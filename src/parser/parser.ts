@@ -222,17 +222,41 @@ function parseKey(content: string): KeySignature {
   // six sharps against dorian's four, and `visual-transpose-output-06`'s single note sat
   // 20.5px right of abcjs's on two accidentals it should never have drawn.
   //
-  // MATCHED ON THE FIRST THREE CHARACTERS, exactly as `getMode` does, and never as a
-  // prefix of the whole word: `m` is minor only when it stands alone, so `middle=B` and
-  // `merge` cannot be read as one.
+  /**
+   * MATCHED ON THE FIRST THREE CHARACTERS, exactly as `getMode` does, and never as a
+   * prefix of the whole word: `middle=B` reads `mid` and `merge` reads `mer`, neither of
+   * which is a mode.
+   *
+   * ⚠️ **AND `m` IS MINOR WHENEVER THE NEXT CHARACTER IS ` `, `^`, `_` OR `=`.** That is
+   * `getMode`'s own truncation — `firstThree = firstThree[0]`, with abcjs's comment "this
+   * will handle the case of 'm'" (`abc_tokenizer.js`) — so `K:C m=B` is C MINOR, not a
+   * middle-line override. This read `m` as a mode only when it stood ALONE, which put the
+   * tune in C major and drew neither the three flats nor the natural.
+   */
   const modeOf = (word: string): Mode | null => {
-    const w = word.toLowerCase()
-    return MODES.find(([prefix]) => prefix === (w.length === 1 ? w : w.slice(0, 3)))?.[1] ?? null
+    const three = word.slice(0, 3).toLowerCase()
+    const w = three.length > 1 && ' ^_='.includes(three[1] ?? '') ? (three[0] ?? '') : three
+    return MODES.find(([prefix]) => prefix === w)?.[1] ?? null
   }
   const rest = spec.slice(i)
-  const next = content.trim().split(/\s+/)[1] ?? ''
-  const mode = modeOf(rest) ?? (rest === '' ? modeOf(next) : null) ?? 'major'
-  const extra = parseKeyAccidentals(content)
+  const words = content.trim().split(/\s+/)
+  const next = words[1] ?? ''
+  const inlineMode = modeOf(rest)
+  const nextMode = rest === '' ? modeOf(next) : null
+  const mode = inlineMode ?? nextMode ?? 'major'
+  /**
+   * **AND `getMode` CONSUMES ONLY THE ALPHABETIC RUN IT MATCHED** — `len: skipAlpha(str, i)`
+   * — so whatever follows it on the SAME token is still scanned for accidentals.
+   * `K:C m=B` is C minor with a natural B, both drawn; abcjs's own probe reads two flats
+   * and one natural. With the mode slot already filled (`K:Cmaj m=B`) the token never
+   * reaches `getMode` at all and the modifier switch takes it as the middle override, which
+   * is why the skip list below has to see the whole word in that case and not in this one.
+   */
+  const scanText =
+    nextMode === null
+      ? content
+      : words.map((w, k) => (k === 1 ? w.replace(/^[A-Za-z]+/, '') : w)).join(' ')
+  const extra = parseKeyAccidentals(scanText)
   return {
     tonic: { step: head.toLowerCase() as DiatonicStep, accidental },
     mode,
@@ -248,13 +272,40 @@ function parseKey(content: string): KeySignature {
  * followed by `/`, likewise `_`, or a bare `=`, then a note letter. In QUARTER tones,
  * because the field can write a half-sharp that `Accidental` has no value for.
  *
- * Everything else on the field — `clef=`, `octave=`, `stafflines=` — carries no `^` or `_`
- * before a letter, so a scan over the whole value cannot collide with it. `middle=` is the
- * one to watch and it has none either.
+ * ⚠️ **AND A MODIFIER'S OWN `=` IS ONE OF THE THREE SIGNS.** The note here used to say a
+ * scan over the whole value "cannot collide" with `clef=` and friends because none of them
+ * carries a `^` or `_` before a letter — true, and beside the point: a BARE `=` is an
+ * accidental too, so `K:C clef=C` read a natural on C, drew a key signature abcjs does not
+ * and widened the staff by 15.4px. `clef=alto` escaped only because the `(?![A-Za-z=])`
+ * guard saw the `l`.
+ *
+ * abcjs never scans the whole value: `getKeyAccidentals2` runs on what follows the key and
+ * mode, and the MODIFIER LOOP takes over from the first keyword on
+ * (`abc_parse_key_voice.js:380-520`). So the accidentals are a PREFIX, and the scan stops
+ * at the first modifier word rather than skipping it — measured, because the two differ:
+ * `K:C =f clef=alto` draws the natural and `K:C clef=alto =f` draws NOTHING, abcjs
+ * warning "Unknown parameter: =" and dropping it.
+ *
+ * ⚠️ **AND NOT EVERY `x=y` IS A MODIFIER** — `K:C=c` really is a natural, measured — which
+ * is why the stop tests the switch's own keywords and the bare clef names, and why the
+ * KEY's own word is never one of them.
  */
+const KEY_VOICE_MODIFIERS: ReadonlySet<string> = new Set([
+  'clef', 'cl', 'middle', 'm', 'transpose', 'stafflines', 'staffscale', 'octave', 'style',
+  'name', 'nm', 'subname', 'sname', 'snm', 'scale', 'score', 'space', 'spc', 'staves',
+  'stave', 'stv', 'brace', 'brc', 'bracket', 'brk', 'volume', 'cue', 'gchords', 'gch',
+  'stem', 'stems', 'merge',
+])
+
 function parseKeyAccidentals(content: string): KeyAccidental[] {
   const out: KeyAccidental[] = []
-  for (const m of content.matchAll(/(\^\^|\^\/|\^|__|_\/|_|=)([A-Ga-g])(?![A-Za-z=])/g)) {
+  const isModifier = (word: string): boolean =>
+    KEY_VOICE_MODIFIERS.has((/^([A-Za-z]+)=/.exec(word)?.[1] ?? '').toLowerCase()) ||
+    /^(?:treble|bass|alto|tenor|perc|none)/i.test(word)
+  const words = content.trim().split(/\s+/)
+  const stop = words.findIndex((w, i) => i > 0 && isModifier(w))
+  const scanned = (stop < 0 ? words : words.slice(0, stop)).join(' ')
+  for (const m of scanned.matchAll(/(\^\^|\^\/|\^|__|_\/|_|=)([A-Ga-g])(?![A-Za-z=])/g)) {
     const sign = m[1] ?? ''
     const quarters =
       sign === '^^'
@@ -361,6 +412,19 @@ const CLEF_NAMES: ReadonlyArray<readonly [string, ClefShape, number]> = [
  * optional trailing digit overrides the staff line and `+8` / `-8` sets the sounding
  * octave — `clef=treble-8` is the tenor's octave-down treble clef.
  */
+export /**
+ * **`C`, `F` AND `G` NAME CLEFS, IN EITHER CASE** — the inner switch of abcjs's clef arm
+ * rewrites `C`/`c` to `alto`, `F`/`f` to `bass` and `G`/`g` to `treble`
+ * (`abc_parse_key_voice.js:497-502`), the shapes' own letters.
+ *
+ * ⚠️ **ONLY AFTER `clef=`.** That inner switch is reached from `case "clef"` and from the
+ * six full clef NAMES it falls through to, so a bare `K:C G` never gets there — `G` is not
+ * a case of the OUTER switch and warns as an unknown parameter. Treating a bare letter as a
+ * clef would make the key's own letter one.
+ */
+const clefAlias = (name: string): string =>
+  ({ c: 'alto', f: 'bass', g: 'treble' })[name.toLowerCase()] ?? name
+
 export function parseClef(spec: string): Clef | null {
   const middleOverride = middleLineOverride(spec)
   const staffLines = staffLineCount(spec)
@@ -395,7 +459,7 @@ export function parseClef(spec: string): Clef | null {
   // V:-only: abcjs's K: switch has no such alias, and reading it on both is a divergence
   // only a `K:C cl=bass` could show. No corpus writes one.
   const explicit = /\bcl(?:ef)?=([a-z]+)(\d?)([-+^_]8)?/i.exec(spec)
-  if (explicit) return build(explicit[1] ?? '', explicit[2] ?? '', explicit[3] ?? '')
+  if (explicit) return build(clefAlias(explicit[1] ?? ''), explicit[2] ?? '', explicit[3] ?? '')
 
   // Bare form, as in `K:C bass`. EVERY word is tried, not just the first: the first word
   // of a K: field is the key itself, so returning on the first non-clef match would never
@@ -442,13 +506,27 @@ export function parseClef(spec: string): Clef | null {
  * default treble alongside it.
  */
 function clefWith(current: Clef, spec: string): Clef {
-  return (
-    parseClef(spec) ?? {
-      ...current,
-      staffLines: staffLineCount(spec),
-      ...(staffLinesWritten(spec) ? { staffLinesWritten: true as const } : {}),
-    }
-  )
+  const named = parseClef(spec)
+  if (named !== null) return named
+  /**
+   * ⚠️ **AND `middle=` REACHES THIS FALLBACK TOO.** abcjs writes it straight onto the
+   * standing clef — `multilineVars.clef.verticalPos = pitch.position - 6`
+   * (`abc_parse_key_voice.js:410`) — with no clef named beside it, exactly as
+   * `stafflines=` does. A `K:C middle=d` therefore repositions the staff and ours dropped
+   * it on the floor: `parseClef` rightly returns null for a field that names no clef, and
+   * only the line count was being carried across.
+   *
+   * ⚠️ **AND THE PROBE THAT SAID OTHERWISE WAS `middle=B`.** B IS the treble middle line,
+   * so both engines drew the untouched tune and the row read identical. `middle=d` and
+   * `middle=G` are what see it — a "SAME" is only as good as the shape that asked.
+   */
+  const middle = middleLineOverride(spec)
+  return {
+    ...current,
+    staffLines: staffLineCount(spec),
+    ...(middle === null ? {} : { middleOverride: middle }),
+    ...(staffLinesWritten(spec) ? { staffLinesWritten: true as const } : {}),
+  }
 }
 
 /**

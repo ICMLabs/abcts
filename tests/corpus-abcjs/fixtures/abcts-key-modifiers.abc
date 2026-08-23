@@ -1,0 +1,59 @@
+X:1
+T:Key Minor Natural
+L:1/8
+K:C m=B
+CDEF|GAB[ceg]2|
+
+X:2
+T:Key Middle D
+L:1/8
+K:C middle=d
+CDEF|GAB[ceg]2|
+
+X:3
+T:Key Middle G
+L:1/8
+K:C middle=G
+CDEF|GAB[ceg]2|
+
+X:4
+T:Key Middle After Mode
+L:1/8
+K:Cmaj m=d
+CDEF|GAB[ceg]2|
+
+X:5
+T:Key Clef Letter C
+L:1/8
+K:C clef=C
+CDEF|GAB[ceg]2|
+
+X:6
+T:Key Clef Letter F
+L:1/8
+K:C clef=F
+CDEF|GAB[ceg]2|
+
+X:7
+T:Key Clef Letter G
+L:1/8
+K:C clef=G
+CDEF|GAB[ceg]2|
+
+X:8
+T:Key Clef Letter Lower
+L:1/8
+K:C clef=g
+CDEF|GAB[ceg]2|
+
+X:9
+T:Key Explicit Natural
+L:1/8
+K:C=c
+CDEF|GAB[ceg]2|
+
+X:10
+T:Key Clef Alto With Naturals
+L:1/8
+K:C clef=alto =f
+CDEF|GAB[ceg]2|

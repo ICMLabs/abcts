@@ -948,6 +948,36 @@
  "repo/abcts-directives-tune9": {
   "title": "newpage"
  },
+ "repo/abcts-key-modifiers-tune0": {
+  "title": "Key Minor Natural"
+ },
+ "repo/abcts-key-modifiers-tune1": {
+  "title": "Key Middle D"
+ },
+ "repo/abcts-key-modifiers-tune2": {
+  "title": "Key Middle G"
+ },
+ "repo/abcts-key-modifiers-tune3": {
+  "title": "Key Middle After Mode"
+ },
+ "repo/abcts-key-modifiers-tune4": {
+  "title": "Key Clef Letter C"
+ },
+ "repo/abcts-key-modifiers-tune5": {
+  "title": "Key Clef Letter F"
+ },
+ "repo/abcts-key-modifiers-tune6": {
+  "title": "Key Clef Letter G"
+ },
+ "repo/abcts-key-modifiers-tune7": {
+  "title": "Key Clef Letter Lower"
+ },
+ "repo/abcts-key-modifiers-tune8": {
+  "title": "Key Explicit Natural"
+ },
+ "repo/abcts-key-modifiers-tune9": {
+  "title": "Key Clef Alto With Naturals"
+ },
  "repo/abcts-keywarn-tune0": {
   "title": "keywarn absent"
  },

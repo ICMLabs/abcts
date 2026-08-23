@@ -314,6 +314,17 @@ const PASSING: readonly string[] = [
   "abcts-visualtranspose-tune2",
   "abcts-visualtranspose-tune3",
   /**
+   * `abcts-key-modifiers.abc` — the K: switch's own 31 case labels, which are NOT the V:
+   * ones: four defects, and tune 9 gates the rule that decided the fourth — accidentals
+   * are a PREFIX, so `K:C =f clef=alto` draws the natural and `K:C clef=alto =f` does not.
+   *
+   * ⚠️ **`clef=perc`, `clef=none` AND `clef=alto2` ARE NOT HERE.** All three are one open
+   * row: the BEAM's left x, which abcjs builds from the head and we translate from the
+   * element, so a clef that lands the line on a `.xx5` boundary rounds the other way. The
+   * stem half of that pair is fixed and gated here; the beam half is not.
+   */
+  ...Array.from({ length: 10 }, (_, i) => `abcts-key-modifiers-tune${i}`),
+  /**
    * `abcts-voice-style.abc` — `V:… style=`, the first of the three modifiers the V:
    * enumeration left as a FEATURE. All five shapes, one voice each.
    *

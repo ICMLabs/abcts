@@ -1299,6 +1299,66 @@
   "bar el_type,endChar,startChar,type",
   "note duration,el_type,endChar,lyric,pitches,pitches.name,pitches.pitch,pitches.verticalPos,startChar"
  ],
+ "repo/abcts-key-modifiers-tune0": [
+  "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.key el_type=undefined acc,accidentals,mode,root",
+  "bar el_type,endChar,startChar,type",
+  "note duration,el_type,endBeam,endChar,pitches,pitches.name,pitches.pitch,pitches.verticalPos,startBeam,startChar"
+ ],
+ "repo/abcts-key-modifiers-tune1": [
+  "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.key el_type=undefined acc,accidentals,mode,root",
+  "bar el_type,endChar,startChar,type",
+  "note duration,el_type,endBeam,endChar,pitches,pitches.name,pitches.pitch,pitches.verticalPos,startBeam,startChar"
+ ],
+ "repo/abcts-key-modifiers-tune2": [
+  "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.key el_type=undefined acc,accidentals,mode,root",
+  "bar el_type,endChar,startChar,type",
+  "note duration,el_type,endBeam,endChar,pitches,pitches.name,pitches.pitch,pitches.verticalPos,startBeam,startChar"
+ ],
+ "repo/abcts-key-modifiers-tune3": [
+  "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.key el_type=undefined acc,accidentals,mode,root",
+  "bar el_type,endChar,startChar,type",
+  "note duration,el_type,endBeam,endChar,pitches,pitches.name,pitches.pitch,pitches.verticalPos,startBeam,startChar"
+ ],
+ "repo/abcts-key-modifiers-tune4": [
+  "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.key el_type=undefined acc,accidentals,mode,root",
+  "bar el_type,endChar,startChar,type",
+  "note duration,el_type,endBeam,endChar,pitches,pitches.name,pitches.pitch,pitches.verticalPos,startBeam,startChar"
+ ],
+ "repo/abcts-key-modifiers-tune5": [
+  "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.key el_type=undefined acc,accidentals,mode,root",
+  "bar el_type,endChar,startChar,type",
+  "note duration,el_type,endBeam,endChar,pitches,pitches.name,pitches.pitch,pitches.verticalPos,startBeam,startChar"
+ ],
+ "repo/abcts-key-modifiers-tune6": [
+  "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.key el_type=undefined acc,accidentals,mode,root",
+  "bar el_type,endChar,startChar,type",
+  "note duration,el_type,endBeam,endChar,pitches,pitches.name,pitches.pitch,pitches.verticalPos,startBeam,startChar"
+ ],
+ "repo/abcts-key-modifiers-tune7": [
+  "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.key el_type=undefined acc,accidentals,mode,root",
+  "bar el_type,endChar,startChar,type",
+  "note duration,el_type,endBeam,endChar,pitches,pitches.name,pitches.pitch,pitches.verticalPos,startBeam,startChar"
+ ],
+ "repo/abcts-key-modifiers-tune8": [
+  "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.key el_type=undefined acc,accidentals,mode,root",
+  "bar el_type,endChar,startChar,type",
+  "note duration,el_type,endBeam,endChar,pitches,pitches.name,pitches.pitch,pitches.verticalPos,startBeam,startChar"
+ ],
+ "repo/abcts-key-modifiers-tune9": [
+  "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.key el_type=undefined acc,accidentals,mode,root",
+  "bar el_type,endChar,startChar,type",
+  "note duration,el_type,endBeam,endChar,pitches,pitches.name,pitches.pitch,pitches.verticalPos,startBeam,startChar"
+ ],
  "repo/abcts-keywarn-tune0": [
   "staff.clef el_type=undefined clefPos,type,verticalPos",
   "staff.key el_type=undefined acc,accidentals,mode,root",

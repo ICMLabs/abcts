@@ -2943,6 +2943,128 @@
    "hasPickup": false
   }
  ],
+ "repo/abcts-key-modifiers": [
+  {
+   "header": "X:1\nT:Key Minor Natural\nL:1/8\nK:C m=B\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    },
+    {
+     "abc": "GAB[ceg]2|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "X:2\nT:Key Middle D\nL:1/8\nK:C middle=d\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    },
+    {
+     "abc": "GAB[ceg]2|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "X:3\nT:Key Middle G\nL:1/8\nK:C middle=G\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    },
+    {
+     "abc": "GAB[ceg]2|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "X:4\nT:Key Middle After Mode\nL:1/8\nK:Cmaj m=d\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    },
+    {
+     "abc": "GAB[ceg]2|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "X:5\nT:Key Clef Letter C\nL:1/8\nK:C clef=C\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    },
+    {
+     "abc": "GAB[ceg]2|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "X:6\nT:Key Clef Letter F\nL:1/8\nK:C clef=F\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    },
+    {
+     "abc": "GAB[ceg]2|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "X:7\nT:Key Clef Letter G\nL:1/8\nK:C clef=G\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    },
+    {
+     "abc": "GAB[ceg]2|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "X:8\nT:Key Clef Letter Lower\nL:1/8\nK:C clef=g\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    },
+    {
+     "abc": "GAB[ceg]2|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "X:9\nT:Key Explicit Natural\nL:1/8\nK:C=c\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    },
+    {
+     "abc": "GAB[ceg]2|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "X:10\nT:Key Clef Alto With Naturals\nL:1/8\nK:C clef=alto =f\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    },
+    {
+     "abc": "GAB[ceg]2|"
+    }
+   ],
+   "hasPickup": true
+  }
+ ],
  "repo/abcts-keywarn": [
   {
    "header": "X:1\nT:keywarn absent\nL:1/4\nM:4/4\nK:C\n",

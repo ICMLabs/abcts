@@ -497,7 +497,17 @@ function lineToRect(
        * The BEAM's emitter above chains the same way for the same reason; this is the one
        * place that did not.
        */
-      const anchor = roundNumber(up ? x + w : x);
+      /**
+       * ⚠️ **AND AN UP STEM'S ANCHOR IS THE CENTRE PLUS A HALF, NOT `(centre - half) + w`.**
+       * abcjs hands `printStem` ONE number — `x = abselem.x + heads[0].w`, the stem's right
+       * edge, with `dx = -0.6` (`abstract-engraver.js:747, 762`) — where this rebuilt it out
+       * of the rect's left edge and its width. The two are equal in algebra and not in
+       * doubles: on `K:C clef=alto2` the third stem is `153.91499999999999204` this way and
+       * abcjs's own `153.91500000000002046`, which round to 153.91 and 153.92. Three K:
+       * clefs showed it — `alto2`, `perc` and `none` — because only a clef whose width
+       * lands the line on a `.xx5` boundary can.
+       */
+      const anchor = roundNumber(up ? line.x1 + line.thickness / 2 : x);
       const [xa, xb] = [anchor, roundNumber(anchor + (up ? -w : w))];
       const [ya, yb] = up ? [y, y + h] : [y + h, y];
       return (

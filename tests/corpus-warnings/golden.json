@@ -226,6 +226,19 @@
  "repo/abcts-directives-tune7": null,
  "repo/abcts-directives-tune8": null,
  "repo/abcts-directives-tune9": null,
+ "repo/abcts-key-modifiers-tune0": null,
+ "repo/abcts-key-modifiers-tune1": null,
+ "repo/abcts-key-modifiers-tune2": null,
+ "repo/abcts-key-modifiers-tune3": null,
+ "repo/abcts-key-modifiers-tune4": null,
+ "repo/abcts-key-modifiers-tune5": null,
+ "repo/abcts-key-modifiers-tune6": null,
+ "repo/abcts-key-modifiers-tune7": null,
+ "repo/abcts-key-modifiers-tune8": null,
+ "repo/abcts-key-modifiers-tune9": [
+  "Music Line:4:13: Unknown parameter: =:  C clef=alto <span style=\"text-decoration:underline;font-size:1.3em;font-weight:bold;\">=</span>f",
+  "Music Line:4:14: Unknown parameter: f:  C clef=alto =<span style=\"text-decoration:underline;font-size:1.3em;font-weight:bold;\">f</span>"
+ ],
  "repo/abcts-keywarn-tune0": null,
  "repo/abcts-keywarn-tune1": null,
  "repo/abcts-keywarn-tune2": [

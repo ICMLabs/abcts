@@ -809,6 +809,66 @@
    "endChar": 1205
   }
  },
+ "repo/abcts-key-modifiers-tune0": {
+  "title": {
+   "startChar": 4,
+   "endChar": 23
+  }
+ },
+ "repo/abcts-key-modifiers-tune1": {
+  "title": {
+   "startChar": 59,
+   "endChar": 73
+  }
+ },
+ "repo/abcts-key-modifiers-tune2": {
+  "title": {
+   "startChar": 114,
+   "endChar": 128
+  }
+ },
+ "repo/abcts-key-modifiers-tune3": {
+  "title": {
+   "startChar": 169,
+   "endChar": 192
+  }
+ },
+ "repo/abcts-key-modifiers-tune4": {
+  "title": {
+   "startChar": 231,
+   "endChar": 250
+  }
+ },
+ "repo/abcts-key-modifiers-tune5": {
+  "title": {
+   "startChar": 289,
+   "endChar": 308
+  }
+ },
+ "repo/abcts-key-modifiers-tune6": {
+  "title": {
+   "startChar": 347,
+   "endChar": 366
+  }
+ },
+ "repo/abcts-key-modifiers-tune7": {
+  "title": {
+   "startChar": 405,
+   "endChar": 428
+  }
+ },
+ "repo/abcts-key-modifiers-tune8": {
+  "title": {
+   "startChar": 467,
+   "endChar": 489
+  }
+ },
+ "repo/abcts-key-modifiers-tune9": {
+  "title": {
+   "startChar": 524,
+   "endChar": 553
+  }
+ },
  "repo/abcts-keywarn-tune0": {
   "title": {
    "startChar": 356,

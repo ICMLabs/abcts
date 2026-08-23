@@ -3778,6 +3778,216 @@
   ],
   "bottomText": []
  },
+ "repo/abcts-key-modifiers-tune0": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Key Minor Natural",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 4,
+    "endChar": 23,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-key-modifiers-tune1": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Key Middle D",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 59,
+    "endChar": 73,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-key-modifiers-tune2": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Key Middle G",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 114,
+    "endChar": 128,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-key-modifiers-tune3": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Key Middle After Mode",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 169,
+    "endChar": 192,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-key-modifiers-tune4": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Key Clef Letter C",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 231,
+    "endChar": 250,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-key-modifiers-tune5": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Key Clef Letter F",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 289,
+    "endChar": 308,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-key-modifiers-tune6": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Key Clef Letter G",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 347,
+    "endChar": 366,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-key-modifiers-tune7": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Key Clef Letter Lower",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 405,
+    "endChar": 428,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-key-modifiers-tune8": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Key Explicit Natural",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 467,
+    "endChar": 489,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-key-modifiers-tune9": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Key Clef Alto With Naturals",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 524,
+    "endChar": 553,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
  "repo/abcts-keywarn-tune0": {
   "topText": [
    {
