@@ -67,6 +67,13 @@ const rows = (): Row[] =>
 const PASSING: readonly string[] = [
   // …and the third-tone microtone of `abcts-ledger-gaps-4`, whose four characters abcjs
   // warns about one at a time.
+  /**
+   * `[C"Am"E]` — an unparseable token ends the chord where it stands, and abcjs WARNS as it
+   * stops: `warn("Expected ']' to end the chords", line, index)` (`abc_parse_music.js:487`).
+   * The GEOMETRY has agreed since that rule landed on 2026-08-21 and only the diagnostic
+   * was missing, which is what this row has read ever since.
+   */
+  "repo/abcts-ledger-gaps-tune2",
   "repo/abcts-ledger-gaps-4-tune2",
   "repo/abcjs-parse-book_parser-04-wed-tune0",
   "repo/abcjs-parse-book_parser-05-a-tune0",

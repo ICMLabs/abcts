@@ -5338,7 +5338,18 @@ class Parser {
        * Ours skipped the token and kept collecting, which made it one two-note chord with
        * the symbol thrown away — invisible to every gate until `abcts-ledger-gaps` wrote
        * one, and worth 22.4px of page, because a chord symbol takes a lane.
+       *
+       * …**AND abcjs WARNS AS IT STOPS**, pointing at the token that ended it:
+       * `warn("Expected ']' to end the chords", line, index)` (`abc_parse_music.js:487`).
+       * The GEOMETRY has been right since the rule landed and only the diagnostic was
+       * missing, which is what the warnings gate has read as its second row since
+       * 2026-08-21.
        */
+      this.warn(
+        'chord-unterminated',
+        "expected ']' to end the chords",
+        sourceRange(token.start, token.start + 1),
+      )
       break
     }
     if ((tokens[i] as Token | undefined)?.kind === 'closeBracket') i++

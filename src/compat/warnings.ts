@@ -228,6 +228,17 @@ const AS_ABCJS: Record<
         };
   },
   /** `Can't nest triplets`, pointing at the inner `(` (`abc_parse_music.js:329-331`). */
+  /**
+   * `Expected ']' to end the chords`, pointing at the token that ended it —
+   * `warn("Expected ']' to end the chords", line, index)` (`abc_parse_music.js:487`). The
+   * same line-and-column shape as `nested-triplet` below.
+   */
+  "chord-unterminated": (diagnostic, abc) => {
+    const at = diagnostic.range?.start ?? 0;
+    let start = 0;
+    for (let i = 0; i < at; i += 1) if (abc[i] === "\n") start = i + 1;
+    return { message: "Expected ']' to end the chords", column: at - start };
+  },
   "nested-triplet": (diagnostic, abc) => {
     const at = diagnostic.range?.start ?? 0;
     let start = 0;
