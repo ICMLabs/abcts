@@ -47,6 +47,18 @@
   "L0 s3 kept=key,clef",
   "L0 s3 v0 note@93..97 note@97..100 note@100..103 note@103..107 bar@107..108 break@undefined..undefined note@185..188 note@188..190 note@190..192 note@192..195 bar@195..196"
  ],
+ "repo/abcjs-parse-tie-slur-01-multipart-tune0": [
+  "L0 s0 kept=meter,key,clef",
+  "L0 s0 v0 note@35..39 bar@39..40 note@59..63 bar@63..64 note@65..67 bar@67..69",
+  "L0 s1 kept=meter,key,clef",
+  "L0 s1 v0 note@47..51 bar@51..52 note@76..80 bar@80..81 note@82..84 bar@84..86"
+ ],
+ "repo/abcjs-parse-tie-slur-01-multipart-tune0#breaks": [
+  "L0 s0 kept=meter,key,clef",
+  "L0 s0 v0 note@35..39 bar@39..40 break@undefined..undefined note@59..63 bar@63..64 break@undefined..undefined note@65..67 bar@67..69",
+  "L0 s1 kept=meter,key,clef",
+  "L0 s1 v0 note@47..51 bar@51..52 break@undefined..undefined note@76..80 bar@80..81 break@undefined..undefined note@82..84 bar@84..86"
+ ],
  "repo/abcjs-parse-tie-slur-01-staffwidth-200-tune0": [
   "L0 s0 kept=meter,key,clef",
   "L0 s0 v0 note@35..39 bar@39..40 note@59..63 bar@63..64 note@65..67 bar@67..69",
@@ -58,6 +70,18 @@
   "L0 s0 v0 note@35..39 bar@39..40 break@undefined..undefined note@59..63 bar@63..64 break@undefined..undefined note@65..67 bar@67..69",
   "L0 s1 kept=meter,key,clef",
   "L0 s1 v0 note@47..51 bar@51..52 break@undefined..undefined note@76..80 bar@80..81 break@undefined..undefined note@82..84 bar@84..86"
+ ],
+ "repo/abcjs-parse-tie-slur-02-chord-tune0": [
+  "L0 s0 kept=meter,key,clef",
+  "L0 s0 v0 note@35..42 bar@42..43 note@65..72 bar@72..73 note@74..79 bar@79..81",
+  "L0 s1 kept=meter,key,clef",
+  "L0 s1 v0 note@50..57 bar@57..58 note@88..95 bar@95..96 note@97..102 bar@102..104"
+ ],
+ "repo/abcjs-parse-tie-slur-02-chord-tune0#breaks": [
+  "L0 s0 kept=meter,key,clef",
+  "L0 s0 v0 note@35..42 bar@42..43 break@undefined..undefined note@65..72 bar@72..73 break@undefined..undefined note@74..79 bar@79..81",
+  "L0 s1 kept=meter,key,clef",
+  "L0 s1 v0 note@50..57 bar@57..58 break@undefined..undefined note@88..95 bar@95..96 break@undefined..undefined note@97..102 bar@102..104"
  ],
  "repo/abcjs-parse-tie-slur-02-staffwidth-200-tune0": [
   "L0 s0 kept=meter,key,clef",
@@ -71,6 +95,16 @@
   "L0 s1 kept=meter,key,clef",
   "L0 s1 v0 note@50..57 bar@57..58 break@undefined..undefined note@88..95 bar@95..96 break@undefined..undefined note@97..102 bar@102..104"
  ],
+ "repo/abcjs-parse-tie-slur-03-onestaff-tune0": [
+  "L0 s0 kept=meter,key,clef",
+  "L0 s0 v0 stem@undefined..undefined note@52..59 bar@59..60 stem@undefined..undefined note@82..89 bar@89..90 stem@undefined..undefined note@91..96 bar@96..98",
+  "L0 s0 v1 stem@undefined..undefined note@67..74 bar@74..75 stem@undefined..undefined note@105..112 bar@112..113 stem@undefined..undefined note@114..119 bar@119..121"
+ ],
+ "repo/abcjs-parse-tie-slur-03-onestaff-tune0#breaks": [
+  "L0 s0 kept=meter,key,clef",
+  "L0 s0 v0 stem@undefined..undefined note@52..59 bar@59..60 break@undefined..undefined stem@undefined..undefined note@82..89 bar@89..90 break@undefined..undefined stem@undefined..undefined note@91..96 bar@96..98",
+  "L0 s0 v1 stem@undefined..undefined note@67..74 bar@74..75 break@undefined..undefined stem@undefined..undefined note@105..112 bar@112..113 break@undefined..undefined stem@undefined..undefined note@114..119 bar@119..121"
+ ],
  "repo/abcjs-parse-tie-slur-03-staffwidth-200-tune0": [
   "L0 s0 kept=meter,key,clef",
   "L0 s0 v0 stem@undefined..undefined note@52..59 bar@59..60 stem@undefined..undefined note@82..89 bar@89..90 stem@undefined..undefined note@91..96 bar@96..98",
@@ -80,6 +114,22 @@
   "L0 s0 kept=meter,key,clef",
   "L0 s0 v0 stem@undefined..undefined note@52..59 bar@59..60 break@undefined..undefined stem@undefined..undefined note@82..89 bar@89..90 break@undefined..undefined stem@undefined..undefined note@91..96 bar@96..98",
   "L0 s0 v1 stem@undefined..undefined note@67..74 bar@74..75 break@undefined..undefined stem@undefined..undefined note@105..112 bar@112..113 break@undefined..undefined stem@undefined..undefined note@114..119 bar@119..121"
+ ],
+ "repo/abcjs-parse-tie-slur-04-height-tune0": [
+  "L0 s0 kept=meter,key,clef",
+  "L0 s0 v0 stem@undefined..undefined note@180..182 bar@182..183 note@183..186 note@186..187 note@187..189 note@189..192 note@192..194 bar@194..195 note@195..197 bar@197..199",
+  "L0 s0 v1 stem@undefined..undefined note@206..208 bar@208..209 note@209..212 note@212..213 note@213..216 note@216..220 note@220..223 bar@223..224 note@224..227 bar@227..229",
+  "L0 s1 kept=meter,key,clef",
+  "L0 s1 v0 stem@undefined..undefined note@236..239 bar@239..240 note@240..243 note@243..246 note@246..249 note@249..252 note@252..255 bar@255..256 note@256..259 bar@259..261",
+  "L0 s1 v1 stem@undefined..undefined note@268..271 bar@271..272 note@272..275 note@275..278 note@278..281 note@281..285 note@285..289 bar@289..290 note@290..294 bar@294..296"
+ ],
+ "repo/abcjs-parse-tie-slur-04-height-tune0#breaks": [
+  "L0 s0 kept=meter,key,clef",
+  "L0 s0 v0 stem@undefined..undefined note@180..182 bar@182..183 note@183..186 note@186..187 note@187..189 note@189..192 note@192..194 bar@194..195 note@195..197 bar@197..199",
+  "L0 s0 v1 stem@undefined..undefined note@206..208 bar@208..209 note@209..212 note@212..213 note@213..216 note@216..220 note@220..223 bar@223..224 note@224..227 bar@227..229",
+  "L0 s1 kept=meter,key,clef",
+  "L0 s1 v0 stem@undefined..undefined note@236..239 bar@239..240 note@240..243 note@243..246 note@246..249 note@249..252 note@252..255 bar@255..256 note@256..259 bar@259..261",
+  "L0 s1 v1 stem@undefined..undefined note@268..271 bar@271..272 note@272..275 note@275..278 note@278..281 note@281..285 note@285..289 bar@289..290 note@290..294 bar@294..296"
  ],
  "repo/abcjs-parse-tie-slur-04-stretchlast-1-tune0": [
   "L0 s0 kept=meter,key,clef",
@@ -641,6 +691,14 @@
   "L0 s1 kept=meter,key,clef",
   "L0 s1 v0 note@327..346 note@346..349 note@349..369 bar@369..370 note@370..389 note@389..391 note@391..411 bar@411..412 note@412..423 note@423..426 note@426..438 bar@438..439 note@439..450 note@450..452 note@452..464 bar@464..466"
  ],
+ "repo/abcjs-visual-decorations-x02-tune0": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@23..26 note@26..29 note@29..32 note@32..42 note@42..52 note@52..63 note@63..79 note@79..95 note@95..106 note@106..108"
+ ],
+ "repo/abcjs-visual-decorations-x02-tune0#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@23..26 note@26..29 note@29..32 note@32..42 note@42..52 note@52..63 note@63..79 note@79..95 note@95..106 note@106..108"
+ ],
  "repo/abcjs-visual-directives-01-incipit-test-tune0": [
   "L0 subtitle",
   "L1 s0 kept=meter,key,clef",
@@ -650,6 +708,14 @@
   "L0 subtitle",
   "L1 s0 kept=meter,key,clef",
   "L1 s0 v0 note@83..85 bar@85..86 break@undefined..undefined note@87..89 bar@89..90 break@undefined..undefined clef@-1..-1 note@91..93 bar@93..94 break@undefined..undefined clef@-1..-1 note@95..97 bar@97..98"
+ ],
+ "repo/abcjs-visual-directives-x01-tune0": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@0..1 note@1..2 note@2..4 note@28..30 note@30..31 note@31..32 bar@32..34"
+ ],
+ "repo/abcjs-visual-directives-x01-tune0#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@0..1 note@1..2 note@2..4 note@28..30 note@30..31 note@31..32 bar@32..34"
  ],
  "repo/abcjs-visual-layout-01-barlabelfont-times-bold-18-box-tune0": [
   "L0 s0 kept=meter,key,clef",
@@ -869,6 +935,8 @@
  ],
  "repo/abcjs-visual-misc-14-tune-tune0": [],
  "repo/abcjs-visual-misc-14-tune-tune0#breaks": [],
+ "repo/abcjs-visual-misc-x07-tune0": [],
+ "repo/abcjs-visual-misc-x07-tune0#breaks": [],
  "repo/abcjs-visual-mouse-click-01-selection-test-tune0": [
   "L0 subtitle",
   "L1 text",
@@ -912,6 +980,66 @@
   "L0 s0 v0 note@40..46 note@46..49 note@49..52 note@52..54 note@54..57 note@57..59 bar@59..60 break@undefined..undefined note@73..79 note@79..82 note@82..85 note@85..87 note@87..90 note@90..92 bar@92..93",
   "L0 s1 kept=meter,key,clef",
   "L0 s1 v0 note@132..139 note@139..143 note@143..146 bar@146..147 break@undefined..undefined note@156..163 note@163..167 note@167..170 bar@170..171"
+ ],
+ "repo/abcjs-visual-multi-voice-x01-tune0": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 stem@undefined..undefined note@31..34 note@34..37 note@37..40 note@40..43 note@43..46 bar@46..47 note@47..52 note@52..54 note@54..57 note@57..61 note@61..63 note@63..66 note@66..70 note@70..72 note@72..75 note@75..79 note@79..82 note@82..85 bar@85..86 stem@undefined..undefined note@159..163 note@163..165 note@165..168 note@168..172 note@172..175 note@175..178 note@178..182 note@182..184 note@184..187 note@187..191 note@191..193 note@193..196 bar@196..197",
+  "L0 s0 v1 stem@undefined..undefined note@96..100 note@100..102 note@102..105 note@105..109 note@109..111 note@111..114 note@114..118 note@118..120 note@120..123 note@123..127 note@127..130 note@130..133 bar@133..134 note@134..139 note@139..143 note@143..147 note@147..151 bar@151..152 stem@undefined..undefined note@207..211 note@211..215 note@215..219 note@219..223 bar@223..224"
+ ],
+ "repo/abcjs-visual-multi-voice-x01-tune0#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 stem@undefined..undefined note@31..34 note@34..37 note@37..40 note@40..43 note@43..46 bar@46..47 note@47..52 note@52..54 note@54..57 note@57..61 note@61..63 note@63..66 note@66..70 note@70..72 note@72..75 note@75..79 note@79..82 note@82..85 bar@85..86 break@undefined..undefined stem@undefined..undefined note@159..163 note@163..165 note@165..168 note@168..172 note@172..175 note@175..178 note@178..182 note@182..184 note@184..187 note@187..191 note@191..193 note@193..196 bar@196..197",
+  "L0 s0 v1 stem@undefined..undefined note@96..100 note@100..102 note@102..105 note@105..109 note@109..111 note@111..114 note@114..118 note@118..120 note@120..123 note@123..127 note@127..130 note@130..133 bar@133..134 note@134..139 note@139..143 note@143..147 note@147..151 bar@151..152 break@undefined..undefined stem@undefined..undefined note@207..211 note@211..215 note@215..219 note@219..223 bar@223..224"
+ ],
+ "repo/abcjs-visual-multi-voice-x02-tune0": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@21..25 note@25..28 note@28..30 bar@30..31 note@32..38 note@38..39 note@39..40 note@40..41 note@41..42 bar@42..43"
+ ],
+ "repo/abcjs-visual-multi-voice-x02-tune0#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@21..25 note@25..28 note@28..30 bar@30..31 break@undefined..undefined note@32..38 note@38..39 note@39..40 note@40..41 note@41..42 bar@42..43"
+ ],
+ "repo/abcjs-visual-multi-voice-x03-tune0": [
+  "L0 s0 kept=meter,key,clef",
+  "L0 s0 v0 stem@undefined..undefined note@72..75 bar@75..76 note@76..80 note@80..82 note@82..85 note@85..87 bar@87..89",
+  "L0 s0 v1 stem@undefined..undefined note@121..125 bar@125..126 note@126..130 note@130..132 bar@132..134"
+ ],
+ "repo/abcjs-visual-multi-voice-x03-tune0#breaks": [
+  "L0 s0 kept=meter,key,clef",
+  "L0 s0 v0 stem@undefined..undefined note@72..75 bar@75..76 note@76..80 note@80..82 note@82..85 note@85..87 bar@87..89",
+  "L0 s0 v1 stem@undefined..undefined note@121..125 bar@125..126 note@126..130 note@130..132 bar@132..134"
+ ],
+ "repo/abcjs-visual-multi-voice-x04-tune0": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 stem@undefined..undefined note@31..34 note@34..35 note@35..37 note@37..38 note@38..39 note@39..41 bar@41..42 note@42..45 note@45..48 note@48..51 note@51..53 bar@53..54",
+  "L0 s0 v1 stem@undefined..undefined note@64..68 note@68..70 note@70..72 note@72..75 bar@75..76 note@76..79 note@79..82 note@82..85 note@85..87 bar@87..88"
+ ],
+ "repo/abcjs-visual-multi-voice-x04-tune0#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 stem@undefined..undefined note@31..34 note@34..35 note@35..37 note@37..38 note@38..39 note@39..41 bar@41..42 note@42..45 note@45..48 note@48..51 note@51..53 bar@53..54",
+  "L0 s0 v1 stem@undefined..undefined note@64..68 note@68..70 note@70..72 note@72..75 bar@75..76 note@76..79 note@79..82 note@82..85 note@85..87 bar@87..88"
+ ],
+ "repo/abcjs-visual-multi-voice-x05-tune0": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@10..13 note@13..14 note@14..16 note@16..17 note@17..18 note@18..20 bar@20..21 note@21..24 note@24..27 note@27..30 note@30..32 bar@32..33",
+  "L0 s1 kept=key,clef",
+  "L0 s1 v0 note@43..47 note@47..49 note@49..51 note@51..54 bar@54..55 note@55..58 note@58..61 note@61..64 note@64..66 bar@66..67"
+ ],
+ "repo/abcjs-visual-multi-voice-x05-tune0#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@10..13 note@13..14 note@14..16 note@16..17 note@17..18 note@18..20 bar@20..21 note@21..24 note@24..27 note@27..30 note@30..32 bar@32..33",
+  "L0 s1 kept=key,clef",
+  "L0 s1 v0 note@43..47 note@47..49 note@49..51 note@51..54 bar@54..55 note@55..58 note@58..61 note@61..64 note@64..66 bar@66..67"
+ ],
+ "repo/abcjs-visual-multi-voice-x08-tune0": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 stem@undefined..undefined note@31..34 note@34..37 note@37..40 note@40..43 note@43..46 bar@46..47 note@47..52 note@52..54 note@54..57 note@57..61 note@61..63 note@63..66 note@66..70 note@70..72 note@72..75 note@75..79 note@79..82 note@82..85 bar@85..86",
+  "L0 s0 v1 stem@undefined..undefined note@123..127 note@127..129 note@129..132 note@132..136 note@136..138 note@138..141 note@141..145 note@145..147 note@147..150 note@150..154 note@154..157 note@157..160 bar@160..161 note@161..166 note@166..170 note@170..174 note@174..178 bar@178..179"
+ ],
+ "repo/abcjs-visual-multi-voice-x08-tune0#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 stem@undefined..undefined note@31..34 note@34..37 note@37..40 note@40..43 note@43..46 bar@46..47 note@47..52 note@52..54 note@54..57 note@57..61 note@61..63 note@63..66 note@66..70 note@70..72 note@72..75 note@75..79 note@79..82 note@82..85 bar@85..86",
+  "L0 s0 v1 stem@undefined..undefined note@123..127 note@127..129 note@129..132 note@132..136 note@136..138 note@138..141 note@141..145 note@145..147 note@147..150 note@150..154 note@154..157 note@157..160 bar@160..161 note@161..166 note@166..170 note@170..174 note@174..178 bar@178..179"
  ],
  "repo/abcjs-visual-options-01-fonts-tune0": [
   "L0 subtitle",
@@ -1030,6 +1158,48 @@
   "L0 subtitle",
   "L1 s0 kept=meter,key,clef",
   "L1 s0 v0 note@82..85 bar@85..87 note@87..91 bar@91..92"
+ ],
+ "repo/abcjs-visual-parsing-x10-tune0": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@5..7 bar@7..8 key@-1..-1 note@25..27 bar@27..28 keySignature@41..44 key@-1..-1 note@45..47 bar@47..48 keySignature@49..54 note@54..56 bar@56..57 key@-1..-1 note@70..72 bar@72..73 keySignature@74..79 note@79..81 bar@81..82"
+ ],
+ "repo/abcjs-visual-parsing-x10-tune0#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@5..7 bar@7..8 break@undefined..undefined key@-1..-1 note@25..27 bar@27..28 keySignature@41..44 break@undefined..undefined key@-1..-1 note@45..47 bar@47..48 keySignature@49..54 note@54..56 bar@56..57 break@undefined..undefined key@-1..-1 note@70..72 bar@72..73 keySignature@74..79 note@79..81 bar@81..82"
+ ],
+ "repo/abcjs-visual-parsing-x11-tune0": [
+  "L0 s0 kept=meter,key,clef",
+  "L0 s0 v0 note@24..25 bar@25..26 keySignature@27..30 key@-1..-1 note@31..32 bar@32..33",
+  "L1 subtitle",
+  "L2 s0 kept=key,clef",
+  "L2 s0 v0 note@44..45 bar@45..46"
+ ],
+ "repo/abcjs-visual-parsing-x11-tune0#breaks": [
+  "L0 s0 kept=meter,key,clef",
+  "L0 s0 v0 note@24..25 bar@25..26 keySignature@27..30 break@undefined..undefined key@-1..-1 note@31..32 bar@32..33",
+  "L1 subtitle",
+  "L2 s0 kept=key,clef",
+  "L2 s0 v0 note@44..45 bar@45..46"
+ ],
+ "repo/abcjs-visual-parsing-x12-tune0": [
+  "L0 s0 kept=meter,key,clef",
+  "L0 s0 v0 note@27..30 note@30..33 note@33..36 note@36..38 bar@38..39 keySignature@40..45 note@45..49 note@49..52 note@52..55 note@55..57 bar@57..59 key@-1..-1 note@101..104 note@104..107 note@107..110 note@110..112 bar@112..113 keySignature@114..122 note@122..126 note@126..129 note@129..132 note@132..134 bar@134..136 key@-1..-1 note@181..184 note@184..187 note@187..190 note@190..192 bar@192..193 note@193..197 note@197..200 note@200..203 note@203..205 bar@205..207",
+  "L0 s1 kept=meter,key,clef",
+  "L0 s1 v0 note@64..67 note@67..70 note@70..73 note@73..75 bar@75..76 keySignature@77..82 note@82..86 note@86..89 note@89..92 note@92..94 bar@94..96 key@-1..-1 note@141..144 note@144..147 note@147..150 note@150..152 bar@152..153 keySignature@154..162 note@162..166 note@166..169 note@169..172 note@172..174 bar@174..176 key@-1..-1 note@212..215 note@215..218 note@218..221 note@221..223 bar@223..224 note@224..228 note@228..231 note@231..234 note@234..236 bar@236..238"
+ ],
+ "repo/abcjs-visual-parsing-x12-tune0#breaks": [
+  "L0 s0 kept=meter,key,clef",
+  "L0 s0 v0 note@27..30 note@30..33 note@33..36 note@36..38 bar@38..39 keySignature@40..45 note@45..49 note@49..52 note@52..55 note@55..57 bar@57..59 break@undefined..undefined key@-1..-1 note@101..104 note@104..107 note@107..110 note@110..112 bar@112..113 keySignature@114..122 note@122..126 note@126..129 note@129..132 note@132..134 bar@134..136 break@undefined..undefined key@-1..-1 note@181..184 note@184..187 note@187..190 note@190..192 bar@192..193 note@193..197 note@197..200 note@200..203 note@203..205 bar@205..207",
+  "L0 s1 kept=meter,key,clef",
+  "L0 s1 v0 note@64..67 note@67..70 note@70..73 note@73..75 bar@75..76 keySignature@77..82 note@82..86 note@86..89 note@89..92 note@92..94 bar@94..96 break@undefined..undefined key@-1..-1 note@141..144 note@144..147 note@147..150 note@150..152 bar@152..153 keySignature@154..162 note@162..166 note@166..169 note@169..172 note@172..174 bar@174..176 break@undefined..undefined key@-1..-1 note@212..215 note@215..218 note@218..221 note@221..223 bar@223..224 note@224..228 note@228..231 note@231..234 note@234..236 bar@236..238"
+ ],
+ "repo/abcjs-visual-parsing-x14-tune0": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@9..23 note@23..43"
+ ],
+ "repo/abcjs-visual-parsing-x14-tune0#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@9..23 note@23..43"
  ],
  "repo/abcjs-visual-selection-01-selection-test-tune0": [
   "L0 subtitle",

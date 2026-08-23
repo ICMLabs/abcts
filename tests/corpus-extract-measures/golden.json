@@ -37,6 +37,23 @@
    "hasPickup": true
   }
  ],
+ "repo/abcjs-parse-tie-slur-01-multipart": [
+  {
+   "header": "X:1\n%%staffwidth 200\nM:C\nK:E\n",
+   "measures": [
+    {
+     "abc": " G8-|"
+    },
+    {
+     "abc": " G8-|"
+    },
+    {
+     "abc": "G8||"
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
  "repo/abcjs-parse-tie-slur-01-staffwidth-200": [
   {
    "header": "X:1\n%%staffwidth 200\nM:C\nK:E\n",
@@ -54,9 +71,43 @@
    "hasPickup": false
   }
  ],
+ "repo/abcjs-parse-tie-slur-02-chord": [
+  {
+   "header": "X:1\n%%staffwidth 200\nM:C\nK:E\n",
+   "measures": [
+    {
+     "abc": " [GB]8-|"
+    },
+    {
+     "abc": " [GB]8-|"
+    },
+    {
+     "abc": "[GB]8||"
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
  "repo/abcjs-parse-tie-slur-02-staffwidth-200": [
   {
    "header": "X:1\n%%staffwidth 200\nM:C\nK:E\n",
+   "measures": [
+    {
+     "abc": " [GB]8-|"
+    },
+    {
+     "abc": " [GB]8-|"
+    },
+    {
+     "abc": "[GB]8||"
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
+ "repo/abcjs-parse-tie-slur-03-onestaff": [
+  {
+   "header": "X:1\n%%staffwidth 200\n%%staves (T1 B1)\nM:C\nK:E\n",
    "measures": [
     {
      "abc": " [GB]8-|"
@@ -86,6 +137,23 @@
     }
    ],
    "hasPickup": false
+  }
+ ],
+ "repo/abcjs-parse-tie-slur-04-height": [
+  {
+   "header": "X:1\n%%stretchlast 1\nL:1/8\nM:4/4\nK:D\n",
+   "measures": [
+    {
+     "abc": "F2|"
+    },
+    {
+     "abc": "F2 EF G2 E2|"
+    },
+    {
+     "abc": "C6||"
+    }
+   ],
+   "hasPickup": true
   }
  ],
  "repo/abcjs-parse-tie-slur-04-stretchlast-1": [
@@ -1333,7 +1401,17 @@
    "hasPickup": true
   }
  ],
+ "repo/abcjs-visual-decorations-x02": [
+  {
+   "header": "L:1/1\nK:none clef=none\n",
+   "measures": [],
+   "hasPickup": false
+  }
+ ],
  "repo/abcjs-visual-directives-01-incipit-test": {
+  "throws": "Cannot read properties of undefined (reading 'split')"
+ },
+ "repo/abcjs-visual-directives-x01": {
   "throws": "Cannot read properties of undefined (reading 'split')"
  },
  "repo/abcjs-visual-layout-01-barlabelfont-times-bold-18-box": [
@@ -1584,6 +1662,13 @@
    "hasPickup": false
   }
  ],
+ "repo/abcjs-visual-misc-x07": [
+  {
+   "header": "X: 1\nL: 1/8\nK: C none\n",
+   "measures": [],
+   "hasPickup": false
+  }
+ ],
  "repo/abcjs-visual-mouse-click-01-selection-test": [
   {
    "header": "X:1\nM:4/4\nL:1/16\n%%titlefont Times New Roman 22.0\n%%partsfont box\n%%barnumbers 1\nT: Selection Test\nT: Everything should be selectable\nC: public domain\nR: Hit it\nA: Yours Truly\nS: My own testing\nW: Now is the time for all good men\nW:\nW: To come to the aid of their party.\nH: This shows every type of thing that can possibly be drawn.\nH:\nH: And two lines of history!\nQ: \"Easy Swing\" 1/4=140\nP: AABB\n%%staves {(PianoRightHand extra) (PianoLeftHand)}\nV:PianoRightHand clef=treble+8 name=RH\nV:PianoLeftHand clef=bass name=LH\nK:Bb\n",
@@ -1635,6 +1720,93 @@
     }
    ],
    "hasPickup": false
+  }
+ ],
+ "repo/abcjs-visual-multi-voice-x01": [
+  {
+   "header": "K:C\n",
+   "measures": [
+    {
+     "abc": "e4 e4 e4 e4 e4 |"
+    },
+    {
+     "abc": " (3c2A2G2 (3z2A2G2 (3c2A2z2 (3c2a'2G2 |"
+    },
+    {
+     "abc": "(3c2A2G2 (3c2TA2G2 (3c2A2G2 (3c2A2G2 |"
+    }
+   ],
+   "hasPickup": true
+  }
+ ],
+ "repo/abcjs-visual-multi-voice-x02": [
+  {
+   "header": "K:C\n",
+   "measures": [
+    {
+     "abc": "(3g2_g2f2|"
+    },
+    {
+     "abc": "\"C7\"d4GABc|"
+    }
+   ],
+   "hasPickup": true
+  }
+ ],
+ "repo/abcjs-visual-multi-voice-x03": [
+  {
+   "header": "M:4/4\nL:1/16\n%%score (mpguitar mpguitarlow)\nV:mpguitar\nK:G clef=treble \n",
+   "measures": [
+    {
+     "abc": "D16|"
+    },
+    {
+     "abc": "(3B2G2D2 E4|]"
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
+ "repo/abcjs-visual-multi-voice-x04": [
+  {
+   "header": "K:C\n",
+   "measures": [
+    {
+     "abc": "G4 ED edF2|"
+    },
+    {
+     "abc": "g2 z2 g2 z2|"
+    }
+   ],
+   "hasPickup": true
+  }
+ ],
+ "repo/abcjs-visual-multi-voice-x05": [
+  {
+   "header": "K:C\n",
+   "measures": [
+    {
+     "abc": "G4 ED edF2|"
+    },
+    {
+     "abc": "g2 z2 g2 z2|"
+    }
+   ],
+   "hasPickup": true
+  }
+ ],
+ "repo/abcjs-visual-multi-voice-x08": [
+  {
+   "header": "K:C\n",
+   "measures": [
+    {
+     "abc": "e4 e4 e4 e4 e4 |"
+    },
+    {
+     "abc": " (3c2A2G2 (3z2A2G2 (3c2A2z2 (3c2a'2G2 |"
+    }
+   ],
+   "hasPickup": true
   }
  ],
  "repo/abcjs-visual-options-01-fonts": [
@@ -1697,6 +1869,82 @@
     }
    ],
    "hasPickup": false
+  }
+ ],
+ "repo/abcjs-visual-parsing-x10": [
+  {
+   "header": "K:Gm\n",
+   "measures": [
+    {
+     "abc": "G8|"
+    },
+    {
+     "abc": "F8|"
+    },
+    {
+     "abc": "K:G\nG8|"
+    },
+    {
+     "abc": "[K:F]F8|"
+    },
+    {
+     "abc": "F8|"
+    },
+    {
+     "abc": "[K:A]A8|"
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
+ "repo/abcjs-visual-parsing-x11": [
+  {
+   "header": "X:1\nT:Main\nM: 3/4\nK: Eb\n",
+   "measures": [
+    {
+     "abc": "G|"
+    },
+    {
+     "abc": "K:F\nB|"
+    },
+    {
+     "abc": "d|"
+    }
+   ],
+   "hasPickup": true
+  }
+ ],
+ "repo/abcjs-visual-parsing-x12": [
+  {
+   "header": "X:1\nM:4/4\nL:1/8\nK:Edor\n",
+   "measures": [
+    {
+     "abc": "C2 D2 E2 F2|"
+    },
+    {
+     "abc": "[K:F] G2 A2 B2 c2|]"
+    },
+    {
+     "abc": "C2 D2 E2 F2|"
+    },
+    {
+     "abc": "[K:Bb^f] G2 A2 B2 c2|]"
+    },
+    {
+     "abc": "C2 D2 E2 F2|"
+    },
+    {
+     "abc": " G2 A2 B2 c2|]"
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
+ "repo/abcjs-visual-parsing-x14": [
+  {
+   "header": "X:1\nK: C\n",
+   "measures": [],
+   "hasPickup": true
   }
  ],
  "repo/abcjs-visual-selection-01-selection-test": [

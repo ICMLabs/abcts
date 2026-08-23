@@ -20,7 +20,21 @@
   "bar el_type,endChar,startChar,type",
   "note duration,el_type,endBeam,endChar,pitches,pitches.name,pitches.pitch,pitches.verticalPos,startBeam,startChar"
  ],
+ "repo/abcjs-parse-tie-slur-01-multipart-tune0": [
+  "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.key el_type=undefined acc,accidentals,mode,root",
+  "staff.meter el_type=undefined type",
+  "bar el_type,endChar,startChar,type",
+  "note duration,el_type,endChar,pitches,pitches.endTie,pitches.name,pitches.pitch,pitches.startTie,pitches.verticalPos,startChar"
+ ],
  "repo/abcjs-parse-tie-slur-01-staffwidth-200-tune0": [
+  "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.key el_type=undefined acc,accidentals,mode,root",
+  "staff.meter el_type=undefined type",
+  "bar el_type,endChar,startChar,type",
+  "note duration,el_type,endChar,pitches,pitches.endTie,pitches.name,pitches.pitch,pitches.startTie,pitches.verticalPos,startChar"
+ ],
+ "repo/abcjs-parse-tie-slur-02-chord-tune0": [
   "staff.clef el_type=undefined clefPos,type,verticalPos",
   "staff.key el_type=undefined acc,accidentals,mode,root",
   "staff.meter el_type=undefined type",
@@ -34,6 +48,15 @@
   "bar el_type,endChar,startChar,type",
   "note duration,el_type,endChar,pitches,pitches.endTie,pitches.name,pitches.pitch,pitches.startTie,pitches.verticalPos,startChar"
  ],
+ "repo/abcjs-parse-tie-slur-03-onestaff-tune0": [
+  "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.connectBarLines el_type=string ",
+  "staff.key el_type=undefined acc,accidentals,mode,root",
+  "staff.meter el_type=undefined type",
+  "bar el_type,endChar,startChar,type",
+  "note duration,el_type,endChar,pitches,pitches.endTie,pitches.name,pitches.pitch,pitches.startTie,pitches.verticalPos,startChar",
+  "stem direction,el_type"
+ ],
  "repo/abcjs-parse-tie-slur-03-staffwidth-200-tune0": [
   "staff.clef el_type=undefined clefPos,type,verticalPos",
   "staff.connectBarLines el_type=string ",
@@ -41,6 +64,14 @@
   "staff.meter el_type=undefined type",
   "bar el_type,endChar,startChar,type",
   "note duration,el_type,endChar,pitches,pitches.endTie,pitches.name,pitches.pitch,pitches.startTie,pitches.verticalPos,startChar",
+  "stem direction,el_type"
+ ],
+ "repo/abcjs-parse-tie-slur-04-height-tune0": [
+  "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.key el_type=undefined acc,accidentals,mode,root",
+  "staff.meter el_type=undefined type,value",
+  "bar el_type,endChar,startChar,type",
+  "note duration,el_type,endBeam,endChar,pitches,pitches.accidental,pitches.endSlur,pitches.name,pitches.pitch,pitches.startSlur,pitches.verticalPos,startBeam,startChar",
   "stem direction,el_type"
  ],
  "repo/abcjs-parse-tie-slur-04-stretchlast-1-tune0": [
@@ -491,12 +522,23 @@
   "note decoration,duration,el_type,endBeam,endChar,pitches,pitches.name,pitches.pitch,pitches.verticalPos,startBeam,startChar",
   "stem direction,el_type"
  ],
+ "repo/abcjs-visual-decorations-x02-tune0": [
+  "staff.clef el_type=undefined type,verticalPos",
+  "staff.key el_type=undefined acc,accidentals,mode,root",
+  "note decoration,duration,el_type,endChar,pitches,pitches.name,pitches.pitch,pitches.verticalPos,startChar"
+ ],
  "repo/abcjs-visual-directives-01-incipit-test-tune0": [
   "staff.clef el_type=undefined clefPos,type,verticalPos",
   "staff.key el_type=undefined acc,accidentals,mode,root",
   "staff.meter el_type=undefined type,value",
   "bar el_type,endChar,startChar,type",
   "note duration,el_type,endChar,pitches,pitches.name,pitches.pitch,pitches.verticalPos,startChar"
+ ],
+ "repo/abcjs-visual-directives-x01-tune0": [
+  "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.key el_type=undefined acc,accidentals,mode,root",
+  "bar el_type,endChar,startChar,type",
+  "note duration,el_type,endBeam,endChar,pitches,pitches.name,pitches.pitch,pitches.verticalPos,startBeam,startChar"
  ],
  "repo/abcjs-visual-layout-01-barlabelfont-times-bold-18-box-tune0": [
   "staff.barNumber el_type=number ",
@@ -650,6 +692,7 @@
   "note chord,decoration,duration,el_type,endChar,pitches,pitches.accidental,pitches.name,pitches.pitch,pitches.verticalPos,startChar"
  ],
  "repo/abcjs-visual-misc-14-tune-tune0": [],
+ "repo/abcjs-visual-misc-x07-tune0": [],
  "repo/abcjs-visual-mouse-click-01-selection-test-tune0": [
   "staff.brace el_type=string ",
   "staff.clef el_type=undefined clefPos,type,verticalPos",
@@ -677,6 +720,47 @@
   "staff.meter el_type=undefined type,value",
   "bar el_type,endChar,startChar,type",
   "note decoration,duration,el_type,endBeam,endChar,lyric,pitches,pitches.name,pitches.pitch,pitches.verticalPos,rest,rest.type,startBeam,startChar"
+ ],
+ "repo/abcjs-visual-multi-voice-x01-tune0": [
+  "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.key el_type=undefined acc,accidentals,mode,root",
+  "bar el_type,endChar,startChar,type",
+  "note decoration,duration,el_type,endChar,endTriplet,pitches,pitches.name,pitches.pitch,pitches.verticalPos,rest,rest.type,startChar,startTriplet,tripletMultiplier,tripletR",
+  "stem direction,el_type"
+ ],
+ "repo/abcjs-visual-multi-voice-x02-tune0": [
+  "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.key el_type=undefined acc,accidentals,mode,root",
+  "bar el_type,endChar,startChar,type",
+  "note chord,duration,el_type,endBeam,endChar,endTriplet,pitches,pitches.accidental,pitches.name,pitches.pitch,pitches.verticalPos,startBeam,startChar,startTriplet,tripletMultiplier,tripletR"
+ ],
+ "repo/abcjs-visual-multi-voice-x03-tune0": [
+  "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.key el_type=undefined acc,accidentals,mode,root",
+  "staff.meter el_type=undefined type,value",
+  "bar el_type,endChar,startChar,type",
+  "note duration,el_type,endBeam,endChar,endTriplet,pitches,pitches.name,pitches.pitch,pitches.verticalPos,rest,rest.type,startBeam,startChar,startTriplet,tripletMultiplier,tripletR",
+  "stem direction,el_type"
+ ],
+ "repo/abcjs-visual-multi-voice-x04-tune0": [
+  "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.key el_type=undefined acc,accidentals,mode,root",
+  "bar el_type,endChar,startChar,type",
+  "note duration,el_type,endBeam,endChar,pitches,pitches.name,pitches.pitch,pitches.verticalPos,rest,rest.type,startBeam,startChar",
+  "stem direction,el_type"
+ ],
+ "repo/abcjs-visual-multi-voice-x05-tune0": [
+  "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.key el_type=undefined acc,accidentals,mode,root",
+  "bar el_type,endChar,startChar,type",
+  "note duration,el_type,endBeam,endChar,pitches,pitches.name,pitches.pitch,pitches.verticalPos,rest,rest.type,startBeam,startChar"
+ ],
+ "repo/abcjs-visual-multi-voice-x08-tune0": [
+  "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.key el_type=undefined acc,accidentals,mode,root",
+  "bar el_type,endChar,startChar,type",
+  "note duration,el_type,endChar,endTriplet,lyric,pitches,pitches.name,pitches.pitch,pitches.verticalPos,rest,rest.type,startChar,startTriplet,tripletMultiplier,tripletR",
+  "stem direction,el_type"
  ],
  "repo/abcjs-visual-options-01-fonts-tune0": [
   "staff.barNumber el_type=number ",
@@ -749,6 +833,34 @@
   "staff.meter el_type=undefined type,value",
   "bar el_type,endChar,startChar,type",
   "note duration,el_type,endChar,pitches,pitches.name,pitches.pitch,pitches.verticalPos,rest,rest.text,rest.type,startChar"
+ ],
+ "repo/abcjs-visual-parsing-x10-tune0": [
+  "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.key el_type=undefined acc,accidentals,mode,root",
+  "bar el_type,endChar,startChar,type",
+  "key acc,accidentals,el_type,endChar,mode,root,startChar",
+  "note duration,el_type,endChar,pitches,pitches.name,pitches.pitch,pitches.verticalPos,startChar"
+ ],
+ "repo/abcjs-visual-parsing-x11-tune0": [
+  "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.key el_type=undefined acc,accidentals,mode,root",
+  "staff.meter el_type=undefined type,value",
+  "bar el_type,endChar,startChar,type",
+  "key acc,accidentals,el_type,endChar,mode,root,startChar",
+  "note duration,el_type,endChar,pitches,pitches.name,pitches.pitch,pitches.verticalPos,startChar"
+ ],
+ "repo/abcjs-visual-parsing-x12-tune0": [
+  "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.key el_type=undefined acc,accidentals,mode,root",
+  "staff.meter el_type=undefined type,value",
+  "bar el_type,endChar,startChar,type",
+  "key acc,accidentals,el_type,endChar,mode,root,startChar",
+  "note duration,el_type,endChar,pitches,pitches.name,pitches.pitch,pitches.verticalPos,startChar"
+ ],
+ "repo/abcjs-visual-parsing-x14-tune0": [
+  "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.key el_type=undefined acc,accidentals,mode,root",
+  "note decoration,duration,el_type,endBeam,endChar,extraClass,lyric,pitches,pitches.name,pitches.pitch,pitches.verticalPos,startBeam,startChar"
  ],
  "repo/abcjs-visual-selection-01-selection-test-tune0": [
   "staff.barNumber el_type=number ",

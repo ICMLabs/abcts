@@ -1399,7 +1399,16 @@ function voiceElements(
           return e;
         })(),
       );
-    if (inStream(measure.keyChangeSourceRange, measure.keyChangeInline, keywarn))
+    // …**AND THE FLAG IS THE ONE AT THIS `K:`, NOT THE TUNE'S LAST SETTING** — abcjs tests
+    // `multilineVars.keywarn !== false` inside `parseKey` itself. See
+    // `Measure.keyChangeKeywarn`.
+    if (
+      inStream(
+        measure.keyChangeSourceRange,
+        measure.keyChangeInline,
+        measure.keyChangeKeywarn ?? keywarn,
+      )
+    )
       out.push(
         (() => {
           const e = el(drawnName("keySignature"), measure.keyChangeSourceRange);
@@ -1444,8 +1453,11 @@ function voiceElements(
              * produced two wrong readings — "the flats must be bass too" and "the arrays
              * alias across staves" — and the second is denied by staff 0 keeping 8.
              */
+            // …**AND THE FLAG IS THIS `K:`'s** — see `Measure.keyChangeKeywarn`. abcjs
+            // computes the naturals inside `parseKey`, so the directive in force AT the
+            // change is what decides, and a later `%%keywarn 0` cannot take them back.
             const naturals =
-              keywarn === false || keyNow === undefined
+              (measure.keyChangeKeywarn ?? keywarn) === false || keyNow === undefined
                 ? []
                 : impliedNaturals(keyNow, measure.keyChange, clefNow ?? keyClef);
             Object.assign(
@@ -2471,7 +2483,12 @@ const VOICE_FURNITURE = new Set(["style", "stem", "color"]);
      * clef in force where the `[K:]` was written. `ragtime-nightingale`'s `d` is 8 on the
      * treble staff and 6 on the bass one, from one change.
      */
-    let pendingChange: { from: KeySignature; to: KeySignature } | null = null;
+    let pendingChange: {
+      from: KeySignature;
+      to: KeySignature;
+      /** `%%keywarn` at that `K:` — see `Measure.keyChangeKeywarn`. */
+      keywarn?: boolean;
+    } | null = null;
     /**
      * ⚠️ **AND A VOICE SWITCH THROWS THE PENDING CANCELLATION AWAY.** `setCurrentVoice`
      * restores the key with `deepCopyKey`, which does not copy `impliedNaturals`
@@ -2664,8 +2681,15 @@ const VOICE_FURNITURE = new Set(["style", "stem", "color"]);
           otherVoiceOpensAt.some(
             (at) => at > previousLineOpenedAt && at < musicStartsAt(m),
           );
+        // …**AND THE FLAG IS THE ONE AT THE `K:` THESE NATURALS CANCEL FOR** — the change
+        // leading this line, or the pending one from the line above. See
+        // `Measure.keyChangeKeywarn`; `score.keywarn` is only the fallback for a line whose
+        // change carries none of its own.
+        const naturalsOff =
+          (leadingKey != null ? m.keyChangeKeywarn : pendingChange?.keywarn) ??
+          score.keywarn;
         const naturals =
-          score.keywarn === false
+          naturalsOff === false
             ? []
             : leadingKey != null
               ? impliedNaturals(keyInForce, key, keyClef)
@@ -2698,7 +2722,12 @@ const VOICE_FURNITURE = new Set(["style", "stem", "color"]);
          * testing it directly skipped the very change this list exists for. The flag the
          * push sets is the only thing that knows.
          */
-        if (!consumedHere) pendingChange = { from: keyInForce, to: m.keyChange };
+        if (!consumedHere)
+          pendingChange = {
+            from: keyInForce,
+            to: m.keyChange,
+            ...(m.keyChangeKeywarn === undefined ? {} : { keywarn: m.keyChangeKeywarn }),
+          };
         keyInForce = m.keyChange;
       }
     });

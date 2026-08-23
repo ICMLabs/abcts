@@ -10689,7 +10689,13 @@ function layoutMeasure(
     // **`%%keywarn 0` STOPS IT BEING DRAWN, not taking effect** — `appendStartingElement`
     // is guarded on it, so no key element enters the stream while every note after the
     // change is still spelled in the new key. See `Score.keywarn`.
-    if (!KEYWARN) return
+    //
+    // ⚠️ **AND IT IS READ AT THE `K:`, NOT AT THE END OF THE TUNE.** abcjs tests
+    // `multilineVars.keywarn !== false` inside `parseKey` (`abc_parse_key_voice.js:319`),
+    // so a directive between two key changes governs only what follows it. This took the
+    // tune-level flag, so `abcjs-visual-parsing-x10` — which toggles it three times — drew
+    // every change the same way. See `Measure.keyChangeKeywarn`.
+    if (!(measure.keyChangeKeywarn ?? KEYWARN)) return
     // NOT WHEN IT LEADS THE SYSTEM — the prefix already carries it, and the previous
     // system's `trailingKey` already drew it. See `keyChangeLeadsLine`.
     if (keyChangeLeadsLine(measure)) return
@@ -12101,15 +12107,23 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
             (at) => at > previousLineOpenedAt && at < opensAt,
           )
         previousLineOpenedAt = opensAt
-        keyAtPreviousLine = subtitleLeads(measure)
-          ? // …**AND THE NATURALS GO WITH IT.** `noWarnBeforeTitle` strips them from the
-            // NEXT staff line's own key as well — "the new key signature might have some
-            // naturals, remove that" — so the line a subtitle introduces prints its
-            // signature and nothing else.
-            (measure.keyChange ?? keyInForce)
-          : leads || switched
-            ? keyInForce
-            : keyAtLineStart
+        keyAtPreviousLine =
+          subtitleLeads(measure) || measure.keyChangeKeywarn === false
+            ? // …**AND THE NATURALS GO WITH IT.** `noWarnBeforeTitle` strips them from the
+              // NEXT staff line's own key as well — "the new key signature might have some
+              // naturals, remove that" — so the line a subtitle introduces prints its
+              // signature and nothing else.
+              //
+              // ⚠️ **AND `%%keywarn 0` STRIPS THEM THE SAME WAY.** abcjs computes the
+              // naturals INSIDE `parseKey`, under `if (oldKey && multilineVars.keywarn !==
+              // false)` (`abc_parse_key_voice.js:319-331`) — so with the directive off the
+              // key carries none at all and the next line's own signature has none to
+              // concatenate. Suppressing only the cautionary key at the line END, which is
+              // where the other two `KEYWARN` guards sit, left a natural abcjs never drew.
+              (measure.keyChange ?? keyInForce)
+            : leads || switched
+              ? keyInForce
+              : keyAtLineStart
         // A change that LEADS the line is already in `multilineVars.key` when abcjs stamps
         // `params.key`, so the prefix shows the NEW key. See `keyChangeLeadsLine`.
         keyAtLineStart = leads ? (measure.keyChange ?? keyInForce) : keyInForce
@@ -12160,8 +12174,15 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
            * A first attempt suppressed the line-leading key as well and took line 2's
            * notes 18.25px left of abcjs's.
            */
-          if (!KEYWARN) return null
           if (!keyChangeLeadsLine(next) || next?.keyChange == null) return null
+          // …**AND THIS ONE READS THE DIRECTIVE AT THE `K:` IT WARNS ABOUT** — the NEXT
+          // line's change, not the tune's last setting. See `Measure.keyChangeKeywarn`.
+          //
+          // ⚠️ **AFTER the "is there a change at all" guard, not before it.** Asked first,
+          // a measure with NO change answers `undefined`, falls back to the tune-level flag
+          // and suppresses a key element abcjs publishes — four `parseOnly` value rows and
+          // an `extractMeasures` row said so.
+          if (!(next.keyChangeKeywarn ?? KEYWARN)) return null
           /**
            * **AND NOT BEFORE A SUBTITLE** — `noWarnBeforeTitle` pops the courtesy key back
            * off the line above whenever the next line is a `subtitle`, under abcjs's own

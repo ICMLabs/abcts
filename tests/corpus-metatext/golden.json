@@ -25,9 +25,13 @@
  },
  "repo/abcjs-parse-note-01-c0-d1-eg-0-fa-1-tune0": {},
  "repo/abcjs-parse-note-id-01-v-v1-c-d-e-f-tune0": {},
+ "repo/abcjs-parse-tie-slur-01-multipart-tune0": {},
  "repo/abcjs-parse-tie-slur-01-staffwidth-200-tune0": {},
+ "repo/abcjs-parse-tie-slur-02-chord-tune0": {},
  "repo/abcjs-parse-tie-slur-02-staffwidth-200-tune0": {},
+ "repo/abcjs-parse-tie-slur-03-onestaff-tune0": {},
  "repo/abcjs-parse-tie-slur-03-staffwidth-200-tune0": {},
+ "repo/abcjs-parse-tie-slur-04-height-tune0": {},
  "repo/abcjs-parse-tie-slur-04-stretchlast-1-tune0": {},
  "repo/abcjs-synth-flattener-01-crescendo-efga-gab-crescendo-c-diminuend-tune0": {
   "tempo": {
@@ -389,9 +393,11 @@
  "repo/abcjs-synth-timing-11-stretchlast-1-tune0": {},
  "repo/abcjs-synth-timing-12-stretchlast-1-tune0": {},
  "repo/abcjs-visual-decorations-01-score-s-a-b-tune0": {},
+ "repo/abcjs-visual-decorations-x02-tune0": {},
  "repo/abcjs-visual-directives-01-incipit-test-tune0": {
   "title": "Incipit Test"
  },
+ "repo/abcjs-visual-directives-x01-tune0": {},
  "repo/abcjs-visual-layout-01-barlabelfont-times-bold-18-box-tune0": {},
  "repo/abcjs-visual-layout-02-barlabelfont-times-bold-18-box-tune0": {},
  "repo/abcjs-visual-layout-03-cdef-cdef-tune0": {},
@@ -611,6 +617,7 @@
  "repo/abcjs-visual-misc-12-b-beambr1-b-bb-tune0": {},
  "repo/abcjs-visual-misc-13-ceg-t-gce-d-f-b-3-dm7-d-te-tune0": {},
  "repo/abcjs-visual-misc-14-tune-tune0": {},
+ "repo/abcjs-visual-misc-x07-tune0": {},
  "repo/abcjs-visual-mouse-click-01-selection-test-tune0": {
   "title": "Selection Test",
   "composer": "public domain",
@@ -636,6 +643,12 @@
  },
  "repo/abcjs-visual-multi-voice-01-score-top-bottom-tune0": {},
  "repo/abcjs-visual-multi-voice-02-p-c-2b2-z4-f2a2-f4-tune0": {},
+ "repo/abcjs-visual-multi-voice-x01-tune0": {},
+ "repo/abcjs-visual-multi-voice-x02-tune0": {},
+ "repo/abcjs-visual-multi-voice-x03-tune0": {},
+ "repo/abcjs-visual-multi-voice-x04-tune0": {},
+ "repo/abcjs-visual-multi-voice-x05-tune0": {},
+ "repo/abcjs-visual-multi-voice-x08-tune0": {},
  "repo/abcjs-visual-options-01-fonts-tune0": {
   "header": {
    "left": "",
@@ -684,6 +697,12 @@
   "title": "song",
   "composer": "composer"
  },
+ "repo/abcjs-visual-parsing-x10-tune0": {},
+ "repo/abcjs-visual-parsing-x11-tune0": {
+  "title": "Main"
+ },
+ "repo/abcjs-visual-parsing-x12-tune0": {},
+ "repo/abcjs-visual-parsing-x14-tune0": {},
  "repo/abcjs-visual-selection-01-selection-test-tune0": {
   "title": "Selection Test",
   "composer": "public domain",

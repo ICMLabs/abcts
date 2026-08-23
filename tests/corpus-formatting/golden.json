@@ -1811,7 +1811,311 @@
   "pagewidth": 612,
   "pageheight": 792
  },
+ "repo/abcjs-parse-tie-slur-01-multipart-tune0": {
+  "composerfont": {
+   "face": "\"Times New Roman\"",
+   "size": 14,
+   "weight": "normal",
+   "style": "italic",
+   "decoration": "none"
+  },
+  "subtitlefont": {
+   "face": "\"Times New Roman\"",
+   "size": 16,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "tempofont": {
+   "face": "\"Times New Roman\"",
+   "size": 15,
+   "weight": "bold",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "titlefont": {
+   "face": "\"Times New Roman\"",
+   "size": 20,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "footerfont": {
+   "face": "\"Times New Roman\"",
+   "size": 12,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "headerfont": {
+   "face": "\"Times New Roman\"",
+   "size": 12,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "voicefont": {
+   "face": "\"Times New Roman\"",
+   "size": 13,
+   "weight": "bold",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "tablabelfont": {
+   "face": "\"Trebuchet MS\"",
+   "size": 16,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "tabnumberfont": {
+   "face": "\"Arial\"",
+   "size": 11,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "tabgracefont": {
+   "face": "\"Arial\"",
+   "size": 8,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "annotationfont": {
+   "face": "Helvetica",
+   "size": 12,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "gchordfont": {
+   "face": "Helvetica",
+   "size": 12,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "historyfont": {
+   "face": "\"Times New Roman\"",
+   "size": 16,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "infofont": {
+   "face": "\"Times New Roman\"",
+   "size": 14,
+   "weight": "normal",
+   "style": "italic",
+   "decoration": "none"
+  },
+  "measurefont": {
+   "face": "\"Times New Roman\"",
+   "size": 14,
+   "weight": "normal",
+   "style": "italic",
+   "decoration": "none"
+  },
+  "partsfont": {
+   "face": "\"Times New Roman\"",
+   "size": 15,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "repeatfont": {
+   "face": "\"Times New Roman\"",
+   "size": 13,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "textfont": {
+   "face": "\"Times New Roman\"",
+   "size": 16,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "tripletfont": {
+   "face": "Times",
+   "size": 11,
+   "weight": "normal",
+   "style": "italic",
+   "decoration": "none"
+  },
+  "vocalfont": {
+   "face": "\"Times New Roman\"",
+   "size": 13,
+   "weight": "bold",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "wordsfont": {
+   "face": "\"Times New Roman\"",
+   "size": 16,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "staffwidth": 200,
+  "pagewidth": 612,
+  "pageheight": 792
+ },
  "repo/abcjs-parse-tie-slur-01-staffwidth-200-tune0": {
+  "composerfont": {
+   "face": "\"Times New Roman\"",
+   "size": 14,
+   "weight": "normal",
+   "style": "italic",
+   "decoration": "none"
+  },
+  "subtitlefont": {
+   "face": "\"Times New Roman\"",
+   "size": 16,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "tempofont": {
+   "face": "\"Times New Roman\"",
+   "size": 15,
+   "weight": "bold",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "titlefont": {
+   "face": "\"Times New Roman\"",
+   "size": 20,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "footerfont": {
+   "face": "\"Times New Roman\"",
+   "size": 12,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "headerfont": {
+   "face": "\"Times New Roman\"",
+   "size": 12,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "voicefont": {
+   "face": "\"Times New Roman\"",
+   "size": 13,
+   "weight": "bold",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "tablabelfont": {
+   "face": "\"Trebuchet MS\"",
+   "size": 16,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "tabnumberfont": {
+   "face": "\"Arial\"",
+   "size": 11,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "tabgracefont": {
+   "face": "\"Arial\"",
+   "size": 8,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "annotationfont": {
+   "face": "Helvetica",
+   "size": 12,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "gchordfont": {
+   "face": "Helvetica",
+   "size": 12,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "historyfont": {
+   "face": "\"Times New Roman\"",
+   "size": 16,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "infofont": {
+   "face": "\"Times New Roman\"",
+   "size": 14,
+   "weight": "normal",
+   "style": "italic",
+   "decoration": "none"
+  },
+  "measurefont": {
+   "face": "\"Times New Roman\"",
+   "size": 14,
+   "weight": "normal",
+   "style": "italic",
+   "decoration": "none"
+  },
+  "partsfont": {
+   "face": "\"Times New Roman\"",
+   "size": 15,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "repeatfont": {
+   "face": "\"Times New Roman\"",
+   "size": 13,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "textfont": {
+   "face": "\"Times New Roman\"",
+   "size": 16,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "tripletfont": {
+   "face": "Times",
+   "size": 11,
+   "weight": "normal",
+   "style": "italic",
+   "decoration": "none"
+  },
+  "vocalfont": {
+   "face": "\"Times New Roman\"",
+   "size": 13,
+   "weight": "bold",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "wordsfont": {
+   "face": "\"Times New Roman\"",
+   "size": 16,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "staffwidth": 200,
+  "pagewidth": 612,
+  "pageheight": 792
+ },
+ "repo/abcjs-parse-tie-slur-02-chord-tune0": {
   "composerfont": {
    "face": "\"Times New Roman\"",
    "size": 14,
@@ -2115,6 +2419,158 @@
   "pagewidth": 612,
   "pageheight": 792
  },
+ "repo/abcjs-parse-tie-slur-03-onestaff-tune0": {
+  "composerfont": {
+   "face": "\"Times New Roman\"",
+   "size": 14,
+   "weight": "normal",
+   "style": "italic",
+   "decoration": "none"
+  },
+  "subtitlefont": {
+   "face": "\"Times New Roman\"",
+   "size": 16,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "tempofont": {
+   "face": "\"Times New Roman\"",
+   "size": 15,
+   "weight": "bold",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "titlefont": {
+   "face": "\"Times New Roman\"",
+   "size": 20,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "footerfont": {
+   "face": "\"Times New Roman\"",
+   "size": 12,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "headerfont": {
+   "face": "\"Times New Roman\"",
+   "size": 12,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "voicefont": {
+   "face": "\"Times New Roman\"",
+   "size": 13,
+   "weight": "bold",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "tablabelfont": {
+   "face": "\"Trebuchet MS\"",
+   "size": 16,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "tabnumberfont": {
+   "face": "\"Arial\"",
+   "size": 11,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "tabgracefont": {
+   "face": "\"Arial\"",
+   "size": 8,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "annotationfont": {
+   "face": "Helvetica",
+   "size": 12,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "gchordfont": {
+   "face": "Helvetica",
+   "size": 12,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "historyfont": {
+   "face": "\"Times New Roman\"",
+   "size": 16,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "infofont": {
+   "face": "\"Times New Roman\"",
+   "size": 14,
+   "weight": "normal",
+   "style": "italic",
+   "decoration": "none"
+  },
+  "measurefont": {
+   "face": "\"Times New Roman\"",
+   "size": 14,
+   "weight": "normal",
+   "style": "italic",
+   "decoration": "none"
+  },
+  "partsfont": {
+   "face": "\"Times New Roman\"",
+   "size": 15,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "repeatfont": {
+   "face": "\"Times New Roman\"",
+   "size": 13,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "textfont": {
+   "face": "\"Times New Roman\"",
+   "size": 16,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "tripletfont": {
+   "face": "Times",
+   "size": 11,
+   "weight": "normal",
+   "style": "italic",
+   "decoration": "none"
+  },
+  "vocalfont": {
+   "face": "\"Times New Roman\"",
+   "size": 13,
+   "weight": "bold",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "wordsfont": {
+   "face": "\"Times New Roman\"",
+   "size": 16,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "staffwidth": 200,
+  "pagewidth": 612,
+  "pageheight": 792
+ },
  "repo/abcjs-parse-tie-slur-03-staffwidth-200-tune0": {
   "composerfont": {
    "face": "\"Times New Roman\"",
@@ -2264,6 +2720,158 @@
    "decoration": "none"
   },
   "staffwidth": 200,
+  "pagewidth": 612,
+  "pageheight": 792
+ },
+ "repo/abcjs-parse-tie-slur-04-height-tune0": {
+  "composerfont": {
+   "face": "\"Times New Roman\"",
+   "size": 14,
+   "weight": "normal",
+   "style": "italic",
+   "decoration": "none"
+  },
+  "subtitlefont": {
+   "face": "\"Times New Roman\"",
+   "size": 16,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "tempofont": {
+   "face": "\"Times New Roman\"",
+   "size": 15,
+   "weight": "bold",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "titlefont": {
+   "face": "\"Times New Roman\"",
+   "size": 20,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "footerfont": {
+   "face": "\"Times New Roman\"",
+   "size": 12,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "headerfont": {
+   "face": "\"Times New Roman\"",
+   "size": 12,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "voicefont": {
+   "face": "\"Times New Roman\"",
+   "size": 13,
+   "weight": "bold",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "tablabelfont": {
+   "face": "\"Trebuchet MS\"",
+   "size": 16,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "tabnumberfont": {
+   "face": "\"Arial\"",
+   "size": 11,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "tabgracefont": {
+   "face": "\"Arial\"",
+   "size": 8,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "annotationfont": {
+   "face": "Helvetica",
+   "size": 12,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "gchordfont": {
+   "face": "Helvetica",
+   "size": 12,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "historyfont": {
+   "face": "\"Times New Roman\"",
+   "size": 16,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "infofont": {
+   "face": "\"Times New Roman\"",
+   "size": 14,
+   "weight": "normal",
+   "style": "italic",
+   "decoration": "none"
+  },
+  "measurefont": {
+   "face": "\"Times New Roman\"",
+   "size": 14,
+   "weight": "normal",
+   "style": "italic",
+   "decoration": "none"
+  },
+  "partsfont": {
+   "face": "\"Times New Roman\"",
+   "size": 15,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "repeatfont": {
+   "face": "\"Times New Roman\"",
+   "size": 13,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "textfont": {
+   "face": "\"Times New Roman\"",
+   "size": 16,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "tripletfont": {
+   "face": "Times",
+   "size": 11,
+   "weight": "normal",
+   "style": "italic",
+   "decoration": "none"
+  },
+  "vocalfont": {
+   "face": "\"Times New Roman\"",
+   "size": 13,
+   "weight": "bold",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "wordsfont": {
+   "face": "\"Times New Roman\"",
+   "size": 16,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "stretchlast": 1,
   "pagewidth": 612,
   "pageheight": 792
  },
@@ -12010,6 +12618,157 @@
   "pagewidth": 612,
   "pageheight": 792
  },
+ "repo/abcjs-visual-decorations-x02-tune0": {
+  "composerfont": {
+   "face": "\"Times New Roman\"",
+   "size": 14,
+   "weight": "normal",
+   "style": "italic",
+   "decoration": "none"
+  },
+  "subtitlefont": {
+   "face": "\"Times New Roman\"",
+   "size": 16,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "tempofont": {
+   "face": "\"Times New Roman\"",
+   "size": 15,
+   "weight": "bold",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "titlefont": {
+   "face": "\"Times New Roman\"",
+   "size": 20,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "footerfont": {
+   "face": "\"Times New Roman\"",
+   "size": 12,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "headerfont": {
+   "face": "\"Times New Roman\"",
+   "size": 12,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "voicefont": {
+   "face": "\"Times New Roman\"",
+   "size": 13,
+   "weight": "bold",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "tablabelfont": {
+   "face": "\"Trebuchet MS\"",
+   "size": 16,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "tabnumberfont": {
+   "face": "\"Arial\"",
+   "size": 11,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "tabgracefont": {
+   "face": "\"Arial\"",
+   "size": 8,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "annotationfont": {
+   "face": "Helvetica",
+   "size": 12,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "gchordfont": {
+   "face": "Helvetica",
+   "size": 12,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "historyfont": {
+   "face": "\"Times New Roman\"",
+   "size": 16,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "infofont": {
+   "face": "\"Times New Roman\"",
+   "size": 14,
+   "weight": "normal",
+   "style": "italic",
+   "decoration": "none"
+  },
+  "measurefont": {
+   "face": "\"Times New Roman\"",
+   "size": 14,
+   "weight": "normal",
+   "style": "italic",
+   "decoration": "none"
+  },
+  "partsfont": {
+   "face": "\"Times New Roman\"",
+   "size": 15,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "repeatfont": {
+   "face": "\"Times New Roman\"",
+   "size": 13,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "textfont": {
+   "face": "\"Times New Roman\"",
+   "size": 16,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "tripletfont": {
+   "face": "Times",
+   "size": 11,
+   "weight": "normal",
+   "style": "italic",
+   "decoration": "none"
+  },
+  "vocalfont": {
+   "face": "\"Times New Roman\"",
+   "size": 13,
+   "weight": "bold",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "wordsfont": {
+   "face": "\"Times New Roman\"",
+   "size": 16,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "pagewidth": 612,
+  "pageheight": 792
+ },
  "repo/abcjs-visual-directives-01-incipit-test-tune0": {
   "composerfont": {
    "face": "\"Times New Roman\"",
@@ -12160,6 +12919,157 @@
   },
   "staffwidth": 140,
   "maxStaves": 2,
+  "pagewidth": 612,
+  "pageheight": 792
+ },
+ "repo/abcjs-visual-directives-x01-tune0": {
+  "composerfont": {
+   "face": "\"Times New Roman\"",
+   "size": 14,
+   "weight": "normal",
+   "style": "italic",
+   "decoration": "none"
+  },
+  "subtitlefont": {
+   "face": "\"Times New Roman\"",
+   "size": 16,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "tempofont": {
+   "face": "\"Times New Roman\"",
+   "size": 15,
+   "weight": "bold",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "titlefont": {
+   "face": "\"Times New Roman\"",
+   "size": 20,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "footerfont": {
+   "face": "\"Times New Roman\"",
+   "size": 12,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "headerfont": {
+   "face": "\"Times New Roman\"",
+   "size": 12,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "voicefont": {
+   "face": "\"Times New Roman\"",
+   "size": 13,
+   "weight": "bold",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "tablabelfont": {
+   "face": "\"Trebuchet MS\"",
+   "size": 16,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "tabnumberfont": {
+   "face": "\"Arial\"",
+   "size": 11,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "tabgracefont": {
+   "face": "\"Arial\"",
+   "size": 8,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "annotationfont": {
+   "face": "Helvetica",
+   "size": 12,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "gchordfont": {
+   "face": "Helvetica",
+   "size": 12,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "historyfont": {
+   "face": "\"Times New Roman\"",
+   "size": 16,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "infofont": {
+   "face": "\"Times New Roman\"",
+   "size": 14,
+   "weight": "normal",
+   "style": "italic",
+   "decoration": "none"
+  },
+  "measurefont": {
+   "face": "\"Times New Roman\"",
+   "size": 14,
+   "weight": "normal",
+   "style": "italic",
+   "decoration": "none"
+  },
+  "partsfont": {
+   "face": "\"Times New Roman\"",
+   "size": 15,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "repeatfont": {
+   "face": "\"Times New Roman\"",
+   "size": 13,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "textfont": {
+   "face": "\"Times New Roman\"",
+   "size": 16,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "tripletfont": {
+   "face": "Times",
+   "size": 11,
+   "weight": "normal",
+   "style": "italic",
+   "decoration": "none"
+  },
+  "vocalfont": {
+   "face": "\"Times New Roman\"",
+   "size": 13,
+   "weight": "bold",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "wordsfont": {
+   "face": "\"Times New Roman\"",
+   "size": 16,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
   "pagewidth": 612,
   "pageheight": 792
  },
@@ -15792,6 +16702,157 @@
   "pagewidth": 612,
   "pageheight": 792
  },
+ "repo/abcjs-visual-misc-x07-tune0": {
+  "composerfont": {
+   "face": "\"Times New Roman\"",
+   "size": 14,
+   "weight": "normal",
+   "style": "italic",
+   "decoration": "none"
+  },
+  "subtitlefont": {
+   "face": "\"Times New Roman\"",
+   "size": 16,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "tempofont": {
+   "face": "\"Times New Roman\"",
+   "size": 15,
+   "weight": "bold",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "titlefont": {
+   "face": "\"Times New Roman\"",
+   "size": 20,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "footerfont": {
+   "face": "\"Times New Roman\"",
+   "size": 12,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "headerfont": {
+   "face": "\"Times New Roman\"",
+   "size": 12,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "voicefont": {
+   "face": "\"Times New Roman\"",
+   "size": 13,
+   "weight": "bold",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "tablabelfont": {
+   "face": "\"Trebuchet MS\"",
+   "size": 16,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "tabnumberfont": {
+   "face": "\"Arial\"",
+   "size": 11,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "tabgracefont": {
+   "face": "\"Arial\"",
+   "size": 8,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "annotationfont": {
+   "face": "Helvetica",
+   "size": 12,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "gchordfont": {
+   "face": "Helvetica",
+   "size": 12,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "historyfont": {
+   "face": "\"Times New Roman\"",
+   "size": 16,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "infofont": {
+   "face": "\"Times New Roman\"",
+   "size": 14,
+   "weight": "normal",
+   "style": "italic",
+   "decoration": "none"
+  },
+  "measurefont": {
+   "face": "\"Times New Roman\"",
+   "size": 14,
+   "weight": "normal",
+   "style": "italic",
+   "decoration": "none"
+  },
+  "partsfont": {
+   "face": "\"Times New Roman\"",
+   "size": 15,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "repeatfont": {
+   "face": "\"Times New Roman\"",
+   "size": 13,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "textfont": {
+   "face": "\"Times New Roman\"",
+   "size": 16,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "tripletfont": {
+   "face": "Times",
+   "size": 11,
+   "weight": "normal",
+   "style": "italic",
+   "decoration": "none"
+  },
+  "vocalfont": {
+   "face": "\"Times New Roman\"",
+   "size": 13,
+   "weight": "bold",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "wordsfont": {
+   "face": "\"Times New Roman\"",
+   "size": 16,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "pagewidth": 612,
+  "pageheight": 792
+ },
  "repo/abcjs-visual-mouse-click-01-selection-test-tune0": {
   "composerfont": {
    "face": "\"Times New Roman\"",
@@ -16096,6 +17157,913 @@
   "pageheight": 792
  },
  "repo/abcjs-visual-multi-voice-02-p-c-2b2-z4-f2a2-f4-tune0": {
+  "composerfont": {
+   "face": "\"Times New Roman\"",
+   "size": 14,
+   "weight": "normal",
+   "style": "italic",
+   "decoration": "none"
+  },
+  "subtitlefont": {
+   "face": "\"Times New Roman\"",
+   "size": 16,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "tempofont": {
+   "face": "\"Times New Roman\"",
+   "size": 15,
+   "weight": "bold",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "titlefont": {
+   "face": "\"Times New Roman\"",
+   "size": 20,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "footerfont": {
+   "face": "\"Times New Roman\"",
+   "size": 12,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "headerfont": {
+   "face": "\"Times New Roman\"",
+   "size": 12,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "voicefont": {
+   "face": "\"Times New Roman\"",
+   "size": 13,
+   "weight": "bold",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "tablabelfont": {
+   "face": "\"Trebuchet MS\"",
+   "size": 16,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "tabnumberfont": {
+   "face": "\"Arial\"",
+   "size": 11,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "tabgracefont": {
+   "face": "\"Arial\"",
+   "size": 8,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "annotationfont": {
+   "face": "Helvetica",
+   "size": 12,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "gchordfont": {
+   "face": "Helvetica",
+   "size": 12,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "historyfont": {
+   "face": "\"Times New Roman\"",
+   "size": 16,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "infofont": {
+   "face": "\"Times New Roman\"",
+   "size": 14,
+   "weight": "normal",
+   "style": "italic",
+   "decoration": "none"
+  },
+  "measurefont": {
+   "face": "\"Times New Roman\"",
+   "size": 14,
+   "weight": "normal",
+   "style": "italic",
+   "decoration": "none"
+  },
+  "partsfont": {
+   "face": "\"Times New Roman\"",
+   "size": 15,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "repeatfont": {
+   "face": "\"Times New Roman\"",
+   "size": 13,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "textfont": {
+   "face": "\"Times New Roman\"",
+   "size": 16,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "tripletfont": {
+   "face": "Times",
+   "size": 11,
+   "weight": "normal",
+   "style": "italic",
+   "decoration": "none"
+  },
+  "vocalfont": {
+   "face": "\"Times New Roman\"",
+   "size": 13,
+   "weight": "bold",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "wordsfont": {
+   "face": "\"Times New Roman\"",
+   "size": 16,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "pagewidth": 612,
+  "pageheight": 792
+ },
+ "repo/abcjs-visual-multi-voice-x01-tune0": {
+  "composerfont": {
+   "face": "\"Times New Roman\"",
+   "size": 14,
+   "weight": "normal",
+   "style": "italic",
+   "decoration": "none"
+  },
+  "subtitlefont": {
+   "face": "\"Times New Roman\"",
+   "size": 16,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "tempofont": {
+   "face": "\"Times New Roman\"",
+   "size": 15,
+   "weight": "bold",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "titlefont": {
+   "face": "\"Times New Roman\"",
+   "size": 20,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "footerfont": {
+   "face": "\"Times New Roman\"",
+   "size": 12,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "headerfont": {
+   "face": "\"Times New Roman\"",
+   "size": 12,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "voicefont": {
+   "face": "\"Times New Roman\"",
+   "size": 13,
+   "weight": "bold",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "tablabelfont": {
+   "face": "\"Trebuchet MS\"",
+   "size": 16,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "tabnumberfont": {
+   "face": "\"Arial\"",
+   "size": 11,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "tabgracefont": {
+   "face": "\"Arial\"",
+   "size": 8,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "annotationfont": {
+   "face": "Helvetica",
+   "size": 12,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "gchordfont": {
+   "face": "Helvetica",
+   "size": 12,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "historyfont": {
+   "face": "\"Times New Roman\"",
+   "size": 16,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "infofont": {
+   "face": "\"Times New Roman\"",
+   "size": 14,
+   "weight": "normal",
+   "style": "italic",
+   "decoration": "none"
+  },
+  "measurefont": {
+   "face": "\"Times New Roman\"",
+   "size": 14,
+   "weight": "normal",
+   "style": "italic",
+   "decoration": "none"
+  },
+  "partsfont": {
+   "face": "\"Times New Roman\"",
+   "size": 15,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "repeatfont": {
+   "face": "\"Times New Roman\"",
+   "size": 13,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "textfont": {
+   "face": "\"Times New Roman\"",
+   "size": 16,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "tripletfont": {
+   "face": "Times",
+   "size": 11,
+   "weight": "normal",
+   "style": "italic",
+   "decoration": "none"
+  },
+  "vocalfont": {
+   "face": "\"Times New Roman\"",
+   "size": 13,
+   "weight": "bold",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "wordsfont": {
+   "face": "\"Times New Roman\"",
+   "size": 16,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "pagewidth": 612,
+  "pageheight": 792
+ },
+ "repo/abcjs-visual-multi-voice-x02-tune0": {
+  "composerfont": {
+   "face": "\"Times New Roman\"",
+   "size": 14,
+   "weight": "normal",
+   "style": "italic",
+   "decoration": "none"
+  },
+  "subtitlefont": {
+   "face": "\"Times New Roman\"",
+   "size": 16,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "tempofont": {
+   "face": "\"Times New Roman\"",
+   "size": 15,
+   "weight": "bold",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "titlefont": {
+   "face": "\"Times New Roman\"",
+   "size": 20,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "footerfont": {
+   "face": "\"Times New Roman\"",
+   "size": 12,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "headerfont": {
+   "face": "\"Times New Roman\"",
+   "size": 12,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "voicefont": {
+   "face": "\"Times New Roman\"",
+   "size": 13,
+   "weight": "bold",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "tablabelfont": {
+   "face": "\"Trebuchet MS\"",
+   "size": 16,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "tabnumberfont": {
+   "face": "\"Arial\"",
+   "size": 11,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "tabgracefont": {
+   "face": "\"Arial\"",
+   "size": 8,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "annotationfont": {
+   "face": "Helvetica",
+   "size": 12,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "gchordfont": {
+   "face": "Helvetica",
+   "size": 12,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "historyfont": {
+   "face": "\"Times New Roman\"",
+   "size": 16,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "infofont": {
+   "face": "\"Times New Roman\"",
+   "size": 14,
+   "weight": "normal",
+   "style": "italic",
+   "decoration": "none"
+  },
+  "measurefont": {
+   "face": "\"Times New Roman\"",
+   "size": 14,
+   "weight": "normal",
+   "style": "italic",
+   "decoration": "none"
+  },
+  "partsfont": {
+   "face": "\"Times New Roman\"",
+   "size": 15,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "repeatfont": {
+   "face": "\"Times New Roman\"",
+   "size": 13,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "textfont": {
+   "face": "\"Times New Roman\"",
+   "size": 16,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "tripletfont": {
+   "face": "Times",
+   "size": 11,
+   "weight": "normal",
+   "style": "italic",
+   "decoration": "none"
+  },
+  "vocalfont": {
+   "face": "\"Times New Roman\"",
+   "size": 13,
+   "weight": "bold",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "wordsfont": {
+   "face": "\"Times New Roman\"",
+   "size": 16,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "staffwidth": 300,
+  "pagewidth": 612,
+  "pageheight": 792
+ },
+ "repo/abcjs-visual-multi-voice-x03-tune0": {
+  "composerfont": {
+   "face": "\"Times New Roman\"",
+   "size": 14,
+   "weight": "normal",
+   "style": "italic",
+   "decoration": "none"
+  },
+  "subtitlefont": {
+   "face": "\"Times New Roman\"",
+   "size": 16,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "tempofont": {
+   "face": "\"Times New Roman\"",
+   "size": 15,
+   "weight": "bold",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "titlefont": {
+   "face": "\"Times New Roman\"",
+   "size": 20,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "footerfont": {
+   "face": "\"Times New Roman\"",
+   "size": 12,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "headerfont": {
+   "face": "\"Times New Roman\"",
+   "size": 12,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "voicefont": {
+   "face": "\"Times New Roman\"",
+   "size": 13,
+   "weight": "bold",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "tablabelfont": {
+   "face": "\"Trebuchet MS\"",
+   "size": 16,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "tabnumberfont": {
+   "face": "\"Arial\"",
+   "size": 11,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "tabgracefont": {
+   "face": "\"Arial\"",
+   "size": 8,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "annotationfont": {
+   "face": "Helvetica",
+   "size": 12,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "gchordfont": {
+   "face": "Helvetica",
+   "size": 12,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "historyfont": {
+   "face": "\"Times New Roman\"",
+   "size": 16,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "infofont": {
+   "face": "\"Times New Roman\"",
+   "size": 14,
+   "weight": "normal",
+   "style": "italic",
+   "decoration": "none"
+  },
+  "measurefont": {
+   "face": "\"Times New Roman\"",
+   "size": 14,
+   "weight": "normal",
+   "style": "italic",
+   "decoration": "none"
+  },
+  "partsfont": {
+   "face": "\"Times New Roman\"",
+   "size": 15,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "repeatfont": {
+   "face": "\"Times New Roman\"",
+   "size": 13,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "textfont": {
+   "face": "\"Times New Roman\"",
+   "size": 16,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "tripletfont": {
+   "face": "Times",
+   "size": 11,
+   "weight": "normal",
+   "style": "italic",
+   "decoration": "none"
+  },
+  "vocalfont": {
+   "face": "\"Times New Roman\"",
+   "size": 13,
+   "weight": "bold",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "wordsfont": {
+   "face": "\"Times New Roman\"",
+   "size": 16,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "pagewidth": 612,
+  "pageheight": 792
+ },
+ "repo/abcjs-visual-multi-voice-x04-tune0": {
+  "composerfont": {
+   "face": "\"Times New Roman\"",
+   "size": 14,
+   "weight": "normal",
+   "style": "italic",
+   "decoration": "none"
+  },
+  "subtitlefont": {
+   "face": "\"Times New Roman\"",
+   "size": 16,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "tempofont": {
+   "face": "\"Times New Roman\"",
+   "size": 15,
+   "weight": "bold",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "titlefont": {
+   "face": "\"Times New Roman\"",
+   "size": 20,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "footerfont": {
+   "face": "\"Times New Roman\"",
+   "size": 12,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "headerfont": {
+   "face": "\"Times New Roman\"",
+   "size": 12,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "voicefont": {
+   "face": "\"Times New Roman\"",
+   "size": 13,
+   "weight": "bold",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "tablabelfont": {
+   "face": "\"Trebuchet MS\"",
+   "size": 16,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "tabnumberfont": {
+   "face": "\"Arial\"",
+   "size": 11,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "tabgracefont": {
+   "face": "\"Arial\"",
+   "size": 8,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "annotationfont": {
+   "face": "Helvetica",
+   "size": 12,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "gchordfont": {
+   "face": "Helvetica",
+   "size": 12,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "historyfont": {
+   "face": "\"Times New Roman\"",
+   "size": 16,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "infofont": {
+   "face": "\"Times New Roman\"",
+   "size": 14,
+   "weight": "normal",
+   "style": "italic",
+   "decoration": "none"
+  },
+  "measurefont": {
+   "face": "\"Times New Roman\"",
+   "size": 14,
+   "weight": "normal",
+   "style": "italic",
+   "decoration": "none"
+  },
+  "partsfont": {
+   "face": "\"Times New Roman\"",
+   "size": 15,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "repeatfont": {
+   "face": "\"Times New Roman\"",
+   "size": 13,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "textfont": {
+   "face": "\"Times New Roman\"",
+   "size": 16,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "tripletfont": {
+   "face": "Times",
+   "size": 11,
+   "weight": "normal",
+   "style": "italic",
+   "decoration": "none"
+  },
+  "vocalfont": {
+   "face": "\"Times New Roman\"",
+   "size": 13,
+   "weight": "bold",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "wordsfont": {
+   "face": "\"Times New Roman\"",
+   "size": 16,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "pagewidth": 612,
+  "pageheight": 792
+ },
+ "repo/abcjs-visual-multi-voice-x05-tune0": {
+  "composerfont": {
+   "face": "\"Times New Roman\"",
+   "size": 14,
+   "weight": "normal",
+   "style": "italic",
+   "decoration": "none"
+  },
+  "subtitlefont": {
+   "face": "\"Times New Roman\"",
+   "size": 16,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "tempofont": {
+   "face": "\"Times New Roman\"",
+   "size": 15,
+   "weight": "bold",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "titlefont": {
+   "face": "\"Times New Roman\"",
+   "size": 20,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "footerfont": {
+   "face": "\"Times New Roman\"",
+   "size": 12,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "headerfont": {
+   "face": "\"Times New Roman\"",
+   "size": 12,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "voicefont": {
+   "face": "\"Times New Roman\"",
+   "size": 13,
+   "weight": "bold",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "tablabelfont": {
+   "face": "\"Trebuchet MS\"",
+   "size": 16,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "tabnumberfont": {
+   "face": "\"Arial\"",
+   "size": 11,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "tabgracefont": {
+   "face": "\"Arial\"",
+   "size": 8,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "annotationfont": {
+   "face": "Helvetica",
+   "size": 12,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "gchordfont": {
+   "face": "Helvetica",
+   "size": 12,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "historyfont": {
+   "face": "\"Times New Roman\"",
+   "size": 16,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "infofont": {
+   "face": "\"Times New Roman\"",
+   "size": 14,
+   "weight": "normal",
+   "style": "italic",
+   "decoration": "none"
+  },
+  "measurefont": {
+   "face": "\"Times New Roman\"",
+   "size": 14,
+   "weight": "normal",
+   "style": "italic",
+   "decoration": "none"
+  },
+  "partsfont": {
+   "face": "\"Times New Roman\"",
+   "size": 15,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "repeatfont": {
+   "face": "\"Times New Roman\"",
+   "size": 13,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "textfont": {
+   "face": "\"Times New Roman\"",
+   "size": 16,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "tripletfont": {
+   "face": "Times",
+   "size": 11,
+   "weight": "normal",
+   "style": "italic",
+   "decoration": "none"
+  },
+  "vocalfont": {
+   "face": "\"Times New Roman\"",
+   "size": 13,
+   "weight": "bold",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "wordsfont": {
+   "face": "\"Times New Roman\"",
+   "size": 16,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "pagewidth": 612,
+  "pageheight": 792
+ },
+ "repo/abcjs-visual-multi-voice-x08-tune0": {
   "composerfont": {
    "face": "\"Times New Roman\"",
    "size": 14,
@@ -17768,6 +19736,610 @@
   "pageheight": 792
  },
  "repo/abcjs-visual-parsing-10-song-tune0": {
+  "composerfont": {
+   "face": "\"Times New Roman\"",
+   "size": 14,
+   "weight": "normal",
+   "style": "italic",
+   "decoration": "none"
+  },
+  "subtitlefont": {
+   "face": "\"Times New Roman\"",
+   "size": 16,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "tempofont": {
+   "face": "\"Times New Roman\"",
+   "size": 15,
+   "weight": "bold",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "titlefont": {
+   "face": "\"Times New Roman\"",
+   "size": 20,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "footerfont": {
+   "face": "\"Times New Roman\"",
+   "size": 12,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "headerfont": {
+   "face": "\"Times New Roman\"",
+   "size": 12,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "voicefont": {
+   "face": "\"Times New Roman\"",
+   "size": 13,
+   "weight": "bold",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "tablabelfont": {
+   "face": "\"Trebuchet MS\"",
+   "size": 16,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "tabnumberfont": {
+   "face": "\"Arial\"",
+   "size": 11,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "tabgracefont": {
+   "face": "\"Arial\"",
+   "size": 8,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "annotationfont": {
+   "face": "Helvetica",
+   "size": 12,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "gchordfont": {
+   "face": "Helvetica",
+   "size": 12,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "historyfont": {
+   "face": "\"Times New Roman\"",
+   "size": 16,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "infofont": {
+   "face": "\"Times New Roman\"",
+   "size": 14,
+   "weight": "normal",
+   "style": "italic",
+   "decoration": "none"
+  },
+  "measurefont": {
+   "face": "\"Times New Roman\"",
+   "size": 14,
+   "weight": "normal",
+   "style": "italic",
+   "decoration": "none"
+  },
+  "partsfont": {
+   "face": "\"Times New Roman\"",
+   "size": 15,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "repeatfont": {
+   "face": "\"Times New Roman\"",
+   "size": 13,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "textfont": {
+   "face": "\"Times New Roman\"",
+   "size": 16,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "tripletfont": {
+   "face": "Times",
+   "size": 11,
+   "weight": "normal",
+   "style": "italic",
+   "decoration": "none"
+  },
+  "vocalfont": {
+   "face": "\"Times New Roman\"",
+   "size": 13,
+   "weight": "bold",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "wordsfont": {
+   "face": "\"Times New Roman\"",
+   "size": 16,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "pagewidth": 612,
+  "pageheight": 792
+ },
+ "repo/abcjs-visual-parsing-x10-tune0": {
+  "composerfont": {
+   "face": "\"Times New Roman\"",
+   "size": 14,
+   "weight": "normal",
+   "style": "italic",
+   "decoration": "none"
+  },
+  "subtitlefont": {
+   "face": "\"Times New Roman\"",
+   "size": 16,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "tempofont": {
+   "face": "\"Times New Roman\"",
+   "size": 15,
+   "weight": "bold",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "titlefont": {
+   "face": "\"Times New Roman\"",
+   "size": 20,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "footerfont": {
+   "face": "\"Times New Roman\"",
+   "size": 12,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "headerfont": {
+   "face": "\"Times New Roman\"",
+   "size": 12,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "voicefont": {
+   "face": "\"Times New Roman\"",
+   "size": 13,
+   "weight": "bold",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "tablabelfont": {
+   "face": "\"Trebuchet MS\"",
+   "size": 16,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "tabnumberfont": {
+   "face": "\"Arial\"",
+   "size": 11,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "tabgracefont": {
+   "face": "\"Arial\"",
+   "size": 8,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "annotationfont": {
+   "face": "Helvetica",
+   "size": 12,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "gchordfont": {
+   "face": "Helvetica",
+   "size": 12,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "historyfont": {
+   "face": "\"Times New Roman\"",
+   "size": 16,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "infofont": {
+   "face": "\"Times New Roman\"",
+   "size": 14,
+   "weight": "normal",
+   "style": "italic",
+   "decoration": "none"
+  },
+  "measurefont": {
+   "face": "\"Times New Roman\"",
+   "size": 14,
+   "weight": "normal",
+   "style": "italic",
+   "decoration": "none"
+  },
+  "partsfont": {
+   "face": "\"Times New Roman\"",
+   "size": 15,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "repeatfont": {
+   "face": "\"Times New Roman\"",
+   "size": 13,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "textfont": {
+   "face": "\"Times New Roman\"",
+   "size": 16,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "tripletfont": {
+   "face": "Times",
+   "size": 11,
+   "weight": "normal",
+   "style": "italic",
+   "decoration": "none"
+  },
+  "vocalfont": {
+   "face": "\"Times New Roman\"",
+   "size": 13,
+   "weight": "bold",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "wordsfont": {
+   "face": "\"Times New Roman\"",
+   "size": 16,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "pagewidth": 612,
+  "pageheight": 792
+ },
+ "repo/abcjs-visual-parsing-x11-tune0": {
+  "composerfont": {
+   "face": "\"Times New Roman\"",
+   "size": 14,
+   "weight": "normal",
+   "style": "italic",
+   "decoration": "none"
+  },
+  "subtitlefont": {
+   "face": "\"Times New Roman\"",
+   "size": 16,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "tempofont": {
+   "face": "\"Times New Roman\"",
+   "size": 15,
+   "weight": "bold",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "titlefont": {
+   "face": "\"Times New Roman\"",
+   "size": 20,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "footerfont": {
+   "face": "\"Times New Roman\"",
+   "size": 12,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "headerfont": {
+   "face": "\"Times New Roman\"",
+   "size": 12,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "voicefont": {
+   "face": "\"Times New Roman\"",
+   "size": 13,
+   "weight": "bold",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "tablabelfont": {
+   "face": "\"Trebuchet MS\"",
+   "size": 16,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "tabnumberfont": {
+   "face": "\"Arial\"",
+   "size": 11,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "tabgracefont": {
+   "face": "\"Arial\"",
+   "size": 8,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "annotationfont": {
+   "face": "Helvetica",
+   "size": 12,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "gchordfont": {
+   "face": "Helvetica",
+   "size": 12,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "historyfont": {
+   "face": "\"Times New Roman\"",
+   "size": 16,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "infofont": {
+   "face": "\"Times New Roman\"",
+   "size": 14,
+   "weight": "normal",
+   "style": "italic",
+   "decoration": "none"
+  },
+  "measurefont": {
+   "face": "\"Times New Roman\"",
+   "size": 14,
+   "weight": "normal",
+   "style": "italic",
+   "decoration": "none"
+  },
+  "partsfont": {
+   "face": "\"Times New Roman\"",
+   "size": 15,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "repeatfont": {
+   "face": "\"Times New Roman\"",
+   "size": 13,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "textfont": {
+   "face": "\"Times New Roman\"",
+   "size": 16,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "tripletfont": {
+   "face": "Times",
+   "size": 11,
+   "weight": "normal",
+   "style": "italic",
+   "decoration": "none"
+  },
+  "vocalfont": {
+   "face": "\"Times New Roman\"",
+   "size": 13,
+   "weight": "bold",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "wordsfont": {
+   "face": "\"Times New Roman\"",
+   "size": 16,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "pagewidth": 612,
+  "pageheight": 792
+ },
+ "repo/abcjs-visual-parsing-x12-tune0": {
+  "composerfont": {
+   "face": "\"Times New Roman\"",
+   "size": 14,
+   "weight": "normal",
+   "style": "italic",
+   "decoration": "none"
+  },
+  "subtitlefont": {
+   "face": "\"Times New Roman\"",
+   "size": 16,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "tempofont": {
+   "face": "\"Times New Roman\"",
+   "size": 15,
+   "weight": "bold",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "titlefont": {
+   "face": "\"Times New Roman\"",
+   "size": 20,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "footerfont": {
+   "face": "\"Times New Roman\"",
+   "size": 12,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "headerfont": {
+   "face": "\"Times New Roman\"",
+   "size": 12,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "voicefont": {
+   "face": "\"Times New Roman\"",
+   "size": 13,
+   "weight": "bold",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "tablabelfont": {
+   "face": "\"Trebuchet MS\"",
+   "size": 16,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "tabnumberfont": {
+   "face": "\"Arial\"",
+   "size": 11,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "tabgracefont": {
+   "face": "\"Arial\"",
+   "size": 8,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "annotationfont": {
+   "face": "Helvetica",
+   "size": 12,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "gchordfont": {
+   "face": "Helvetica",
+   "size": 12,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "historyfont": {
+   "face": "\"Times New Roman\"",
+   "size": 16,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "infofont": {
+   "face": "\"Times New Roman\"",
+   "size": 14,
+   "weight": "normal",
+   "style": "italic",
+   "decoration": "none"
+  },
+  "measurefont": {
+   "face": "\"Times New Roman\"",
+   "size": 14,
+   "weight": "normal",
+   "style": "italic",
+   "decoration": "none"
+  },
+  "partsfont": {
+   "face": "\"Times New Roman\"",
+   "size": 15,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "repeatfont": {
+   "face": "\"Times New Roman\"",
+   "size": 13,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "textfont": {
+   "face": "\"Times New Roman\"",
+   "size": 16,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "tripletfont": {
+   "face": "Times",
+   "size": 11,
+   "weight": "normal",
+   "style": "italic",
+   "decoration": "none"
+  },
+  "vocalfont": {
+   "face": "\"Times New Roman\"",
+   "size": 13,
+   "weight": "bold",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "wordsfont": {
+   "face": "\"Times New Roman\"",
+   "size": 16,
+   "weight": "normal",
+   "style": "normal",
+   "decoration": "none"
+  },
+  "pagewidth": 612,
+  "pageheight": 792
+ },
+ "repo/abcjs-visual-parsing-x14-tune0": {
   "composerfont": {
    "face": "\"Times New Roman\"",
    "size": 14,

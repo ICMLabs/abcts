@@ -1,0 +1,9 @@
+M:4/4
+L:1/16
+%%score (mpguitar mpguitarlow)
+V:mpguitar
+K:G clef=treble 
+D16|(3B2G2D2 E4|]
+V:mpguitarlow
+K:G clef=treble 
+E,16|G,4 z4|]

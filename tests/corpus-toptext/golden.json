@@ -149,7 +149,15 @@
   "topText": [],
   "bottomText": []
  },
+ "repo/abcjs-parse-tie-slur-01-multipart-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
  "repo/abcjs-parse-tie-slur-01-staffwidth-200-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "repo/abcjs-parse-tie-slur-02-chord-tune0": {
   "topText": [],
   "bottomText": []
  },
@@ -157,7 +165,15 @@
   "topText": [],
   "bottomText": []
  },
+ "repo/abcjs-parse-tie-slur-03-onestaff-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
  "repo/abcjs-parse-tie-slur-03-staffwidth-200-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "repo/abcjs-parse-tie-slur-04-height-tune0": {
   "topText": [],
   "bottomText": []
  },
@@ -681,6 +697,10 @@
   "topText": [],
   "bottomText": []
  },
+ "repo/abcjs-visual-decorations-x02-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
  "repo/abcjs-visual-directives-01-incipit-test-tune0": {
   "topText": [
    {
@@ -716,6 +736,10 @@
     "move": 26
    }
   ],
+  "bottomText": []
+ },
+ "repo/abcjs-visual-directives-x01-tune0": {
+  "topText": [],
   "bottomText": []
  },
  "repo/abcjs-visual-layout-01-barlabelfont-times-bold-18-box-tune0": {
@@ -1538,6 +1562,10 @@
   "topText": [],
   "bottomText": []
  },
+ "repo/abcjs-visual-misc-x07-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
  "repo/abcjs-visual-mouse-click-01-selection-test-tune0": {
   "topText": [
    {
@@ -1711,6 +1739,30 @@
   "bottomText": []
  },
  "repo/abcjs-visual-multi-voice-02-p-c-2b2-z4-f2a2-f4-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "repo/abcjs-visual-multi-voice-x01-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "repo/abcjs-visual-multi-voice-x02-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "repo/abcjs-visual-multi-voice-x03-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "repo/abcjs-visual-multi-voice-x04-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "repo/abcjs-visual-multi-voice-x05-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "repo/abcjs-visual-multi-voice-x08-tune0": {
   "topText": [],
   "bottomText": []
  },
@@ -1980,6 +2032,39 @@
     "move": 23
    }
   ],
+  "bottomText": []
+ },
+ "repo/abcjs-visual-parsing-x10-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "repo/abcjs-visual-parsing-x11-tune0": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Main",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 4,
+    "endChar": 10,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcjs-visual-parsing-x12-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "repo/abcjs-visual-parsing-x14-tune0": {
+  "topText": [],
   "bottomText": []
  },
  "repo/abcjs-visual-selection-01-selection-test-tune0": {

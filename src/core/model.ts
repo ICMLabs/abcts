@@ -1026,6 +1026,15 @@ export interface Measure {
    */
   readonly keyChangeInline?: boolean
   /**
+   * `%%keywarn` AS IT STOOD WHEN THIS `K:` WAS READ, not as it stands at the end of the
+   * tune. abcjs tests `multilineVars.keywarn !== false` inside `parseKey` itself
+   * (`abc_parse_key_voice.js:319`), so a directive between two key changes governs only the
+   * changes after it — `abcjs-visual-parsing-x10` toggles it three times and its own second
+   * `K:` draws no naturals while its third does. See `Score.keywarn`, which is the
+   * tune-level default this overrides.
+   */
+  readonly keyChangeKeywarn?: boolean
+  /**
    * Where the `K:` that named this clef was written, and whether it was bracketed.
    *
    * A CLEF is its own element in `tune.lines` — `if (result.foundClef)

@@ -314,6 +314,35 @@ const PASSING: readonly string[] = [
   "abcts-visualtranspose-tune2",
   "abcts-visualtranspose-tune3",
   /**
+   * abcjs's OWN TEST INPUTS, the ones its harvester never took. Counting `var abc`
+   * declarations per file against the fixtures already here named ~20 absent — nine of them
+   * in `multi-voice`, which is where `checkLastBarX` came from. Thirteen of fourteen and all
+   * four `tie-slur` tunes were byte-exact on arrival, which is the honest outcome of a
+   * corpus sweep; the fourteenth was not, and is the `%%keywarn` row below.
+   *
+   * ⚠️ **`abcjs-visual-parsing-x10` IS NOT HERE.** It toggles `%%keywarn` three times and
+   * closed two real defects (see `Measure.keyChangeKeywarn`), taking the row from 11,498
+   * matching bytes to 21,407 of 37,883; what is left is a notehead x one ULP apart —
+   * `81.211` against `81.21100000000001` — on the third line of a tune whose first two now
+   * agree.
+   */
+  "abcjs-parse-tie-slur-01-multipart",
+  "abcjs-parse-tie-slur-02-chord",
+  "abcjs-parse-tie-slur-03-onestaff",
+  "abcjs-parse-tie-slur-04-height",
+  "abcjs-visual-decorations-x02",
+  "abcjs-visual-directives-x01",
+  "abcjs-visual-misc-x07",
+  "abcjs-visual-multi-voice-x01",
+  "abcjs-visual-multi-voice-x02",
+  "abcjs-visual-multi-voice-x03",
+  "abcjs-visual-multi-voice-x04",
+  "abcjs-visual-multi-voice-x05",
+  "abcjs-visual-multi-voice-x08",
+  "abcjs-visual-parsing-x11",
+  "abcjs-visual-parsing-x12",
+  "abcjs-visual-parsing-x14",
+  /**
    * `abcts-start-char.abc` — abcjs's OWN `tests/parse/start-char.test.js` tune, the last
    * unenumerated list's first case. Its emoji chord symbol makes it look like a
    * surrogate-pair test and it is not: what it catches is an opening slur's iteration

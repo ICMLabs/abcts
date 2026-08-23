@@ -430,10 +430,15 @@ const WITHIN: Readonly<Record<string, number>> = {
   // tunes, one per `%%MIDI` sub-command, none of which moves a note, and
   // `abcts-voice-style.abc` the 190th, `abcts-key-modifiers.abc` the 191st and
   // `abcts-start-char.abc` — abcjs's own test tune — the 192nd.
-  "0.05": 192,
-  "1": 192,
-  "5": 192,
-  "25": 192,
+  //
+  // …and SIXTEEN more of abcjs's OWN test inputs, the ones its harvester never took: four
+  // `tie-slur` files and twelve tunes counted out of `multi-voice`, `parsing`, `misc`,
+  // `decorations` and `directives` by comparing each file's `var abc` declarations against
+  // the fixtures already here. Every one byte-exact on arrival.
+  "0.05": 208,
+  "1": 208,
+  "5": 208,
+  "25": 208,
 };
 
 const names = readdirSync(fixturesDir)

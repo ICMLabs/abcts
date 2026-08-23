@@ -114,6 +114,22 @@ const PASSING: readonly string[] = [
   // enumeration — every one of which agrees on every character from its first run.
   // `abcts-decorations` is the sixth, from the decoration-table enumeration, and
   // `abcts-last-bar` the seventh, from the V:-modifier enumeration's control.
+  "repo/abcjs-parse-tie-slur-01-multipart-tune0",
+  "repo/abcjs-parse-tie-slur-02-chord-tune0",
+  "repo/abcjs-parse-tie-slur-03-onestaff-tune0",
+  "repo/abcjs-parse-tie-slur-04-height-tune0",
+  "repo/abcjs-visual-decorations-x02-tune0",
+  "repo/abcjs-visual-directives-x01-tune0",
+  "repo/abcjs-visual-misc-x07-tune0",
+  "repo/abcjs-visual-multi-voice-x01-tune0",
+  "repo/abcjs-visual-multi-voice-x02-tune0",
+  "repo/abcjs-visual-multi-voice-x03-tune0",
+  "repo/abcjs-visual-multi-voice-x04-tune0",
+  "repo/abcjs-visual-multi-voice-x05-tune0",
+  "repo/abcjs-visual-multi-voice-x08-tune0",
+  "repo/abcjs-visual-parsing-x11-tune0",
+  "repo/abcjs-visual-parsing-x12-tune0",
+  "repo/abcjs-visual-parsing-x14-tune0",
   "repo/abcts-start-char-tune0",
   ...Array.from({ length: 12 }, (_, i) => `repo/abcts-key-modifiers-tune${i}`),
   ...Array.from({ length: 5 }, (_, i) => `repo/abcts-voice-style-tune${i}`),
@@ -516,8 +532,9 @@ describe("tune.lines and getElementFromChar", () => {
     // 328,548 of 328,548 until `abcts-decorations.abc` added six tunes on the same day,
     // `abcts-last-bar.abc` three more, `abcts-voice-modifiers.abc` five and
     // `abcts-midi.abc` fifty-six, `abcts-voice-style.abc` five and
-    // `abcts-key-modifiers.abc` twelve and `abcts-start-char.abc` one.
-    expect(agree).toBeGreaterThanOrEqual(588668);
+    // `abcts-key-modifiers.abc` twelve, `abcts-start-char.abc` one, and seventeen tunes of
+    // abcjs's own test inputs its harvester had never taken.
+    expect(agree).toBeGreaterThanOrEqual(590636);
   });
 
   /**

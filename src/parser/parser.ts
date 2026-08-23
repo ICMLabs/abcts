@@ -1197,6 +1197,8 @@ class VoiceBuilder {
   private pendingKeyChangeClef: Clef | undefined = undefined
   /** `[K:…]` rather than a standalone `K:` line — see `Measure.keyChangeInline`. */
   private pendingKeyChangeInline = false
+  /** `%%keywarn` as it stood at this `K:` — see `Measure.keyChangeKeywarn`. */
+  private pendingKeyChangeKeywarn: boolean | undefined = undefined
   /** The meter came off a standalone `M:` LINE — see `Measure.meterChangeStandalone`. */
   private pendingMeterChangeStandalone = false
   /** Where the `K:` that named this clef was written — see `Measure.clefChangeSourceRange`. */
@@ -1299,11 +1301,19 @@ class VoiceBuilder {
     return shift
   }
 
-  setKeyChange(key: KeySignature, range: SourceRange, clef?: Clef, inline = false): void {
+  setKeyChange(
+    key: KeySignature,
+    range: SourceRange,
+    clef?: Clef,
+    inline = false,
+    /** `%%keywarn` AT THIS `K:` — see `Measure.keyChangeKeywarn`. */
+    keywarn?: boolean,
+  ): void {
     this.pendingKeyChange = key
     this.pendingKeyChangeRange = range
     this.pendingKeyChangeClef = clef
     this.pendingKeyChangeInline = inline
+    this.pendingKeyChangeKeywarn = keywarn
   }
 
   /** A mid-tune `K:… clef=` or `[K: bass]`. Delta, like the key change. */
@@ -1389,6 +1399,9 @@ class VoiceBuilder {
       ...(this.pendingMidi.length > 0 ? { midiCommands: this.pendingMidi } : {}),
       keyChangeSourceRange: this.pendingKeyChangeRange,
       ...(this.pendingKeyChangeInline ? { keyChangeInline: true } : {}),
+      ...(this.pendingKeyChangeKeywarn === undefined
+        ? {}
+        : { keyChangeKeywarn: this.pendingKeyChangeKeywarn }),
       meterChange: this.pendingMeterChange,
       meterChangeSourceRange: this.pendingMeterChangeRange,
       ...(this.pendingMeterChangeInline ? { meterChangeInline: true } : {}),
@@ -1400,6 +1413,7 @@ class VoiceBuilder {
     this.pendingKeyChange = null
     this.pendingKeyChangeClef = undefined
     this.pendingKeyChangeInline = false
+    this.pendingKeyChangeKeywarn = undefined
     this.pendingClefChange = null
     this.pendingClefChangeRange = null
     this.pendingClefChangeInline = false
@@ -4187,6 +4201,7 @@ class Parser {
               range,
               inline ? (midClef ?? defaultClef) : undefined,
               inline,
+              builder.keywarn,
             )
           if (midClef !== null) builder.voice.setClefChange(midClef, range, inline)
           // A MID-TUNE `K: octave=` is GLOBAL and takes effect from here. abcjs reads it
