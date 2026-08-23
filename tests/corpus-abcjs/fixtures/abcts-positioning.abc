@@ -1,0 +1,68 @@
+X:1
+T:Vocal Above
+L:1/8
+%%vocal above
+K:C
+"Am"!p!CDEF|GABc|
+w:la la la la
+
+X:2
+T:Vocal Below
+L:1/8
+%%vocal below
+K:C
+"Am"!p!CDEF|GABc|
+w:la la la la
+
+X:3
+T:Gchord Below
+L:1/8
+%%gchord below
+K:C
+"Am"!p!CDEF|GABc|
+w:la la la la
+
+X:4
+T:Gchord Hidden
+L:1/8
+%%gchord hidden
+K:C
+"Am"!p!CDEF|GABc|
+w:la la la la
+
+X:5
+T:Volume Below
+L:1/8
+%%volume below
+K:C
+"Am"!p!CDEF|GABc|
+w:la la la la
+
+X:6
+T:Ornament Above No Ornament
+L:1/8
+%%ornament above
+K:C
+"Am"!p!CDEF|GABc|
+w:la la la la
+
+X:7
+T:All Five
+L:1/8
+%%vocal above
+%%dynamic above
+%%gchord below
+%%ornament below
+%%volume above
+K:C
+"Am"!p!CDEF|GABc|
+w:la la la la
+
+X:8
+T:Mid Tune Change
+L:1/8
+K:C
+"Am"!p!CDEF|
+%%gchord below
+"Bm"GABc|
+w:la la la la

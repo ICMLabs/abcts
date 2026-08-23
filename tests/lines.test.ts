@@ -110,6 +110,20 @@ const rows = (): Row[] => {
 
 /** Tunes that agree on EVERY character. Grows, never shrinks. */
 const PASSING: readonly string[] = [
+  /**
+   * **THE FIVE `positionChoices` DIRECTIVES** — `%%vocal`, `%%dynamic`, `%%gchord`,
+   * `%%ornament`, `%%volume`. Exact on arrival on this surface, which is the one that says
+   * a directive line belongs to NO element: eight tunes whose `%%` lines sit between the
+   * `K:` and the music, and one with a mid-tune change.
+   */
+  "repo/abcts-positioning-tune0",
+  "repo/abcts-positioning-tune1",
+  "repo/abcts-positioning-tune2",
+  "repo/abcts-positioning-tune3",
+  "repo/abcts-positioning-tune4",
+  "repo/abcts-positioning-tune5",
+  "repo/abcts-positioning-tune6",
+  "repo/abcts-positioning-tune7",
   // …and the five CONTROL fixtures of 2026-08-22 — the ledger sweeps and the directive
   // enumeration — every one of which agrees on every character from its first run.
   // `abcts-decorations` is the sixth, from the decoration-table enumeration, and
@@ -542,7 +556,8 @@ describe("tune.lines and getElementFromChar", () => {
     // `abcts-midi.abc` fifty-six, `abcts-voice-style.abc` five and
     // `abcts-key-modifiers.abc` twelve, `abcts-start-char.abc` one, and seventeen tunes of
     // abcjs's own test inputs its harvester had never taken.
-    expect(agree).toBeGreaterThanOrEqual(592653);
+    // 592,653 of 592,653 until `abcts-positioning.abc` added eight tunes on 2026-08-23.
+    expect(agree).toBeGreaterThanOrEqual(598213);
   });
 
   /**

@@ -91,6 +91,13 @@ const table = (): Case[] =>
 
 /** The cases that agree on EVERY row. Shrinks never — see `tests/lines.test.ts`. */
 const PASSING: readonly string[] = [
+  /**
+   * `abcts-positioning` — the five `positionChoices` directives, exact on arrival. A
+   * whole-element surface, so it is what would catch a positioning change that is
+   * byte-perfect on the drawing and wrong on the x a host reads back — the shape
+   * `checkLastBarX` was caught in.
+   */
+  "abcts-positioning",
   "abcts-ledger-gaps",
   "abcts-ledger-gaps-2",
   "abcts-ledger-gaps-3",

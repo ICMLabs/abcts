@@ -2901,6 +2901,70 @@
   "L0 s0 kept=meter,key,clef",
   "L0 s0 v0 note@1166..1174 note@1174..1176 note@1176..1178 note@1178..1179 bar@1179..1180"
  ],
+ "repo/abcts-positioning-tune0": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@42..50 note@50..51 note@51..52 note@52..53 bar@53..54 note@54..55 note@55..56 note@56..57 note@57..58 bar@58..59"
+ ],
+ "repo/abcts-positioning-tune1": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@117..125 note@125..126 note@126..127 note@127..128 bar@128..129 note@129..130 note@130..131 note@131..132 note@132..133 bar@133..134"
+ ],
+ "repo/abcts-positioning-tune2": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@194..202 note@202..203 note@203..204 note@204..205 bar@205..206 note@206..207 note@207..208 note@208..209 note@209..210 bar@210..211"
+ ],
+ "repo/abcts-positioning-tune3": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@273..281 note@281..282 note@282..283 note@283..284 bar@284..285 note@285..286 note@286..287 note@287..288 note@288..289 bar@289..290"
+ ],
+ "repo/abcts-positioning-tune4": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@350..358 note@358..359 note@359..360 note@360..361 bar@361..362 note@362..363 note@363..364 note@364..365 note@365..366 bar@366..367"
+ ],
+ "repo/abcts-positioning-tune5": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@443..451 note@451..452 note@452..453 note@453..454 bar@454..455 note@455..456 note@456..457 note@457..458 note@458..459 bar@459..460"
+ ],
+ "repo/abcts-positioning-tune6": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@578..586 note@586..587 note@587..588 note@588..589 bar@589..590 note@590..591 note@591..592 note@592..593 note@593..594 bar@594..595"
+ ],
+ "repo/abcts-positioning-tune7": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@643..651 note@651..652 note@652..653 note@653..654 bar@654..655 note@671..676 note@676..677 note@677..678 note@678..679 bar@679..680"
+ ],
+ "repo/abcts-positioning-tune0#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@42..50 note@50..51 note@51..52 note@52..53 bar@53..54 note@54..55 note@55..56 note@56..57 note@57..58 bar@58..59"
+ ],
+ "repo/abcts-positioning-tune1#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@117..125 note@125..126 note@126..127 note@127..128 bar@128..129 note@129..130 note@130..131 note@131..132 note@132..133 bar@133..134"
+ ],
+ "repo/abcts-positioning-tune2#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@194..202 note@202..203 note@203..204 note@204..205 bar@205..206 note@206..207 note@207..208 note@208..209 note@209..210 bar@210..211"
+ ],
+ "repo/abcts-positioning-tune3#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@273..281 note@281..282 note@282..283 note@283..284 bar@284..285 note@285..286 note@286..287 note@287..288 note@288..289 bar@289..290"
+ ],
+ "repo/abcts-positioning-tune4#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@350..358 note@358..359 note@359..360 note@360..361 bar@361..362 note@362..363 note@363..364 note@364..365 note@365..366 bar@366..367"
+ ],
+ "repo/abcts-positioning-tune5#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@443..451 note@451..452 note@452..453 note@453..454 bar@454..455 note@455..456 note@456..457 note@457..458 note@458..459 bar@459..460"
+ ],
+ "repo/abcts-positioning-tune6#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@578..586 note@586..587 note@587..588 note@588..589 bar@589..590 note@590..591 note@591..592 note@592..593 note@593..594 bar@594..595"
+ ],
+ "repo/abcts-positioning-tune7#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@643..651 note@651..652 note@652..653 note@653..654 bar@654..655 break@undefined..undefined note@671..676 note@676..677 note@677..678 note@678..679 bar@679..680"
+ ],
  "repo/abcts-slur-shapes-tune0": [
   "L0 s0 kept=meter,key,clef",
   "L0 s0 v0 note@529..531 note@531..533 bar@533..534"

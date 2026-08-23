@@ -1508,6 +1508,54 @@
    "endChar": 1149
   }
  },
+ "repo/abcts-positioning-tune0": {
+  "title": {
+   "startChar": 4,
+   "endChar": 17
+  }
+ },
+ "repo/abcts-positioning-tune1": {
+  "title": {
+   "startChar": 79,
+   "endChar": 92
+  }
+ },
+ "repo/abcts-positioning-tune2": {
+  "title": {
+   "startChar": 154,
+   "endChar": 168
+  }
+ },
+ "repo/abcts-positioning-tune3": {
+  "title": {
+   "startChar": 231,
+   "endChar": 246
+  }
+ },
+ "repo/abcts-positioning-tune4": {
+  "title": {
+   "startChar": 310,
+   "endChar": 324
+  }
+ },
+ "repo/abcts-positioning-tune5": {
+  "title": {
+   "startChar": 387,
+   "endChar": 415
+  }
+ },
+ "repo/abcts-positioning-tune6": {
+  "title": {
+   "startChar": 480,
+   "endChar": 490
+  }
+ },
+ "repo/abcts-positioning-tune7": {
+  "title": {
+   "startChar": 615,
+   "endChar": 632
+  }
+ },
  "repo/abcts-slur-shapes-tune0": {
   "title": {
    "startChar": 496,

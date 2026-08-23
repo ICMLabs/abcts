@@ -111,6 +111,23 @@ const DIVERGENT: readonly string[] = [];
  * lands; never delete a row to make a run pass.
  */
 const PASSING: readonly string[] = [
+  /**
+   * **THE FIVE `positionChoices` DIRECTIVES** — `%%vocal`, `%%dynamic`, `%%gchord`,
+   * `%%ornament`, `%%volume`. Eight tunes, byte-exact on arrival; the ten-rung ladder they
+   * were built from is in `tests/positioning.test.ts` with abcjs's own numbers.
+   *
+   * ⚠️ **AND THEY HAD BEEN SWEPT ONCE AND CALLED "SAME"** — the 2026-08-22 directive
+   * enumeration's control had no lyric, no chord symbol, no dynamic and no ornament, which
+   * is everything they position. A "SAME" is only as good as the shape that asked.
+   */
+  "abcts-positioning-tune0",
+  "abcts-positioning-tune1",
+  "abcts-positioning-tune2",
+  "abcts-positioning-tune3",
+  "abcts-positioning-tune4",
+  "abcts-positioning-tune5",
+  "abcts-positioning-tune6",
+  "abcts-positioning-tune7",
   "abcts-slur-shapes-tune0",
   "abcts-slur-shapes-tune1",
   // CLOSED 2026-08-20: the two the fixture opened. `{(CD)}E` was two passes over the grace

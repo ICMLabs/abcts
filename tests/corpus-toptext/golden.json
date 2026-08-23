@@ -6233,6 +6233,174 @@
   ],
   "bottomText": []
  },
+ "repo/abcts-positioning-tune0": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Vocal Above",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 4,
+    "endChar": 17,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-positioning-tune1": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Vocal Below",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 79,
+    "endChar": 92,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-positioning-tune2": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Gchord Below",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 154,
+    "endChar": 168,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-positioning-tune3": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Gchord Hidden",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 231,
+    "endChar": 246,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-positioning-tune4": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Volume Below",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 310,
+    "endChar": 324,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-positioning-tune5": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Ornament Above No Ornament",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 387,
+    "endChar": 415,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-positioning-tune6": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "All Five",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 480,
+    "endChar": 490,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-positioning-tune7": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Mid Tune Change",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 615,
+    "endChar": 632,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
  "repo/abcts-slur-shapes-tune0": {
   "topText": [
    {

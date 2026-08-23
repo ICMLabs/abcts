@@ -2201,6 +2201,54 @@
   "bar el_type,endChar,startChar,type",
   "note duration,el_type,endChar,gracenotes,gracenotes.acciaccatura,gracenotes.duration,gracenotes.endBeam,gracenotes.name,gracenotes.pitch,gracenotes.verticalPos,pitches,pitches.name,pitches.pitch,pitches.verticalPos,startChar"
  ],
+ "repo/abcts-positioning-tune0": [
+  "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.key el_type=undefined acc,accidentals,mode,root",
+  "bar el_type,endChar,startChar,type",
+  "note chord,decoration,duration,el_type,endBeam,endChar,lyric,pitches,pitches.name,pitches.pitch,pitches.verticalPos,positioning,startBeam,startChar"
+ ],
+ "repo/abcts-positioning-tune1": [
+  "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.key el_type=undefined acc,accidentals,mode,root",
+  "bar el_type,endChar,startChar,type",
+  "note chord,decoration,duration,el_type,endBeam,endChar,lyric,pitches,pitches.name,pitches.pitch,pitches.verticalPos,positioning,startBeam,startChar"
+ ],
+ "repo/abcts-positioning-tune2": [
+  "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.key el_type=undefined acc,accidentals,mode,root",
+  "bar el_type,endChar,startChar,type",
+  "note chord,decoration,duration,el_type,endBeam,endChar,lyric,pitches,pitches.name,pitches.pitch,pitches.verticalPos,positioning,startBeam,startChar"
+ ],
+ "repo/abcts-positioning-tune3": [
+  "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.key el_type=undefined acc,accidentals,mode,root",
+  "bar el_type,endChar,startChar,type",
+  "note chord,decoration,duration,el_type,endBeam,endChar,lyric,pitches,pitches.name,pitches.pitch,pitches.verticalPos,positioning,startBeam,startChar"
+ ],
+ "repo/abcts-positioning-tune4": [
+  "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.key el_type=undefined acc,accidentals,mode,root",
+  "bar el_type,endChar,startChar,type",
+  "note chord,decoration,duration,el_type,endBeam,endChar,lyric,pitches,pitches.name,pitches.pitch,pitches.verticalPos,positioning,startBeam,startChar"
+ ],
+ "repo/abcts-positioning-tune5": [
+  "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.key el_type=undefined acc,accidentals,mode,root",
+  "bar el_type,endChar,startChar,type",
+  "note chord,decoration,duration,el_type,endBeam,endChar,lyric,pitches,pitches.name,pitches.pitch,pitches.verticalPos,positioning,startBeam,startChar"
+ ],
+ "repo/abcts-positioning-tune6": [
+  "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.key el_type=undefined acc,accidentals,mode,root",
+  "bar el_type,endChar,startChar,type",
+  "note chord,decoration,duration,el_type,endBeam,endChar,lyric,pitches,pitches.name,pitches.pitch,pitches.verticalPos,positioning,startBeam,startChar"
+ ],
+ "repo/abcts-positioning-tune7": [
+  "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.key el_type=undefined acc,accidentals,mode,root",
+  "bar el_type,endChar,startChar,type",
+  "note chord,decoration,duration,el_type,endBeam,endChar,lyric,pitches,pitches.name,pitches.pitch,pitches.verticalPos,positioning,startBeam,startChar"
+ ],
  "repo/abcts-slur-shapes-tune0": [
   "staff.clef el_type=undefined clefPos,type,verticalPos",
   "staff.key el_type=undefined acc,accidentals,mode,root",

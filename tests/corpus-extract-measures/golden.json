@@ -4465,6 +4465,104 @@
    "hasPickup": false
   }
  ],
+ "repo/abcts-positioning": [
+  {
+   "header": "X:1\nT:Vocal Above\nL:1/8\n%%vocal above\nK:C\n",
+   "measures": [
+    {
+     "abc": "\"Am\"!p!CDEF|"
+    },
+    {
+     "abc": "GABc|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "X:2\nT:Vocal Below\nL:1/8\n%%vocal below\nK:C\n",
+   "measures": [
+    {
+     "abc": "\"Am\"!p!CDEF|"
+    },
+    {
+     "abc": "GABc|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "X:3\nT:Gchord Below\nL:1/8\n%%gchord below\nK:C\n",
+   "measures": [
+    {
+     "abc": "\"Am\"!p!CDEF|"
+    },
+    {
+     "abc": "GABc|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "X:4\nT:Gchord Hidden\nL:1/8\n%%gchord hidden\nK:C\n",
+   "measures": [
+    {
+     "abc": "\"Am\"!p!CDEF|"
+    },
+    {
+     "abc": "GABc|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "X:5\nT:Volume Below\nL:1/8\n%%volume below\nK:C\n",
+   "measures": [
+    {
+     "abc": "\"Am\"!p!CDEF|"
+    },
+    {
+     "abc": "GABc|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "X:6\nT:Ornament Above No Ornament\nL:1/8\n%%ornament above\nK:C\n",
+   "measures": [
+    {
+     "abc": "\"Am\"!p!CDEF|"
+    },
+    {
+     "abc": "GABc|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "X:7\nT:All Five\nL:1/8\n%%vocal above\n%%dynamic above\n%%gchord below\n%%ornament below\n%%volume above\nK:C\n",
+   "measures": [
+    {
+     "abc": "\"Am\"!p!CDEF|"
+    },
+    {
+     "abc": "GABc|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "X:8\nT:Mid Tune Change\nL:1/8\nK:C\n",
+   "measures": [
+    {
+     "abc": "\"Am\"!p!CDEF|"
+    },
+    {
+     "abc": "\"Bm\"GABc|"
+    }
+   ],
+   "hasPickup": true
+  }
+ ],
  "repo/abcts-slur-shapes": [
   {
    "header": "X:1\nT:slur two notes\nL:1/4\nM:4/4\nK:C\n",

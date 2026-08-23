@@ -439,10 +439,12 @@ const WITHIN: Readonly<Record<string, number>> = {
   // …and `abcts-tempo-rung.abc`, the tempo ULP's own fixture.
   // …and `abcjs-visual-parsing-x10` joins them: the key signature's own width was `dx`
   // less the trailing gap where abcjs takes the last child's BUILT right edge.
-  "0.05": 213,
-  "1": 213,
-  "5": 213,
-  "25": 213,
+  // …and `abcts-positioning.abc`, the five `positionChoices` directives, whose eight tunes
+  // are exact on all four axes on arrival — see `tests/positioning.test.ts`.
+  "0.05": 214,
+  "1": 214,
+  "5": 214,
+  "25": 214,
 };
 
 const names = readdirSync(fixturesDir)

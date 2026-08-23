@@ -63,6 +63,12 @@ const table = (): Row[] =>
 
 /** Tunes whose every section agrees. Grows, never shrinks. */
 const PASSING: readonly string[] = [
+  /**
+   * `abcts-positioning` — the five `positionChoices` directives. Exact on arrival; its
+   * measure widths are untouched by any of them, which is the point of the fixture being
+   * gated here as well as on the bytes.
+   */
+  "repo/abcts-positioning-tune0",
   "repo/abcts-ledger-gaps-tune0",
   "repo/abcts-ledger-gaps-2-tune0",
   "repo/abcts-ledger-gaps-3-tune0",

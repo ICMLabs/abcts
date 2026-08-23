@@ -1771,6 +1771,30 @@
  "repo/abcts-model-gaps-tune8": {
   "title": "a slash before a grace note that is not the first"
  },
+ "repo/abcts-positioning-tune0": {
+  "title": "Vocal Above"
+ },
+ "repo/abcts-positioning-tune1": {
+  "title": "Vocal Below"
+ },
+ "repo/abcts-positioning-tune2": {
+  "title": "Gchord Below"
+ },
+ "repo/abcts-positioning-tune3": {
+  "title": "Gchord Hidden"
+ },
+ "repo/abcts-positioning-tune4": {
+  "title": "Volume Below"
+ },
+ "repo/abcts-positioning-tune5": {
+  "title": "Ornament Above No Ornament"
+ },
+ "repo/abcts-positioning-tune6": {
+  "title": "All Five"
+ },
+ "repo/abcts-positioning-tune7": {
+  "title": "Mid Tune Change"
+ },
  "repo/abcts-slur-shapes-tune0": {
   "title": "slur two notes"
  },
