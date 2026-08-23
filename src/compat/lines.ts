@@ -102,6 +102,7 @@ export interface AbcElement {
   barNumber?: number;
   /** A tempo whose rate came from its WORD and is therefore not printed — see `tempoElement`. */
   suppressBpm?: boolean;
+  suppress?: boolean;
   /**
    * A `style` element's note head — abcjs's `appendElement('style', null, null, {head:
    * params.style})` (`tune-builder.js:971-972`). The field is literally named `head`
@@ -748,6 +749,10 @@ export const tempoElement = (
     e.suppressBpm = true;
     if (duration !== null) e.duration = duration;
   }
+  // …**AND `%%printtempo false` PUBLISHES A FLAG, NOT AN ABSENCE.** `parseTempo` stamps
+  // `tempo.suppress` and the field stays on `metaText.tempo` and in the stream — what
+  // changes is that the ENGRAVER draws no mark. See `Tempo.suppress`.
+  if (tempo.suppress === true) e.suppress = true;
   if (tempo.postText != null) e.postString = tempo.postText;
   byRange?.set(range.start, e);
   return e;

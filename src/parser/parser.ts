@@ -925,7 +925,15 @@ const TEMPO_WORDS: Readonly<Record<string, number>> = {
   prestissimo: 210,
 }
 
-function parseTempo(content: string): Tempo | null {
+function parseTempo(
+  content: string,
+  /**
+   * `multilineVars.printTempo === false` — `%%printtempo 0` or `false`. Stamped ON THE
+   * TEMPO because the directive is running state, so one written between two `Q:` fields
+   * governs only the second (`abc_parse_header.js:333-334`). See `Tempo.suppress`.
+   */
+  suppress = false,
+): Tempo | null {
   // A `%` starts a comment; strip before parsing, or `% tempo` reads as a stray word.
   const spec = (content.split('%')[0] ?? '').trim()
 
@@ -970,9 +978,17 @@ function parseTempo(content: string): Tempo | null {
    */
   if (bpm === null && postText === null && text !== null) {
     const word = TEMPO_WORDS[text.toLowerCase()]
-    if (word !== undefined) return { beatUnit, bpm: word, text, postText, suppressBpm: true }
+    if (word !== undefined)
+      return {
+        beatUnit,
+        bpm: word,
+        text,
+        postText,
+        suppressBpm: true,
+        ...(suppress ? { suppress: true } : {}),
+      }
   }
-  return { beatUnit, bpm, text, postText }
+  return { beatUnit, bpm, text, postText, ...(suppress ? { suppress: true } : {}) }
 }
 
 /**
@@ -2427,6 +2443,8 @@ interface Formatting {
   newPageAt: number | null
   barsPerStaff: number | null
   partsBox: boolean
+  /** `%%printtempo` — see `ScoreBuilder.printTempo`. */
+  printTempo: boolean | undefined
   jazzChords: boolean
   keywarn: boolean
   percMap: Record<string, PercMapEntry>
@@ -2665,6 +2683,11 @@ class ScoreBuilder {
   barsPerStaff: number | null = null
   newPageAt: number | null = null
   partsBox = false
+  /**
+   * `%%printtempo` — `multilineVars.printTempo`. UNDEFINED until a directive says
+   * otherwise, and only the literal `false` suppresses; see `Tempo.suppress`.
+   */
+  printTempo: boolean | undefined = undefined
   jazzChords = false
   /** `%%keywarn 0` stops a mid-tune `K:` being DRAWN — see `Score.keywarn`. */
   keywarn = true
@@ -2695,6 +2718,7 @@ class ScoreBuilder {
       newPage: this.newPage,
       newPageAt: this.newPageAt,
       partsBox: this.partsBox,
+      printTempo: this.printTempo,
       jazzChords: this.jazzChords,
       keywarn: this.keywarn,
       percMap: this.percMap,
@@ -2727,6 +2751,7 @@ class ScoreBuilder {
     this.newPageAt = f.newPageAt
     this.barsPerStaff = f.barsPerStaff
     this.partsBox = f.partsBox
+    this.printTempo = f.printTempo
     this.jazzChords = f.jazzChords
     this.percMap = f.percMap
     if (f.drumMap !== undefined) this.drumMap = f.drumMap
@@ -3992,6 +4017,21 @@ class Parser {
       return
     }
     /**
+     * **`%%printtempo 0` / `false` — THE `Q:` MARK IS NOT DRAWN.**
+     * `addMultilineVarBool('printTempo', …)` takes `true`/`false` OR abcjs's
+     * `oneParameter` `0`/`1` and reduces the latter with `=== 1`
+     * (`abc_parse_directive.js:437-446`, `:917-920`). Running state, read at each `Q:`, so
+     * one written between two of them governs only the second — see `Tempo.suppress`.
+     */
+    const printTempo = /^printtempo\s+(\S+)\s*$/.exec(body)
+    if (printTempo?.[1] !== undefined) {
+      const word = printTempo[1]
+      if (word === 'true' || word === 'false')
+        this.ensureScore(start).printTempo = word === 'true'
+      else if (word === '0' || word === '1') this.ensureScore(start).printTempo = word === '1'
+      return
+    }
+    /**
      * **THE FIVE POSITION DIRECTIVES** — `%%vocal`, `%%dynamic`, `%%gchord`, `%%ornament`
      * and `%%volume`, each `addMultilineVarOneParamChoice(<x>Position, cmd, tokens,
      * positionChoices)` (`abc_parse_directive.js:824-828`). Running state on the tune,
@@ -4273,13 +4313,13 @@ class Parser {
         // It still changes the tempo where it stands, so it is recorded as a change too —
         // `tempoInline` is what lets audio take the one and not the other.
         if (builder.tempo === null) {
-          builder.tempo = parseTempo(value)
+          builder.tempo = parseTempo(value, builder.printTempo === false)
           builder.tempoSourceRange = range
           builder.tempoInline = inline
           if (inline && builder.bodyStarted)
-            builder.voice.setTempoChange(parseTempo(value), range)
+            builder.voice.setTempoChange(parseTempo(value, builder.printTempo === false), range)
         } else if (builder.bodyStarted)
-          builder.voice.setTempoChange(parseTempo(value), range)
+          builder.voice.setTempoChange(parseTempo(value, builder.printTempo === false), range)
         return
       }
       case 'w': {

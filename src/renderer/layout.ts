@@ -3157,6 +3157,19 @@ function layoutTempo(
   /** Where the `Q:` was written — the join to the projection's own tempo element. */
   range?: SourceRange | null,
 ): LayoutElement | null {
+  /**
+   * **`%%printtempo false` — THE MARK IS NOT DRAWN, AND THE TWO SITES DIFFER.**
+   *
+   * The HEADER tempo is skipped outright: `if (!this.tempoSet && tempo && !tempo.suppress)`
+   * builds no element at all (`abstract-engraver.js:263`). A MID-TUNE `[Q:]` still builds
+   * its `AbsoluteElement` and simply gets no `TempoElement` child —
+   * `if (!elem.suppress) abselem3.addFixedX(…)` (`:352-356`) — so it is an EMPTY element
+   * that still takes its turn in the stream and still spends its `minspacing`.
+   *
+   * Returning `null` is the header shape; the caller for a mid-tune change hands back an
+   * empty element instead. See `Tempo.suppress`.
+   */
+  if (tempo.suppress === true) return null
   const glyphs: PlacedGlyph[] = []
   const texts: PlacedText[] = []
   const lines: PlacedLine[] = []

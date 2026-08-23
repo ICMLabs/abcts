@@ -489,6 +489,25 @@ export interface Tempo {
    * 180 — the default — because nothing in the audio corpus writes a bare tempo word.
    */
   readonly suppressBpm?: boolean
+  /**
+   * **`%%printtempo false` — THE MARK IS NOT DRAWN, AND THAT IS NOT THE SAME AS ABSENT.**
+   *
+   * `parseTempo` stamps `tempo.suppress = true` when `multilineVars.printTempo === false`
+   * (`abc_parse_header.js:333-334`), and the engraver reads it in TWO places that behave
+   * DIFFERENTLY:
+   *
+   *   • the HEADER tempo is skipped outright — `if (!this.tempoSet && tempo &&
+   *     !tempo.suppress)`, so no element is built at all (`abstract-engraver.js:263`);
+   *   • a MID-TUNE `[Q:]` still builds its `AbsoluteElement` and simply gets no
+   *     `TempoElement` child — `if (!elem.suppress) abselem3.addFixedX(…)`
+   *     (`:352-356`, under abcjs's own comment "For %%printtempo after initial header").
+   *
+   * So a suppressed mid-tune tempo is an EMPTY element that still takes its turn in the
+   * stream and still spends its `minspacing`, where a suppressed header one is nothing.
+   * The flag rides the tempo rather than the tune because the directive is running state:
+   * `%%printtempo` between two `Q:` fields governs only the second.
+   */
+  readonly suppress?: boolean
 }
 
 // ─── Events ──────────────────────────────────────────────────────────────────
