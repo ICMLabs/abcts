@@ -1,0 +1,34 @@
+X:1
+T:Voice Style X
+L:1/8
+K:C
+V:1 style=x
+CDEF|GABc|
+
+X:2
+T:Voice Style Harmonic
+L:1/8
+K:C
+V:1 style=harmonic
+CDEF|GABc|
+
+X:3
+T:Voice Style Rhythm
+L:1/8
+K:C
+V:1 style=rhythm
+CDEF|GABc|
+
+X:4
+T:Voice Style Triangle
+L:1/8
+K:C
+V:1 style=triangle
+CDEF|GABc|
+
+X:5
+T:Voice Style Normal
+L:1/8
+K:C
+V:1 style=normal
+CDEF|GABc|

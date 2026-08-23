@@ -314,6 +314,20 @@ const PASSING: readonly string[] = [
   "abcts-visualtranspose-tune2",
   "abcts-visualtranspose-tune3",
   /**
+   * `abcts-voice-style.abc` — `V:… style=`, the first of the three modifiers the V:
+   * enumeration left as a FEATURE. All five shapes, one voice each.
+   *
+   * ⚠️ **ONE VOICE ON PURPOSE.** abcjs's `this.style` leaks into every voice engraved after
+   * the one that set it — `pushCrossLineElems` saves the colour and the scale per voice and
+   * not the style — and that is a running value in engraving order, which this parser does
+   * not model. See the `V:` arm's `ponytail:`.
+   */
+  "abcts-voice-style-tune0",
+  "abcts-voice-style-tune1",
+  "abcts-voice-style-tune2",
+  "abcts-voice-style-tune3",
+  "abcts-voice-style-tune4",
+  /**
    * `abcts-midi.abc` — all 53 `%%MIDI` sub-commands abcjs's eleven `midiCmdParam*` tables
    * name, one tune each, plus a negative parameter, a spaced fraction and a `/`-bearing
    * drum pattern. NOT ONE OF THEM MOVES THE DRAWING, which is the honest outcome of the

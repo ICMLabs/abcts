@@ -1752,6 +1752,21 @@
  "repo/abcts-voice-modifiers-tune4": {
   "title": "Clef Alto Caret Eight"
  },
+ "repo/abcts-voice-style-tune0": {
+  "title": "Voice Style X"
+ },
+ "repo/abcts-voice-style-tune1": {
+  "title": "Voice Style Harmonic"
+ },
+ "repo/abcts-voice-style-tune2": {
+  "title": "Voice Style Rhythm"
+ },
+ "repo/abcts-voice-style-tune3": {
+  "title": "Voice Style Triangle"
+ },
+ "repo/abcts-voice-style-tune4": {
+  "title": "Voice Style Normal"
+ },
  "repo/abcts-vskip-tune0": {
   "title": "vskip between lines"
  },

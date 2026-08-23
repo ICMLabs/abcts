@@ -95,6 +95,7 @@ const PASSING: readonly string[] = [
   "abcts-ledger-gaps-2",
   "abcts-ledger-gaps-3",
   "abcts-ledger-gaps-4",
+  "abcts-voice-style",
   "abcts-midi",
   "abcts-voice-modifiers",
   "abcts-last-bar",

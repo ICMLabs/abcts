@@ -427,11 +427,12 @@ const WITHIN: Readonly<Record<string, number>> = {
   // …and `abcts-last-bar.abc` is the 187th — `checkLastBarX`, which that enumeration's own
   // control found before any modifier did, and `abcts-voice-modifiers.abc` the 188th —
   // the three defects the modifiers themselves found. `abcts-midi.abc` is the 189th — 56
-  // tunes, one per `%%MIDI` sub-command, none of which moves a note.
-  "0.05": 189,
-  "1": 189,
-  "5": 189,
-  "25": 189,
+  // tunes, one per `%%MIDI` sub-command, none of which moves a note, and
+  // `abcts-voice-style.abc` the 190th.
+  "0.05": 190,
+  "1": 190,
+  "5": 190,
+  "25": 190,
 };
 
 const names = readdirSync(fixturesDir)

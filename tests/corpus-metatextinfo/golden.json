@@ -1525,6 +1525,36 @@
    "endChar": 381
   }
  },
+ "repo/abcts-voice-style-tune0": {
+  "title": {
+   "startChar": 4,
+   "endChar": 19
+  }
+ },
+ "repo/abcts-voice-style-tune1": {
+  "title": {
+   "startChar": 58,
+   "endChar": 80
+  }
+ },
+ "repo/abcts-voice-style-tune2": {
+  "title": {
+   "startChar": 126,
+   "endChar": 146
+  }
+ },
+ "repo/abcts-voice-style-tune3": {
+  "title": {
+   "startChar": 190,
+   "endChar": 212
+  }
+ },
+ "repo/abcts-voice-style-tune4": {
+  "title": {
+   "startChar": 258,
+   "endChar": 278
+  }
+ },
  "repo/abcts-vskip-tune0": {
   "title": {
    "startChar": 364,

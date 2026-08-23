@@ -3930,6 +3930,37 @@ class Parser {
         if (bare !== null) builder.voiceFor(id).staffLineOverride = bare
         const stems = stemModifier(value)
         if (stems !== null) builder.voiceFor(id).stemDirection = stems
+        /**
+         * **`V:… style=` IS THE VOICE'S STANDING NOTEHEAD SHAPE** — `createVoice` appends
+         * a `style` element carrying `params.style` at the head of every line of that
+         * voice (`tune-builder.js:979-980`), which the engraver reads as `this.style` for
+         * everything after. The comment above this arm has claimed `style=` was read since
+         * the arm was written and it was not: `V:1 style=x` drew ordinary heads, 4705
+         * bytes short of abcjs's.
+         *
+         * The same `setNoteStyle` the `K:` arm calls, and NOT inline: the element is
+         * appended at the line's head, so it applies to the line the field opens.
+         *
+         * ⚠️ **AND IN abcjs IT LEAKS INTO EVERY VOICE ENGRAVED AFTER IT.** `this.style` is
+         * plain engraver state: `pushCrossLineElems`/`popCrossLineElems` save and restore
+         * the slurs, the ties, the endings, the COLOUR and the SCALE per voice, and not the
+         * style (`abstract-engraver.js:92-107`). So a voice with no style of its own
+         * inherits whatever the last one left. Measured on `[V:1]…\n[V:2 style=x]…` over two
+         * lines: voice 2's x heads reach voice 1's SECOND line, and on `V:1 style=x` the
+         * lower staff draws x heads it never asked for.
+         *
+         * ponytail: not reproduced. The leak is a running value in (line, staff, voice)
+         * ENGRAVING order, and this parser resolves the style per voice at parse time —
+         * where the source order is the engraving order only for interleaved `[V:…]` lines
+         * and not for a tune written one whole voice at a time. Reproducing it means moving
+         * the style out of `VoiceBuilder` and re-asserting it at each line head, which is
+         * a model change, not a patch. A SINGLE-voice tune is byte-exact in all five
+         * styles, which is what `abcts-voice-style.abc` gates; a multi-voice one is closer
+         * than it was (24654 bytes against abcjs's 25020, from a 20315 baseline) and still
+         * wrong.
+         */
+        const voiceStyle = styleModifier(value)
+        if (voiceStyle !== null) builder.voiceFor(id).setNoteStyle(voiceStyle, false)
         const name = voiceLabel(value, ['name', 'nm'])
         if (name !== undefined) builder.voiceFor(id).name = name
         const subname = voiceLabel(value, ['subname', 'sname', 'snm'])

@@ -6283,6 +6283,111 @@
   ],
   "bottomText": []
  },
+ "repo/abcts-voice-style-tune0": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Voice Style X",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 4,
+    "endChar": 19,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-voice-style-tune1": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Voice Style Harmonic",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 58,
+    "endChar": 80,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-voice-style-tune2": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Voice Style Rhythm",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 126,
+    "endChar": 146,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-voice-style-tune3": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Voice Style Triangle",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 190,
+    "endChar": 212,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-voice-style-tune4": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Voice Style Normal",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 258,
+    "endChar": 278,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
  "repo/abcts-vskip-tune0": {
   "topText": [
    {

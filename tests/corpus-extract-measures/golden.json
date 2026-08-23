@@ -4258,6 +4258,68 @@
    "hasPickup": true
   }
  ],
+ "repo/abcts-voice-style": [
+  {
+   "header": "X:1\nT:Voice Style X\nL:1/8\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    },
+    {
+     "abc": "GABc|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "X:2\nT:Voice Style Harmonic\nL:1/8\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    },
+    {
+     "abc": "GABc|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "X:3\nT:Voice Style Rhythm\nL:1/8\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    },
+    {
+     "abc": "GABc|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "X:4\nT:Voice Style Triangle\nL:1/8\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    },
+    {
+     "abc": "GABc|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "X:5\nT:Voice Style Normal\nL:1/8\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    },
+    {
+     "abc": "GABc|"
+    }
+   ],
+   "hasPickup": true
+  }
+ ],
  "repo/abcts-vskip": [
   {
    "header": "X:1\nT:vskip between lines\nL:1/4\nM:4/4\nK:C\n",
