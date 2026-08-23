@@ -1409,6 +1409,8 @@ class VoiceBuilder {
   staffLineOverride: number | null = null
   /** `V:… stems=up|down` — see `Voice.stemDirection`. */
   stemDirection: 'up' | 'down' | null = null
+  /** `V:… scale=` / `cue=` — see `Voice.scale`. */
+  scale: number | null = null
   /** `%%voicecolor` — see `Voice.color`. */
   color: string | null = null
   clef: Clef | null = null
@@ -2344,6 +2346,7 @@ class VoiceBuilder {
       clef: this.clef,
       staffLineOverride: this.staffLineOverride,
       stemDirection: this.stemDirection,
+      scale: this.scale,
       color: this.color,
       name: this.name,
       subname: this.subname,
@@ -4389,6 +4392,17 @@ class Parser {
          */
         const voiceStyle = styleModifier(value)
         if (voiceStyle !== null) builder.voiceFor(id).setNoteStyle(voiceStyle, false)
+        /**
+         * **`scale=` AND `cue=` ARE ONE VALUE** — `voiceScale`. `cue=on` is `0.6` and
+         * ANYTHING ELSE IS `1` (`abc_parse_key_voice.js:809-815`), so `cue=off` declares a
+         * scale rather than clearing one, which is why the two arms are ordered: a `cue=`
+         * written after a `scale=` overrides it, exactly as abcjs's switch does.
+         */
+        const voiceScale = /(?:^|\s)scale=([\d.]+)/i.exec(value)?.[1]
+        if (voiceScale !== undefined && Number.isFinite(Number(voiceScale)))
+          builder.voiceFor(id).scale = Number(voiceScale)
+        const cue = /(?:^|\s)cue=(\S+)/i.exec(value)?.[1]
+        if (cue !== undefined) builder.voiceFor(id).scale = cue === 'on' ? 0.6 : 1
         const name = voiceLabel(value, ['name', 'nm'])
         if (name !== undefined) builder.voiceFor(id).name = name
         const subname = voiceLabel(value, ['subname', 'sname', 'snm'])

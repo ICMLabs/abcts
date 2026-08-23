@@ -7028,6 +7028,258 @@
   ],
   "bottomText": []
  },
+ "repo/abcts-voice-scale-tune0": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Scale Unbeamed",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 4,
+    "endChar": 20,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-voice-scale-tune1": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Cue Unbeamed",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 63,
+    "endChar": 77,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-voice-scale-tune2": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Scale Beamed",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 117,
+    "endChar": 131,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-voice-scale-tune3": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Cue Beamed",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 172,
+    "endChar": 184,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-voice-scale-tune4": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Scale Rests",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 222,
+    "endChar": 235,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-voice-scale-tune5": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Scale Dotted",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 275,
+    "endChar": 289,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-voice-scale-tune6": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Scale Graces",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 330,
+    "endChar": 344,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-voice-scale-tune7": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Cue Flags",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 394,
+    "endChar": 405,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-voice-scale-tune8": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Scale Chords",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 445,
+    "endChar": 459,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-voice-scale-tune9": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Scale One",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 505,
+    "endChar": 516,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-voice-scale-tune10": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Cue Off",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 558,
+    "endChar": 567,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-voice-scale-tune11": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Two Voices One Scaled",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 609,
+    "endChar": 632,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
  "repo/abcts-voice-style-tune0": {
   "topText": [
    {

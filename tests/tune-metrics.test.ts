@@ -63,6 +63,8 @@ const table = (): Row[] =>
 
 /** Tunes whose every section agrees. Grows, never shrinks. */
 const PASSING: readonly string[] = [
+  /** `abcts-voice-scale` — abcjs's `voiceScale`, exact on arrival. */
+  "repo/abcts-voice-scale-tune0",
   /**
    * `abcts-positioning` — the five `positionChoices` directives. Exact on arrival; its
    * measure widths are untouched by any of them, which is the point of the fixture being

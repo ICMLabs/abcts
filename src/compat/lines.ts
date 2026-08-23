@@ -103,6 +103,7 @@ export interface AbcElement {
   /** A tempo whose rate came from its WORD and is therefore not printed — see `tempoElement`. */
   suppressBpm?: boolean;
   suppress?: boolean;
+  size?: number;
   /**
    * A `style` element's note head — abcjs's `appendElement('style', null, null, {head:
    * params.style})` (`tune-builder.js:971-972`). The field is literally named `head`
@@ -2359,7 +2360,7 @@ export function projectionOf(
    * `K:A` then `[K:G] |` and abcjs answers NOTHING for that `[K:G]`.
    */
 /** What `createVoice` puts at the head of a voice, in its own order (`:971-998`). */
-const VOICE_FURNITURE = new Set(["style", "stem", "color"]);
+const VOICE_FURNITURE = new Set(["style", "stem", "color", "scale"]);
 
   const hoistLeadingStaffFields = (voiceLines: AbcElement[][]): void => {
     const STAFF_FIELD = new Set([
@@ -2955,6 +2956,19 @@ const VOICE_FURNITURE = new Set(["style", "stem", "color"]);
               firstOfStaff?.splice(0, 0, { el_type: "stem", direction: "up" });
             head.push({ el_type: "stem", direction: "down" });
           }
+          /**
+           * …**AND THE `scale` COMES BETWEEN THE STEM AND THE COLOUR** — `if (params.scale)
+           * appendElement('scale', null, null, {size: params.scale})` immediately before
+           * the `color` arm (`tune-builder.js:990-993`), and like the `style` it is on
+           * EVERY line of the voice because `createVoice` runs per line.
+           *
+           * ⚠️ **AND THE GUARD IS TRUTHY, SO `cue=off` STILL EMITS ONE.** That arm sets
+           * `scale = 1`, which is truthy — only an absent `scale=`/`cue=` and a literal
+           * `scale=0` produce no element at all.
+           */
+          const voiceScale = score.voices[k]?.scale;
+          if (voiceScale != null && voiceScale !== 0)
+            head.push({ el_type: "scale", size: voiceScale });
           const color = score.voices[k]?.color;
           if (color != null) head.push({ el_type: "color", color });
           voice.splice(0, 0, ...head);

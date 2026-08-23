@@ -1,0 +1,85 @@
+X:1
+T:Scale Unbeamed
+L:1/8
+V:1 scale=1.5
+K:C
+C2 D2 E2 F2|
+
+X:2
+T:Cue Unbeamed
+L:1/8
+V:1 cue=on
+K:C
+C2 D2 E2 F2|
+
+X:3
+T:Scale Beamed
+L:1/8
+V:1 scale=1.5
+K:C
+CDEF|GABc|
+
+X:4
+T:Cue Beamed
+L:1/8
+V:1 cue=on
+K:C
+CDEF|GABc|
+
+X:5
+T:Scale Rests
+L:1/8
+V:1 scale=1.5
+K:C
+z2 C2 z4|
+
+X:6
+T:Scale Dotted
+L:1/8
+V:1 scale=1.5
+K:C
+C3 D C3 D|
+
+X:7
+T:Scale Graces
+L:1/8
+V:1 scale=1.5
+K:C
+{ab}C2 D2 {c}E2 F2|
+
+X:8
+T:Cue Flags
+L:1/8
+V:1 cue=on
+K:C
+C2 D/ E/ F2|
+
+X:9
+T:Scale Chords
+L:1/8
+V:1 scale=1.5
+K:C
+[CEG]2 [DFA]2|
+
+X:10
+T:Scale One
+L:1/8
+V:1 scale=1
+K:C
+C2 D2 E2 F2|
+
+X:11
+T:Cue Off
+L:1/8
+V:1 cue=off
+K:C
+C2 D2 E2 F2|
+
+X:12
+T:Two Voices One Scaled
+L:1/8
+V:1 scale=0.6
+V:2
+K:C
+[V:1]CDEF|GABc|
+[V:2]C4|C4|

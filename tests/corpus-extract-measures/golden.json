@@ -4819,6 +4819,125 @@
    "hasPickup": true
   }
  ],
+ "repo/abcts-voice-scale": [
+  {
+   "header": "X:1\nT:Scale Unbeamed\nL:1/8\nV:1 scale=1.5\nK:C\n",
+   "measures": [
+    {
+     "abc": "C2 D2 E2 F2|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:2\nT:Cue Unbeamed\nL:1/8\nV:1 cue=on\nK:C\n",
+   "measures": [
+    {
+     "abc": "C2 D2 E2 F2|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:3\nT:Scale Beamed\nL:1/8\nV:1 scale=1.5\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    },
+    {
+     "abc": "GABc|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "X:4\nT:Cue Beamed\nL:1/8\nV:1 cue=on\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    },
+    {
+     "abc": "GABc|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "X:5\nT:Scale Rests\nL:1/8\nV:1 scale=1.5\nK:C\n",
+   "measures": [
+    {
+     "abc": "z2 C2 z4|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:6\nT:Scale Dotted\nL:1/8\nV:1 scale=1.5\nK:C\n",
+   "measures": [
+    {
+     "abc": "C3 D C3 D|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:7\nT:Scale Graces\nL:1/8\nV:1 scale=1.5\nK:C\n",
+   "measures": [
+    {
+     "abc": "{ab}C2 D2 {c}E2 F2|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:8\nT:Cue Flags\nL:1/8\nV:1 cue=on\nK:C\n",
+   "measures": [
+    {
+     "abc": "C2 D/ E/ F2|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "X:9\nT:Scale Chords\nL:1/8\nV:1 scale=1.5\nK:C\n",
+   "measures": [
+    {
+     "abc": "[CEG]2 [DFA]2|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "X:10\nT:Scale One\nL:1/8\nV:1 scale=1\nK:C\n",
+   "measures": [
+    {
+     "abc": "C2 D2 E2 F2|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:11\nT:Cue Off\nL:1/8\nV:1 cue=off\nK:C\n",
+   "measures": [
+    {
+     "abc": "C2 D2 E2 F2|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:12\nT:Two Voices One Scaled\nL:1/8\nV:1 scale=0.6\nV:2\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    },
+    {
+     "abc": "GABc|"
+    }
+   ],
+   "hasPickup": true
+  }
+ ],
  "repo/abcts-voice-style": [
   {
    "header": "X:1\nT:Voice Style X\nL:1/8\nK:C\n",

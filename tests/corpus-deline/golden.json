@@ -3195,6 +3195,106 @@
   "L0 s1 kept=key,clef",
   "L0 s1 v0 note@445..449 note@449..452 bar@452..453"
  ],
+ "repo/abcts-voice-scale-tune0": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 scale@undefined..undefined note@45..48 note@48..51 note@51..54 note@54..56 bar@56..57"
+ ],
+ "repo/abcts-voice-scale-tune1": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 scale@undefined..undefined note@99..102 note@102..105 note@105..108 note@108..110 bar@110..111"
+ ],
+ "repo/abcts-voice-scale-tune2": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 scale@undefined..undefined note@156..157 note@157..158 note@158..159 note@159..160 bar@160..161 note@161..162 note@162..163 note@163..164 note@164..165 bar@165..166"
+ ],
+ "repo/abcts-voice-scale-tune3": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 scale@undefined..undefined note@206..207 note@207..208 note@208..209 note@209..210 bar@210..211 note@211..212 note@212..213 note@213..214 note@214..215 bar@215..216"
+ ],
+ "repo/abcts-voice-scale-tune4": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 scale@undefined..undefined note@260..263 note@263..266 note@266..268 bar@268..269"
+ ],
+ "repo/abcts-voice-scale-tune5": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 scale@undefined..undefined note@314..317 note@317..319 note@319..322 note@322..323 bar@323..324"
+ ],
+ "repo/abcts-voice-scale-tune6": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 scale@undefined..undefined note@369..376 note@376..379 note@379..385 note@385..387 bar@387..388"
+ ],
+ "repo/abcts-voice-scale-tune7": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 scale@undefined..undefined note@427..430 note@430..433 note@433..436 note@436..438 bar@438..439"
+ ],
+ "repo/abcts-voice-scale-tune8": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 scale@undefined..undefined note@484..491 note@491..497 bar@497..498"
+ ],
+ "repo/abcts-voice-scale-tune9": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 scale@undefined..undefined note@539..542 note@542..545 note@545..548 note@548..550 bar@550..551"
+ ],
+ "repo/abcts-voice-scale-tune10": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 scale@undefined..undefined note@590..593 note@593..596 note@596..599 note@599..601 bar@601..602"
+ ],
+ "repo/abcts-voice-scale-tune11": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 scale@undefined..undefined note@666..667 note@667..668 note@668..669 note@669..670 bar@670..671 note@671..672 note@672..673 note@673..674 note@674..675 bar@675..676",
+  "L0 s1 kept=key,clef",
+  "L0 s1 v0 note@682..684 bar@684..685 note@685..687 bar@687..688"
+ ],
+ "repo/abcts-voice-scale-tune0#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 scale@undefined..undefined note@45..48 note@48..51 note@51..54 note@54..56 bar@56..57"
+ ],
+ "repo/abcts-voice-scale-tune1#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 scale@undefined..undefined note@99..102 note@102..105 note@105..108 note@108..110 bar@110..111"
+ ],
+ "repo/abcts-voice-scale-tune2#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 scale@undefined..undefined note@156..157 note@157..158 note@158..159 note@159..160 bar@160..161 note@161..162 note@162..163 note@163..164 note@164..165 bar@165..166"
+ ],
+ "repo/abcts-voice-scale-tune3#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 scale@undefined..undefined note@206..207 note@207..208 note@208..209 note@209..210 bar@210..211 note@211..212 note@212..213 note@213..214 note@214..215 bar@215..216"
+ ],
+ "repo/abcts-voice-scale-tune4#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 scale@undefined..undefined note@260..263 note@263..266 note@266..268 bar@268..269"
+ ],
+ "repo/abcts-voice-scale-tune5#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 scale@undefined..undefined note@314..317 note@317..319 note@319..322 note@322..323 bar@323..324"
+ ],
+ "repo/abcts-voice-scale-tune6#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 scale@undefined..undefined note@369..376 note@376..379 note@379..385 note@385..387 bar@387..388"
+ ],
+ "repo/abcts-voice-scale-tune7#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 scale@undefined..undefined note@427..430 note@430..433 note@433..436 note@436..438 bar@438..439"
+ ],
+ "repo/abcts-voice-scale-tune8#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 scale@undefined..undefined note@484..491 note@491..497 bar@497..498"
+ ],
+ "repo/abcts-voice-scale-tune9#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 scale@undefined..undefined note@539..542 note@542..545 note@545..548 note@548..550 bar@550..551"
+ ],
+ "repo/abcts-voice-scale-tune10#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 scale@undefined..undefined note@590..593 note@593..596 note@596..599 note@599..601 bar@601..602"
+ ],
+ "repo/abcts-voice-scale-tune11#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 scale@undefined..undefined note@666..667 note@667..668 note@668..669 note@669..670 bar@670..671 note@671..672 note@672..673 note@673..674 note@674..675 bar@675..676",
+  "L0 s1 kept=key,clef",
+  "L0 s1 v0 note@682..684 bar@684..685 note@685..687 bar@687..688"
+ ],
  "repo/abcts-voice-style-tune0": [
   "L0 s0 kept=key,clef",
   "L0 s0 v0 style@undefined..undefined note@42..43 note@43..44 note@44..45 note@45..46 bar@46..47 note@47..48 note@48..49 note@49..50 note@50..51 bar@51..52"

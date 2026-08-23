@@ -1399,6 +1399,28 @@ export interface Voice {
    */
   readonly stemDirection: 'up' | 'down' | null
   /**
+   * **`V:… scale=<n>` / `V:… cue=on` — EVERYTHING THIS VOICE DRAWS, SMALLER OR LARGER.**
+   * `null` when the voice declares neither.
+   *
+   * `cue=on` is `scale = 0.6` and anything else is `1` (`abc_parse_key_voice.js:809-815`),
+   * so `cue=off` really does declare a scale of one rather than clearing it. The value
+   * reaches the engraver as an element — `if (params.scale) appendElement('scale', null,
+   * null, {size: params.scale})` at the head of every LINE of the voice, `createVoice`
+   * running per line (`tune-builder.js:990-991`) — and `this.voiceScale = elem.size`
+   * (`abstract-engraver.js:373`).
+   *
+   * ⚠️ **AND UNLIKE `style` IT IS SAVED AND RESTORED PER VOICE.** `pushCrossLineElems`
+   * keeps `scaleByVoice[voiceId]` (`abstract-engraver.js:96`, `:105-106`), so a scaled
+   * voice does not leak into the next one engraved — which is exactly what `style` DOES do
+   * and is why that one is still unreproduced. See `Voice.style`.
+   *
+   * Six things read it: the notehead, the rest, the flag and the dots as a glyph SCALE; the
+   * stem as `Math.round(70 * scale) / 10` — ⚠️ **QUANTISED TO A TENTH OF A PITCH**, abcjs's
+   * own rounding (`abstract-engraver.js:740`); the beam as `stemHeight * voiceScale`; and a
+   * grace as `gracescale * voiceScale`, the two multiplying.
+   */
+  readonly scale: number | null
+  /**
    * `%%voicecolor <colour>` — every mark this voice makes is drawn in it. `null` means the
    * host's `foregroundColor`, which abcjs writes as the literal `currentColor`.
    *

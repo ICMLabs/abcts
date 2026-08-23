@@ -924,6 +924,20 @@ export interface PlacedGlyph {
    * glyph keeps the path that is already byte-exact 363 fixtures over.
    */
   readonly drawPitch?: number
+  /**
+   * **THE PITCH A CSS SCALE PIVOTS ABOUT — abcjs's RAW `params.pitch`, BEFORE `getYCorr`.**
+   *
+   * `scaleExistingElem` takes `transform-origin: params.x, renderer.calcY(params.pitch)`
+   * (`draw/relative.js:68-76`), and `printSymbol` applies the correction on its OWN, so the
+   * pivot sits where the element was declared rather than where its outline was drawn.
+   *
+   * A REST is the case that needs it stated: abcjs declares one at `restpitch` and draws it
+   * a pitch lower (`rests.quarter` has `getYCorr` -1), where this engine bakes the
+   * correction into the glyph's step and reaches the same DRAWN y by a different route. The
+   * two agree everywhere until something scales — `V:… scale=1.5` put the pivot 3.875px
+   * low, one whole pitch, on a byte-exact drawing.
+   */
+  readonly originPitch?: number
   readonly x: number
   readonly y: number
   /** What this glyph is. Absent means it inherits its element's kind. */
@@ -3589,12 +3603,20 @@ function layoutRest(
    * corpus writes.
    */
   measureLength: number | null = null,
+  /**
+   * **abcjs's `voiceScale` — A REST REACHES `createNoteHead` LIKE ANY HEAD.**
+   * `createNoteHead(abselem, c, {verticalPos: restpitch}, {dot, scale: voiceScale})`
+   * (`abstract-engraver.js:600-601`), so the glyph is CSS-scaled, its declared box scales
+   * with it, and the dot's x follows the scaled width — while the DOT itself does not
+   * scale, which is abcjs's own `// TODO scale the dot as well`. See `Voice.scale`.
+   */
+  voiceScale = 1,
 ): LayoutElement {
   // A REST CARRIES ITS GRACES, by the same line that gives it a chord symbol: `createNote`
   // closes its rest/note branch and THEN calls `addGraceNotes`
   // (`abstract-engraver.js:834`). They hang LEFT and push the rest right, exactly as on a
   // note. `(f3 {a})y` was a notehead short of abcjs and 9.6px high on nothing else.
-  const graces = layoutGraces(rest, x, clef, strict)
+  const graces = layoutGraces(rest, x, clef, strict, voiceScale)
   x += graces.width
   // `x` and `y` occupy horizontal space but print nothing; a spacer prints nothing and
   // is not even a rest musically. Both still advance, so following notes stay put.
@@ -3733,7 +3755,7 @@ function layoutRest(
     // glyph's INK box read `rests.quarter` as 3.066 pitch above its anchor against a
     // declared 2.766 — and asymmetrically, since that glyph inks 11.88px up and 9.6 down
     // around a declared ±10.72.
-    const restHalf = (glyphsFor(strict).get(spec.name)?.declaredHeight ?? 0) / 2
+    const restHalf = ((glyphsFor(strict).get(spec.name)?.declaredHeight ?? 0) * voiceScale) / 2
     /**
      * **THE DOTS COME BEFORE THE REST, because they come before the NOTEHEAD too.**
      *
@@ -3749,6 +3771,11 @@ function layoutRest(
     const restBoxPitch = ABCJS_PITCH.restPitch + shift
     const restGlyph = {
       ...glyphAt(spec.name, x, spec.step + shift),
+      // …**AND THE SCALE PIVOTS ON `restpitch`, NOT ON WHERE THE GLYPH LANDS** — see
+      // `PlacedGlyph.originPitch`.
+      ...(voiceScale === 1
+        ? {}
+        : { scale: voiceScale, originPitch: ABCJS_PITCH.restPitch + shift }),
       reserve: [
         stepToY(restBoxPitch - PITCH_ORIGIN) - restHalf,
         stepToY(restBoxPitch - PITCH_ORIGIN) + restHalf,
@@ -3787,7 +3814,10 @@ function layoutRest(
         ...dotGlyphs(
           spec.dots,
           x,
-          glyphsFor(strict).width(spec.name),
+          // `notehead.w` — the rest glyph's SCALED width, since a rest reaches
+          // `createNoteHead` with its own `c`. The dot MOVES with the scale and does not
+          // GROW with it.
+          glyphsFor(strict).width(spec.name) * voiceScale,
           dotOff,
           spec.step + restPitchShift(sharedStaffStem),
           step,
@@ -3802,7 +3832,7 @@ function layoutRest(
       // one only ever knew `restWidth`. `S4-bars-repeats` X:403 is eleven rests and two
       // notes, and one dotted rest 6.45 narrow moved both heads.
       dotRight =
-        glyphsFor(strict).width(spec.name) +
+        glyphsFor(strict).width(spec.name) * voiceScale +
         dotOff +
         step * spec.dots +
         (strict ? glyphsFor(strict).width('augmentationDot') : step)
@@ -4144,6 +4174,11 @@ function layoutNoteheads(
   strict = true,
   /** Dynamics above the staff when the tune sings, below otherwise. See `dynamicAboveStep`. */
   dynamicsAbove = true,
+  /**
+   * **abcjs's `voiceScale` — `V:… scale=` / `cue=`, ONE value for the whole voice.**
+   * Six things read it and they do NOT all read it the same way; see `Voice.scale`.
+   */
+  voiceScale = 1,
 ): LayoutElement {
   /**
    * ⚠️ **AND `hasVocals` IS ONLY THE DEFAULT — ONCE `positioning` EXISTS IT IS NEVER
@@ -4210,6 +4245,20 @@ function layoutNoteheads(
   // metrics come from the active table, so strict spaces at abcjs's widths.
   const head = GLYPHS[headName]
   const headInk = glyphsFor(strict).width(headName)
+  /**
+   * **`notehead.w` — THE HEAD'S OWN WIDTH, SCALED**, which is a different quantity from the
+   * table width beside it. `new RelativeElement(c, shiftheadx, getSymbolWidth(c) * scale,
+   * …)` (`create-note-head.js:35`), and three things read THAT rather than the table: the
+   * STEM's `dx = abselem.heads[0].w` (`abstract-engraver.js:747`), the FLAG's
+   * `xdelta = headx + notehead.w - 0.6` and the DOT's `notehead.w + dotshiftx - 2 + 5 * dot`
+   * (`create-note-head.js:47`, `:53`).
+   *
+   * Everything ELSE keeps the unscaled `headInk` — the ledgers, the advance and the
+   * accidental's declared `w`, which abcjs passes UNSCALED at `:100` while scaling the very
+   * offset it computes one line above. That asymmetry is abcjs's and is reproduced, not
+   * tidied.
+   */
+  const headW = headInk * voiceScale
   const glyphs: PlacedGlyph[] = []
   const lines: PlacedLine[] = []
 
@@ -4219,7 +4268,7 @@ function layoutNoteheads(
   // 65.14, 105.14, 95.14 — because a grace is an `extra` child and the head is a `head`.
   // The pixel gate pairs the i-th notehead of each engine, so emitting them in playing
   // order read as a position error on every graced fixture.
-  const graces = event === null ? null : layoutGraces(event, x, clef, strict)
+  const graces = event === null ? null : layoutGraces(event, x, clef, strict, voiceScale)
   const graceGlyphs = graces?.glyphs ?? []
   const graceLines = graces?.lines ?? []
   const graceWidth = graces?.width ?? 0
@@ -4415,7 +4464,19 @@ function layoutNoteheads(
    */
   const graceFlagDx = (index: number): number =>
     -(roomTaken + (graces?.offsets[index] ?? 0)) +
-    glyphsFor(strict).width('noteheadBlack') * ENGRAVE.graceScale -
+    // …**AND THE WIDTH IN IT IS THE GRACE HEAD'S OWN, WHICH THE VOICE SCALES.**
+    // `xdelta = headx + notehead.w - 0.6` with `notehead.w = getSymbolWidth(c) *
+    // (gracescale * this.voiceScale)` (`create-note-head.js:35`, `:47`) — the COMBINED
+    // scale, unlike the grace's stem and its ledger, which take the local `gracescale`
+    // alone. `abcts-voice-scale` tune 6 is what said so: a `V:… scale=1.5` grace's
+    // `flags.u8th` printed 148.77 against abcjs's 151.71, exactly `9.81 * (0.9 - 0.6)`, and
+    // ONLY on the unbeamed one — a beamed group has no flag to be wrong.
+    // ⚠️ **AND THE TWO SCALES MULTIPLY EACH OTHER BEFORE THE WIDTH.** abcjs's `scale` IS
+    // `gracescale * this.voiceScale`, one number formed once and handed on
+    // (`abstract-engraver.js:495`), where `w * a * b` associates left: `9.81 * 0.6 * 1.5`
+    // is `151.71281374238572` and `9.81 * (0.6 * 1.5)` is abcjs's `151.7128137423857`.
+    // The SVG says so in its own attribute — `scale(0.8999999999999999,…)`.
+    glyphsFor(strict).width('noteheadBlack') * (ENGRAVE.graceScale * voiceScale) -
     spaces(ABCJS_PX.flagStemInset)
   // The ACCIACCATURA SLASH wears `role: 'flag'` too — the role picks the CLASS — so the
   // two are told apart by name. Its own offset is one term shorter and still derived.
@@ -4543,10 +4604,18 @@ function layoutNoteheads(
     const dx = offsetAt[position] ?? 0
     const y = stepToY(step)
     const drawn = headOf(position)
-    const headDeclaredHalf = (glyphsFor(strict).get(drawn)?.declaredHeight ?? 0) / 2
+    // …**AND THE SCALE IS IN THE DECLARED BOX, NOT ONLY IN THE DRAWING.**
+    // `thickness: glyphs.symbolHeightInPitches(c) * scale` (`create-note-head.js:34`), so a
+    // `V:… scale=1.5` head reserves half again as much staff and `cue=on` reserves 0.6 of
+    // it. The `d` is unchanged and the ROOM is not — which is the whole reason the token
+    // counts agreed while the page height did not.
+    const headDeclaredHalf =
+      ((glyphsFor(strict).get(drawn)?.declaredHeight ?? 0) * voiceScale) / 2
     /** `symbolHeightInPitches(c) * scale / 2` — the same half box, in PITCH. */
     const headHalfPitch =
-      (glyphsFor(strict).get(drawn)?.declaredHeight ?? 0) / ENGRAVE.spacePerStep / 2
+      ((glyphsFor(strict).get(drawn)?.declaredHeight ?? 0) * voiceScale) /
+      ENGRAVE.spacePerStep /
+      2
     pendingHeads.push({
       /**
        * **THE OFFSET IS `shiftheadx` AND NOTHING ELSE.** `createNoteHead` builds the head as
@@ -4565,6 +4634,13 @@ function layoutNoteheads(
       ...glyphAt(drawn, headX + dx, step),
       dx,
       role: 'notehead',
+      // …**AND `V:… scale=` IS A CSS SCALE ON THE HEAD, NOT A REDRAWN OUTLINE.** abcjs
+      // passes `scale: this.voiceScale` into `createNoteHead` (`abstract-engraver.js:723`)
+      // and `drawRelativeElement` ends with `if (params.scalex !== 1)
+      // scaleExistingElem(…)` — a `style="transform:scale(…)"` on the element it just made
+      // (`draw/relative.js:68-76`). Its `d` is byte-identical to the unscaled one, which
+      // abcjs's own golden confirms.
+      ...(voiceScale === 1 ? {} : { scale: voiceScale }),
       ...(stepped[position] === undefined ? {} : { dataName: writtenNote(stepped[position].pitch) }),
       reserve: [y - headDeclaredHalf, y + headDeclaredHalf],
       // …AND THE SAME BOX IN PITCH, which is how abcjs states it and how `calcHeight` sums
@@ -4622,7 +4698,11 @@ function layoutNoteheads(
      * `dots.dot` printed 382.414 for abcjs's 384.414.
      */
     const dotShiftX = up && offsetAt.some((d) => d > 0) ? headInk + ENGRAVE.accidentalGap : 0
-    const dxBase = headInk + dotShiftX
+    // `notehead.w + dotshiftx - 2 + 5 * dot` — the SCALED width moves the dot along, and
+    // ⚠️ **THE DOT ITSELF IS NOT SCALED**: abcjs passes a plain `getSymbolWidth("dots.dot")`
+    // with no `scalex`, under its own `// TODO scale the dot as well`
+    // (`create-note-head.js:18`, `:53`). A quirk to reproduce, not to fix.
+    const dxBase = headW + dotShiftX
     for (const step of steps) {
       const pos = chordPosOf(step)
       pendingDots.set(
@@ -4677,8 +4757,10 @@ function layoutNoteheads(
     // only for a beamed stem.
     const baseShift = beamed ? stemHeadOffset : 0
     const anchor = up ? head.anchors.stemUpSE : head.anchors.stemDownNW
-    const [bravuraX, bravuraY] = anchor ?? [up ? headInk : 0, 0]
-    const ax = strict ? baseShift + (up ? headInk - weight / 2 : weight / 2) : bravuraX
+    const [bravuraX, bravuraY] = anchor ?? [up ? headW : 0, 0]
+    // `dx = (dir === "down" || heads.length === 0) ? 0 : abselem.heads[0].w` — the SCALED
+    // head width (`abstract-engraver.js:747`). See `headW`.
+    const ax = strict ? baseShift + (up ? headW - weight / 2 : weight / 2) : bravuraX
     // The near end sits a fraction of a PITCH inside the head — `minpitch + 1/3` going up
     // and `maxpitch - 1/3` going down unbeamed, `± ovalDelta = 1/5` once beamed. Bravura's
     // anchors say 0.168 spaces where a third of a pitch is 0.1667: a hundredth of a pixel
@@ -4753,7 +4835,18 @@ function layoutNoteheads(
      */
     const nearClamp = (v: number): number =>
       (forcedUp !== null ? v : up ? Math.min(v, 0) : Math.max(v, 0)) + headStemShift
-    const farStepRaw = (up ? highest : lowest) + (up ? 1 : -1) * ABCJS_PITCH.stemLength
+    /**
+     * ⚠️ **AND `V:… scale=` QUANTISES THE STEM TO A TENTH OF A PITCH.**
+     * `var stemHeight = Math.round(70 * this.voiceScale) / 10` (`abstract-engraver.js:740`)
+     * — the literal 70, not `this.stemHeight`, and the rounding is abcjs's own. So
+     * `scale=1.5` gives 10.5 exactly while a third would give 2.3, not 2.3333…. At scale 1
+     * it is `Math.round(70)/10`, which is the constant 7 this line already had.
+     */
+    const stemPitches =
+      voiceScale === 1
+        ? ABCJS_PITCH.stemLength
+        : Math.round(ABCJS_PITCH.stemLength * 10 * voiceScale) / 10
+    const farStepRaw = (up ? highest : lowest) + (up ? 1 : -1) * stemPitches
     // headX, not x: an accidental shifts the noteheads, and the stem follows them.
     const stemX = headX + ax
     // The stem starts at the head nearest its own end and runs past the far one, so a
@@ -4845,7 +4938,9 @@ function layoutNoteheads(
         // The furthest head is the one the stem is BUILT from — `heads[0]` up,
         // `heads[len-1]` down — and `offsets` is what displaces it in a seconds chord.
         headX: headX + stemHeadOffset,
-        headWidth: headInk,
+        // `furthestHead.w` — the SCALED width, the same `notehead.w` the unbeamed stem's
+        // own `dx` reads. See `headW`.
+        headWidth: headW,
         headDx: baseShift,
         ...(event?.decorations.includes('beambr2') === true
           ? { beambr: 2 }
@@ -4879,15 +4974,38 @@ function layoutNoteheads(
       // one number to the solved x. See `PlacedGlyph.dx`.
       // Relative to the ELEMENT'S OWN x, which is `headX` — abcjs's anchor is the stemmed
       // head, whose own `dx` is 0 (measured through `RelativeElement.setX`).
-      const flagDx = strict ? (up ? headInk - spaces(ABCJS_PX.flagStemInset) : 0) : null
+      // `xdelta = headx + notehead.w - 0.6` — the SCALED width (`create-note-head.js:47`).
+      const flagDx = strict ? (up ? headW - spaces(ABCJS_PX.flagStemInset) : 0) : null
       const flagX = flagDx === null ? stemX : headX + flagDx
+      /**
+       * ⚠️ **AND A FLAG'S OWN PITCH IS `7 * scale` — UNROUNDED — WHERE THE STEM'S IS
+       * `Math.round(70 * scale) / 10`.** `var pos = pitch + ((dir === "down") ? -7 : 7) *
+       * scale`, then the same middle-line clamp the stem takes when `shouldExtendStem`
+       * (`create-note-head.js:38-45`). The two are the same number at scale 1 and part
+       * company at every other: `cue=on` gives the stem 4.2 and the flag 4.2 as well, but a
+       * third would give 2.3 and 2.333…. THREE quantisations in one feature, and they are
+       * abcjs's.
+       */
+      const flagStep = (up ? highest : lowest) + (up ? 1 : -1) * ABCJS_PITCH.stemLength * voiceScale
+      // …**AND THE CLAMPED PITCH IS WHAT THE SCALE PIVOTS ON TOO** — abcjs hands
+      // `RelativeElement` the `pos` it just clamped, and `scaleExistingElem` reads that very
+      // field (`create-note-head.js:38-48`, `draw/relative.js:71`). Pivoting on the
+      // unclamped one put `cue=on`'s flag origin 3.1px out on an otherwise exact drawing.
+      const flagStepClamped =
+        forcedUp !== null ? flagStep : up ? Math.max(flagStep, 0) : Math.min(flagStep, 0)
+      const flagY = voiceScale === 1 ? tip : stepToY(flagStepClamped)
       if (flag !== undefined)
         pendingFlag = {
           name: flag,
           ...(flagDx === null ? {} : { dx: flagDx }),
           x: flagX,
-          y: tip,
+          y: flagY,
           role: 'flag',
+          // `{scalex: scale, scaley: scale}` on the flag's own RelativeElement
+          // (`create-note-head.js:48`), pivoting on the pitch it was DECLARED at.
+          ...(voiceScale === 1
+            ? {}
+            : { scale: voiceScale, originPitch: flagStepClamped + PITCH_ORIGIN }),
           ...(flagDx === null ? {} : { dx: flagDx }),
         }
     }
@@ -5062,7 +5180,9 @@ function layoutNoteheads(
   // and Bravura's outline is 9.145 — 0.665px per note, which is nothing on a line with
   // slack and the whole error on one without: it is a ROD, and a rod only shows when the
   // spring has been squeezed under it. The flag beside it already read the active table.
-  const headRight = Math.max(0, ...offsetAt) + glyphsFor(strict).width(headName)
+  // …**AND THE HEAD'S OWN CONTRIBUTION IS ITS SCALED WIDTH** — `abselem.w` is a running max
+  // over `dx + w` and the head's `w` is `getSymbolWidth(c) * scale` (`create-note-head.js:35`).
+  const headRight = Math.max(0, ...offsetAt) + glyphsFor(strict).width(headName) * voiceScale
   const headLeft = -Math.min(0, ...offsetAt)
   // A lyric or a chord symbol is CENTRED on the note and counts on BOTH sides. It is the
   // dominant term in sung music: `birth-` makes a 9.81px notehead occupy 21.28px each way.
@@ -5073,7 +5193,8 @@ function layoutNoteheads(
   const flagInk = glyphs
     .filter((g) => g.role === 'flag')
     // `dx + w`, abcjs's own two terms — see `PlacedGlyph.dx`.
-    .map((g) => (g.dx ?? g.x - headX) + glyphsFor(strict).width(g.name))
+    // …and the flag's `w` is `getSymbolWidth(flag) * scale` too (`create-note-head.js:48`).
+    .map((g) => (g.dx ?? g.x - headX) + glyphsFor(strict).width(g.name) * voiceScale)
   /** `getMinWidth(child)` — the element's own `w`, WITHOUT the `minspacing` beside it. */
   const inkWidth = Math.max(headRight, dotWidth, textSpan.right, ...flagInk)
   const ink = inkWidth + ENGRAVE.noteRodGap
@@ -9817,7 +9938,17 @@ function layoutTuplets(
  *
  * Returns the beam rectangles. Stems are rewritten in place in `elements`.
  */
-function layoutBeam(group: readonly StemInfo[], elements: LayoutElement[]): PlacedLine[] {
+function layoutBeam(
+  group: readonly StemInfo[],
+  elements: LayoutElement[],
+  /**
+   * **abcjs's `voiceScale`, WHICH THE BEAM TAKES AS A PLAIN PRODUCT** —
+   * `new BeamElem(this.stemHeight * this.voiceScale, …)` (`abstract-engraver.js:405`), with
+   * NO rounding, where the UNBEAMED stem takes `Math.round(70 * voiceScale) / 10`. The two
+   * paths quantise differently and that is abcjs's own asymmetry. See `Voice.scale`.
+   */
+  voiceScale = 1,
+): PlacedLine[] {
   /**
    * **THE ENDS ARE THE FIRST AND LAST NOTES, NOT THE FIRST AND LAST MEMBERS.** A REST is a
    * member (see `Rest.beamGroup`) and has no heads, where `calcXPos` reads
@@ -9857,7 +9988,7 @@ function layoutBeam(group: readonly StemInfo[], elements: LayoutElement[]): Plac
   // This replaces a fit through the END notes plus a `minStemLength` push. The two agree
   // whenever an end note is the extreme and disagree whenever an interior one is, which
   // in a dense sixteenth run is most of the time.
-  const barpos = ENGRAVE.beamStemHeight - 2
+  const barpos = ENGRAVE.beamStemHeight * voiceScale - 2
   const extreme = up
     ? Math.max(...group.map((stem) => stem.farStep))
     : Math.min(...group.map((stem) => stem.farStep))
@@ -10748,6 +10879,12 @@ function layoutMeasure(
    * it. See `layerSingsOn` and `layoutEvent`.
    */
   isOverlayLayer = false,
+  /**
+   * **`V:… scale=` / `cue=` — abcjs's `voiceScale`, ONE for this whole voice.**
+   * `this.voiceScale = elem.size` at the `scale` element and `scaleByVoice` restores it per
+   * voice (`abstract-engraver.js:373`, `:96`, `:105-106`). See `Voice.scale`.
+   */
+  voiceScale = 1,
 ): MeasureBlock {
   const elements: LayoutElement[] = []
   /**
@@ -11183,6 +11320,7 @@ function layoutMeasure(
        */
       meterInForce === null ? 1 : meterInForce.numerator / meterInForce.denominator,
       isOverlayLayer,
+      voiceScale,
     )
     if (el === null) continue
     if (group !== null && stemOut?.value) {
@@ -12381,7 +12519,10 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
         // `parent$layer`, and ONLY on a line it does not sing on — see `layerSingsOn` and
         // `layoutEvent`'s rest-pitch note.
         (voices[voiceIndex]?.id ?? '').includes('$') &&
-          !layerSingsOn(voiceIndex, lineOfMeasure[measureIndex] ?? 0)
+          !layerSingsOn(voiceIndex, lineOfMeasure[measureIndex] ?? 0),
+        // `V:… scale=` / `cue=` — abcjs's `voiceScale`, restored per voice by
+        // `scaleByVoice` and therefore constant for the whole of this one. See `Voice.scale`.
+        voices[voiceIndex]?.scale ?? 1,
       )
       if (measure.keyChange !== null) keyInForce = measure.keyChange
       if (measure.meterChange != null) meterInForce = measure.meterChange
@@ -13908,7 +14049,7 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
         beamGroup += 1
         // The group's LAST element — see `PlacedLine.beamAt`.
         const beamAt = Math.max(...group.map((m) => m.element))
-        for (const b of layoutBeam(group, elements))
+        for (const b of layoutBeam(group, elements, voices[voiceIndex]?.scale ?? 1))
           beams.push({ ...b, group: beamGroup, beamAt })
       }
 
@@ -18665,6 +18806,8 @@ function layoutEvent(
   measureLength: number | null = null,
   /** Is this an `&` overlay layer on a line it does NOT sing on — only the REST reads it. */
   isOverlayLayer = false,
+  /** abcjs's `voiceScale` — see `Voice.scale`. */
+  voiceScale = 1,
 ): LayoutElement | null {
   const advance = naturalWidth(event.duration, spacingScale)
   // The beam's direction wins over the voice convention: a beam cannot join opposed stems,
@@ -18682,6 +18825,7 @@ function layoutEvent(
       event,
       strict,
       dynamicsAbove,
+      voiceScale,
     )
   }
   if (event.type === 'chord') {
@@ -18696,6 +18840,7 @@ function layoutEvent(
       event,
       strict,
       dynamicsAbove,
+      voiceScale,
     )
   }
   /**
@@ -18729,6 +18874,7 @@ function layoutEvent(
     clef,
     sharedStaff && !isOverlayLayer ? voiceStem : null,
     measureLength,
+    voiceScale,
   )
 }
 
@@ -18825,6 +18971,13 @@ function layoutGraces(
   x: number,
   clef: Clef,
   strict: boolean,
+  /**
+   * **abcjs's `voiceScale`, WHICH MULTIPLIES THE GRACE'S OWN SCALE** —
+   * `scale: gracescale * this.voiceScale` (`abstract-engraver.js:495`) and the beam's
+   * `stemHeight * this.voiceScale` (`:835`). The two are a product, not a max. See
+   * `Voice.scale`.
+   */
+  voiceScale = 1,
 ): {
   glyphs: PlacedGlyph[]
   lines: PlacedLine[]
@@ -18850,7 +19003,8 @@ function layoutGraces(
   /** abcjs's `graceoffsets`, less the room already taken — see the return type. */
   let offsets: readonly number[] = []
   if ('graceNotes' in event && event.graceNotes.length > 0) {
-    const scale = ENGRAVE.graceScale
+    // `gracescale * this.voiceScale` — a PRODUCT (`abstract-engraver.js:495`).
+    const scale = ENGRAVE.graceScale * voiceScale
     const graceSteps = event.graceNotes.map((p) => pitchToStep(p, clef))
 
     // A GROUP OF MORE THAN ONE GRACE IS BEAMED, and that changes three things at once —
@@ -18870,7 +19024,21 @@ function layoutGraces(
     const graceDeclaredHalf = (glyphsFor(strict).get('noteheadBlack')?.declaredHeight ?? 0) / 2
     // `stemHeight = Math.round(this.stemHeight * graceScaleStem)` — 9.5 * 0.7 rounded, so
     // a flat 7 PITCH, and the rounding is abcjs's (`abstract-engraver.js:469`).
-    const graceStemPitches = Math.round(ENGRAVE.beamStemHeight * ABCJS_RATIO.graceStemScale)
+    /**
+     * ⚠️ **AND `voiceScale` IS INSIDE THE ROUNDING** — `addGraceNotes` is handed
+     * `this.stemHeight * this.voiceScale` (`abstract-engraver.js:835`) and opens with
+     * `stemHeight = Math.round(stemHeight * graceScaleStem)` (`:469`). So a scaled voice's
+     * grace beam is `round(9.5 * scale * 0.7)`: 7 at scale 1 and **10** at 1.5, not 10.5.
+     * The FOURTH quantisation in this feature, and each of the four rounds a different
+     * product — see `Voice.scale`.
+     *
+     * ⚠️ **AND AN UNBEAMED GRACE'S STEM DOES NOT SCALE AT ALL**: `p2 = gracepitch + 7 *
+     * gracescale` takes the LOCAL `3/5` literal with no `voiceScale` in it (`:513`), like
+     * the ledger below.
+     */
+    const graceStemPitches = Math.round(
+      ENGRAVE.beamStemHeight * voiceScale * ABCJS_RATIO.graceStemScale,
+    )
     // WHERE EACH GRACE SITS IS A BACKWARD WALK, and an accidental widens the gap BEFORE
     // its own grace rather than after it:
     //
@@ -19069,9 +19237,21 @@ function layoutGraces(
       // stems: that pass walks `graceLines` BY INDEX — `graceLines[i] = {...stem, y2:
       // yAt(graceXOf(i) + graceInk)}` — and assumes every entry is a stem. Pushing the
       // ledgers into it moved every grace stem, which the baselines caught.
+      /**
+       * ⚠️ **AND A GRACE'S LEDGER TAKES A LITERAL `0.6` — `voiceScale` NEVER REACHES IT.**
+       * `ledgerLines(abselem, gracepitch, gracepitch, false, getSymbolWidth(…), [], true,
+       * grace.dx - 1, 0.6)` (`abstract-engraver.js:522`), a hard-coded argument where the
+       * grace's own head one line above takes `gracescale * this.voiceScale`. The MAIN
+       * note's ledger is the same shape with a literal `1` (`:850`), so no ledger in a
+       * scaled voice scales at all. Multiplying it through put a `V:… scale=1.5` grace's
+       * ledger at 12.43px against abcjs's 8.29 — and it is the only thing in the whole
+       * feature that does NOT follow the scale.
+       */
       for (const line of ledgerLines(graceStep, gx, 0, graceStep, {
         inset: ENGRAVE.graceLedgerInset,
-        span: (glyphsFor(strict).width('noteheadBlack') + LINE_WEIGHTS.ledgerExtension * 2) * scale,
+        span:
+          (glyphsFor(strict).width('noteheadBlack') + LINE_WEIGHTS.ledgerExtension * 2) *
+          ENGRAVE.graceScale,
       })) {
         graceLedgers.push({ ...line, graceIndex: i, noReserve: true })
       }
@@ -19096,9 +19276,16 @@ function layoutGraces(
          * `visual-tablature-10`. Sign included: pitch runs the other way from y, so the
          * foot of the stem sits 0.775px INSIDE the head and ours had it 1.55 below.
          */
-        y1: stepToY(graceStep + (1 / 3) * scale),
+        // ⚠️ **AND BOTH OFFSETS TAKE THE LOCAL `gracescale`, NOT THE VOICE-SCALED ONE.**
+        // `var gracescale = 3 / 5` is a LOCAL in `addGraceNotes`, and `p1`/`p2` read it
+        // straight (`abstract-engraver.js:467`, `:515-520`) — where the grace HEAD one
+        // line above takes `gracescale * this.voiceScale`. So a `V:… scale=1.5` grace draws
+        // half again as large on a stem that did not move: `1/3 * 0.9` put the foot 0.39px
+        // out, a tenth of a pitch, on an otherwise byte-exact drawing. Same shape as the
+        // ledger above and the unbeamed grace stem beside it.
+        y1: stepToY(graceStep + (1 / 3) * ENGRAVE.graceScale),
         x2: stemX,
-        y2: stepToY(graceStep + ABCJS_PITCH.stemLength * scale),
+        y2: stepToY(graceStep + ABCJS_PITCH.stemLength * ENGRAVE.graceScale),
         thickness: weight,
         role: 'stem',
         // A GRACE'S STEM IS WRITTEN AFTER EVERY GRACE HEAD, not before them. abcjs's own

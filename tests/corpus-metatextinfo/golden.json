@@ -1723,6 +1723,78 @@
    "endChar": 381
   }
  },
+ "repo/abcts-voice-scale-tune0": {
+  "title": {
+   "startChar": 4,
+   "endChar": 20
+  }
+ },
+ "repo/abcts-voice-scale-tune1": {
+  "title": {
+   "startChar": 63,
+   "endChar": 77
+  }
+ },
+ "repo/abcts-voice-scale-tune2": {
+  "title": {
+   "startChar": 117,
+   "endChar": 131
+  }
+ },
+ "repo/abcts-voice-scale-tune3": {
+  "title": {
+   "startChar": 172,
+   "endChar": 184
+  }
+ },
+ "repo/abcts-voice-scale-tune4": {
+  "title": {
+   "startChar": 222,
+   "endChar": 235
+  }
+ },
+ "repo/abcts-voice-scale-tune5": {
+  "title": {
+   "startChar": 275,
+   "endChar": 289
+  }
+ },
+ "repo/abcts-voice-scale-tune6": {
+  "title": {
+   "startChar": 330,
+   "endChar": 344
+  }
+ },
+ "repo/abcts-voice-scale-tune7": {
+  "title": {
+   "startChar": 394,
+   "endChar": 405
+  }
+ },
+ "repo/abcts-voice-scale-tune8": {
+  "title": {
+   "startChar": 445,
+   "endChar": 459
+  }
+ },
+ "repo/abcts-voice-scale-tune9": {
+  "title": {
+   "startChar": 505,
+   "endChar": 516
+  }
+ },
+ "repo/abcts-voice-scale-tune10": {
+  "title": {
+   "startChar": 558,
+   "endChar": 567
+  }
+ },
+ "repo/abcts-voice-scale-tune11": {
+  "title": {
+   "startChar": 609,
+   "endChar": 632
+  }
+ },
  "repo/abcts-voice-style-tune0": {
   "title": {
    "startChar": 4,

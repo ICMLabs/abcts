@@ -112,6 +112,25 @@ const DIVERGENT: readonly string[] = [];
  */
 const PASSING: readonly string[] = [
   /**
+   * **`V:… scale=` AND `cue=` — abcjs's `voiceScale`.** Twelve tunes, one per thing that
+   * reads it: unbeamed and beamed stems, rests, dots, graces, flags, chords, the identity
+   * `scale=1`, `cue=off` (which declares a scale of ONE rather than clearing it) and a
+   * two-voice tune where only the first is scaled. See `Voice.scale` for the four
+   * quantisations, and `tests/positioning.test.ts` for the ladder method.
+   */
+  "abcts-voice-scale-tune0",
+  "abcts-voice-scale-tune1",
+  "abcts-voice-scale-tune2",
+  "abcts-voice-scale-tune3",
+  "abcts-voice-scale-tune4",
+  "abcts-voice-scale-tune5",
+  "abcts-voice-scale-tune6",
+  "abcts-voice-scale-tune7",
+  "abcts-voice-scale-tune8",
+  "abcts-voice-scale-tune9",
+  "abcts-voice-scale-tune10",
+  "abcts-voice-scale-tune11",
+  /**
    * **THE FIVE `positionChoices` DIRECTIVES** — `%%vocal`, `%%dynamic`, `%%gchord`,
    * `%%ornament`, `%%volume`. Eight tunes, byte-exact on arrival; the ten-rung ladder they
    * were built from is in `tests/positioning.test.ts` with abcjs's own numbers.

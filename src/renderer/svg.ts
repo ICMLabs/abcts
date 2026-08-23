@@ -1075,6 +1075,8 @@ export function toSVG(
     trailing = "",
     /** abcjs's `offset` for this glyph, where its producer holds one — see `drawPitch`. */
     drawPitch?: number,
+    /** The pitch a CSS scale pivots about — see `PlacedGlyph.originPitch`. */
+    originPitch?: number,
   ): string => {
     const ink = outline(name);
     /**
@@ -1205,7 +1207,11 @@ export function toSVG(
           scale === undefined || scale === 1
             ? ""
             : ` style="transform:scale(${scale},${scale});transform-origin:` +
-              `${x * PX}px ${y * PX + oy}px;"`;
+              `${x * PX}px ${
+                // …**AND THE PIVOT IS THE DECLARED PITCH WHERE THE PRODUCER STATES ONE** —
+                // `calcY(params.pitch)`, before `getYCorr`. See `PlacedGlyph.originPitch`.
+                originPitch === undefined ? y * PX + oy : -spacesOfPitch(originPitch) * PX + oy
+              }px;"`;
         return (
           `<path${late ? attributes.replace(late, "") : attributes}${named ? ` data-name="${named}"` : ""} ` +
           `d="M ${px} ${py}${ink.path.slice(head[0].length)}"${styleAttr}${late}${trailing}></path>`
@@ -2351,6 +2357,7 @@ export function toSVG(
                   SEL_SLOT,
                   // abcjs's `offset` for this letter — see `PlacedGlyph.drawPitch`.
                   g.drawPitch,
+                g.originPitch,
                 ),
                 rec: {
                   kind: "dynamic",
@@ -2388,6 +2395,7 @@ export function toSVG(
                 "",
                 "",
                 g.drawPitch,
+                g.originPitch,
               ),
             );
           }
@@ -3459,6 +3467,7 @@ export function toSVG(
                 group === null ? g.dataName : "",
                 "",
                 g.drawPitch,
+                g.originPitch,
               ),
             );
           }
@@ -3551,6 +3560,7 @@ export function toSVG(
                   g.dataName,
                   "",
                   g.drawPitch,
+                g.originPitch,
                 ),
               );
             }
@@ -3677,6 +3687,7 @@ export function toSVG(
                 g.dataName,
                 "",
                 g.drawPitch,
+                g.originPitch,
               ),
             );
             // A grace's stem and ledgers follow the LAST glyph carrying its index — the

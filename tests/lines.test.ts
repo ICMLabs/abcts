@@ -111,6 +111,23 @@ const rows = (): Row[] => {
 /** Tunes that agree on EVERY character. Grows, never shrinks. */
 const PASSING: readonly string[] = [
   /**
+   * `abcts-voice-scale` — `V:… scale=` / `cue=`. Twelve tunes, exact on arrival, and the
+   * surface that says a `scale` element belongs to NO character: it is voice furniture
+   * `createVoice` appends at the head of every line, like the `style` and the `stem`.
+   */
+  "repo/abcts-voice-scale-tune0",
+  "repo/abcts-voice-scale-tune1",
+  "repo/abcts-voice-scale-tune10",
+  "repo/abcts-voice-scale-tune11",
+  "repo/abcts-voice-scale-tune2",
+  "repo/abcts-voice-scale-tune3",
+  "repo/abcts-voice-scale-tune4",
+  "repo/abcts-voice-scale-tune5",
+  "repo/abcts-voice-scale-tune6",
+  "repo/abcts-voice-scale-tune7",
+  "repo/abcts-voice-scale-tune8",
+  "repo/abcts-voice-scale-tune9",
+  /**
    * **THE FIVE `positionChoices` DIRECTIVES** — `%%vocal`, `%%dynamic`, `%%gchord`,
    * `%%ornament`, `%%volume`. Exact on arrival on this surface, which is the one that says
    * a directive line belongs to NO element: eight tunes whose `%%` lines sit between the
@@ -556,8 +573,9 @@ describe("tune.lines and getElementFromChar", () => {
     // `abcts-midi.abc` fifty-six, `abcts-voice-style.abc` five and
     // `abcts-key-modifiers.abc` twelve, `abcts-start-char.abc` one, and seventeen tunes of
     // abcjs's own test inputs its harvester had never taken.
-    // 592,653 of 592,653 until `abcts-positioning.abc` added eight tunes on 2026-08-23.
-    expect(agree).toBeGreaterThanOrEqual(598213);
+    // 592,653 of 592,653 until `abcts-positioning.abc` added eight tunes on 2026-08-23,
+    // and 598,213 until `abcts-voice-scale.abc` added twelve more the same day.
+    expect(agree).toBeGreaterThanOrEqual(606481);
   });
 
   /**

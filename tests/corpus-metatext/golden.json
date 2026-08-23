@@ -1906,6 +1906,42 @@
  "repo/abcts-voice-modifiers-tune4": {
   "title": "Clef Alto Caret Eight"
  },
+ "repo/abcts-voice-scale-tune0": {
+  "title": "Scale Unbeamed"
+ },
+ "repo/abcts-voice-scale-tune1": {
+  "title": "Cue Unbeamed"
+ },
+ "repo/abcts-voice-scale-tune2": {
+  "title": "Scale Beamed"
+ },
+ "repo/abcts-voice-scale-tune3": {
+  "title": "Cue Beamed"
+ },
+ "repo/abcts-voice-scale-tune4": {
+  "title": "Scale Rests"
+ },
+ "repo/abcts-voice-scale-tune5": {
+  "title": "Scale Dotted"
+ },
+ "repo/abcts-voice-scale-tune6": {
+  "title": "Scale Graces"
+ },
+ "repo/abcts-voice-scale-tune7": {
+  "title": "Cue Flags"
+ },
+ "repo/abcts-voice-scale-tune8": {
+  "title": "Scale Chords"
+ },
+ "repo/abcts-voice-scale-tune9": {
+  "title": "Scale One"
+ },
+ "repo/abcts-voice-scale-tune10": {
+  "title": "Cue Off"
+ },
+ "repo/abcts-voice-scale-tune11": {
+  "title": "Two Voices One Scaled"
+ },
  "repo/abcts-voice-style-tune0": {
   "title": "Voice Style X"
  },

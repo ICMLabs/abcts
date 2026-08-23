@@ -91,6 +91,8 @@ const table = (): Case[] =>
 
 /** The cases that agree on EVERY row. Shrinks never — see `tests/lines.test.ts`. */
 const PASSING: readonly string[] = [
+  /** `abcts-voice-scale` — abcjs's `voiceScale`, exact on arrival. */
+  "abcts-voice-scale",
   /**
    * `abcts-positioning` — the five `positionChoices` directives, exact on arrival. A
    * whole-element surface, so it is what would catch a positioning change that is
