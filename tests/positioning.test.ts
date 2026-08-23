@@ -28,9 +28,8 @@ import { parseOnly, renderAbc } from "../src/compat/index.js";
  * they travel from a file header into every tune the way a font does, and `el.positioning`
  * is byte-identical to abcjs's on the ten-rung ladder.
  *
- * The LAYOUT half is NOT, and the `.fails` tests are the measurement, so they go RED the
- * moment it lands. Its mechanism is worked out and is smaller than it looks — nine of the
- * nine moving rungs move for ONE reason, and it is not what any of them positions:
+ * **AND THE LAYOUT HALF IS IN — ALL TEN RUNGS OF THE LADDER ARE BYTE-IDENTICAL TO abcjs.**
+ * Nine of the nine that move do so for ONE reason, and it is not what any of them positions:
  *
  * 1. **`containsLyrics` TESTS `=== 'below'`, NOT `!== 'above'`**
  *    (`abstract-engraver.js:114-119`). A `%%ornament above` on a singing tune writes
@@ -52,8 +51,8 @@ import { parseOnly, renderAbc } from "../src/compat/index.js";
  * 4. A chord symbol is `elem.positioning.chordPosition` defaulting to `'above'`, and
  *    `'hidden'` DROPS the element rather than moving it (`add-chord.js:104-108`).
  *
- * So what is owed is a `lyricHeightAbove` lane this engine has never had a producer for,
- * and the three literal-`'below'` tests above. The numbers to land it against are here.
+ * All four are ported. The `lyricHeightAbove` lane — the ladder's FIRST rung, which this
+ * engine had never had a producer for — is `PlacedText.lyricAbove` and `AboveLadder`.
  */
 const positioningOf = (abc: string): unknown[] => {
   const out: unknown[] = [];
@@ -164,24 +163,34 @@ describe("the five positionChoices directives — the parse half", () => {
   });
 });
 
-/** The rendered height, which is what every one of these moves. */
-const height = (abc: string): number => {
-  const svg = (renderAbc("*", abc, { staffwidth: 670 })[0] as { svg?: string })?.svg ?? "";
-  return Number(/height="([\d.]+)"/.exec(svg)?.[1] ?? 0);
-};
+/** The staff's own TOP LINE — what every one of these actually moves. */
+const svgOf = (abc: string): string =>
+  (renderAbc("*", abc, { staffwidth: 670 })[0] as { svg?: string })?.svg ?? "";
 
-describe("the layout half — MEASURED, NOT BUILT", () => {
-  /**
-   * Every number here is abcjs 6.7.0's own, on the control above at `{staffwidth: 670}`.
-   * `%%vocal below` is the DEFAULT and is the one rung that genuinely cannot move — it is
-   * the calibration, and it passes today.
-   */
+const topLine = (abc: string): number =>
+  Number(/<path d="M 15 ([\d.]+) L/.exec(svgOf(abc))?.[1] ?? 0);
+
+/**
+ * ⚠️ **AND THE ROOT `height` IS NOT WHAT MOVES — 216.402 ON ALL TEN RUNGS AND ON THE BARE
+ * TUNE, IN BOTH ENGINES.** The above stack is anchored to the page and the STAFF drops
+ * inside it, so the page is exactly as tall either way. A first cut of these tests asserted
+ * a height delta, took the 22.71px off the top line's diff and encoded it against the wrong
+ * quantity — **a test can carry an inference as firmly as a comment can, and a green one
+ * reads as a checked fact.**
+ */
+describe("the layout half", () => {
+  const TOP_LINE_BARE = 135.54;
+  const TOP_LINE_MOVED = 158.25;
+
   it("`%%vocal below` is the default, so it moves nothing", () => {
-    expect(height(withDirectives("vocal below"))).toBeCloseTo(height(TUNE), 2);
+    expect(topLine(withDirectives("vocal below"))).toBeCloseTo(TOP_LINE_BARE, 2);
+    expect(topLine(TUNE)).toBeCloseTo(TOP_LINE_BARE, 2);
   });
 
-  it.fails("any other position drops the staff 22.71px, via hasVocals", () => {
-    // abcjs: top line 135.54 bare, 158.25 on every one of the nine moving rungs.
+  it("any other position drops the staff 22.71px, through hasVocals", () => {
+    // abcjs's own top line, rung by rung. `%%gchord below` is the exception: its chord
+    // symbol leaves the above stack for the below one, so the staff drops by the lyric
+    // rung alone rather than by lyric-minus-chord.
     for (const d of [
       "vocal above",
       "dynamic above",
@@ -191,25 +200,49 @@ describe("the layout half — MEASURED, NOT BUILT", () => {
       "ornament below",
       "volume above",
     ])
-      expect(height(withDirectives(d)) - height(TUNE)).toBeCloseTo(22.71, 1);
+      expect(topLine(withDirectives(d)), d).toBeCloseTo(TOP_LINE_MOVED, 2);
   });
 
-  it.fails("`%%vocal above` puts the lyric above the staff", () => {
+  it("`%%vocal above` puts the lyric above the staff", () => {
     // abcjs: the lyric's `<text>` y goes 195.69 → 129.64.
-    const svg =
-      (renderAbc("*", withDirectives("vocal above"), { staffwidth: 670 })[0] as {
-        svg?: string;
-      })?.svg ?? "";
-    const y = Number(/<text[^>]*y="([\d.]+)"[^>]*>(?:<tspan[^>]*>)?la/.exec(svg)?.[1] ?? 0);
-    expect(y).toBeCloseTo(129.64, 1);
+    const y = Number(
+      /<text[^>]*y="([\d.]+)"[^>]*>(?:<tspan[^>]*>)?la/.exec(
+        svgOf(withDirectives("vocal above")),
+      )?.[1] ?? 0,
+    );
+    expect(y).toBeCloseTo(129.64, 2);
+    expect(
+      Number(/<text[^>]*y="([\d.]+)"[^>]*>(?:<tspan[^>]*>)?la/.exec(svgOf(TUNE))?.[1] ?? 0),
+    ).toBeCloseTo(195.69, 2);
   });
 
-  it.fails("`%%gchord hidden` drops the chord symbol rather than moving it", () => {
+  it("`%%gchord below` moves the chord symbol into the annotation's below lane", () => {
+    // abcjs: `Am` goes from y 128.29 above to 195.01 below, and the lyric to 107.25.
+    const y = Number(
+      /<text[^>]*y="([\d.]+)"[^>]*>(?:<tspan[^>]*>)?Am/.exec(
+        svgOf(withDirectives("gchord below")),
+      )?.[1] ?? 0,
+    );
+    expect(y).toBeCloseTo(195.01, 2);
+  });
+
+  it("`%%gchord hidden` drops the chord symbol rather than moving it", () => {
     // `if (pos2 !== 'hidden')` guards the `addCentered` outright (`add-chord.js:108`).
-    const svg =
-      (renderAbc("*", withDirectives("gchord hidden"), { staffwidth: 670 })[0] as {
-        svg?: string;
-      })?.svg ?? "";
-    expect(svg).not.toContain("Am");
+    expect(svgOf(withDirectives("gchord hidden"))).not.toContain("Am");
+  });
+
+  /**
+   * ⚠️ **AND THE DYNAMIC'S `getYCorr` JOINS ITS PITCH, NOT ITS y.** abcjs draws the letter
+   * at `calcY(offset + ycorr)` — one sum, one multiply (`draw/print-symbol.js:34`) — where
+   * spending the correction on the finished y is `offset * STEP + ycorr * STEP`. The two
+   * agree on every tune in both corpora and part by ONE ULP the moment the rung has a long
+   * tail, which a lyric singing above the staff is the first thing to give it:
+   * `69.91999999999999` against `69.92`. See `PlacedGlyph.drawPitch`.
+   */
+  it("the `!p!` keeps abcjs's own last bits", () => {
+    expect(svgOf(withDirectives("vocal above"))).toContain("M 62.971000000000004 69.91999999999999");
+    // …and the bare tune's, which has no tail and is the control that the rule did not
+    // break something already exact.
+    expect(svgOf(TUNE)).toContain("M 62.971000000000004 69.92c");
   });
 });

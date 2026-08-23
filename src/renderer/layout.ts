@@ -907,6 +907,23 @@ export interface PlacedGlyph {
    * close decoration (no `klass`) and a forced-below one are both out.
    */
   readonly ornamentPitch?: number
+  /**
+   * **THE PITCH THIS GLYPH IS DRAWN AT, WHERE ITS PRODUCER HOLDS ONE** — abcjs's `offset`
+   * in `printSymbol(renderer, x, offset, symbol, …)`, before `getYCorr`.
+   *
+   * ⚠️ **AND THE BRACKETS ARE THE WHOLE REASON IT EXISTS.** abcjs draws at
+   * `renderer.calcY(offset + ycorr)` — the pitch and the correction added as ONE number,
+   * then a single multiply (`draw/print-symbol.js:21`, `:34`). The emitter otherwise has
+   * only the y and spends the correction on it as a LENGTH, which is
+   * `offset * STEP + ycorr * STEP` against abcjs's `(offset + ycorr) * STEP`.
+   *
+   * They agree on every tune in both corpora and part by one ULP the moment the pitch has
+   * a long tail: a lyric singing above the staff puts abcjs's `p` at
+   * `69.91999999999999` and the two-multiply form at `69.92`. Set on the DYNAMIC alone,
+   * whose lane is a walked sum and therefore the first place a tail appears; every other
+   * glyph keeps the path that is already byte-exact 363 fixtures over.
+   */
+  readonly drawPitch?: number
   readonly x: number
   readonly y: number
   /** What this glyph is. Absent means it inherits its element's kind. */
@@ -1289,6 +1306,20 @@ export interface PlacedText {
    * `<tspan x="15">Notes:</tspan><tspan x="15" dy="1.2em">…`.
    */
   readonly extraLines?: readonly string[]
+  /**
+   * **A LYRIC THAT SINGS ABOVE THE STAFF** — `%%vocal above`, or any other positioning
+   * directive at all, because `RelativeElement`'s `case "lyric"` tests `opt.position ===
+   * 'below'` and abcjs's `position` is `elem.positioning ? elem.positioning.vocalPosition
+   * : 'below'` (`relative-element.js:57-63`, `abstract-engraver.js:776`). See `noteText`.
+   *
+   * It changes BOTH sides of the arithmetic: the height goes to `lyricHeightAbove` rather
+   * than `lyricHeightBelow`, which is the FIRST rung of the above ladder
+   * (`set-upper-and-lower-elements.js:31`), and its placement takes neither
+   * `spacing.vocal` nor the per-voice drop — `element.top = element.bottom =
+   * positionY.lyricHeightAbove`, with none of the below branch's three extra terms
+   * (`:238-247`).
+   */
+  readonly lyricAbove?: true
   /** `dominant-baseline="middle"`, which abcjs sets on the bottom block's multi-line rows. */
   readonly middleBaseline?: boolean
   /**
@@ -4101,6 +4132,29 @@ function layoutNoteheads(
   /** Dynamics above the staff when the tune sings, below otherwise. See `dynamicAboveStep`. */
   dynamicsAbove = true,
 ): LayoutElement {
+  /**
+   * ⚠️ **AND `hasVocals` IS ONLY THE DEFAULT — ONCE `positioning` EXISTS IT IS NEVER
+   * CONSULTED AGAIN.**
+   *
+   *     if (!positioning)
+   *       positioning = { ornamentPosition: 'above',
+   *                       volumePosition:  hasVocals ? 'above' : 'below',
+   *                       dynamicPosition: hasVocals ? 'above' : 'below' };
+   *
+   * (`creation/decoration.js:378-379`) — a whole-object fallback, so with an object in hand
+   * the missing keys stay `undefined` and each reader tests its own field literally:
+   * `if (position === 'below') volumeHeightBelow = 6; else volumeHeightAbove = 6`
+   * (`elements/dynamic-decoration.js:7-10`). **`undefined` DRAWS ABOVE.**
+   *
+   * So `%%ornament above` on a singing tune turns `hasVocals` off — see `sings` — and the
+   * `!p!` beside it STAYS above regardless, which is a combination neither flag alone can
+   * express. Measured: abcjs keeps its `p` at y 69.92 in the bare tune and in every rung
+   * of the ten, while the staff under it moves 22.71px.
+   */
+  const volumeAbove =
+    event?.positioning === undefined
+      ? dynamicsAbove
+      : event.positioning.volumePosition !== 'below'
   // Sorted ascending to match abcjs, which reports a chord's heads lowest-first — so the
   // gate compares like with like regardless of the order the pitches were written in.
   // `[GCE]` and `[CEG]` are the same chord and must produce the same steps.
@@ -4972,7 +5026,8 @@ function layoutNoteheads(
       beamedNote && !up,
       strict,
       roomAfterGraces,
-      dynamicsAbove,
+      // …resolved per EVENT, because `positioning` overrides `hasVocals` outright.
+      volumeAbove,
     )
     glyphs.push(...decorated.glyphs)
     texts.push(...decorated.texts)
@@ -6551,6 +6606,28 @@ function noteText(
 ): PlacedText[] {
   const texts: PlacedText[] = []
   const centre = headX + headWidth / 2
+  /**
+   * **THE FIVE `positionChoices` DIRECTIVES, AS THIS ELEMENT CARRIES THEM** — see
+   * `MusicEvent.positioning`, and `tests/positioning.test.ts` for abcjs's own numbers.
+   *
+   * ⚠️ **AND ONCE THE OBJECT EXISTS, EVERY READER TESTS ITS FIELD LITERALLY.**
+   * `createDecoration`'s `if (!positioning) positioning = {…}` is the WHOLE of the default
+   * (`decoration.js:378-379`), so with an object in hand the missing keys stay `undefined`
+   * and `undefined` is NOT the default — it is whatever each reader's `=== 'below'` test
+   * says, which is ABOVE. A `%%ornament above` therefore moves the LYRIC of a tune with no
+   * ornament in it, and abcjs's own output says so: its lyric goes y 195.69 → 129.64.
+   */
+  const positioning = event.positioning
+  /** `elem.positioning.chordPosition` or `'above'` (`add-chord.js:104-106`). */
+  const chordAt = positioning?.chordPosition ?? 'above'
+  /**
+   * `var position = elem.positioning ? elem.positioning.vocalPosition : 'below'`
+   * (`abstract-engraver.js:776`) — ⚠️ **THE TERNARY TESTS THE OBJECT, NOT THE FIELD**, and
+   * `RelativeElement`'s `case "lyric"` is then `opt.position === 'below' ? below : above`
+   * (`relative-element.js:57-63`). So any positioning at all with no `vocalPosition` puts
+   * the lyric ABOVE.
+   */
+  const lyricAbove = positioning !== undefined && positioning.vocalPosition !== 'below'
   /** A text CENTRED on the note, `dx` from its x. Annotations do not call this. */
   const centred = (text: string, size: number, dx: number, face: Face): void => {
     if (spans === null) return
@@ -6563,7 +6640,10 @@ function noteText(
   // `elem.chord` and calls `addCentered` for every entry whose position is not `hidden`
   // (`add-chord.js:104-116`) — it never tests the STRING, so `""` reaches the paper as an
   // element with no ink. Ours skipped it, which is one `<text>` of markup and no pixels.
-  if (event.chordSymbol !== null) {
+  // ⚠️ **`hidden` DROPS THE MARK, IT DOES NOT MOVE IT** — `if (pos2 !== 'hidden')` guards
+  // the `addCentered` outright, so the element is never built and takes no lane, no width
+  // and no room (`add-chord.js:108`).
+  if (event.chordSymbol !== null && chordAt !== 'hidden') {
     // `%%gchordfont`'s size, in POINTS, converted the way abcjs converts every font:
     // `Math.round(size * 4 / 3)` (`get-font-and-attr.js:29`). Its default is Helvetica 12,
     // which is the 16px `chordTextSize` already here, so a tune with no directive takes
@@ -6598,7 +6678,16 @@ function noteText(
         text: line,
         // The lane is only the origin: `anchorAboveStaff` moves the whole set onto the
         // staff's music once the voices sharing it are known, exactly as lyrics are.
-        role: 'chord',
+        /**
+         * ⚠️ **AND `%%gchord below` PUTS IT IN THE ANNOTATION'S OWN BELOW LANE.**
+         * `RelativeElement`'s `case "chord"` is the same `opt.position === 'below'` split
+         * the lyric's is (`relative-element.js:65-70`), and `chordHeightBelow` is spent by
+         * `set-upper-and-lower-elements.js:56-61` — the lane `"_text"` already opens here,
+         * which is why this is a ROLE change and not a second lane.
+         */
+        ...(chordAt === 'below'
+          ? { role: 'chordBelow' as const, reserve: pointReserve(stepToY(-4)) }
+          : { role: 'chord' as const }),
         font: 'gchordfont',
         // **CENTRED BY THE ANCHOR, NOT BY PRE-SUBTRACTING HALF A WIDTH.** `addCentered`
         // gives the chord `dx = noteheadWidth / 2` and `relative.js`'s `case "chord"`
@@ -6613,7 +6702,9 @@ function noteText(
         // — so the two are told apart here rather than at the emitter.
         dataName: 'chord',
         x: centre,
-        y: stepToY(ENGRAVE.chordSymbolStep),
+        // Drawn at the STAFF while it is below, with a POINT reserve, so `anchorChordsBelow`
+        // can spend that lane exactly once — the shape the below ANNOTATION already uses.
+        y: chordAt === 'below' ? stepToY(-4) : stepToY(ENGRAVE.chordSymbolStep),
         size,
         bold: false,
         italic: false,
@@ -6995,6 +7086,11 @@ function noteText(
       // Tagged so the melisma pass can find the syllable it must extend from. Matching
       // on the y lane instead would couple that pass to this one's lane arithmetic.
       role: 'lyric',
+      // …**AND WHICH SIDE OF THE STAFF IT SINGS ON.** See `lyricAbove` at the head of this
+      // function: it is the lyric's own `lyricHeightAbove` rather than `lyricHeightBelow`,
+      // and abcjs spends that as the FIRST rung of the above ladder
+      // (`set-upper-and-lower-elements.js:31`).
+      ...(lyricAbove ? { lyricAbove: true as const } : {}),
       dataName: 'lyric',
       font: 'vocalfont',
       // …AND `%%vocalfont`'s FACE. The size and weight were already realized and the face
@@ -16410,7 +16506,15 @@ function anchorLyrics<
     readonly melismaLines: readonly PlacedLine[]
   } & StaffFurniture,
 >(parts: readonly T[], strict: boolean): T[] {
-  const isLyric = (t: PlacedText): boolean => t.role === 'lyric'
+  /**
+   * …**AND A LYRIC THAT SINGS ABOVE IS NOT THIS PASS'S BUSINESS.** It hangs off the
+   * ladder's first rung instead — `anchorAboveStaff` — and takes none of the three terms
+   * below: `spacing.vocal` is added to `lyricHeightBelow` alone, the baseline's own
+   * `+ vocal/STEP` is the below branch's, and the per-voice drop
+   * (`child.pitch -= voiceNumber * lyricHeightBelow`) is keyed on the below height too
+   * (`set-upper-and-lower-elements.js:52`, `:238-247`, `:118-131`).
+   */
+  const isLyric = (t: PlacedText): boolean => t.role === 'lyric' && t.lyricAbove !== true
   if (!parts.some((p) => p.elements.some((el) => el.texts.some(isLyric)))) return [...parts]
   // THE ANCHOR IS THE SAME INK THE RESERVE IS TAKEN FROM, and it has to be the SAME
   // NUMBER, not a second measurement of it. abcjs runs both off one value — `staff.bottom`
@@ -16581,6 +16685,21 @@ const chordHeightOf = (t: PlacedText): number =>
  * chord, part and tempo, `anchorDynamicsAbove` the dynamic, `anchorVoltas` the ending.
  */
 interface AboveLadder {
+  /**
+   * The baseline a lyric that sings ABOVE is drawn at — the ladder's FIRST rung plus the
+   * lyric's own font size, abcjs's universal "one size below the top it reserved"
+   * (`text.js:30-31`). Null when no lyric on the staff sings above, which is every tune
+   * that writes none of the five positioning directives.
+   */
+  readonly lyricAboveY: number | null
+  /** …and that rung's own PITCH — `positionY.lyricHeightAbove`, which IS `staff.top`. */
+  readonly lyricAbovePitch: number | null
+  /**
+   * The DYNAMIC rung's own pitch — `positionY.volumeHeightAbove`, which `incTop` sets to
+   * `staff.top` itself. The letter is drawn at `calcY(pitch + ycorr)`, one sum and one
+   * multiply; see `PlacedGlyph.drawPitch`.
+   */
+  readonly dynamicPitch: number | null
   readonly chordY: number | null
   /**
    * The chord rung's own y and the PITCH abcjs holds it in — `positionY.chordHeightAbove`,
@@ -16729,6 +16848,37 @@ function aboveLadder<
     topPitch += toPitch(height) + ABCJS_PITCH.laneMargin
     return yOfPitch(topPitch)
   }
+  /**
+   * …and the same in PITCH, for a rung whose height abcjs already holds as one — the
+   * lyric's, which `RelativeElement` takes from `lyricDim.height / spacing.STEP`.
+   * Converting a length back would be the `x * STEP / STEP` round trip §3 names.
+   */
+  const reservePitch = (pitch: number): number => {
+    topPitch += pitch + ABCJS_PITCH.laneMargin
+    return yOfPitch(topPitch)
+  }
+  /**
+   * **THE LYRIC LANE IS THE LADDER'S FIRST RUNG** — `incTop(staff, positionY,
+   * 'lyricHeightAbove')` stands before the chord's (`set-upper-and-lower-elements.js:31`),
+   * so a lyric that sings above sits INSIDE a chord symbol rather than outside it.
+   *
+   * Only a `%%vocal above` — or any other positioning directive, see `PlacedText.lyricAbove`
+   * — ever opens it, which is why this rung has had no producer until now and why its
+   * absence was invisible: `incTop` does nothing at all when the height is zero.
+   */
+  const lyricAboveSize = Math.max(
+    0,
+    ...parts.flatMap((p) =>
+      p.elements.flatMap((el) =>
+        el.texts.filter((t) => t.role === 'lyric' && t.lyricAbove === true).map((t) => t.size),
+      ),
+    ),
+  )
+  const lyricAboveY =
+    inkExtent.lyricLaneAbove > 0 ? reservePitch(inkExtent.lyricLaneAbove) + lyricAboveSize : null
+  /** …and the rung's own PITCH, which is `staff.top` when `incTop` reached it. */
+  const lyricAbovePitch = lyricAboveY === null ? null : topPitch
+
   // ── CHORD SYMBOLS AND ANNOTATIONS SHARE A LANE, AND THE LANE COUNT IS PACKED ─
   //
   // `setLaneForChord` (`layout/voice.js:70-101`) walks a voice's items left to right and
@@ -16860,6 +17010,8 @@ function aboveLadder<
    * lane on this side because `incTop` adds it before recording the position.
    */
   const dynamicY = dynamicAbove ? spend(ENGRAVE.dynamicBelowReserve * ENGRAVE.spacePerStep) : null
+  /** …and that rung's own pitch, which is what the letter is DRAWN from. */
+  const dynamicPitch = dynamicAbove ? topPitch : null
 
   // A BOXED PART LABEL MEASURES TALLER, so its whole lane grows: `getTextSize` returns
   // `height + padding * 4` for a boxed font (`helpers/get-text-size.js:46-48`), and
@@ -16887,6 +17039,9 @@ function aboveLadder<
   const tempoPitch = tempos ? topPitch : null
 
   return {
+    lyricAboveY,
+    lyricAbovePitch,
+    dynamicPitch,
     chordY,
     chordTopY,
     chordPitch,
@@ -16917,12 +17072,26 @@ function anchorAboveStaff<
   const chords = has((el) => el.texts.some(isChord))
   const partLabels = has((el) => el.type === 'part')
   const tempos = has((el) => el.type === 'tempo')
-  if (!chords && !partLabels && !tempos) return [...parts]
-  const { chordY, chordTopY, chordPitch, partY, tempoY, tempoPitch, laneOf } = aboveLadder(
-    parts,
-    strict,
-    partsBox,
-  )
+  /**
+   * A lyric that sings ABOVE takes the ladder's first rung, so this pass owes it the same
+   * placement it owes a chord symbol — and it can be the ONLY thing above the staff, which
+   * is why it joins the early-out rather than riding on `chords`.
+   */
+  const isAboveLyric = (t: PlacedText): boolean =>
+    t.role === 'lyric' && t.lyricAbove === true
+  const aboveLyrics = has((el) => el.texts.some(isAboveLyric))
+  if (!chords && !partLabels && !tempos && !aboveLyrics) return [...parts]
+  const {
+    lyricAboveY,
+    lyricAbovePitch,
+    chordY,
+    chordTopY,
+    chordPitch,
+    partY,
+    tempoY,
+    tempoPitch,
+    laneOf,
+  } = aboveLadder(parts, strict, partsBox)
 
   // A uniform shift per item, so a tempo mark's beat-unit glyph and its stem ride along
   // with the `= 120` they belong to rather than being re-derived.
@@ -17012,10 +17181,26 @@ function anchorAboveStaff<
           ),
         }
       }
-      if (!el.texts.some(isChord)) return el
+      if (!el.texts.some(isChord) && !el.texts.some(isAboveLyric)) return el
       return {
         ...el,
         texts: el.texts.map((t) => {
+          // **AN ABOVE LYRIC IS PLACED ABSOLUTELY ON ITS OWN RUNG**, exactly as a chord is,
+          // and takes NONE of the below branch's three extra terms: no `spacing.vocal` on
+          // the lane, none on the baseline, and no per-voice drop
+          // (`set-upper-and-lower-elements.js:238-247`).
+          if (isAboveLyric(t))
+            return lyricAboveY === null
+              ? t
+              : {
+                  ...t,
+                  y: lyricAboveY,
+                  // A POINT at the rung — `element.top = element.bottom =
+                  // positionY.lyricHeightAbove` (`set-upper-and-lower-elements.js:240-242`),
+                  // which `incTop` has already walked to `staff.top` itself.
+                  reserve: pointReserve(lyricAboveY - t.size),
+                  reserveTopPitch: lyricAbovePitch ?? undefined,
+                }
           if (!isChord(t)) return t
           const y = chordAt(t)
           // **THE RUNG IS `staff.top` ITSELF, NOT THIS BASELINE DIVIDED BACK.** `incTop`
@@ -17291,7 +17476,10 @@ function anchorDynamicsAbove<
   // THE DYNAMIC'S OWN RUNG — third of five, above the chord and the ending and below the
   // part and the tempo. It used to be the whole stack's outer edge, which is right only on
   // a staff carrying no other above lane; `aboveLadder` walks abcjs's order instead.
-  const laneTop = aboveLadder(parts, strict, false).dynamicY
+  const ladder = aboveLadder(parts, strict, false)
+  const laneTop = ladder.dynamicY
+  /** …and the rung's own PITCH, which the letter is DRAWN from — see `PlacedGlyph.drawPitch`. */
+  const laneTopPitch = ladder.dynamicPitch
   if (laneTop === null) return [...parts]
 
   const shift = laneTop - stepToY(ENGRAVE.dynamicAboveStep)
@@ -17305,7 +17493,20 @@ function anchorDynamicsAbove<
       el.glyphs.some((g) => isDyn(g.role, g.y))
         ? {
             ...el,
-            glyphs: el.glyphs.map((g) => (isDyn(g.role, g.y) ? { ...g, y: g.y + shift } : g)),
+            /**
+             * …**AND THE RUNG'S OWN PITCH TRAVELS WITH IT.** abcjs draws the letter at
+             * `calcY(offset + ycorr)` — the pitch and the correction added as ONE number,
+             * then a single multiply (`draw/print-symbol.js:34`) — where the emitter
+             * otherwise has only the y and spends the correction on it as a LENGTH. See
+             * `PlacedGlyph.drawPitch`: the two agree on every tune in both corpora and part
+             * by one ULP the moment the rung has a long tail, which a lyric singing above
+             * the staff is the first thing to give it.
+             */
+            glyphs: el.glyphs.map((g) =>
+              isDyn(g.role, g.y)
+                ? { ...g, y: g.y + shift, drawPitch: laneTopPitch ?? undefined }
+                : g,
+            ),
           }
         : el,
     ),
@@ -17831,6 +18032,8 @@ function verticalExtent(
   inkBottomPitch: number
   /** The LYRIC lane alone — see the return below. */
   lyricLane: number
+  /** abcjs's `lyricHeightAbove` in PITCH — see the field's own note below. */
+  lyricLaneAbove: number
   topPitch: number
   bottomPitch: number
 } {
@@ -17966,6 +18169,8 @@ function verticalExtent(
   let lyricBottom = Number.NEGATIVE_INFINITY
   /** abcjs's `lyricHeightBelow` in PITCH — one measurement of the WHOLE verse string. */
   let lyricLanePitch = 0
+  /** …and abcjs's `lyricHeightAbove`, the FIRST rung of the above ladder. */
+  let lyricLaneAbovePitch = 0
   /** The per-VOICE drop below the lane — see where it is gathered. */
   let lyricVoiceDrop = 0
 
@@ -18134,7 +18339,34 @@ function verticalExtent(
     let versesHere = 0
     let versesSize = 0
     let versesVoice = 0
+    /** …and the same three for a lyric that sings ABOVE — see `PlacedText.lyricAbove`. */
+    let versesAbove = 0
+    let versesAboveSize = 0
     for (const t of el.texts) {
+      if (t.role === 'lyric' && t.lyricAbove === true) {
+        // **THE ABOVE LANE IS THE SAME MEASUREMENT AND A DIFFERENT SINK.**
+        // `RelativeElement` sets `lyricHeightAbove = this.height` off the very
+        // `lyricDim.height` the below branch uses (`relative-element.js:57-63`), so only
+        // where it is SPENT differs — `incTop`'s first rung rather than `staff.bottom`.
+        // ⚠️ **AND `spacing.vocal` IS NOT IN IT.** That term is added to
+        // `lyricHeightBelow` alone (`set-upper-and-lower-elements.js:52`), so `%%vocalspace`
+        // moves a lyric that sings below and does nothing at all to one that sings above.
+        if (t.text !== '') versesAbove += t.extraLines?.length ?? 1
+        versesAboveSize = Math.max(versesAboveSize, t.size)
+        /**
+         * ⚠️ **AND IT IS INK ONLY ONCE `anchorAboveStaff` HAS PLACED IT.** Until then its y
+         * is the BELOW-staff default this function's own producer wrote, so including it
+         * would drag the staff the wrong way entirely. The chord symbol has no such problem
+         * — it starts at an above-staff step — which is why only this one needs the guard.
+         *
+         * The placement hands it a POINT `reserve` at the rung, the same shape the tempo's
+         * and the below annotation's carry, and `reserveTopPitch` so `staff.top` is abcjs's
+         * own pitch rather than that pitch multiplied and divided back.
+         */
+        if (t.reserve !== undefined)
+          include(t.reserve[0], t.reserve[1], t.reserveTopPitch, t.reserveBottomPitch)
+        continue
+      }
       if (t.role === 'lyric') {
         // **ONE `<text>` HOLDS EVERY VERSE OF THE NOTE**, so the count is its LINES and not
         // the number of texts — `getTextSize.calc(lyricStr, …)` measures the whole string
@@ -18202,6 +18434,15 @@ function verticalExtent(
        */
       lyricVoiceDrop = Math.max(lyricVoiceDrop, (versesVoice * h) / ENGRAVE.spacePerStep)
     }
+    // …and the ABOVE side, whose only difference is the sink. No `%%vocalspace` and no
+    // per-voice drop: both are terms of `lyricHeightBelow` alone.
+    if (versesAbove > 0)
+      lyricLaneAbovePitch = Math.max(
+        lyricLaneAbovePitch,
+        (goldenTextHeight(versesAboveSize) +
+          (versesAbove - 1) * versesAboveSize * ABCJS_RATIO.textLineStep) /
+          ENGRAVE.spacePerStep,
+      )
   }
 
   // A LYRIC BLOCK RESERVES ITS OWN HEIGHT PLUS ONE PITCH STEP, measured from the LAST
@@ -18381,6 +18622,12 @@ function verticalExtent(
     lyricLane: Number.isFinite(lyricBottom)
       ? (lyricLanePitch + ENGRAVE.laneMargin + lyricVoiceDrop) * ENGRAVE.spacePerStep
       : 0,
+    /**
+     * abcjs's `lyricHeightAbove`, in PITCH, for `aboveLadder`'s FIRST rung — `incTop(staff,
+     * positionY, 'lyricHeightAbove')` runs before the chord's (`:31-32`). Zero unless some
+     * lyric on the staff sings above; see `PlacedText.lyricAbove`.
+     */
+    lyricLaneAbove: lyricLaneAbovePitch,
     topPitch: topPitch + ENGRAVE.marginY / ENGRAVE.spacePerStep,
     bottomPitch: bottomPitch - ENGRAVE.marginY / ENGRAVE.spacePerStep,
   }

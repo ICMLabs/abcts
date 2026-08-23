@@ -1073,6 +1073,8 @@ export function toSVG(
      * notehead's late `class`.
      */
     trailing = "",
+    /** abcjs's `offset` for this glyph, where its producer holds one — see `drawPitch`. */
+    drawPitch?: number,
   ): string => {
     const ink = outline(name);
     /**
@@ -1096,15 +1098,23 @@ export function toSVG(
     // A PITCH → A LENGTH, which is `spacesOfPitch` — written `0.5 *`, the same number only
     // while a staff space is the unit. `glyph-ycorr` and `above-lane-order` both caught it
     // under the flip, by 3.375px per pitch: exactly `3.875 - 0.5`.
+    const ycorr = strict
+      ? name.startsWith("dynamic")
+        ? (ABCJS_YCORR.f ?? 0)
+        : (ABCJS_YCORR[SMUFL_TO_ABCJS[name] ?? ""] ?? 0)
+      : 0;
+    /**
+     * ⚠️ **AND WHERE THE PRODUCER HOLDS THE PITCH, THE CORRECTION JOINS IT THERE.** abcjs
+     * draws at `renderer.calcY(offset + ycorr)` — one sum, one multiply
+     * (`draw/print-symbol.js:21`, `:34`) — where subtracting the correction from the
+     * finished y is `offset * STEP + ycorr * STEP`. The two agree on every tune in both
+     * corpora and part by one ULP the moment the pitch has a long tail; see
+     * `PlacedGlyph.drawPitch`, which is set on the dynamic alone for exactly that reason.
+     */
     const corrected =
-      y -
-      spacesOfPitch(
-        strict
-          ? name.startsWith("dynamic")
-            ? (ABCJS_YCORR.f ?? 0)
-            : (ABCJS_YCORR[SMUFL_TO_ABCJS[name] ?? ""] ?? 0)
-          : 0,
-      );
+      drawPitch === undefined
+        ? y - spacesOfPitch(ycorr)
+        : -spacesOfPitch(drawPitch + ycorr);
     // ABCJS NEVER APPLIES A GLYPH'S SCALE AT DRAW TIME, and says so in its own source:
     // `printSymbol` takes `{scalex, scaley}` and passes NEITHER to `glyphs.printSymbol`,
     // under the comment "TODO-PER: what happened to scalex, and scaley? That might have
@@ -2339,6 +2349,8 @@ export function toSVG(
                   // this stops `glyphMarkup` adding a SECOND `data-name` from the glyph key.
                   "",
                   SEL_SLOT,
+                  // abcjs's `offset` for this letter — see `PlacedGlyph.drawPitch`.
+                  g.drawPitch,
                 ),
                 rec: {
                   kind: "dynamic",
@@ -2374,6 +2386,8 @@ export function toSVG(
                 // `{stroke, fill}` and nothing else — and `'' ?? x` is `''`, so this suppresses
                 // the attribute rather than falling back to the glyph key.
                 "",
+                "",
+                g.drawPitch,
               ),
             );
           }
@@ -3443,6 +3457,8 @@ export function toSVG(
                 // only `{stroke, fill}` there — and `'' ?? x` is `''`, so this suppresses
                 // the attribute rather than falling back to the glyph key.
                 group === null ? g.dataName : "",
+                "",
+                g.drawPitch,
               ),
             );
           }
@@ -3533,6 +3549,8 @@ export function toSVG(
                   attrs(el.type, g.role, g.chordPos),
                   g.role,
                   g.dataName,
+                  "",
+                  g.drawPitch,
                 ),
               );
             }
@@ -3657,6 +3675,8 @@ export function toSVG(
                 attrs(el.type, g.role, g.chordPos),
                 g.role,
                 g.dataName,
+                "",
+                g.drawPitch,
               ),
             );
             // A grace's stem and ledgers follow the LAST glyph carrying its index — the
