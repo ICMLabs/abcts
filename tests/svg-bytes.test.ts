@@ -314,6 +314,17 @@ const PASSING: readonly string[] = [
   "abcts-visualtranspose-tune2",
   "abcts-visualtranspose-tune3",
   /**
+   * `abcts-tempo-rung.abc` — the ULP that was invisible because nothing combined a `Q:`
+   * with the rest. `verticalExtent` recovered the tempo's reserve by subtracting the font
+   * size and abcjs's 2px bump back off the baseline it had just been PLACED at, and the
+   * rung now travels with the text as `reserveTopPitch`. Tune 3 carries `%%tempofont`,
+   * because the OLD re-derivation depended on the font size and the rung does not.
+   */
+  "abcts-tempo-rung-tune0",
+  "abcts-tempo-rung-tune1",
+  "abcts-tempo-rung-tune2",
+  "abcts-tempo-rung-tune3",
+  /**
    * …and the same sweep over `tests/synth/`, which the visual pass did not cover: three
    * more, all byte-exact on arrival. `synth-y01` is `|:C8|1D8::2E8||F8:|` — a first/second
    * ending inside a double repeat, which nothing else in either corpus writes.

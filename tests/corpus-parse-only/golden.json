@@ -2279,6 +2279,34 @@
   "bar el_type,endChar,startChar,type",
   "note chord,duration,el_type,endChar,pitches,pitches.endSlur,pitches.name,pitches.pitch,pitches.startSlur,pitches.verticalPos,startChar"
  ],
+ "repo/abcts-tempo-rung-tune0": [
+  "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.key el_type=undefined acc,accidentals,mode,root",
+  "staff.meter el_type=undefined type,value",
+  "bar el_type,endChar,startChar,type",
+  "note decoration,duration,el_type,endBeam,endChar,pitches,pitches.name,pitches.pitch,pitches.verticalPos,startBeam,startChar"
+ ],
+ "repo/abcts-tempo-rung-tune1": [
+  "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.key el_type=undefined acc,accidentals,mode,root",
+  "staff.meter el_type=undefined type,value",
+  "bar el_type,endChar,startChar,type",
+  "note decoration,duration,el_type,endBeam,endChar,pitches,pitches.name,pitches.pitch,pitches.verticalPos,startBeam,startChar"
+ ],
+ "repo/abcts-tempo-rung-tune2": [
+  "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.key el_type=undefined acc,accidentals,mode,root",
+  "staff.meter el_type=undefined type,value",
+  "bar el_type,endChar,startChar,type",
+  "note chord,decoration,duration,el_type,endBeam,endChar,endTriplet,gracenotes,gracenotes.duration,gracenotes.name,gracenotes.pitch,gracenotes.verticalPos,lyric,pitches,pitches.endTie,pitches.name,pitches.pitch,pitches.startTie,pitches.verticalPos,startBeam,startChar,startTriplet,tripletMultiplier,tripletR"
+ ],
+ "repo/abcts-tempo-rung-tune3": [
+  "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.key el_type=undefined acc,accidentals,mode,root",
+  "staff.meter el_type=undefined type,value",
+  "bar el_type,endChar,startChar,type",
+  "note decoration,duration,el_type,endBeam,endChar,pitches,pitches.name,pitches.pitch,pitches.verticalPos,startBeam,startChar"
+ ],
  "repo/abcts-visualtranspose-tune0": [
   "staff.clef el_type=undefined clefPos,type,verticalPos",
   "staff.key el_type=undefined acc,accidentals,mode,root",

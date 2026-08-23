@@ -1,0 +1,57 @@
+X:1
+T:Tempo Rung
+R:Reel
+Q:1/4=120
+M:4/4
+L:1/8
+K:C
+V:1
+V:2
+[V:1]P:A
+[V:1]CDEF|
+[V:2]C,4|
+
+X:2
+T:Tempo Rung Composer
+C:Composer
+Q:1/4=120
+M:4/4
+L:1/8
+K:C
+V:1
+V:2
+[V:1]P:A
+[V:1]CDEF|
+[V:2]C,4|
+
+X:3
+T:Tempo Rung Rich
+T:Subtitle
+C:Composer
+R:Reel
+P:A
+Q:1/4=120
+M:4/4
+L:1/8
+W:Words here
+K:C
+V:1
+V:2
+[V:1]P:A
+[V:1]"Am"(3CDE !trill!F|{c}G>A B-B|
+w:la la la la la
+[V:2]C,4 G,4|
+
+X:4
+T:Tempo Font
+%%tempofont Times 20
+R:Reel
+Q:1/4=120
+M:4/4
+L:1/8
+K:C
+V:1
+V:2
+[V:1]P:A
+[V:1]CDEF|
+[V:2]C,4|

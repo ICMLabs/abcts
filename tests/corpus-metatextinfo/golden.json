@@ -1569,6 +1569,58 @@
   }
  },
  "repo/abcts-start-char-tune0": {},
+ "repo/abcts-tempo-rung-tune0": {
+  "title": {
+   "startChar": 4,
+   "endChar": 16
+  },
+  "rhythm": {
+   "startChar": 17,
+   "endChar": 23
+  }
+ },
+ "repo/abcts-tempo-rung-tune1": {
+  "title": {
+   "startChar": 93,
+   "endChar": 114
+  },
+  "composer": {
+   "startChar": 115,
+   "endChar": 125
+  }
+ },
+ "repo/abcts-tempo-rung-tune2": {
+  "title": {
+   "startChar": 195,
+   "endChar": 212
+  },
+  "composer": {
+   "startChar": 224,
+   "endChar": 234
+  },
+  "rhythm": {
+   "startChar": 235,
+   "endChar": 241
+  },
+  "partOrder": {
+   "startChar": 242,
+   "endChar": 245
+  },
+  "unalignedWords": {
+   "startChar": 268,
+   "endChar": 280
+  }
+ },
+ "repo/abcts-tempo-rung-tune3": {
+  "title": {
+   "startChar": 374,
+   "endChar": 386
+  },
+  "rhythm": {
+   "startChar": 408,
+   "endChar": 414
+  }
+ },
  "repo/abcts-visualtranspose-tune0": {
   "title": {
    "startChar": 421,

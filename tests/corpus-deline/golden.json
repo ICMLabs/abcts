@@ -2989,6 +2989,56 @@
   "L0 s0 kept=meter,key,clef",
   "L0 s0 v0 note@56..69 note@69..74 note@74..79 note@79..82 bar@82..83"
  ],
+ "repo/abcts-tempo-rung-tune0": [
+  "L0 s0 kept=meter,key,clef",
+  "L0 s0 v0 note@65..66 note@72..73 note@73..74 note@74..75 note@75..76 bar@76..77",
+  "L0 s1 kept=meter,key,clef",
+  "L0 s1 v0 note@83..86 bar@86..87"
+ ],
+ "repo/abcts-tempo-rung-tune1": [
+  "L0 s0 kept=meter,key,clef",
+  "L0 s0 v0 note@167..168 note@174..175 note@175..176 note@176..177 note@177..178 bar@178..179",
+  "L0 s1 kept=meter,key,clef",
+  "L0 s1 v0 note@185..188 bar@188..189"
+ ],
+ "repo/abcts-tempo-rung-tune2": [
+  "L0 subtitle",
+  "L1 s0 kept=meter,key,clef",
+  "L1 s0 v0 note@300..301 note@307..314 note@314..315 note@315..317 note@317..325 bar@325..326 note@326..331 note@331..333 note@333..335 note@335..336 bar@336..337",
+  "L1 s1 kept=meter,key,clef",
+  "L1 s1 v0 note@360..364 note@364..367 bar@367..368"
+ ],
+ "repo/abcts-tempo-rung-tune3": [
+  "L0 s0 kept=meter,key,clef",
+  "L0 s0 v0 note@456..457 note@463..464 note@464..465 note@465..466 note@466..467 bar@467..468",
+  "L0 s1 kept=meter,key,clef",
+  "L0 s1 v0 note@474..477 bar@477..478"
+ ],
+ "repo/abcts-tempo-rung-tune0#breaks": [
+  "L0 s0 kept=meter,key,clef",
+  "L0 s0 v0 note@65..66 break@undefined..undefined note@72..73 note@73..74 note@74..75 note@75..76 bar@76..77",
+  "L0 s1 kept=meter,key,clef",
+  "L0 s1 v0 note@83..86 bar@86..87"
+ ],
+ "repo/abcts-tempo-rung-tune1#breaks": [
+  "L0 s0 kept=meter,key,clef",
+  "L0 s0 v0 note@167..168 break@undefined..undefined note@174..175 note@175..176 note@176..177 note@177..178 bar@178..179",
+  "L0 s1 kept=meter,key,clef",
+  "L0 s1 v0 note@185..188 bar@188..189"
+ ],
+ "repo/abcts-tempo-rung-tune2#breaks": [
+  "L0 subtitle",
+  "L1 s0 kept=meter,key,clef",
+  "L1 s0 v0 note@300..301 break@undefined..undefined note@307..314 note@314..315 note@315..317 note@317..325 bar@325..326 note@326..331 note@331..333 note@333..335 note@335..336 bar@336..337",
+  "L1 s1 kept=meter,key,clef",
+  "L1 s1 v0 note@360..364 note@364..367 bar@367..368"
+ ],
+ "repo/abcts-tempo-rung-tune3#breaks": [
+  "L0 s0 kept=meter,key,clef",
+  "L0 s0 v0 note@456..457 break@undefined..undefined note@463..464 note@464..465 note@465..466 note@466..467 bar@467..468",
+  "L0 s1 kept=meter,key,clef",
+  "L0 s1 v0 note@474..477 bar@477..478"
+ ],
  "repo/abcts-visualtranspose-tune0": [
   "L0 s0 kept=meter,key,clef",
   "L0 s0 v0 note@501..502 note@502..503 note@503..504 note@504..505 bar@505..506 note@506..507 note@507..508 note@508..509 note@509..510 bar@510..511"

@@ -1802,6 +1802,59 @@
   "title": "a close after a grace group reaches the note before it"
  },
  "repo/abcts-start-char-tune0": {},
+ "repo/abcts-tempo-rung-tune0": {
+  "title": "Tempo Rung",
+  "rhythm": "Reel",
+  "tempo": {
+   "startChar": 24,
+   "endChar": 33,
+   "duration": [
+    0.25
+   ],
+   "bpm": 120
+  }
+ },
+ "repo/abcts-tempo-rung-tune1": {
+  "title": "Tempo Rung Composer",
+  "composer": "Composer",
+  "tempo": {
+   "startChar": 126,
+   "endChar": 135,
+   "duration": [
+    0.25
+   ],
+   "bpm": 120
+  }
+ },
+ "repo/abcts-tempo-rung-tune2": {
+  "title": "Tempo Rung Rich",
+  "composer": "Composer",
+  "rhythm": "Reel",
+  "partOrder": "A",
+  "tempo": {
+   "startChar": 246,
+   "endChar": 255,
+   "duration": [
+    0.25
+   ],
+   "bpm": 120
+  },
+  "unalignedWords": [
+   "Words here"
+  ]
+ },
+ "repo/abcts-tempo-rung-tune3": {
+  "title": "Tempo Font",
+  "rhythm": "Reel",
+  "tempo": {
+   "startChar": 415,
+   "endChar": 424,
+   "duration": [
+    0.25
+   ],
+   "bpm": 120
+  }
+ },
  "repo/abcts-visualtranspose-tune0": {
   "title": "visualTranspose 0 — the control's control"
  },

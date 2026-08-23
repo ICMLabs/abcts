@@ -16936,6 +16936,23 @@ function anchorAboveStaff<
         return {
           ...moved,
           glyphs: moved.glyphs.map((g) => (g.role === 'tempoNote' ? { ...g, y: headY } : g)),
+          /**
+           * …**AND THE RUNG TRAVELS WITH THE TEXT, FOR THE SAME REASON THE CHORD'S DOES.**
+           * `verticalExtent` recovered the tempo's reserve by subtracting the font size and
+           * abcjs's 2px bump back off the baseline it had just been PLACED at — `x + a + b
+           * - a - b`, three operations round a trip abcjs never makes: `incTop` writes the
+           * pitch to `staff.top` and to `positionY.tempoHeightAbove` together
+           * (`set-upper-and-lower-elements.js:104-110`).
+           *
+           * It is worth one ULP of `staff.top` on EVERY tune with a `Q:`, and `staff.top`
+           * is what `calcHeight` sums — so the page cursor, every system after the first
+           * and the root `height` all inherit it. Measured on the twelve-line control in
+           * `HANDOFF-2026-08-22b` §3a: `21.435483870967740216` here against abcjs's
+           * `21.435483870967743769`, and the two staves WITHOUT a tempo agreed bit for bit.
+           */
+          texts: moved.texts.map((t, i) =>
+            i === 0 ? { ...t, reserveTopPitch: tempoPitch } : t,
+          ),
         }
       }
       if (!el.texts.some(isChord)) return el
@@ -17919,7 +17936,14 @@ function verticalExtent(
       // page came out 5px short, exactly the size delta. `tempoHeightAbove` is a FLAT 6
       // PITCH (`elements/tempo-element.js:12-13`), so the rung cannot depend on the font.
       const declaredTop = baseline - fontSizeOf('tempofont') - ENGRAVE.tempoDescenderBump
-      include(declaredTop, declaredTop + ENGRAVE.tempoHeightAbove)
+      // …**AND THE RUNG ITSELF WHERE THE PLACER KNEW IT** — see the `reserveTopPitch` the
+      // tempo's own text now carries. Recovering it from the baseline is the round trip
+      // `PlacedText.reserveTopPitch` exists to avoid.
+      include(
+        declaredTop,
+        declaredTop + ENGRAVE.tempoHeightAbove,
+        el.texts.find((t) => t.reserveTopPitch !== undefined)?.reserveTopPitch,
+      )
       continue
     }
     for (const g of el.glyphs) {

@@ -436,10 +436,11 @@ const WITHIN: Readonly<Record<string, number>> = {
   // `decorations` and `directives` by comparing each file's `var abc` declarations against
   // the fixtures already here. Every one byte-exact on arrival.
   // …and three more from `tests/synth/`, which that sweep did not cover.
-  "0.05": 211,
-  "1": 211,
-  "5": 211,
-  "25": 211,
+  // …and `abcts-tempo-rung.abc`, the tempo ULP's own fixture.
+  "0.05": 212,
+  "1": 212,
+  "5": 212,
+  "25": 212,
 };
 
 const names = readdirSync(fixturesDir)

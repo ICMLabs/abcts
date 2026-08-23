@@ -4568,6 +4568,47 @@
    "hasPickup": false
   }
  ],
+ "repo/abcts-tempo-rung": [
+  {
+   "header": "X:1\nT:Tempo Rung\nR:Reel\nQ:1/4=120\nM:4/4\nL:1/8\nK:C\n",
+   "measures": [
+    {
+     "abc": "A\n[V:1]CDEF|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "X:2\nT:Tempo Rung Composer\nC:Composer\nQ:1/4=120\nM:4/4\nL:1/8\nK:C\n",
+   "measures": [
+    {
+     "abc": "A\n[V:1]CDEF|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "X:3\nT:Tempo Rung Rich\nT:Subtitle\nC:Composer\nR:Reel\nP:A\nQ:1/4=120\nM:4/4\nL:1/8\nW:Words here\nK:C\n",
+   "measures": [
+    {
+     "abc": "A\n[V:1]\"Am\"(3CDE !trill!F|"
+    },
+    {
+     "abc": "{c}G>A B-B|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "X:4\nT:Tempo Font\n%%tempofont Times 20\nR:Reel\nQ:1/4=120\nM:4/4\nL:1/8\nK:C\n",
+   "measures": [
+    {
+     "abc": "A\n[V:1]CDEF|"
+    }
+   ],
+   "hasPickup": true
+  }
+ ],
  "repo/abcts-visualtranspose": [
   {
    "header": "X:1\nT:visualTranspose 0 — the control's control\nL:1/4\nM:4/4\n%%visualTranspose 0\nK:C\n",

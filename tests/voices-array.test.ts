@@ -114,6 +114,7 @@ const PASSING: readonly string[] = [
   "abcjs-synth-timing-y02",
   "abcjs-synth-timing-y03",
   "abcjs-synth-synth-y01",
+  "abcts-tempo-rung",
   "abcts-start-char",
   "abcts-key-modifiers",
   "abcts-voice-style",

@@ -6447,6 +6447,230 @@
   "topText": [],
   "bottomText": []
  },
+ "repo/abcts-tempo-rung-tune0": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Tempo Rung",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 4,
+    "endChar": 16,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   },
+   {
+    "move": 7.56
+   },
+   {
+    "left": 15,
+    "text": "Reel",
+    "font": "infofont",
+    "anchor": "start",
+    "startChar": 17,
+    "endChar": 23,
+    "absElemType": "rhythm",
+    "name": "rhythm"
+   },
+   {
+    "move": 23
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-tempo-rung-tune1": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Tempo Rung Composer",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 93,
+    "endChar": 114,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   },
+   {
+    "move": 7.56
+   },
+   {
+    "left": 685,
+    "text": "Composer",
+    "font": "composerfont",
+    "anchor": "end",
+    "startChar": 115,
+    "endChar": 125,
+    "absElemType": "composer",
+    "name": "composer"
+   },
+   {
+    "move": 23
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-tempo-rung-tune2": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Tempo Rung Rich",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 195,
+    "endChar": 212,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   },
+   {
+    "move": 3.78
+   },
+   {
+    "left": 350,
+    "text": "Subtitle",
+    "font": "subtitlefont",
+    "anchor": "middle",
+    "startChar": 213,
+    "endChar": 223,
+    "absElemType": "subtitle",
+    "name": "subtitle"
+   },
+   {
+    "move": 26
+   },
+   {
+    "move": 7.56
+   },
+   {
+    "left": 15,
+    "text": "Reel",
+    "font": "infofont",
+    "anchor": "start",
+    "startChar": 235,
+    "endChar": 241,
+    "absElemType": "rhythm",
+    "name": "rhythm"
+   },
+   {
+    "left": 685,
+    "text": "Composer",
+    "font": "composerfont",
+    "anchor": "end",
+    "startChar": 224,
+    "endChar": 234,
+    "absElemType": "composer",
+    "name": "composer"
+   },
+   {
+    "move": 23
+   },
+   {
+    "left": 15,
+    "text": "A",
+    "font": "partsfont",
+    "anchor": "start",
+    "startChar": 242,
+    "endChar": 245,
+    "absElemType": "partOrder",
+    "name": "part-order"
+   },
+   {
+    "move": 24
+   }
+  ],
+  "bottomText": [
+   {
+    "move": 0
+   },
+   {
+    "startGroup": "unalignedWords",
+    "klass": "",
+    "name": "unalignedWords"
+   },
+   {
+    "move": 0
+   },
+   {
+    "left": 15,
+    "text": "Words here",
+    "font": "wordsfont",
+    "anchor": "start",
+    "startChar": -2,
+    "endChar": -2,
+    "name": "unalignedWords"
+   },
+   {
+    "move": 26
+   },
+   {
+    "endGroup": "unalignedWords",
+    "absElemType": "unalignedWords",
+    "startChar": -1,
+    "endChar": -1,
+    "name": "unalignedWords"
+   },
+   {
+    "move": 23.27
+   },
+   {
+    "move": 23.27
+   }
+  ]
+ },
+ "repo/abcts-tempo-rung-tune3": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Tempo Font",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 374,
+    "endChar": 386,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   },
+   {
+    "move": 7.56
+   },
+   {
+    "left": 15,
+    "text": "Reel",
+    "font": "infofont",
+    "anchor": "start",
+    "startChar": 408,
+    "endChar": 414,
+    "absElemType": "rhythm",
+    "name": "rhythm"
+   },
+   {
+    "move": 23
+   }
+  ],
+  "bottomText": []
+ },
  "repo/abcts-visualtranspose-tune0": {
   "topText": [
    {
