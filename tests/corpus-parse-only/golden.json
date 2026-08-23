@@ -1541,6 +1541,398 @@
   "bar el_type,endChar,startChar,type",
   "note duration,el_type,endChar,pitches,pitches.name,pitches.pitch,pitches.verticalPos,startChar"
  ],
+ "repo/abcts-midi-tune0": [
+  "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.key el_type=undefined acc,accidentals,mode,root",
+  "staff.meter el_type=undefined type,value",
+  "bar el_type,endChar,startChar,type",
+  "note chord,duration,el_type,endBeam,endChar,pitches,pitches.name,pitches.pitch,pitches.verticalPos,startBeam,startChar"
+ ],
+ "repo/abcts-midi-tune1": [
+  "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.key el_type=undefined acc,accidentals,mode,root",
+  "staff.meter el_type=undefined type,value",
+  "bar el_type,endChar,startChar,type",
+  "note chord,duration,el_type,endBeam,endChar,pitches,pitches.name,pitches.pitch,pitches.verticalPos,startBeam,startChar"
+ ],
+ "repo/abcts-midi-tune2": [
+  "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.key el_type=undefined acc,accidentals,mode,root",
+  "staff.meter el_type=undefined type,value",
+  "bar el_type,endChar,startChar,type",
+  "note chord,duration,el_type,endBeam,endChar,pitches,pitches.name,pitches.pitch,pitches.verticalPos,startBeam,startChar"
+ ],
+ "repo/abcts-midi-tune3": [
+  "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.key el_type=undefined acc,accidentals,mode,root",
+  "staff.meter el_type=undefined type,value",
+  "bar el_type,endChar,startChar,type",
+  "note chord,duration,el_type,endBeam,endChar,pitches,pitches.name,pitches.pitch,pitches.verticalPos,startBeam,startChar"
+ ],
+ "repo/abcts-midi-tune4": [
+  "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.key el_type=undefined acc,accidentals,mode,root",
+  "staff.meter el_type=undefined type,value",
+  "bar el_type,endChar,startChar,type",
+  "note chord,duration,el_type,endBeam,endChar,pitches,pitches.name,pitches.pitch,pitches.verticalPos,startBeam,startChar"
+ ],
+ "repo/abcts-midi-tune5": [
+  "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.key el_type=undefined acc,accidentals,mode,root",
+  "staff.meter el_type=undefined type,value",
+  "bar el_type,endChar,startChar,type",
+  "note chord,duration,el_type,endBeam,endChar,pitches,pitches.name,pitches.pitch,pitches.verticalPos,startBeam,startChar"
+ ],
+ "repo/abcts-midi-tune6": [
+  "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.key el_type=undefined acc,accidentals,mode,root",
+  "staff.meter el_type=undefined type,value",
+  "bar el_type,endChar,startChar,type",
+  "note chord,duration,el_type,endBeam,endChar,pitches,pitches.name,pitches.pitch,pitches.verticalPos,startBeam,startChar"
+ ],
+ "repo/abcts-midi-tune7": [
+  "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.key el_type=undefined acc,accidentals,mode,root",
+  "staff.meter el_type=undefined type,value",
+  "bar el_type,endChar,startChar,type",
+  "note chord,duration,el_type,endBeam,endChar,pitches,pitches.name,pitches.pitch,pitches.verticalPos,startBeam,startChar"
+ ],
+ "repo/abcts-midi-tune8": [
+  "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.key el_type=undefined acc,accidentals,mode,root",
+  "staff.meter el_type=undefined type,value",
+  "bar el_type,endChar,startChar,type",
+  "note chord,duration,el_type,endBeam,endChar,pitches,pitches.name,pitches.pitch,pitches.verticalPos,startBeam,startChar"
+ ],
+ "repo/abcts-midi-tune9": [
+  "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.key el_type=undefined acc,accidentals,mode,root",
+  "staff.meter el_type=undefined type,value",
+  "bar el_type,endChar,startChar,type",
+  "note chord,duration,el_type,endBeam,endChar,pitches,pitches.name,pitches.pitch,pitches.verticalPos,startBeam,startChar"
+ ],
+ "repo/abcts-midi-tune10": [
+  "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.key el_type=undefined acc,accidentals,mode,root",
+  "staff.meter el_type=undefined type,value",
+  "bar el_type,endChar,startChar,type",
+  "note chord,duration,el_type,endBeam,endChar,pitches,pitches.name,pitches.pitch,pitches.verticalPos,startBeam,startChar"
+ ],
+ "repo/abcts-midi-tune11": [
+  "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.key el_type=undefined acc,accidentals,mode,root",
+  "staff.meter el_type=undefined type,value",
+  "bar el_type,endChar,startChar,type",
+  "note chord,duration,el_type,endBeam,endChar,pitches,pitches.name,pitches.pitch,pitches.verticalPos,startBeam,startChar"
+ ],
+ "repo/abcts-midi-tune12": [
+  "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.key el_type=undefined acc,accidentals,mode,root",
+  "staff.meter el_type=undefined type,value",
+  "bar el_type,endChar,startChar,type",
+  "note chord,duration,el_type,endBeam,endChar,pitches,pitches.name,pitches.pitch,pitches.verticalPos,startBeam,startChar"
+ ],
+ "repo/abcts-midi-tune13": [
+  "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.key el_type=undefined acc,accidentals,mode,root",
+  "staff.meter el_type=undefined type,value",
+  "bar el_type,endChar,startChar,type",
+  "note chord,duration,el_type,endBeam,endChar,pitches,pitches.name,pitches.pitch,pitches.verticalPos,startBeam,startChar"
+ ],
+ "repo/abcts-midi-tune14": [
+  "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.key el_type=undefined acc,accidentals,mode,root",
+  "staff.meter el_type=undefined type,value",
+  "bar el_type,endChar,startChar,type",
+  "note chord,duration,el_type,endBeam,endChar,pitches,pitches.name,pitches.pitch,pitches.verticalPos,startBeam,startChar"
+ ],
+ "repo/abcts-midi-tune15": [
+  "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.key el_type=undefined acc,accidentals,mode,root",
+  "staff.meter el_type=undefined type,value",
+  "bar el_type,endChar,startChar,type",
+  "note chord,duration,el_type,endBeam,endChar,pitches,pitches.name,pitches.pitch,pitches.verticalPos,startBeam,startChar"
+ ],
+ "repo/abcts-midi-tune16": [
+  "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.key el_type=undefined acc,accidentals,mode,root",
+  "staff.meter el_type=undefined type,value",
+  "bar el_type,endChar,startChar,type",
+  "note chord,duration,el_type,endBeam,endChar,pitches,pitches.name,pitches.pitch,pitches.verticalPos,startBeam,startChar"
+ ],
+ "repo/abcts-midi-tune17": [
+  "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.key el_type=undefined acc,accidentals,mode,root",
+  "staff.meter el_type=undefined type,value",
+  "bar el_type,endChar,startChar,type",
+  "note chord,duration,el_type,endBeam,endChar,pitches,pitches.name,pitches.pitch,pitches.verticalPos,startBeam,startChar"
+ ],
+ "repo/abcts-midi-tune18": [
+  "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.key el_type=undefined acc,accidentals,mode,root",
+  "staff.meter el_type=undefined type,value",
+  "bar el_type,endChar,startChar,type",
+  "note chord,duration,el_type,endBeam,endChar,pitches,pitches.name,pitches.pitch,pitches.verticalPos,startBeam,startChar"
+ ],
+ "repo/abcts-midi-tune19": [
+  "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.key el_type=undefined acc,accidentals,mode,root",
+  "staff.meter el_type=undefined type,value",
+  "bar el_type,endChar,startChar,type",
+  "note chord,duration,el_type,endBeam,endChar,pitches,pitches.name,pitches.pitch,pitches.verticalPos,startBeam,startChar"
+ ],
+ "repo/abcts-midi-tune20": [
+  "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.key el_type=undefined acc,accidentals,mode,root",
+  "staff.meter el_type=undefined type,value",
+  "bar el_type,endChar,startChar,type",
+  "note chord,duration,el_type,endBeam,endChar,pitches,pitches.name,pitches.pitch,pitches.verticalPos,startBeam,startChar"
+ ],
+ "repo/abcts-midi-tune21": [
+  "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.key el_type=undefined acc,accidentals,mode,root",
+  "staff.meter el_type=undefined type,value",
+  "bar el_type,endChar,startChar,type",
+  "note chord,duration,el_type,endBeam,endChar,pitches,pitches.name,pitches.pitch,pitches.verticalPos,startBeam,startChar"
+ ],
+ "repo/abcts-midi-tune22": [
+  "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.key el_type=undefined acc,accidentals,mode,root",
+  "staff.meter el_type=undefined type,value",
+  "bar el_type,endChar,startChar,type",
+  "note chord,duration,el_type,endBeam,endChar,pitches,pitches.name,pitches.pitch,pitches.verticalPos,startBeam,startChar"
+ ],
+ "repo/abcts-midi-tune23": [
+  "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.key el_type=undefined acc,accidentals,mode,root",
+  "staff.meter el_type=undefined type,value",
+  "bar el_type,endChar,startChar,type",
+  "note chord,duration,el_type,endBeam,endChar,pitches,pitches.name,pitches.pitch,pitches.verticalPos,startBeam,startChar"
+ ],
+ "repo/abcts-midi-tune24": [
+  "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.key el_type=undefined acc,accidentals,mode,root",
+  "staff.meter el_type=undefined type,value",
+  "bar el_type,endChar,startChar,type",
+  "note chord,duration,el_type,endBeam,endChar,pitches,pitches.name,pitches.pitch,pitches.verticalPos,startBeam,startChar"
+ ],
+ "repo/abcts-midi-tune25": [
+  "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.key el_type=undefined acc,accidentals,mode,root",
+  "staff.meter el_type=undefined type,value",
+  "bar el_type,endChar,startChar,type",
+  "note chord,duration,el_type,endBeam,endChar,pitches,pitches.name,pitches.pitch,pitches.verticalPos,startBeam,startChar"
+ ],
+ "repo/abcts-midi-tune26": [
+  "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.key el_type=undefined acc,accidentals,mode,root",
+  "staff.meter el_type=undefined type,value",
+  "bar el_type,endChar,startChar,type",
+  "note chord,duration,el_type,endBeam,endChar,pitches,pitches.name,pitches.pitch,pitches.verticalPos,startBeam,startChar"
+ ],
+ "repo/abcts-midi-tune27": [
+  "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.key el_type=undefined acc,accidentals,mode,root",
+  "staff.meter el_type=undefined type,value",
+  "bar el_type,endChar,startChar,type",
+  "note chord,duration,el_type,endBeam,endChar,pitches,pitches.name,pitches.pitch,pitches.verticalPos,startBeam,startChar"
+ ],
+ "repo/abcts-midi-tune28": [
+  "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.key el_type=undefined acc,accidentals,mode,root",
+  "staff.meter el_type=undefined type,value",
+  "bar el_type,endChar,startChar,type",
+  "note chord,duration,el_type,endBeam,endChar,pitches,pitches.name,pitches.pitch,pitches.verticalPos,startBeam,startChar"
+ ],
+ "repo/abcts-midi-tune29": [
+  "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.key el_type=undefined acc,accidentals,mode,root",
+  "staff.meter el_type=undefined type,value",
+  "bar el_type,endChar,startChar,type",
+  "note chord,duration,el_type,endBeam,endChar,pitches,pitches.name,pitches.pitch,pitches.verticalPos,startBeam,startChar"
+ ],
+ "repo/abcts-midi-tune30": [
+  "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.key el_type=undefined acc,accidentals,mode,root",
+  "staff.meter el_type=undefined type,value",
+  "bar el_type,endChar,startChar,type",
+  "note chord,duration,el_type,endBeam,endChar,pitches,pitches.name,pitches.pitch,pitches.verticalPos,startBeam,startChar"
+ ],
+ "repo/abcts-midi-tune31": [
+  "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.key el_type=undefined acc,accidentals,mode,root",
+  "staff.meter el_type=undefined type,value",
+  "bar el_type,endChar,startChar,type",
+  "note chord,duration,el_type,endBeam,endChar,pitches,pitches.name,pitches.pitch,pitches.verticalPos,startBeam,startChar"
+ ],
+ "repo/abcts-midi-tune32": [
+  "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.key el_type=undefined acc,accidentals,mode,root",
+  "staff.meter el_type=undefined type,value",
+  "bar el_type,endChar,startChar,type",
+  "note chord,duration,el_type,endBeam,endChar,pitches,pitches.name,pitches.pitch,pitches.verticalPos,startBeam,startChar"
+ ],
+ "repo/abcts-midi-tune33": [
+  "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.key el_type=undefined acc,accidentals,mode,root",
+  "staff.meter el_type=undefined type,value",
+  "bar el_type,endChar,startChar,type",
+  "note chord,duration,el_type,endBeam,endChar,pitches,pitches.name,pitches.pitch,pitches.verticalPos,startBeam,startChar"
+ ],
+ "repo/abcts-midi-tune34": [
+  "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.key el_type=undefined acc,accidentals,mode,root",
+  "staff.meter el_type=undefined type,value",
+  "bar el_type,endChar,startChar,type",
+  "note chord,duration,el_type,endBeam,endChar,pitches,pitches.name,pitches.pitch,pitches.verticalPos,startBeam,startChar"
+ ],
+ "repo/abcts-midi-tune35": [
+  "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.key el_type=undefined acc,accidentals,mode,root",
+  "staff.meter el_type=undefined type,value",
+  "bar el_type,endChar,startChar,type",
+  "note chord,duration,el_type,endBeam,endChar,pitches,pitches.name,pitches.pitch,pitches.verticalPos,startBeam,startChar"
+ ],
+ "repo/abcts-midi-tune36": [
+  "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.key el_type=undefined acc,accidentals,mode,root",
+  "staff.meter el_type=undefined type,value",
+  "bar el_type,endChar,startChar,type",
+  "note chord,duration,el_type,endBeam,endChar,pitches,pitches.name,pitches.pitch,pitches.verticalPos,startBeam,startChar"
+ ],
+ "repo/abcts-midi-tune37": [
+  "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.key el_type=undefined acc,accidentals,mode,root",
+  "staff.meter el_type=undefined type,value",
+  "bar el_type,endChar,startChar,type",
+  "note chord,duration,el_type,endBeam,endChar,pitches,pitches.name,pitches.pitch,pitches.verticalPos,startBeam,startChar"
+ ],
+ "repo/abcts-midi-tune38": [
+  "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.key el_type=undefined acc,accidentals,mode,root",
+  "staff.meter el_type=undefined type,value",
+  "bar el_type,endChar,startChar,type",
+  "note chord,duration,el_type,endBeam,endChar,pitches,pitches.name,pitches.pitch,pitches.verticalPos,startBeam,startChar"
+ ],
+ "repo/abcts-midi-tune39": [
+  "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.key el_type=undefined acc,accidentals,mode,root",
+  "staff.meter el_type=undefined type,value",
+  "bar el_type,endChar,startChar,type",
+  "note chord,duration,el_type,endBeam,endChar,pitches,pitches.name,pitches.pitch,pitches.verticalPos,startBeam,startChar"
+ ],
+ "repo/abcts-midi-tune40": [
+  "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.key el_type=undefined acc,accidentals,mode,root",
+  "staff.meter el_type=undefined type,value",
+  "bar el_type,endChar,startChar,type",
+  "note chord,duration,el_type,endBeam,endChar,pitches,pitches.name,pitches.pitch,pitches.verticalPos,startBeam,startChar"
+ ],
+ "repo/abcts-midi-tune41": [
+  "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.key el_type=undefined acc,accidentals,mode,root",
+  "staff.meter el_type=undefined type,value",
+  "bar el_type,endChar,startChar,type",
+  "note chord,duration,el_type,endBeam,endChar,pitches,pitches.name,pitches.pitch,pitches.verticalPos,startBeam,startChar"
+ ],
+ "repo/abcts-midi-tune42": [
+  "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.key el_type=undefined acc,accidentals,mode,root",
+  "staff.meter el_type=undefined type,value",
+  "bar el_type,endChar,startChar,type",
+  "note chord,duration,el_type,endBeam,endChar,pitches,pitches.name,pitches.pitch,pitches.verticalPos,startBeam,startChar"
+ ],
+ "repo/abcts-midi-tune43": [
+  "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.key el_type=undefined acc,accidentals,mode,root",
+  "staff.meter el_type=undefined type,value",
+  "bar el_type,endChar,startChar,type",
+  "note chord,duration,el_type,endBeam,endChar,pitches,pitches.name,pitches.pitch,pitches.verticalPos,startBeam,startChar"
+ ],
+ "repo/abcts-midi-tune44": [
+  "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.key el_type=undefined acc,accidentals,mode,root",
+  "staff.meter el_type=undefined type,value",
+  "bar el_type,endChar,startChar,type",
+  "note chord,duration,el_type,endBeam,endChar,pitches,pitches.name,pitches.pitch,pitches.verticalPos,startBeam,startChar"
+ ],
+ "repo/abcts-midi-tune45": [
+  "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.key el_type=undefined acc,accidentals,mode,root",
+  "staff.meter el_type=undefined type,value",
+  "bar el_type,endChar,startChar,type",
+  "note chord,duration,el_type,endBeam,endChar,pitches,pitches.name,pitches.pitch,pitches.verticalPos,startBeam,startChar"
+ ],
+ "repo/abcts-midi-tune46": [
+  "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.key el_type=undefined acc,accidentals,mode,root",
+  "staff.meter el_type=undefined type,value",
+  "bar el_type,endChar,startChar,type",
+  "note chord,duration,el_type,endBeam,endChar,pitches,pitches.name,pitches.pitch,pitches.verticalPos,startBeam,startChar"
+ ],
+ "repo/abcts-midi-tune47": [
+  "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.key el_type=undefined acc,accidentals,mode,root",
+  "staff.meter el_type=undefined type,value",
+  "bar el_type,endChar,startChar,type",
+  "note chord,duration,el_type,endBeam,endChar,pitches,pitches.name,pitches.pitch,pitches.verticalPos,startBeam,startChar"
+ ],
+ "repo/abcts-midi-tune48": [
+  "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.key el_type=undefined acc,accidentals,mode,root",
+  "staff.meter el_type=undefined type,value",
+  "bar el_type,endChar,startChar,type",
+  "note chord,duration,el_type,endBeam,endChar,pitches,pitches.name,pitches.pitch,pitches.verticalPos,startBeam,startChar"
+ ],
+ "repo/abcts-midi-tune49": [
+  "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.key el_type=undefined acc,accidentals,mode,root",
+  "staff.meter el_type=undefined type,value",
+  "bar el_type,endChar,startChar,type",
+  "note chord,duration,el_type,endBeam,endChar,pitches,pitches.name,pitches.pitch,pitches.verticalPos,startBeam,startChar"
+ ],
+ "repo/abcts-midi-tune50": [
+  "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.key el_type=undefined acc,accidentals,mode,root",
+  "staff.meter el_type=undefined type,value",
+  "bar el_type,endChar,startChar,type",
+  "note chord,duration,el_type,endBeam,endChar,pitches,pitches.name,pitches.pitch,pitches.verticalPos,startBeam,startChar"
+ ],
+ "repo/abcts-midi-tune51": [
+  "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.key el_type=undefined acc,accidentals,mode,root",
+  "staff.meter el_type=undefined type,value",
+  "bar el_type,endChar,startChar,type",
+  "note chord,duration,el_type,endBeam,endChar,pitches,pitches.name,pitches.pitch,pitches.verticalPos,startBeam,startChar"
+ ],
+ "repo/abcts-midi-tune52": [
+  "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.key el_type=undefined acc,accidentals,mode,root",
+  "staff.meter el_type=undefined type,value",
+  "bar el_type,endChar,startChar,type",
+  "note chord,duration,el_type,endBeam,endChar,pitches,pitches.name,pitches.pitch,pitches.verticalPos,startBeam,startChar"
+ ],
+ "repo/abcts-midi-tune53": [
+  "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.key el_type=undefined acc,accidentals,mode,root",
+  "staff.meter el_type=undefined type,value",
+  "bar el_type,endChar,startChar,type",
+  "note chord,duration,el_type,endBeam,endChar,pitches,pitches.name,pitches.pitch,pitches.verticalPos,startBeam,startChar"
+ ],
+ "repo/abcts-midi-tune54": [
+  "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.key el_type=undefined acc,accidentals,mode,root",
+  "staff.meter el_type=undefined type,value",
+  "bar el_type,endChar,startChar,type",
+  "note chord,duration,el_type,endBeam,endChar,pitches,pitches.name,pitches.pitch,pitches.verticalPos,startBeam,startChar"
+ ],
+ "repo/abcts-midi-tune55": [
+  "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.key el_type=undefined acc,accidentals,mode,root",
+  "staff.meter el_type=undefined type,value",
+  "bar el_type,endChar,startChar,type",
+  "note chord,duration,el_type,endBeam,endChar,pitches,pitches.name,pitches.pitch,pitches.verticalPos,startBeam,startChar"
+ ],
  "repo/abcts-model-gaps-tune0": [
   "staff.clef el_type=undefined clefPos,type,verticalPos",
   "staff.key el_type=undefined acc,accidentals,mode,root",

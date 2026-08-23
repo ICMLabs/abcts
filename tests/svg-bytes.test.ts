@@ -314,6 +314,14 @@ const PASSING: readonly string[] = [
   "abcts-visualtranspose-tune2",
   "abcts-visualtranspose-tune3",
   /**
+   * `abcts-midi.abc` — all 53 `%%MIDI` sub-commands abcjs's eleven `midiCmdParam*` tables
+   * name, one tune each, plus a negative parameter, a spaced fraction and a `/`-bearing
+   * drum pattern. NOT ONE OF THEM MOVES THE DRAWING, which is the honest outcome of the
+   * only enumeration so far aimed at a non-SVG surface: the two defects it found are
+   * `tune.formatting.midi` VALUES and the `formatting` gate is what states them.
+   */
+  ...Array.from({ length: 56 }, (_, i) => `abcts-midi-tune${i}`),
+  /**
    * `abcts-voice-modifiers.abc` — three of the four defects the V:-modifier enumeration
    * itself found: `^8`/`_8` as clef octave suffixes (abcjs takes any of `- + ^ _` before
    * an `8`), `cl=` as `clef=`, and the staff-connecting rule starting at the FIRST staff's

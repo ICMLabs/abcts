@@ -3532,17 +3532,52 @@ class Parser {
      *
      * The parameters are kept as an ARRAY of number-or-string, which is abcjs's own shape
      * — `midi_params` — and is what lets `program 4` and `program 2 4` be told apart by
-     * LENGTH rather than by a schema. Its per-command arity table is not reproduced: it
-     * only ever produces warnings, and a consumer that reads `params[0]` when the command
-     * takes one number is already tolerant of a wrong count.
+     * LENGTH rather than by a schema.
+     *
+     * ⚠️ **AND ITS ARITY TABLE IS NOT ONLY WARNINGS.** That is what the note here used to
+     * say, and enumerating abcjs's own eleven `midiCmdParam*` lists against this parser
+     * denied it on two arms: `midiCmdParam1String` pushes `midi[0].token` — the RAW TEXT,
+     * so `%%MIDI ptstress 1` is `["1"]` and not `[1]` — and `midiCmdParamFraction` pushes
+     * TWO INTEGERS off a `n / m` triple, so `%%MIDI grace 1/4` is `[1, 4]` and not
+     * `["1/4"]`. Both are VALUES a host reads off `tune.formatting.midi`, and the rest of
+     * the table really is warnings.
      */
     const midiDirective = /^MIDI\s+(\S+)\s*(.*)$/.exec(body)
     if (midiDirective?.[1] !== undefined) {
       const cmd = midiDirective[1]
-      const params: (string | number)[] = (midiDirective[2] ?? '')
+      const rest = midiDirective[2] ?? ''
+      /**
+       * ⚠️ **`%%MIDI` TOKENISES WITH `alphaUntilWhiteSpace`, WHICH IS WHY `1/4` SPLITS AND
+       * `d2z/d/d` DOES NOT.** `tokenize(restOfString, 0, len, true)`
+       * (`abc_parse_directive.js:1188`): a token that STARTS WITH A LETTER runs to the next
+       * whitespace whatever is inside it, and only a token starting with a digit ends at
+       * its digits, leaving the `/` as a `punct` of its own (`abc_tokenizer.js`, the
+       * `alphaUntilWhiteSpace` arm).
+       *
+       * Splitting on `/` unconditionally is what a first cut did, and `flatten-drum`'s
+       * `%%MIDI drum d2z/d/d 35 38 38 100 50 50` denied it — the pattern became three
+       * tokens and the third line's drum track lost its beats.
+       */
+      const tokens = rest
         .split(/\s+/)
         .filter((t) => t !== '')
-        .map((t) => (/^-?\d+$/.test(t) ? Number.parseInt(t, 10) : t))
+        .flatMap((word) =>
+          /^[A-Za-z]/.test(word) ? [word] : (word.match(/-?\d+(?:\.\d+)?|./g) ?? []),
+        )
+      const params: (string | number)[] =
+        MIDI_STRING_PARAM.has(cmd) && tokens.length === 1
+          ? // **THE RAW TOKEN, NOT ITS VALUE** — `midi_params.push(midi[0].token)`
+            // (`:550`). `%%MIDI ptstress 1` publishes the STRING `"1"`.
+            [tokens[0] as string]
+          : MIDI_FRACTION_PARAM.has(cmd) &&
+              tokens.length === 3 &&
+              tokens[1] === '/' &&
+              /^-?\d+$/.test(tokens[0] ?? '') &&
+              /^-?\d+$/.test(tokens[2] ?? '')
+            ? // **A FRACTION IS TWO INTEGERS** — `push(midi[0].intt); push(midi[2].intt)`
+              // (`:615-616`), the `/` dropped.
+              [Number.parseInt(tokens[0] ?? '', 10), Number.parseInt(tokens[2] ?? '', 10)]
+            : tokens.map((t) => (/^-?\d+$/.test(t) ? Number.parseInt(t, 10) : t))
       /**
        * **A ONE-PARAMETER `%%MIDI` COMMAND WITH THE WRONG COUNT IS A WARNING**, and the
        * text it points into is the REST OF THE STRING — `warn("Expected one parameter in
@@ -3550,10 +3585,7 @@ class Parser {
        * a bare `%%MIDI gchord` is the word `gchord` alone, underlined at its first letter.
        * The three string-parameter commands are abcjs's own list (`:480-484`).
        */
-      if (
-        (cmd === 'gchord' || cmd === 'ptstress' || cmd === 'beatstring') &&
-        params.length !== 1
-      )
+      if (MIDI_STRING_PARAM.has(cmd) && params.length !== 1)
         this.warn(
           'midi-one-parameter',
           `${cmd} expects one parameter`,
@@ -5485,6 +5517,13 @@ const isAnnotation = (text: string): boolean =>
  * Non-strict modes accept any name, which is the ABC 2.1 reading: an unknown decoration
  * is one the renderer has no glyph for, not a parse error.
  */
+/**
+ * The two `%%MIDI` arms whose parameter SHAPE is not "whatever the whitespace split gave".
+ * abcjs's own lists (`abc_parse_directive.js:480-484, 524-528`); see the `%%MIDI` handler.
+ */
+const MIDI_STRING_PARAM: ReadonlySet<string> = new Set(['gchord', 'ptstress', 'beatstring'])
+const MIDI_FRACTION_PARAM: ReadonlySet<string> = new Set(['expand', 'grace', 'trim'])
+
 const ABCJS_KNOWN_DECORATIONS: ReadonlySet<string> = new Set([
   // legalAccents
   'trill',

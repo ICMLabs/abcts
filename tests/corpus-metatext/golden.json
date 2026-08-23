@@ -1052,6 +1052,622 @@
  "repo/abcts-ledger-gaps-tune5": {
   "title": "a scale directive"
  },
+ "repo/abcts-midi-tune0": {
+  "title": "Probe",
+  "tempo": {
+   "startChar": 24,
+   "endChar": 33,
+   "duration": [
+    0.25
+   ],
+   "bpm": 120
+  }
+ },
+ "repo/abcts-midi-tune1": {
+  "title": "Probe",
+  "tempo": {
+   "startChar": 99,
+   "endChar": 108,
+   "duration": [
+    0.25
+   ],
+   "bpm": 120
+  }
+ },
+ "repo/abcts-midi-tune2": {
+  "title": "Probe",
+  "tempo": {
+   "startChar": 172,
+   "endChar": 181,
+   "duration": [
+    0.25
+   ],
+   "bpm": 120
+  }
+ },
+ "repo/abcts-midi-tune3": {
+  "title": "Probe",
+  "tempo": {
+   "startChar": 248,
+   "endChar": 257,
+   "duration": [
+    0.25
+   ],
+   "bpm": 120
+  }
+ },
+ "repo/abcts-midi-tune4": {
+  "title": "Probe",
+  "tempo": {
+   "startChar": 326,
+   "endChar": 335,
+   "duration": [
+    0.25
+   ],
+   "bpm": 120
+  }
+ },
+ "repo/abcts-midi-tune5": {
+  "title": "Probe",
+  "tempo": {
+   "startChar": 398,
+   "endChar": 407,
+   "duration": [
+    0.25
+   ],
+   "bpm": 120
+  }
+ },
+ "repo/abcts-midi-tune6": {
+  "title": "Probe",
+  "tempo": {
+   "startChar": 471,
+   "endChar": 480,
+   "duration": [
+    0.25
+   ],
+   "bpm": 120
+  }
+ },
+ "repo/abcts-midi-tune7": {
+  "title": "Probe",
+  "tempo": {
+   "startChar": 542,
+   "endChar": 551,
+   "duration": [
+    0.25
+   ],
+   "bpm": 120
+  }
+ },
+ "repo/abcts-midi-tune8": {
+  "title": "Probe",
+  "tempo": {
+   "startChar": 614,
+   "endChar": 623,
+   "duration": [
+    0.25
+   ],
+   "bpm": 120
+  }
+ },
+ "repo/abcts-midi-tune9": {
+  "title": "Probe",
+  "tempo": {
+   "startChar": 692,
+   "endChar": 701,
+   "duration": [
+    0.25
+   ],
+   "bpm": 120
+  }
+ },
+ "repo/abcts-midi-tune10": {
+  "title": "Probe",
+  "tempo": {
+   "startChar": 777,
+   "endChar": 786,
+   "duration": [
+    0.25
+   ],
+   "bpm": 120
+  }
+ },
+ "repo/abcts-midi-tune11": {
+  "title": "Probe",
+  "tempo": {
+   "startChar": 851,
+   "endChar": 860,
+   "duration": [
+    0.25
+   ],
+   "bpm": 120
+  }
+ },
+ "repo/abcts-midi-tune12": {
+  "title": "Probe",
+  "tempo": {
+   "startChar": 926,
+   "endChar": 935,
+   "duration": [
+    0.25
+   ],
+   "bpm": 120
+  }
+ },
+ "repo/abcts-midi-tune13": {
+  "title": "Probe",
+  "tempo": {
+   "startChar": 1004,
+   "endChar": 1013,
+   "duration": [
+    0.25
+   ],
+   "bpm": 120
+  }
+ },
+ "repo/abcts-midi-tune14": {
+  "title": "Probe",
+  "tempo": {
+   "startChar": 1087,
+   "endChar": 1096,
+   "duration": [
+    0.25
+   ],
+   "bpm": 120
+  }
+ },
+ "repo/abcts-midi-tune15": {
+  "title": "Probe",
+  "tempo": {
+   "startChar": 1165,
+   "endChar": 1174,
+   "duration": [
+    0.25
+   ],
+   "bpm": 120
+  }
+ },
+ "repo/abcts-midi-tune16": {
+  "title": "Probe",
+  "tempo": {
+   "startChar": 1246,
+   "endChar": 1255,
+   "duration": [
+    0.25
+   ],
+   "bpm": 120
+  }
+ },
+ "repo/abcts-midi-tune17": {
+  "title": "Probe",
+  "tempo": {
+   "startChar": 1322,
+   "endChar": 1331,
+   "duration": [
+    0.25
+   ],
+   "bpm": 120
+  }
+ },
+ "repo/abcts-midi-tune18": {
+  "title": "Probe",
+  "tempo": {
+   "startChar": 1403,
+   "endChar": 1412,
+   "duration": [
+    0.25
+   ],
+   "bpm": 120
+  }
+ },
+ "repo/abcts-midi-tune19": {
+  "title": "Probe",
+  "tempo": {
+   "startChar": 1478,
+   "endChar": 1487,
+   "duration": [
+    0.25
+   ],
+   "bpm": 120
+  }
+ },
+ "repo/abcts-midi-tune20": {
+  "title": "Probe",
+  "tempo": {
+   "startChar": 1554,
+   "endChar": 1563,
+   "duration": [
+    0.25
+   ],
+   "bpm": 120
+  }
+ },
+ "repo/abcts-midi-tune21": {
+  "title": "Probe",
+  "tempo": {
+   "startChar": 1623,
+   "endChar": 1632,
+   "duration": [
+    0.25
+   ],
+   "bpm": 120
+  }
+ },
+ "repo/abcts-midi-tune22": {
+  "title": "Probe",
+  "tempo": {
+   "startChar": 1698,
+   "endChar": 1707,
+   "duration": [
+    0.25
+   ],
+   "bpm": 120
+  }
+ },
+ "repo/abcts-midi-tune23": {
+  "title": "Probe",
+  "tempo": {
+   "startChar": 1773,
+   "endChar": 1782,
+   "duration": [
+    0.25
+   ],
+   "bpm": 120
+  }
+ },
+ "repo/abcts-midi-tune24": {
+  "title": "Probe",
+  "tempo": {
+   "startChar": 1854,
+   "endChar": 1863,
+   "duration": [
+    0.25
+   ],
+   "bpm": 120
+  }
+ },
+ "repo/abcts-midi-tune25": {
+  "title": "Probe",
+  "tempo": {
+   "startChar": 1930,
+   "endChar": 1939,
+   "duration": [
+    0.25
+   ],
+   "bpm": 120
+  }
+ },
+ "repo/abcts-midi-tune26": {
+  "title": "Probe",
+  "tempo": {
+   "startChar": 2010,
+   "endChar": 2019,
+   "duration": [
+    0.25
+   ],
+   "bpm": 120
+  }
+ },
+ "repo/abcts-midi-tune27": {
+  "title": "Probe",
+  "tempo": {
+   "startChar": 2095,
+   "endChar": 2104,
+   "duration": [
+    0.25
+   ],
+   "bpm": 120
+  }
+ },
+ "repo/abcts-midi-tune28": {
+  "title": "Probe",
+  "tempo": {
+   "startChar": 2180,
+   "endChar": 2189,
+   "duration": [
+    0.25
+   ],
+   "bpm": 120
+  }
+ },
+ "repo/abcts-midi-tune29": {
+  "title": "Probe",
+  "tempo": {
+   "startChar": 2259,
+   "endChar": 2268,
+   "duration": [
+    0.25
+   ],
+   "bpm": 120
+  }
+ },
+ "repo/abcts-midi-tune30": {
+  "title": "Probe",
+  "tempo": {
+   "startChar": 2338,
+   "endChar": 2347,
+   "duration": [
+    0.25
+   ],
+   "bpm": 120
+  }
+ },
+ "repo/abcts-midi-tune31": {
+  "title": "Probe",
+  "tempo": {
+   "startChar": 2415,
+   "endChar": 2424,
+   "duration": [
+    0.25
+   ],
+   "bpm": 120
+  }
+ },
+ "repo/abcts-midi-tune32": {
+  "title": "Probe",
+  "tempo": {
+   "startChar": 2493,
+   "endChar": 2502,
+   "duration": [
+    0.25
+   ],
+   "bpm": 120
+  }
+ },
+ "repo/abcts-midi-tune33": {
+  "title": "Probe",
+  "tempo": {
+   "startChar": 2564,
+   "endChar": 2573,
+   "duration": [
+    0.25
+   ],
+   "bpm": 120
+  }
+ },
+ "repo/abcts-midi-tune34": {
+  "title": "Probe",
+  "tempo": {
+   "startChar": 2638,
+   "endChar": 2647,
+   "duration": [
+    0.25
+   ],
+   "bpm": 120
+  }
+ },
+ "repo/abcts-midi-tune35": {
+  "title": "Probe",
+  "tempo": {
+   "startChar": 2716,
+   "endChar": 2725,
+   "duration": [
+    0.25
+   ],
+   "bpm": 120
+  }
+ },
+ "repo/abcts-midi-tune36": {
+  "title": "Probe",
+  "tempo": {
+   "startChar": 2791,
+   "endChar": 2800,
+   "duration": [
+    0.25
+   ],
+   "bpm": 120
+  }
+ },
+ "repo/abcts-midi-tune37": {
+  "title": "Probe",
+  "tempo": {
+   "startChar": 2866,
+   "endChar": 2875,
+   "duration": [
+    0.25
+   ],
+   "bpm": 120
+  }
+ },
+ "repo/abcts-midi-tune38": {
+  "title": "Probe",
+  "tempo": {
+   "startChar": 2939,
+   "endChar": 2948,
+   "duration": [
+    0.25
+   ],
+   "bpm": 120
+  }
+ },
+ "repo/abcts-midi-tune39": {
+  "title": "Probe",
+  "tempo": {
+   "startChar": 3021,
+   "endChar": 3030,
+   "duration": [
+    0.25
+   ],
+   "bpm": 120
+  }
+ },
+ "repo/abcts-midi-tune40": {
+  "title": "Probe",
+  "tempo": {
+   "startChar": 3100,
+   "endChar": 3109,
+   "duration": [
+    0.25
+   ],
+   "bpm": 120
+  }
+ },
+ "repo/abcts-midi-tune41": {
+  "title": "Probe",
+  "tempo": {
+   "startChar": 3177,
+   "endChar": 3186,
+   "duration": [
+    0.25
+   ],
+   "bpm": 120
+  }
+ },
+ "repo/abcts-midi-tune42": {
+  "title": "Probe",
+  "tempo": {
+   "startChar": 3264,
+   "endChar": 3273,
+   "duration": [
+    0.25
+   ],
+   "bpm": 120
+  }
+ },
+ "repo/abcts-midi-tune43": {
+  "title": "Probe",
+  "tempo": {
+   "startChar": 3345,
+   "endChar": 3354,
+   "duration": [
+    0.25
+   ],
+   "bpm": 120
+  }
+ },
+ "repo/abcts-midi-tune44": {
+  "title": "Probe",
+  "tempo": {
+   "startChar": 3429,
+   "endChar": 3438,
+   "duration": [
+    0.25
+   ],
+   "bpm": 120
+  }
+ },
+ "repo/abcts-midi-tune45": {
+  "title": "Probe",
+  "tempo": {
+   "startChar": 3510,
+   "endChar": 3519,
+   "duration": [
+    0.25
+   ],
+   "bpm": 120
+  }
+ },
+ "repo/abcts-midi-tune46": {
+  "title": "Probe",
+  "tempo": {
+   "startChar": 3586,
+   "endChar": 3595,
+   "duration": [
+    0.25
+   ],
+   "bpm": 120
+  }
+ },
+ "repo/abcts-midi-tune47": {
+  "title": "Probe",
+  "tempo": {
+   "startChar": 3661,
+   "endChar": 3670,
+   "duration": [
+    0.25
+   ],
+   "bpm": 120
+  }
+ },
+ "repo/abcts-midi-tune48": {
+  "title": "Probe",
+  "tempo": {
+   "startChar": 3735,
+   "endChar": 3744,
+   "duration": [
+    0.25
+   ],
+   "bpm": 120
+  }
+ },
+ "repo/abcts-midi-tune49": {
+  "title": "Probe",
+  "tempo": {
+   "startChar": 3814,
+   "endChar": 3823,
+   "duration": [
+    0.25
+   ],
+   "bpm": 120
+  }
+ },
+ "repo/abcts-midi-tune50": {
+  "title": "Probe",
+  "tempo": {
+   "startChar": 3897,
+   "endChar": 3906,
+   "duration": [
+    0.25
+   ],
+   "bpm": 120
+  }
+ },
+ "repo/abcts-midi-tune51": {
+  "title": "Probe",
+  "tempo": {
+   "startChar": 3973,
+   "endChar": 3982,
+   "duration": [
+    0.25
+   ],
+   "bpm": 120
+  }
+ },
+ "repo/abcts-midi-tune52": {
+  "title": "Probe",
+  "tempo": {
+   "startChar": 4050,
+   "endChar": 4059,
+   "duration": [
+    0.25
+   ],
+   "bpm": 120
+  }
+ },
+ "repo/abcts-midi-tune53": {
+  "title": "Probe",
+  "tempo": {
+   "startChar": 4128,
+   "endChar": 4137,
+   "duration": [
+    0.25
+   ],
+   "bpm": 120
+  }
+ },
+ "repo/abcts-midi-tune54": {
+  "title": "Probe",
+  "tempo": {
+   "startChar": 4207,
+   "endChar": 4216,
+   "duration": [
+    0.25
+   ],
+   "bpm": 120
+  }
+ },
+ "repo/abcts-midi-tune55": {
+  "title": "Probe",
+  "tempo": {
+   "startChar": 4284,
+   "endChar": 4293,
+   "duration": [
+    0.25
+   ],
+   "bpm": 120
+  }
+ },
  "repo/abcts-model-gaps-tune0": {
   "title": "grace slash on the FIRST note"
  },

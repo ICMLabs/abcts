@@ -3294,6 +3294,680 @@
    "hasPickup": false
   }
  ],
+ "repo/abcts-midi": [
+  {
+   "header": "X:1\nT:Probe\nM:4/4\nL:1/8\nQ:1/4=120\nK:C\n",
+   "measures": [
+    {
+     "abc": "\"Am\"CDEF|"
+    },
+    {
+     "abc": "\"G\"GABc|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "X:2\nT:Probe\nM:4/4\nL:1/8\nQ:1/4=120\nK:C\n",
+   "measures": [
+    {
+     "abc": "\"Am\"CDEF|"
+    },
+    {
+     "abc": "\"G\"GABc|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "X:3\nT:Probe\nM:4/4\nL:1/8\nQ:1/4=120\nK:C\n",
+   "measures": [
+    {
+     "abc": "\"Am\"CDEF|"
+    },
+    {
+     "abc": "\"G\"GABc|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "X:4\nT:Probe\nM:4/4\nL:1/8\nQ:1/4=120\nK:C\n",
+   "measures": [
+    {
+     "abc": "\"Am\"CDEF|"
+    },
+    {
+     "abc": "\"G\"GABc|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "X:5\nT:Probe\nM:4/4\nL:1/8\nQ:1/4=120\nK:C\n",
+   "measures": [
+    {
+     "abc": "\"Am\"CDEF|"
+    },
+    {
+     "abc": "\"G\"GABc|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "X:6\nT:Probe\nM:4/4\nL:1/8\nQ:1/4=120\nK:C\n",
+   "measures": [
+    {
+     "abc": "\"Am\"CDEF|"
+    },
+    {
+     "abc": "\"G\"GABc|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "X:7\nT:Probe\nM:4/4\nL:1/8\nQ:1/4=120\nK:C\n",
+   "measures": [
+    {
+     "abc": "\"Am\"CDEF|"
+    },
+    {
+     "abc": "\"G\"GABc|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "X:8\nT:Probe\nM:4/4\nL:1/8\nQ:1/4=120\nK:C\n",
+   "measures": [
+    {
+     "abc": "\"Am\"CDEF|"
+    },
+    {
+     "abc": "\"G\"GABc|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "X:9\nT:Probe\nM:4/4\nL:1/8\nQ:1/4=120\nK:C\n",
+   "measures": [
+    {
+     "abc": "\"Am\"CDEF|"
+    },
+    {
+     "abc": "\"G\"GABc|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "X:10\nT:Probe\nM:4/4\nL:1/8\nQ:1/4=120\nK:C\n",
+   "measures": [
+    {
+     "abc": "\"Am\"CDEF|"
+    },
+    {
+     "abc": "\"G\"GABc|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "X:11\nT:Probe\nM:4/4\nL:1/8\nQ:1/4=120\nK:C\n",
+   "measures": [
+    {
+     "abc": "\"Am\"CDEF|"
+    },
+    {
+     "abc": "\"G\"GABc|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "X:12\nT:Probe\nM:4/4\nL:1/8\nQ:1/4=120\nK:C\n",
+   "measures": [
+    {
+     "abc": "\"Am\"CDEF|"
+    },
+    {
+     "abc": "\"G\"GABc|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "X:13\nT:Probe\nM:4/4\nL:1/8\nQ:1/4=120\nK:C\n",
+   "measures": [
+    {
+     "abc": "\"Am\"CDEF|"
+    },
+    {
+     "abc": "\"G\"GABc|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "X:14\nT:Probe\nM:4/4\nL:1/8\nQ:1/4=120\nK:C\n",
+   "measures": [
+    {
+     "abc": "\"Am\"CDEF|"
+    },
+    {
+     "abc": "\"G\"GABc|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "X:15\nT:Probe\nM:4/4\nL:1/8\nQ:1/4=120\nK:C\n",
+   "measures": [
+    {
+     "abc": "\"Am\"CDEF|"
+    },
+    {
+     "abc": "\"G\"GABc|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "X:16\nT:Probe\nM:4/4\nL:1/8\nQ:1/4=120\nK:C\n",
+   "measures": [
+    {
+     "abc": "\"Am\"CDEF|"
+    },
+    {
+     "abc": "\"G\"GABc|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "X:17\nT:Probe\nM:4/4\nL:1/8\nQ:1/4=120\nK:C\n",
+   "measures": [
+    {
+     "abc": "\"Am\"CDEF|"
+    },
+    {
+     "abc": "\"G\"GABc|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "X:18\nT:Probe\nM:4/4\nL:1/8\nQ:1/4=120\nK:C\n",
+   "measures": [
+    {
+     "abc": "\"Am\"CDEF|"
+    },
+    {
+     "abc": "\"G\"GABc|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "X:19\nT:Probe\nM:4/4\nL:1/8\nQ:1/4=120\nK:C\n",
+   "measures": [
+    {
+     "abc": "\"Am\"CDEF|"
+    },
+    {
+     "abc": "\"G\"GABc|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "X:20\nT:Probe\nM:4/4\nL:1/8\nQ:1/4=120\nK:C\n",
+   "measures": [
+    {
+     "abc": "\"Am\"CDEF|"
+    },
+    {
+     "abc": "\"G\"GABc|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "X:21\nT:Probe\nM:4/4\nL:1/8\nQ:1/4=120\nK:C\n",
+   "measures": [
+    {
+     "abc": "\"Am\"CDEF|"
+    },
+    {
+     "abc": "\"G\"GABc|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "X:22\nT:Probe\nM:4/4\nL:1/8\nQ:1/4=120\nK:C\n",
+   "measures": [
+    {
+     "abc": "\"Am\"CDEF|"
+    },
+    {
+     "abc": "\"G\"GABc|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "X:23\nT:Probe\nM:4/4\nL:1/8\nQ:1/4=120\nK:C\n",
+   "measures": [
+    {
+     "abc": "\"Am\"CDEF|"
+    },
+    {
+     "abc": "\"G\"GABc|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "X:24\nT:Probe\nM:4/4\nL:1/8\nQ:1/4=120\nK:C\n",
+   "measures": [
+    {
+     "abc": "\"Am\"CDEF|"
+    },
+    {
+     "abc": "\"G\"GABc|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "X:25\nT:Probe\nM:4/4\nL:1/8\nQ:1/4=120\nK:C\n",
+   "measures": [
+    {
+     "abc": "\"Am\"CDEF|"
+    },
+    {
+     "abc": "\"G\"GABc|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "X:26\nT:Probe\nM:4/4\nL:1/8\nQ:1/4=120\nK:C\n",
+   "measures": [
+    {
+     "abc": "\"Am\"CDEF|"
+    },
+    {
+     "abc": "\"G\"GABc|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "X:27\nT:Probe\nM:4/4\nL:1/8\nQ:1/4=120\nK:C\n",
+   "measures": [
+    {
+     "abc": "\"Am\"CDEF|"
+    },
+    {
+     "abc": "\"G\"GABc|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "X:28\nT:Probe\nM:4/4\nL:1/8\nQ:1/4=120\nK:C\n",
+   "measures": [
+    {
+     "abc": "\"Am\"CDEF|"
+    },
+    {
+     "abc": "\"G\"GABc|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "X:29\nT:Probe\nM:4/4\nL:1/8\nQ:1/4=120\nK:C\n",
+   "measures": [
+    {
+     "abc": "\"Am\"CDEF|"
+    },
+    {
+     "abc": "\"G\"GABc|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "X:30\nT:Probe\nM:4/4\nL:1/8\nQ:1/4=120\nK:C\n",
+   "measures": [
+    {
+     "abc": "\"Am\"CDEF|"
+    },
+    {
+     "abc": "\"G\"GABc|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "X:31\nT:Probe\nM:4/4\nL:1/8\nQ:1/4=120\nK:C\n",
+   "measures": [
+    {
+     "abc": "\"Am\"CDEF|"
+    },
+    {
+     "abc": "\"G\"GABc|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "X:32\nT:Probe\nM:4/4\nL:1/8\nQ:1/4=120\nK:C\n",
+   "measures": [
+    {
+     "abc": "\"Am\"CDEF|"
+    },
+    {
+     "abc": "\"G\"GABc|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "X:33\nT:Probe\nM:4/4\nL:1/8\nQ:1/4=120\nK:C\n",
+   "measures": [
+    {
+     "abc": "\"Am\"CDEF|"
+    },
+    {
+     "abc": "\"G\"GABc|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "X:34\nT:Probe\nM:4/4\nL:1/8\nQ:1/4=120\nK:C\n",
+   "measures": [
+    {
+     "abc": "\"Am\"CDEF|"
+    },
+    {
+     "abc": "\"G\"GABc|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "X:35\nT:Probe\nM:4/4\nL:1/8\nQ:1/4=120\nK:C\n",
+   "measures": [
+    {
+     "abc": "\"Am\"CDEF|"
+    },
+    {
+     "abc": "\"G\"GABc|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "X:36\nT:Probe\nM:4/4\nL:1/8\nQ:1/4=120\nK:C\n",
+   "measures": [
+    {
+     "abc": "\"Am\"CDEF|"
+    },
+    {
+     "abc": "\"G\"GABc|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "X:37\nT:Probe\nM:4/4\nL:1/8\nQ:1/4=120\nK:C\n",
+   "measures": [
+    {
+     "abc": "\"Am\"CDEF|"
+    },
+    {
+     "abc": "\"G\"GABc|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "X:38\nT:Probe\nM:4/4\nL:1/8\nQ:1/4=120\nK:C\n",
+   "measures": [
+    {
+     "abc": "\"Am\"CDEF|"
+    },
+    {
+     "abc": "\"G\"GABc|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "X:39\nT:Probe\nM:4/4\nL:1/8\nQ:1/4=120\nK:C\n",
+   "measures": [
+    {
+     "abc": "\"Am\"CDEF|"
+    },
+    {
+     "abc": "\"G\"GABc|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "X:40\nT:Probe\nM:4/4\nL:1/8\nQ:1/4=120\nK:C\n",
+   "measures": [
+    {
+     "abc": "\"Am\"CDEF|"
+    },
+    {
+     "abc": "\"G\"GABc|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "X:41\nT:Probe\nM:4/4\nL:1/8\nQ:1/4=120\nK:C\n",
+   "measures": [
+    {
+     "abc": "\"Am\"CDEF|"
+    },
+    {
+     "abc": "\"G\"GABc|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "X:42\nT:Probe\nM:4/4\nL:1/8\nQ:1/4=120\nK:C\n",
+   "measures": [
+    {
+     "abc": "\"Am\"CDEF|"
+    },
+    {
+     "abc": "\"G\"GABc|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "X:43\nT:Probe\nM:4/4\nL:1/8\nQ:1/4=120\nK:C\n",
+   "measures": [
+    {
+     "abc": "\"Am\"CDEF|"
+    },
+    {
+     "abc": "\"G\"GABc|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "X:44\nT:Probe\nM:4/4\nL:1/8\nQ:1/4=120\nK:C\n",
+   "measures": [
+    {
+     "abc": "\"Am\"CDEF|"
+    },
+    {
+     "abc": "\"G\"GABc|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "X:45\nT:Probe\nM:4/4\nL:1/8\nQ:1/4=120\nK:C\n",
+   "measures": [
+    {
+     "abc": "\"Am\"CDEF|"
+    },
+    {
+     "abc": "\"G\"GABc|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "X:46\nT:Probe\nM:4/4\nL:1/8\nQ:1/4=120\nK:C\n",
+   "measures": [
+    {
+     "abc": "\"Am\"CDEF|"
+    },
+    {
+     "abc": "\"G\"GABc|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "X:47\nT:Probe\nM:4/4\nL:1/8\nQ:1/4=120\nK:C\n",
+   "measures": [
+    {
+     "abc": "\"Am\"CDEF|"
+    },
+    {
+     "abc": "\"G\"GABc|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "X:48\nT:Probe\nM:4/4\nL:1/8\nQ:1/4=120\nK:C\n",
+   "measures": [
+    {
+     "abc": "\"Am\"CDEF|"
+    },
+    {
+     "abc": "\"G\"GABc|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "X:49\nT:Probe\nM:4/4\nL:1/8\nQ:1/4=120\nK:C\n",
+   "measures": [
+    {
+     "abc": "\"Am\"CDEF|"
+    },
+    {
+     "abc": "\"G\"GABc|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "X:50\nT:Probe\nM:4/4\nL:1/8\nQ:1/4=120\nK:C\n",
+   "measures": [
+    {
+     "abc": "\"Am\"CDEF|"
+    },
+    {
+     "abc": "\"G\"GABc|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "X:51\nT:Probe\nM:4/4\nL:1/8\nQ:1/4=120\nK:C\n",
+   "measures": [
+    {
+     "abc": "\"Am\"CDEF|"
+    },
+    {
+     "abc": "\"G\"GABc|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "X:52\nT:Probe\nM:4/4\nL:1/8\nQ:1/4=120\nK:C\n",
+   "measures": [
+    {
+     "abc": "\"Am\"CDEF|"
+    },
+    {
+     "abc": "\"G\"GABc|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "X:53\nT:Probe\nM:4/4\nL:1/8\nQ:1/4=120\nK:C\n",
+   "measures": [
+    {
+     "abc": "\"Am\"CDEF|"
+    },
+    {
+     "abc": "\"G\"GABc|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "X:54\nT:Probe\nM:4/4\nL:1/8\nQ:1/4=120\nK:C\n",
+   "measures": [
+    {
+     "abc": "\"Am\"CDEF|"
+    },
+    {
+     "abc": "\"G\"GABc|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "X:55\nT:Probe\nM:4/4\nL:1/8\nQ:1/4=120\nK:C\n",
+   "measures": [
+    {
+     "abc": "\"Am\"CDEF|"
+    },
+    {
+     "abc": "\"G\"GABc|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "X:56\nT:Probe\nM:4/4\nL:1/8\nQ:1/4=120\nK:C\n",
+   "measures": [
+    {
+     "abc": "\"Am\"CDEF|"
+    },
+    {
+     "abc": "\"G\"GABc|"
+    }
+   ],
+   "hasPickup": true
+  }
+ ],
  "repo/abcts-model-gaps": [
   {
    "header": "X:1\nT:grace slash on the FIRST note\nL:1/4\nM:4/4\nK:C\n",

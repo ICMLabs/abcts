@@ -1,0 +1,504 @@
+X:1
+T:Probe
+M:4/4
+L:1/8
+Q:1/4=120
+K:C
+%%MIDI nobarlines
+"Am"CDEF|"G"GABc|
+
+X:2
+T:Probe
+M:4/4
+L:1/8
+Q:1/4=120
+K:C
+%%MIDI barlines
+"Am"CDEF|"G"GABc|
+
+X:3
+T:Probe
+M:4/4
+L:1/8
+Q:1/4=120
+K:C
+%%MIDI beataccents
+"Am"CDEF|"G"GABc|
+
+X:4
+T:Probe
+M:4/4
+L:1/8
+Q:1/4=120
+K:C
+%%MIDI nobeataccents
+"Am"CDEF|"G"GABc|
+
+X:5
+T:Probe
+M:4/4
+L:1/8
+Q:1/4=120
+K:C
+%%MIDI droneon
+"Am"CDEF|"G"GABc|
+
+X:6
+T:Probe
+M:4/4
+L:1/8
+Q:1/4=120
+K:C
+%%MIDI droneoff
+"Am"CDEF|"G"GABc|
+
+X:7
+T:Probe
+M:4/4
+L:1/8
+Q:1/4=120
+K:C
+%%MIDI drumon
+"Am"CDEF|"G"GABc|
+
+X:8
+T:Probe
+M:4/4
+L:1/8
+Q:1/4=120
+K:C
+%%MIDI drumoff
+"Am"CDEF|"G"GABc|
+
+X:9
+T:Probe
+M:4/4
+L:1/8
+Q:1/4=120
+K:C
+%%MIDI fermatafixed
+"Am"CDEF|"G"GABc|
+
+X:10
+T:Probe
+M:4/4
+L:1/8
+Q:1/4=120
+K:C
+%%MIDI fermataproportional
+"Am"CDEF|"G"GABc|
+
+X:11
+T:Probe
+M:4/4
+L:1/8
+Q:1/4=120
+K:C
+%%MIDI gchordon
+"Am"CDEF|"G"GABc|
+
+X:12
+T:Probe
+M:4/4
+L:1/8
+Q:1/4=120
+K:C
+%%MIDI gchordoff
+"Am"CDEF|"G"GABc|
+
+X:13
+T:Probe
+M:4/4
+L:1/8
+Q:1/4=120
+K:C
+%%MIDI controlcombo
+"Am"CDEF|"G"GABc|
+
+X:14
+T:Probe
+M:4/4
+L:1/8
+Q:1/4=120
+K:C
+%%MIDI temperamentnormal
+"Am"CDEF|"G"GABc|
+
+X:15
+T:Probe
+M:4/4
+L:1/8
+Q:1/4=120
+K:C
+%%MIDI noportamento
+"Am"CDEF|"G"GABc|
+
+X:16
+T:Probe
+M:4/4
+L:1/8
+Q:1/4=120
+K:C
+%%MIDI gchord fzczfzcz
+"Am"CDEF|"G"GABc|
+
+X:17
+T:Probe
+M:4/4
+L:1/8
+Q:1/4=120
+K:C
+%%MIDI ptstress 1
+"Am"CDEF|"G"GABc|
+
+X:18
+T:Probe
+M:4/4
+L:1/8
+Q:1/4=120
+K:C
+%%MIDI beatstring fppp
+"Am"CDEF|"G"GABc|
+
+X:19
+T:Probe
+M:4/4
+L:1/8
+Q:1/4=120
+K:C
+%%MIDI bassvol 2
+"Am"CDEF|"G"GABc|
+
+X:20
+T:Probe
+M:4/4
+L:1/8
+Q:1/4=120
+K:C
+%%MIDI chordvol 2
+"Am"CDEF|"G"GABc|
+
+X:21
+T:Probe
+M:4/4
+L:1/8
+Q:1/4=120
+K:C
+%%MIDI c 2
+"Am"CDEF|"G"GABc|
+
+X:22
+T:Probe
+M:4/4
+L:1/8
+Q:1/4=120
+K:C
+%%MIDI channel 2
+"Am"CDEF|"G"GABc|
+
+X:23
+T:Probe
+M:4/4
+L:1/8
+Q:1/4=120
+K:C
+%%MIDI beatmod 2
+"Am"CDEF|"G"GABc|
+
+X:24
+T:Probe
+M:4/4
+L:1/8
+Q:1/4=120
+K:C
+%%MIDI deltaloudness 2
+"Am"CDEF|"G"GABc|
+
+X:25
+T:Probe
+M:4/4
+L:1/8
+Q:1/4=120
+K:C
+%%MIDI drumbars 2
+"Am"CDEF|"G"GABc|
+
+X:26
+T:Probe
+M:4/4
+L:1/8
+Q:1/4=120
+K:C
+%%MIDI gracedivider 2
+"Am"CDEF|"G"GABc|
+
+X:27
+T:Probe
+M:4/4
+L:1/8
+Q:1/4=120
+K:C
+%%MIDI makechordchannels 2
+"Am"CDEF|"G"GABc|
+
+X:28
+T:Probe
+M:4/4
+L:1/8
+Q:1/4=120
+K:C
+%%MIDI randomchordattack 2
+"Am"CDEF|"G"GABc|
+
+X:29
+T:Probe
+M:4/4
+L:1/8
+Q:1/4=120
+K:C
+%%MIDI chordattack 2
+"Am"CDEF|"G"GABc|
+
+X:30
+T:Probe
+M:4/4
+L:1/8
+Q:1/4=120
+K:C
+%%MIDI stressmodel 2
+"Am"CDEF|"G"GABc|
+
+X:31
+T:Probe
+M:4/4
+L:1/8
+Q:1/4=120
+K:C
+%%MIDI transpose 2
+"Am"CDEF|"G"GABc|
+
+X:32
+T:Probe
+M:4/4
+L:1/8
+Q:1/4=120
+K:C
+%%MIDI rtranspose 2
+"Am"CDEF|"G"GABc|
+
+X:33
+T:Probe
+M:4/4
+L:1/8
+Q:1/4=120
+K:C
+%%MIDI vol 2
+"Am"CDEF|"G"GABc|
+
+X:34
+T:Probe
+M:4/4
+L:1/8
+Q:1/4=120
+K:C
+%%MIDI volinc 2
+"Am"CDEF|"G"GABc|
+
+X:35
+T:Probe
+M:4/4
+L:1/8
+Q:1/4=120
+K:C
+%%MIDI gchordbars 2
+"Am"CDEF|"G"GABc|
+
+X:36
+T:Probe
+M:4/4
+L:1/8
+Q:1/4=120
+K:C
+%%MIDI program 5
+"Am"CDEF|"G"GABc|
+
+X:37
+T:Probe
+M:4/4
+L:1/8
+Q:1/4=120
+K:C
+%%MIDI ratio 1 2
+"Am"CDEF|"G"GABc|
+
+X:38
+T:Probe
+M:4/4
+L:1/8
+Q:1/4=120
+K:C
+%%MIDI snt 1 2
+"Am"CDEF|"G"GABc|
+
+X:39
+T:Probe
+M:4/4
+L:1/8
+Q:1/4=120
+K:C
+%%MIDI bendvelocity 1 2
+"Am"CDEF|"G"GABc|
+
+X:40
+T:Probe
+M:4/4
+L:1/8
+Q:1/4=120
+K:C
+%%MIDI pitchbend 1 2
+"Am"CDEF|"G"GABc|
+
+X:41
+T:Probe
+M:4/4
+L:1/8
+Q:1/4=120
+K:C
+%%MIDI control 1 2
+"Am"CDEF|"G"GABc|
+
+X:42
+T:Probe
+M:4/4
+L:1/8
+Q:1/4=120
+K:C
+%%MIDI temperamentlinear 1 2
+"Am"CDEF|"G"GABc|
+
+X:43
+T:Probe
+M:4/4
+L:1/8
+Q:1/4=120
+K:C
+%%MIDI beat 80 60 40 2
+"Am"CDEF|"G"GABc|
+
+X:44
+T:Probe
+M:4/4
+L:1/8
+Q:1/4=120
+K:C
+%%MIDI drone 70 45 60 1 1
+"Am"CDEF|"G"GABc|
+
+X:45
+T:Probe
+M:4/4
+L:1/8
+Q:1/4=120
+K:C
+%%MIDI portamento up 2
+"Am"CDEF|"G"GABc|
+
+X:46
+T:Probe
+M:4/4
+L:1/8
+Q:1/4=120
+K:C
+%%MIDI expand 1/4
+"Am"CDEF|"G"GABc|
+
+X:47
+T:Probe
+M:4/4
+L:1/8
+Q:1/4=120
+K:C
+%%MIDI grace 1/4
+"Am"CDEF|"G"GABc|
+
+X:48
+T:Probe
+M:4/4
+L:1/8
+Q:1/4=120
+K:C
+%%MIDI trim 1/4
+"Am"CDEF|"G"GABc|
+
+X:49
+T:Probe
+M:4/4
+L:1/8
+Q:1/4=120
+K:C
+%%MIDI drum dd 36 38
+"Am"CDEF|"G"GABc|
+
+X:50
+T:Probe
+M:4/4
+L:1/8
+Q:1/4=120
+K:C
+%%MIDI chordname m 0 3 7
+"Am"CDEF|"G"GABc|
+
+X:51
+T:Probe
+M:4/4
+L:1/8
+Q:1/4=120
+K:C
+%%MIDI bassprog 3
+"Am"CDEF|"G"GABc|
+
+X:52
+T:Probe
+M:4/4
+L:1/8
+Q:1/4=120
+K:C
+%%MIDI chordprog 3
+"Am"CDEF|"G"GABc|
+
+X:53
+T:Probe
+M:4/4
+L:1/8
+Q:1/4=120
+K:C
+%%MIDI drummap D 36
+"Am"CDEF|"G"GABc|
+
+X:54
+T:Probe
+M:4/4
+L:1/8
+Q:1/4=120
+K:C
+%%MIDI transpose -12
+"Am"CDEF|"G"GABc|
+
+X:55
+T:Probe
+M:4/4
+L:1/8
+Q:1/4=120
+K:C
+%%MIDI grace 1 / 4
+"Am"CDEF|"G"GABc|
+
+X:56
+T:Probe
+M:4/4
+L:1/8
+Q:1/4=120
+K:C
+%%MIDI drum d2z/d/d 35 38 38 100 50 50
+%%MIDI drumon
+"Am"CDEF|"G"GABc|
