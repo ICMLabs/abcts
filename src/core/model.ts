@@ -1260,6 +1260,23 @@ export interface Measure {
   }[]
   readonly startsSystem: boolean
   /**
+   * **abcjs's `ogLine` — WHICH DELINED LINE THIS MEASURE CAME FROM.** Present only where
+   * `renderAbc({wrap})` has re-lined the music, and it is the SECTION index rather than the
+   * source line's, because `wrapLines` opens with `tune.deline({lineBreaks: false})`
+   * (`wrap_lines.js:10`): every music line of a section is merged into ONE before the
+   * breaks are applied.
+   *
+   * ⚠️ **AND IT EXISTS BECAUSE THE WRAP DESTROYS THE THING THE VOICE NAME IS KEYED ON.**
+   * `fixTitles` resolves each staff's `title` to a STRING — `name` on the first music line,
+   * `subname` after — inside `cleanUp`, which runs BEFORE `wrapLines`
+   * (`tune-builder.js:634-658`, `abc_parse.js:600`). `addLineBreaks` then copies the
+   * DELINED line's already-resolved title onto every output line cut from it. So a tune
+   * whose seven source lines collapse into one section prints the FULL name on all six
+   * wrapped systems — measured on abcjs's own quartet, which reads `Violin I` six times
+   * wrapped and `Violin I, Vl.1, Vl.1, …` unwrapped.
+   */
+  readonly wrapSourceLine?: number
+  /**
    * **THIS LINE WAS CUT OUT OF THE ONE ABOVE BY `%%barsperstaff`**, which is a PARSE-time
    * rewrite: `wrapMusicLines` copies the line with `JSON.parse(JSON.stringify(...))` and
    * empties its voices (`tune-builder.js:794-833`), so the new line's staff keeps the

@@ -12251,6 +12251,35 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
     }
   }
   /**
+   * **IS THIS SYSTEM THE FIRST ONE OF ITS ORIGINAL SOURCE LINE?** — which is what the VOICE
+   * NAME is keyed on, and is `systemIndex === 0` for every tune that was not re-lined.
+   *
+   * ⚠️ **A WRAPPED TUNE SPLITS ONE SOURCE LINE INTO SEVERAL SYSTEMS AND THEY ALL KEEP ITS
+   * NAME.** abcjs's `cleanUp` resolves each staff's `title` before `wrapLines` runs, and
+   * `addLineBreaks` copies that title onto every output line cut from the same `ogLine`
+   * (`wrap_lines.js:41-46`). See `Measure.wrapSourceLine`, which is the only thing that
+   * survives the re-lining to say so.
+   */
+  const openingMeasureOfSystem: number[] = []
+  {
+    const total = Math.max(0, ...voices.map((v) => v?.measures.length ?? 0))
+    for (let i = 0; i < total; i++)
+      if (i === 0 || systemOpensAt.has(i)) openingMeasureOfSystem.push(i)
+  }
+  const namesFirstLine = (systemIndex: number): boolean => {
+    const at = openingMeasureOfSystem[systemIndex]
+    if (at === undefined) return systemIndex === 0
+    const og = voices[0]?.measures[at]?.wrapSourceLine
+    // No wrap ran, so the drawn system IS the source line.
+    if (og === undefined) return systemIndex === 0
+    const previous = openingMeasureOfSystem[systemIndex - 1]
+    return (
+      previous === undefined || voices[0]?.measures[previous]?.wrapSourceLine !== og
+        ? og === 0
+        : false
+    ) || og === 0
+  }
+  /**
    * **AN `&` LAYER CARRIES ITS `stem` ELEMENT ON THE LINE IT SINGS ON AND NOWHERE ELSE.**
    * `resolveOverlays` splices `{el_type: "stem", direction: "down"}` onto the front of the
    * voice it CREATES (`tune-builder.js:596-599`) and back-fills every earlier line with
@@ -12768,7 +12797,9 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
    * 25.000 against a bare tune's 15.
    */
   const headerIndentFor = (systemIndex: number): number => {
-    const label = (plan: VoicePlan): string | null => (systemIndex === 0 ? plan.name : plan.subname)
+    // …**AND IT IS THE ORIGINAL SOURCE LINE, NOT THE DRAWN SYSTEM** — see `namesFirstLine`.
+    const label = (plan: VoicePlan): string | null =>
+      namesFirstLine(systemIndex) ? plan.name : plan.subname
     const widest = Math.max(
       0,
       ...plans.map((plan) => {
@@ -12793,7 +12824,7 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
     const label = (v: number | undefined): string | null => {
       const plan = v === undefined ? undefined : plans[v]
       if (plan === undefined) return null
-      return systemIndex === 0 ? plan.name : plan.subname
+      return namesFirstLine(systemIndex) ? plan.name : plan.subname
     }
     let open: number | null = null
     score.staves.forEach((group, i) => {
@@ -13599,7 +13630,9 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
             (a, b) => (voices[a]?.declaredIndex ?? a) - (voices[b]?.declaredIndex ?? b),
           )[drawPos] ?? voiceIndex
         ]
-      const labelText = systemIndex === 0 ? (named?.name ?? null) : (named?.subname ?? null)
+      const labelText = namesFirstLine(systemIndex)
+        ? (named?.name ?? null)
+        : (named?.subname ?? null)
       const nameElements: LayoutElement[] = []
       // …UNLESS A BRACE TOOK IT. `setBottomStaff` deletes the header off the voice, so the
       // staff draws nothing and the brace's own group draws it — see `ConnectorSpan.header`.

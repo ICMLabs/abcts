@@ -55,6 +55,14 @@ import {
   type Score,
 } from "../core/model.js";
 import { type DelineOptions, delineOf } from "./deline.js";
+import {
+  applyLineBreaks,
+  calcLineWraps,
+  findLineBreaks,
+  type WrapExplanation,
+  type WrapLineBreak,
+  type WrapParams,
+} from "./wrap.js";
 export { TimingCallbacks, type TimingCallbacksParams } from "./timing-callbacks.js";
 export {
   type AnimationOptions,
@@ -219,6 +227,16 @@ const ariaTitle = (title: RichText): string =>
 export interface AbcjsParams {
   /** Staff width in pixels. abcjs's default is 740 on screen. */
   readonly staffwidth?: number;
+  /**
+   * **RE-LINE THE MUSIC TO FIT `staffwidth`** — abcjs's five knobs, all optional. See
+   * `src/compat/wrap.ts`.
+   *
+   * ⚠️ **AND IT DOES NOTHING ON A HEADLESS RENDER.** `renderAbc('*', abc, {wrap})` returns
+   * no `explanation` and no `lineBreaks`, because abcjs's guard is
+   * `if (!removeDiv && params.wrap && params.staffwidth)` and `'*'` sets `removeDiv`
+   * (`api/abc_tunebook_svg.js:112-120`). It also does nothing without a `staffwidth`.
+   */
+  readonly wrap?: WrapParams;
   /**
    * abcjs's PAGE media — a 0.75 CSS scale on the root, print's own page margins, an extra
    * `spacing.top` above the title and an eleven-inch minimum height. See
@@ -649,6 +667,15 @@ export interface TuneObject {
   readonly version: string;
   /** `"screen"` unless `print: true` was asked for (`abc_parse.js:525-526`). */
   readonly media: "screen" | "print";
+  /**
+   * **THE WRAP SEARCH'S OWN REASONING**, one row per SECTION — absent unless `wrap` and
+   * `staffwidth` were both given and the target is not headless. A STRING rather than an
+   * array when the page is narrower than its own margin, which is abcjs's own return
+   * (`wrap_lines.js:359-365`).
+   */
+  readonly explanation?: WrapExplanation[] | string;
+  /** **THE ANSWER** — one row per drawn line, saying where it came from. See `wrap.ts`. */
+  readonly lineBreaks?: WrapLineBreak[];
 
   // ── The accessors, bound to this tune (`abc_tune.js:90-181`) ────────────────
   readonly getMeter: () => AbcjsMeter;
@@ -918,8 +945,44 @@ function renderInto(
      * returns, and holding one per tune made the test suite's own memory blow up and its
      * workers start dying mid-file. Re-laying costs 0.7ms and only when a host asks.
      */
+    /**
+     * **THE SCORE THE DRAWING USES** — the wrapped one where `wrap` applies. abcjs
+     * RE-PARSES with the computed breaks (`abc_tunebook_svg.js:137-144`); this model says
+     * the same thing with `Measure.startsSystem`, so the breaks are a rewrite. See
+     * `applyLineBreaks`.
+     */
+    /**
+     * **THE WRAP SEARCH, RUN ONCE.** Both the published fields and the DRAWING need it, and
+     * it must run on the tune AS PARSED: abcjs measures the original and only then
+     * re-parses with the answer (`abc_tunebook_svg.js:134-144`).
+     *
+     * ⚠️ **AND IT CANNOT GO THROUGH THE CACHED PROJECTION.** `lineCache` is built from the
+     * DRAWN score, the drawn score is the wrapped one, and the wrap is what this computes —
+     * a cycle that recurses until the stack goes. `projectionOf` on the parsed score is the
+     * measurement abcjs makes and has no such dependency.
+     */
+    let wrapCache: {
+      explanation: WrapExplanation[] | string;
+      lineBreaks: number[][];
+      reParse: boolean;
+    } | null = null;
+    const wrapSearch = (): typeof wrapCache => {
+      if (wrapCache !== null) return wrapCache;
+      if (paper === null || params.wrap === undefined || params.staffwidth === undefined)
+        return null;
+      const sections = measureWidthsOf(score, projectionOf(score, abc, engraved).lines);
+      wrapCache = calcLineWraps(sections, staffwidth, params.wrap, params.scale);
+      return wrapCache;
+    };
+    let wrapped: Score | null = null;
+    const drawnScore = (): Score => {
+      if (wrapped !== null) return wrapped;
+      const ret = wrapSearch();
+      wrapped = ret !== null && ret.reParse ? applyLineBreaks(score, ret.lineBreaks) : score;
+      return wrapped;
+    };
     const laidOut = (): ReturnType<typeof layout> =>
-      layout(score, {
+      layout(drawnScore(), {
         mode: "abcjs-strict",
         ...(systemWidth ? { systemWidth } : {}),
         ...(printing ? { print: true } : {}),
@@ -1214,6 +1277,32 @@ function renderInto(
       // abcjs's own version string, not abcts's — a host may feature-detect on it.
       version: ABCJS_TUNE_VERSION,
       media: printing ? "print" : "screen",
+      /**
+       * **THE WRAP SEARCH** — see `src/compat/wrap.ts` for the algorithm and
+       * `tests/wrap.test.ts` for abcjs's own numbers.
+       *
+       * ⚠️ **THREE THINGS HAVE TO BE TRUE**, and abcjs's guard is one expression:
+       * `if (!removeDiv && params.wrap && params.staffwidth)`
+       * (`api/abc_tunebook_svg.js:118`). A HEADLESS target sets `removeDiv`, so `'*'`
+       * never wraps however the params read — which is not an error but an absence, and
+       * is what this surface's own harvester read as eleven empty cases before it
+       * rendered into a target.
+       */
+      ...((): { explanation?: WrapExplanation[] | string; lineBreaks?: WrapLineBreak[] } => {
+        const ret = wrapSearch();
+        if (ret === null) return {};
+        if (!ret.reParse) return { explanation: ret.explanation };
+        return {
+          explanation: ret.explanation,
+          // `wrapLines` walks the DELINED tune — one line per original source line, with
+          // no `break` elements in it (`wrap_lines.js:10`) — and it is the tune AS PARSED,
+          // for the same reason the widths are.
+          lineBreaks: findLineBreaks(
+            delineOf(projectionOf(score, abc, engraved).lines, { lineBreaks: false }),
+            ret.lineBreaks,
+          ),
+        };
+      })(),
 
       getMeter: () => abcjsMeter(score),
       getMeterFraction: () => {
