@@ -922,6 +922,10 @@ function noteFields(
         ...(drumMap === undefined || drumMap[drumKey(writtenName(p))] === undefined
           ? {}
           : { midipitch: drumMap[drumKey(writtenName(p))] }),
+        // **AND A `!style=…!` INSIDE THE BRACKETS IS THIS HEAD'S** — see `Pitch.style`
+        // and `abc_parse_music.js:375-379`. abcjs writes it between `name` and
+        // `verticalPos`, which is where it is assigned.
+        ...(p.style === undefined ? {} : { style: p.style }),
         verticalPos: abcjsPitch(p) - clefMid,
       }))
     // …and see `engraved`: the parser leaves them as written.

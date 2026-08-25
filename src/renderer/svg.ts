@@ -2300,6 +2300,8 @@ export function toSVG(
             x: number;
             s: string;
             k?: number;
+            /** Order within one element's own `k` bucket — see `PlacedCurve.headOrder`. */
+            h?: number;
             rec?: {
               kind: SelectableRecord["kind"];
               abcelem: Readonly<Record<string, string | number>>;
@@ -2866,6 +2868,12 @@ export function toSVG(
                       TC({ ...curve, x1: curve.x1 - (curve.orderShift ?? 0) })
                         .x1 - spaces(ABCJS_ARC.startOffset),
               k: graceCurve ? 1 : 0,
+              // …**AND WITHIN ONE ELEMENT, BY THE HEAD THE CURVE WAS CREATED ON** —
+              // `addSlursAndTies`'s own order inside the pitch loop. Curves on the SAME
+              // head keep the order they were collected in; ranking a tie ahead of a slur
+              // there instead took `curves-tune2` off the sibling gate's ratchet, five
+              // rows. See `PlacedCurve.headOrder`.
+              h: curve.headOrder ?? 0,
               s: curveSink.pop() ?? "",
               /**
                * **EVERY CURVE IS `el_type: "slur"`, WHATEVER IT DRAWS** (`draw/tie.js:28`),
@@ -2904,7 +2912,8 @@ export function toSVG(
           // …and the whole `otherchildren` list goes out as ONE run in x order. `Array.sort`
           // is stable, so two things starting at the same x keep the order they were built in.
           const ordered = others.sort(
-            (p1, p2) => p1.x - p2.x || (p1.k ?? 0) - (p2.k ?? 0),
+            (p1, p2) =>
+              p1.x - p2.x || (p1.k ?? 0) - (p2.k ?? 0) || (p1.h ?? 0) - (p2.h ?? 0),
           );
           if (process.env.ABCTS_OTHER)
             for (const o of ordered)

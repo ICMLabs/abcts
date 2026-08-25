@@ -444,10 +444,13 @@ const WITHIN: Readonly<Record<string, number>> = {
   // …and `abcts-voice-scale.abc`, `V:… scale=`/`cue=`, whose twelve are too — ONCE THE
   // PAIRING ABOVE WAS NUMERIC. It is the first fixture here with more than ten tunes that
   // renders them differently, and it read dy 42.6 against goldens it was byte-identical to.
-  "0.05": 215,
-  "1": 215,
-  "5": 215,
-  "25": 215,
+  // …and `abcts-pitch-style.abc`, the per-PITCH `!style=…!`, whose eight are exact on all
+  // four axes ON ARRIVAL — the three defects it named are byte-level and move no notehead
+  // centre at all: an up-stem's x, a ledger's width and the ORDER two curves go out in.
+  "0.05": 216,
+  "1": 216,
+  "5": 216,
+  "25": 216,
 };
 
 const names = readdirSync(fixturesDir)

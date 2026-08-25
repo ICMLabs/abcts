@@ -118,6 +118,22 @@ const PASSING: readonly string[] = [
    * two-voice tune where only the first is scaled. See `Voice.scale` for the four
    * quantisations, and `tests/positioning.test.ts` for the ladder method.
    */
+  "abcts-pitch-style-tune0",
+  "abcts-pitch-style-tune1",
+  "abcts-pitch-style-tune2",
+  "abcts-pitch-style-tune3",
+  "abcts-pitch-style-tune4",
+  "abcts-pitch-style-tune5",
+  "abcts-pitch-style-tune6",
+  "abcts-pitch-style-tune7",
+  "abcts-pitch-style-tune0",
+  "abcts-pitch-style-tune1",
+  "abcts-pitch-style-tune2",
+  "abcts-pitch-style-tune3",
+  "abcts-pitch-style-tune4",
+  "abcts-pitch-style-tune5",
+  "abcts-pitch-style-tune6",
+  "abcts-pitch-style-tune7",
   "abcts-voice-scale-tune0",
   "abcts-voice-scale-tune1",
   "abcts-voice-scale-tune2",

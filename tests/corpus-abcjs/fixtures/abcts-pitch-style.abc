@@ -1,0 +1,51 @@
+%%abcts a per-PITCH notehead style, which is the ONE decoration inside brackets that is
+%%abcts not the chord's (abc_parse_music.js:375-379). The engraver reads it per head
+%%abcts (abstract-engraver.js:679), and three OTHER quantities read the head it picks:
+%%abcts the up-stem's x is heads[0].w, the ledger's width is the MAX over the loop.
+X:1
+T:style on the lowest head
+L:1/8
+K:C
+[!style=harmonic!CEG]2 [C!style=x!EG]2|
+
+X:2
+T:style on a head needing a ledger
+L:1/8
+K:C
+[!style=x!C,EG]4 [C,EG]4|
+
+X:3
+T:two styles in one chord
+L:1/4
+K:C
+[!style=x!C!style=triangle!EG]2 [CEG]2|
+
+X:4
+T:a style beside an ordinary decoration on another head
+L:1/8
+K:C
+[!>!C!style=harmonic!EG]2 [!>!CEG]2|
+
+X:5
+T:down-stemmed, where heads[0] is not the stem's
+L:1/8
+K:C
+[!style=harmonic!ceg]2 [ceg]2|
+
+X:6
+T:a style on a whole note and on a half
+L:1/1
+K:C
+[!style=x!CEG] [!style=harmonic!CEG]|
+
+X:7
+T:a styled head under a tie and a slur
+L:1/8
+K:C
+([!style=x!CEG]2-[CEG]2)|
+
+X:8
+T:a style with the element's own style beside it
+L:1/8
+K:C
+!style=x![!style=harmonic!CEG]2 [CEG]2|

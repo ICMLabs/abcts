@@ -115,6 +115,15 @@ const PASSING: readonly string[] = [
    * surface that says a `scale` element belongs to NO character: it is voice furniture
    * `createVoice` appends at the head of every line, like the `style` and the `stem`.
    */
+  /** `abcts-pitch-style` — a per-PITCH `!style=…!`. Eight tunes, exact on arrival. */
+  "repo/abcts-pitch-style-tune0",
+  "repo/abcts-pitch-style-tune1",
+  "repo/abcts-pitch-style-tune2",
+  "repo/abcts-pitch-style-tune3",
+  "repo/abcts-pitch-style-tune4",
+  "repo/abcts-pitch-style-tune5",
+  "repo/abcts-pitch-style-tune6",
+  "repo/abcts-pitch-style-tune7",
   "repo/abcts-voice-scale-tune0",
   "repo/abcts-voice-scale-tune1",
   "repo/abcts-voice-scale-tune10",

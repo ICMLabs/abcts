@@ -64,6 +64,15 @@ const table = (): Row[] =>
 /** Tunes whose every section agrees. Grows, never shrinks. */
 const PASSING: readonly string[] = [
   /** `abcts-voice-scale` — abcjs's `voiceScale`, exact on arrival. */
+  /** `abcts-pitch-style` — a per-PITCH `!style=…!`. Eight tunes, exact on arrival. */
+  "repo/abcts-pitch-style-tune0",
+  "repo/abcts-pitch-style-tune1",
+  "repo/abcts-pitch-style-tune2",
+  "repo/abcts-pitch-style-tune3",
+  "repo/abcts-pitch-style-tune4",
+  "repo/abcts-pitch-style-tune5",
+  "repo/abcts-pitch-style-tune6",
+  "repo/abcts-pitch-style-tune7",
   "repo/abcts-voice-scale-tune0",
   /**
    * `abcts-positioning` — the five `positionChoices` directives. Exact on arrival; its

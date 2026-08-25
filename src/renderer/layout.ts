@@ -1770,6 +1770,18 @@ export interface PlacedCurve {
    * `[…]` at 442.2 has three, and abcjs's order is 452.01, 442.2, 442.2.
    */
   readonly orderShift?: number
+  /**
+   * **WHICH HEAD OF THE CHORD THIS CURVE WAS CREATED ON**, which is the order they go out
+   * in when several share one element.
+   *
+   * `addSlursAndTies` runs INSIDE the pitch loop and `addOther`s this head's tie and then
+   * this head's slur before the next head is reached (`abstract-engraver.js:728`,
+   * `:873-925`). So `([CEG]2-[CEG]2)` writes tie, SLUR, tie, tie — the slur second,
+   * because a chord's slur hangs on the head the stem does not (`:690-717`) and that is
+   * head 0 with the stem up. Sorting on x alone put every tie first, which is
+   * indistinguishable until a slur and a tie open on the same chord.
+   */
+  readonly headOrder?: number
   readonly x1: number
   readonly y1: number
   readonly x2: number
@@ -4005,14 +4017,24 @@ function styledHead(
   percussion = false,
   firstStep = 0,
   firstAccidental: Accidental | null = null,
+  pitchStyle: NoteStyle | undefined = undefined,
 ): GlyphName {
   if (event === null || event.type === 'rest') return base
+  /**
+   * ⚠️ **AND THIS HEAD'S OWN `!style=…!` WINS OVER BOTH** — abcjs's own comment says why:
+   * *"There is a style for the whole group of pitches, but there could also be an override
+   * for a particular pitch."* It is tested BEFORE the percussion map, so a mapped voice
+   * still draws what the brackets asked for (`abstract-engraver.js:678-688`). It takes
+   * `chartable[style][-durlog]` with no `nostem` arm, which the element-level style has.
+   */
   const style =
-    event.style !== 'normal'
-      ? event.style
-      : percussion
-        ? percHead(firstStep, firstAccidental)
-        : null
+    pitchStyle !== undefined && pitchStyle !== 'normal'
+      ? pitchStyle
+      : event.style !== 'normal'
+        ? event.style
+        : percussion
+          ? percHead(firstStep, firstAccidental)
+          : null
   if (style === null || style === 'normal') return base
   const pair = STYLED_HEADS[style]
   // `noteGlyph` gives a zero-duration note a stemless `noteheadBlack`, which is abcjs's
@@ -4599,6 +4621,7 @@ function layoutNoteheads(
       clef.shape === 'percussion',
       steps[position] ?? 0,
       pitches[position]?.accidental ?? null,
+      pitches[position]?.style,
     )
   for (const [position, step] of steps.entries()) {
     const dx = offsetAt[position] ?? 0
@@ -4658,7 +4681,18 @@ function layoutNoteheads(
    * also sits outside the staff, and `ledgerLines` draws each at `±symbolWidth + dx`
    * (`abstract-engraver.js:657`, `:459-463`) — one rule apiece, however far out the note is.
    */
-  lines.push(...ledgerLines(lowest, headX, headInk, highest))
+  /**
+   * ⚠️ **AND THE WIDTH IS THE WIDEST HEAD OF THE CHORD, NOT THE CHORD'S OWN GLYPH.**
+   * `symbolWidth = Math.max(glyphs.getSymbolWidth(c), symbolWidth)` accumulates over the
+   * PITCH loop (`abstract-engraver.js:723`) and only then reaches `ledgerLines`
+   * (`:850`), so a per-pitch `!style=x!` widens the rule by its own 0.033px. Unscaled,
+   * as abcjs passes it.
+   */
+  const ledgerWidth = steps.reduce(
+    (w, _s, i) => Math.max(w, glyphsFor(strict).width(headOf(i))),
+    headInk,
+  )
+  lines.push(...ledgerLines(lowest, headX, ledgerWidth, highest))
   for (const [position, step] of steps.entries()) {
     if ((offsetAt[position] ?? 0) === 0) continue
     const pitch = step + PITCH_ORIGIN
@@ -4758,9 +4792,18 @@ function layoutNoteheads(
     const baseShift = beamed ? stemHeadOffset : 0
     const anchor = up ? head.anchors.stemUpSE : head.anchors.stemDownNW
     const [bravuraX, bravuraY] = anchor ?? [up ? headW : 0, 0]
-    // `dx = (dir === "down" || heads.length === 0) ? 0 : abselem.heads[0].w` — the SCALED
-    // head width (`abstract-engraver.js:747`). See `headW`.
-    const ax = strict ? baseShift + (up ? headW - weight / 2 : weight / 2) : bravuraX
+    /**
+     * `dx = (dir === "down" || heads.length === 0) ? 0 : abselem.heads[0].w` — the SCALED
+     * head width (`abstract-engraver.js:747`). See `headW`.
+     *
+     * ⚠️ **AND `heads[0]` IS THE FIRST HEAD ADDED, WHICH IS THE CHORD'S LOWEST — NOT THE
+     * STEMMED ONE AND NOT THE CHORD'S OWN GLYPH.** They are the same width until a
+     * per-pitch `!style=…!` makes them differ: `[!style=harmonic!CEG]` hangs its up-stem
+     * off the DIAMOND's 7.5 while the top head it reaches is an ordinary 9.81, 2.31px.
+     * Reading `headW` here is right for every other shape and wrong for that one.
+     */
+    const stemDx = glyphsFor(strict).width(headOf(0)) * voiceScale
+    const ax = strict ? baseShift + (up ? stemDx - weight / 2 : weight / 2) : bravuraX
     // The near end sits a fraction of a PITCH inside the head — `minpitch + 1/3` going up
     // and `maxpitch - 1/3` going down unbeamed, `± ovalDelta = 1/5` once beamed. Bravura's
     // anchors say 0.168 spaces where a third of a pitch is 0.1667: a hundredth of a pixel
@@ -7890,6 +7933,10 @@ interface NoteAnchor {
   readonly tieHeadDx?: readonly number[]
   /** How far `tiePairs` moved this copy's `left` onto its own head — see `orderShift`. */
   readonly tieHeadShift?: number
+  /** Which head of the chord this copy hangs off — see `PlacedCurve.headOrder`. */
+  readonly tieHeadIndex?: number
+  /** Which head a SLUR opening here hangs on — see `PlacedCurve.headOrder`. */
+  readonly slurHeadIndex?: number
   /** Which of `tieSteps` carry their own `-` — see `Chord.tiedPitches`. */
   readonly tiedHeads?: readonly boolean[]
   readonly stemUp: boolean
@@ -8004,6 +8051,7 @@ function tiePairs(from: NoteAnchor, to: NoteAnchor): [NoteAnchor, NoteAnchor][] 
       right: a.right + dx,
       // …**BUT THE DRAW ORDER IS STILL THE ELEMENT'S.** See `PlacedCurve.orderShift`.
       ...(dx === 0 ? {} : { tieHeadShift: dx }),
+      tieHeadIndex: index,
     }
   }
   return fromSteps.flatMap((step, k) => {
@@ -8205,6 +8253,11 @@ function buildCurve(
     ...(edges?.start === undefined ? {} : { startElement: edges.start }),
     ...(edges?.end === undefined ? {} : { endElement: edges.end }),
     ...(from.tieHeadShift === undefined ? {} : { orderShift: from.tieHeadShift }),
+    ...(from.tieHeadIndex !== undefined
+      ? { headOrder: from.tieHeadIndex }
+      : kind === 'slur' && from.slurHeadIndex !== undefined
+        ? { headOrder: from.slurHeadIndex }
+        : {}),
   }
 }
 
@@ -11375,12 +11428,23 @@ function layoutMeasure(
        * anchors on C where the source says G. Ours took the written order and drew both
        * slurs 4 pitch high, which is 11.45px of page on `curves-tune3` and `-tune4`.
        */
+      /**
+       * ⚠️ **AND IT IS `pitches[0]` ONLY WHILE THE STEM IS UP — WITH THE STEM DOWN IT IS
+       * `pitches[pp-1]`.** abcjs's two tests are
+       * `isTopWhenStemIsDown = (stemdir === "up" || dir === "up") && p === 0` and
+       * `isBottomWhenStemIsUp = (stemdir === "down" || dir === "down") && p === pp - 1`
+       * (`abstract-engraver.js:692-694`), and the slur is hung on whichever head passes.
+       * So `([ceg]2-[ceg]2)` — stem down — anchors on the TOP head, one pitch above where
+       * the lowest-head rule puts it, and goes out AFTER all three ties rather than
+       * second. The two rules look like one on every stem-up chord in both corpora.
+       */
+      const stemIsUp = el.stemUp ?? el.lines.some((l) => l.x1 === l.x2 && l.y2 < l.y1)
+      const ascending =
+        event.type === 'chord'
+          ? [...event.pitches].sort((a, b) => pitchToStep(a, clefNow) - pitchToStep(b, clefNow))
+          : []
       const first =
-        event.type === 'note'
-          ? event.pitch
-          : event.type === 'chord'
-            ? [...event.pitches].sort((a, b) => pitchToStep(a, clefNow) - pitchToStep(b, clefNow))[0]
-            : undefined
+        event.type === 'note' ? event.pitch : event.type === 'chord' ? ascending[0] : undefined
       /** The chord's heads ASCENDING, with each one's own tie flag beside it. */
       const tieHeads =
         event.type === 'chord'
@@ -11411,6 +11475,8 @@ function layoutMeasure(
         // Ascending, which is the order `layoutNoteheads` draws them in and the order
         // abcjs's sorted `el.pitches` hands `addSlursAndTies`.
         tieSteps: tieHeads.map((h) => h.step),
+        /** Which head the SLUR hangs on, for the draw order — see `PlacedCurve.headOrder`. */
+        slurHeadIndex: stemIsUp ? 0 : Math.max(0, tieHeads.length - 1),
         /**
          * Which of those heads carry a `-` of their OWN — see `Chord.tiedPitches`. Absent
          * when the chord ties as a whole or not at all, which is every other case.

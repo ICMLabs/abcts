@@ -5639,6 +5639,8 @@ class Parser {
     /** One flag per pitch — see `Chord.tiedPitches`. */
     const innerTies: boolean[] = []
     let pendingInner: string[] = []
+    /** `!style=…!` read since the last head — see `Pitch.style`. */
+    let pendingHeadStyle: NoteStyle | null = null
     /**
      * **A `(` INSIDE THE BRACKETS OPENS ON THE HEAD IT PRECEDES AND A `)` CLOSES ON THE ONE
      * BEFORE IT** — `[(CE)G]` is a slur from the chord's first pitch to its second, which
@@ -5694,11 +5696,18 @@ class Parser {
       if (token.kind === 'noteLetter') {
         const head = this.readNoteHead(tokens, i, accidental, microtone)
         const length = this.readLength(tokens, head.next)
-        pitches.push(
-          pendingInnerSlurs === 0
-            ? head.pitch
-            : { ...head.pitch, slurStarts: pendingInnerSlurs },
-        )
+        /**
+         * ⚠️ **AND A `!style=…!` INSIDE THE BRACKETS IS THIS HEAD'S, NOT THE CHORD'S** —
+         * the one decoration that is (`abc_parse_music.js:375-379`, with abcjs's own
+         * comment saying so). Every other `!…!` joins `innerDecorations`, the chord's own
+         * list. See `Pitch.style`.
+         */
+        pitches.push({
+          ...head.pitch,
+          ...(pendingInnerSlurs === 0 ? {} : { slurStarts: pendingInnerSlurs }),
+          ...(pendingHeadStyle === null ? {} : { style: pendingHeadStyle }),
+        })
+        pendingHeadStyle = null
         pendingInnerSlurs = 0
         innerTies.push(false)
         innerMultipliers.push(length.factor)
@@ -5718,6 +5727,18 @@ class Parser {
         if (innerTies.length > 0) innerTies[innerTies.length - 1] = true
         i++
         continue
+      }
+      // …**AND `style=` IS CAUGHT BEFORE `chordDecoration`, WHICH DELIBERATELY DROPS IT**
+      // — it is not the chord's decoration, it is the next head's. See `Pitch.style`.
+      if (token.kind === 'decoration') {
+        const named = /^style=(.+)$/.exec(
+          this.src.slice(token.start + 1, token.start + token.length - 1),
+        )?.[1]
+        if (named !== undefined && NOTE_STYLES.includes(named as NoteStyle)) {
+          pendingHeadStyle = named as NoteStyle
+          i++
+          continue
+        }
       }
       const decoration = this.chordDecoration(token, builder)
       if (decoration !== null) {

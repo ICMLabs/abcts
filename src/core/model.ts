@@ -118,6 +118,24 @@ export interface Pitch {
    */
   readonly written?: string
   /**
+   * **`!style=x!` WRITTEN ON THIS HEAD, NOT ON THE CHORD** — and it is the ONE decoration
+   * inside brackets that is not the chord's.
+   *
+   *     if (accent[0] > 0) { // If we found a style above, it modifies the individual
+   *                          // pitch, not the entire chord.
+   *       if (accent[1].indexOf("style=") === 0)
+   *         el.pitches[el.pitches.length-1].style = accent[1].substr(6);
+   *     }
+   *
+   * (`abc_parse_music.js:375-379`, abcjs's own comment.) Every other `!…!` inside a chord
+   * goes onto `el.decoration`, the chord's list — see `chordDecoration`.
+   *
+   * The ENGRAVER reads it per head: `if (elem.pitches[p].style) c =
+   * chartable[elem.pitches[p].style][-durlog]` (`abstract-engraver.js:679-681`), so
+   * `[!style=harmonic!CEG]` draws ONE diamond and two ordinary heads.
+   */
+  readonly style?: NoteStyle
+  /**
    * **A SLUR WRITTEN ON THIS HEAD, NOT ON THE ELEMENT** — `[(CE)G]` opens on the chord's
    * first pitch and closes on its second, and a grace group's `{(CD)}` does the same to its
    * own notes.
