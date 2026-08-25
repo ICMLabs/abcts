@@ -2284,6 +2284,31 @@ class VoiceBuilder {
      */
     if (this.events.length === 0 && this.overlays.length === 0) {
       const trailing = this.pendingOpening
+      /**
+       * ⚠️ **AND WITH NOTHING AT ALL AFTER IT, THE ENDING GOES ON THE MEASURE ALREADY
+       * PUSHED.** `C2|1` ends the line on the digit: no measure opens after that barline,
+       * so nothing ever calls `takeOpening` and the label was set and dropped. abcjs
+       * writes `bar_thin startEnding "1"`.
+       *
+       * The projection joins a volta to a barline BY POSITION — `voltaAt` is keyed on
+       * `voltaSourceRange.start` and read against every measure's opening AND closing
+       * barline range (`compat/lines.ts`) — so which measure carries the label does not
+       * matter, only that one does. It goes on the last measure pushed, and only where
+       * that measure has none of its own.
+       */
+      if (trailing === null && this.pendingVolta !== null) {
+        const last = this.measures[this.measures.length - 1]
+        if (last !== undefined && last.volta === null) {
+          this.measures[this.measures.length - 1] = {
+            ...last,
+            volta: this.pendingVolta.label,
+            voltaSourceRange: this.pendingVolta.range,
+            // …and the bracket hangs on THIS measure's closer — see `Measure.voltaAtClose`.
+            voltaAtClose: true,
+          }
+          this.pendingVolta = null
+        }
+      }
       if (trailing !== null) {
         this.pendingOpening = null
         const bare: Measure = {
@@ -5475,6 +5500,58 @@ class Parser {
           // lexer already emits it as a digit token; nothing consumed it, so the number
           // was silently dropped and a reader could not tell where a repeat went.
           // `1,2` and `1-3` label one ending for several passes.
+          /**
+           * ⚠️ **AND THE NUMBER MAY BE BRACKETTED — `|[1` IS ONE BARLINE.** `letter_to_bar`
+           * skips whitespace, absorbs ONE optional `[` into the barline's own length, and
+           * only then reads the `1234567890-,` token; if that token is empty or opens with
+           * a `-` the whole thing REVERTS and the `[` is not consumed
+           * (`abc_parse_music.js:868-887`). So `|[1` and `| [1` are endings and `|[CEG]`
+           * is a barline followed by a chord.
+           *
+           * Ours stopped at the bracket, so `C2|[1 D2:|[2 E2|]` came out as FIVE bar
+           * elements against abcjs's three, with the endings on invisible barlines of
+           * their own. `endingEnd` already had the rule on the projection side — the SPAN
+           * would have been right the moment the label was.
+           */
+          let scan = i
+          while (
+            scan < tokens.length &&
+            (tokens[scan] as Token | undefined)?.kind === 'whitespace'
+          )
+            scan += 1
+          const bracket = tokens[scan] as Token | undefined
+          if (
+            bracket !== undefined &&
+            // …**AND THE LEXER CALLS THAT `[` A BARLINE**, not an open bracket: a `[` in
+            // bar position is `bar_invisible` on its own (`abc_tokenizer.js:161-173`),
+            // which is exactly what ours emitted for it before this.
+            (bracket.kind === 'barline' || bracket.kind === 'openBracket') &&
+            this.src.slice(bracket.start, bracket.start + bracket.length) === '[' &&
+            ((tokens[scan + 1] as Token | undefined)?.kind === 'digit' ||
+              (tokens[scan + 1] as Token | undefined)?.kind === 'chordSymbol')
+          )
+            i = scan + 1
+          /**
+           * ⚠️ **AND `|["first"]` IS AN ENDING WHOSE LABEL IS PROSE.** The `[` having been
+           * absorbed, a `"` immediately after it takes `getBrackettedSubstring` instead of
+           * the digit token, and the QUOTED TEXT is the label
+           * (`abc_parse_music.js:879-882`) — abcjs's own comment says it is unclear whether
+           * the `[` is required and assumes it is, "otherwise it would be confused with a
+           * regular chord". Its `]` is consumed with it, which is why nothing here treats
+           * that bracket as a stray one — its `]` is NOT consumed, and becomes a bar of
+           * its own.
+           */
+          const quoted = tokens[i] as Token | undefined
+          if (quoted?.kind === 'chordSymbol' && i > scan) {
+            const text = this.src.slice(quoted.start + 1, quoted.start + quoted.length - 1)
+            i += 1
+            // …**AND THE `]` IS LEFT BEHIND, WHICH IS ITS OWN INVISIBLE BARLINE.**
+            // `getBrackettedSubstring` takes the quoted string and nothing after it
+            // (`abc_parse_music.js:880-881`), so `|["first"]` is TWO bar elements in
+            // abcjs — the labelled one and a stray `]`. Consuming it here left one.
+            voice().setVolta(text, sourceRange(token.start, quoted.start))
+            break
+          }
           const label: string[] = []
           while (i < tokens.length) {
             const next = tokens[i]

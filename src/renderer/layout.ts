@@ -10788,6 +10788,8 @@ interface MeasureBlock {
   readonly spannerSites: readonly SpannerSite[]
   /** A repeat ending opening at this measure, and whether this measure closes it. */
   readonly volta: string | null
+  /** …and whether it hangs on this measure's OWN closer — see `Measure.voltaAtClose`. */
+  readonly voltaAtClose: boolean
   readonly closesVolta: boolean
   /** …and the same for its OPENING barline — see `voltaCarried`. */
   readonly opensAfterVolta: boolean
@@ -11951,6 +11953,7 @@ function layoutMeasure(
     openingBarIndex,
     musicWidth,
     volta: measure.volta,
+    voltaAtClose: measure.voltaAtClose === true,
     closesVolta,
     opensAfterVolta,
   }
@@ -14175,6 +14178,11 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
        * rule at 472.18 plus its declared 4.
        */
       const voltaStartOf = (i: number): number =>
+        // …**EXCEPT WHERE THE ENDING IS THIS MEASURE'S OWN CLOSER**, which is what
+        // `C2|1` leaves behind — see `Measure.voltaAtClose`.
+        (plan.blocks[i]?.voltaAtClose === true
+          ? barAnchor(i, 'closing', 'endingStart')
+          : null) ??
         barAnchor(i, 'opening', 'endingStart') ??
         (i > 0 ? barAnchor(i - 1, 'closing', 'endingStart') : null) ??
         startOf(i)

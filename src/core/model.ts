@@ -1205,6 +1205,18 @@ export interface Measure {
   readonly volta: string | null
   readonly voltaSourceRange: SourceRange | null
   /**
+   * **THE ENDING HANGS ON THIS MEASURE'S OWN CLOSING BARLINE, NOT ON THE NEXT MEASURE'S
+   * OPENER.**
+   *
+   * A volta normally rides on the measure its barline OPENS, and the bracket hangs on the
+   * previous measure's CLOSING bar — which is the same barline seen from the other side.
+   * `C2|1`, with nothing whatever after the digit, has no such measure: no measure opens,
+   * so the label is stamped onto the measure already pushed and the bracket has to be told
+   * that the barline it wants is that measure's own closer. Without it the hook falls back
+   * to the start of the system, 43.43px left of abcjs's on `C2|1`.
+   */
+  readonly voltaAtClose?: true
+  /**
    * A `P:` part label taking effect at this measure — "A", or "PART - VERSE, CHORUS".
    * Printed above the staff.
    *
