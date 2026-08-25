@@ -4638,6 +4638,9 @@ function layoutNoteheads(
       pitches[position]?.accidental ?? null,
       pitches[position]?.style,
     )
+  /** See the head's `reserve` below — `abstract-engraver.js:729-731`. */
+  const gracedBottomDrop =
+    event !== null && 'graceNotes' in event && event.graceNotes.length > 0
   for (const [position, step] of steps.entries()) {
     const dx = offsetAt[position] ?? 0
     const y = stepToY(step)
@@ -4680,12 +4683,36 @@ function layoutNoteheads(
       // abcjs's own golden confirms.
       ...(voiceScale === 1 ? {} : { scale: voiceScale }),
       ...(stepped[position] === undefined ? {} : { dataName: writtenNote(stepped[position].pitch) }),
-      reserve: [y - headDeclaredHalf, y + headDeclaredHalf],
+      /**
+       * ⚠️ **AND A GRACED NOTE'S HEADS EACH DROP THEIR BOTTOM BY ONE WHOLE PITCH.**
+       *
+       *     if (elem.gracenotes && elem.gracenotes.length > 0)
+       *       noteHead.bottom = noteHead.bottom - 1; // If there is a tie to the grace
+       *                                              // notes, leave a little more room
+       *                                              // for the note to avoid collisions.
+       *
+       * (`abstract-engraver.js:729-731`.) It runs INSIDE the pitch loop, so every head of
+       * a chord takes it, it is the BOTTOM only — the box stops being symmetric — and it
+       * fires on the mere PRESENCE of a grace group, tie or no tie.
+       *
+       * It hid behind the grace slur's own reserve, which was four pitch too low and
+       * bound first: `{aa}[CEG]2` read `staff.bottom` -3 against abcjs's -2.0444 and
+       * looked like ONE defect worth 3.703px. Fixing the slur alone left the page a whole
+       * pitch SHORT, which is what named this. Instrumented at abcjs's `_addChild`, where
+       * the C of `[CEG]` prints `top 1.0444 bottom -2.0444` — asymmetric by exactly 1.
+       */
+      reserve: [
+        y - headDeclaredHalf,
+        y + headDeclaredHalf + (gracedBottomDrop ? ENGRAVE.spacePerStep : 0),
+      ],
       // …AND THE SAME BOX IN PITCH, which is how abcjs states it and how `calcHeight` sums
       // it: `thickness = symbolHeightInPitches(c) * scale`, `top = pitch + thickness / 2`
       // (`create-note-head.js:34`, `relative-element.js:22-25`). The y above stays a length
       // added to a y because that is what the PLACEMENT needs; only the extent reads this.
-      reservePitch: [step + PITCH_ORIGIN + headHalfPitch, step + PITCH_ORIGIN - headHalfPitch],
+      reservePitch: [
+        step + PITCH_ORIGIN + headHalfPitch,
+        step + PITCH_ORIGIN - headHalfPitch - (gracedBottomDrop ? 1 : 0),
+      ],
       // `steps` is sorted ascending, so the index IS the chord position from the bottom.
       ...(steps.length > 1 ? { chordPos: position + 1 } : {}),
     })
@@ -8362,7 +8389,7 @@ function layoutCurves(
    * chord to that notehead, so the curve has to start where the mark was and not at the
    * element's own `pitches[0]`. Everything else pushes the index alone.
    */
-  const open: { i: number; from?: NoteAnchor }[] = []
+  const open: { i: number; from?: NoteAnchor; graceGi?: number }[] = []
   /** `(` order, by stack depth — see `PlacedCurve.openSeq`. */
   const openSeq = new Map<number, number>()
   let seq = 0
@@ -8792,6 +8819,13 @@ function layoutCurves(
            * stem at all, so `!to.stemUp` made the curve go ABOVE; abcjs's `TieElem` reports
            * `above=false` and draws it below. Instrumented on both sides.
            */
+          // …**AND IT TAKES ITS TURN IN THE GROUP'S OWN SEQUENCE, AT THE GRACE IT
+          // OPENED ON** — after that grace's tie and before the automatic slur. See
+          // `PlacedCurve.graceSeq`.
+          const groupX =
+            anchor.graceSlur === undefined
+              ? undefined
+              : anchor.graceSlur.headX + spaces(ABCJS_ARC.endOffset)
           emit(
             from,
             {
@@ -8802,10 +8836,22 @@ function layoutCurves(
               pitchStep: graceStep,
               stemUp: true,
             },
-            'slur',
+            /**
+             * ⚠️ **AND `{(aa)}` IS DRAWN AS A TIE.** `isTie` is recomputed at draw time
+             * from the two anchors' pitches (`draw/tie.js:39-40`) and `internalNotes` is
+             * fed only by `addSlursAndTies`' `else if (!isGrace)` arm
+             * (`abstract-engraver.js:927-932`), so a curve BETWEEN TWO GRACES can never
+             * have one — the pitch test is the whole rule. Ours wrote `data-name="slur"`
+             * with the slur's own 1.5-pitch lift, 1.16px low, the same 0.3 pitch the
+             * automatic grace slur was measured at.
+             */
+            from.pitchStep === graceStep ? 'tie' : 'slur',
             internalHighOf(rec?.i ?? 0, i, from),
             undefined,
             internalDownOf(rec?.i ?? 0, i),
+            groupX === undefined || rec?.graceGi === undefined
+              ? undefined
+              : { graceSeq: rec.graceGi * 4 + 1, groupX },
           )
         }
         /**
@@ -8828,6 +8874,8 @@ function layoutCurves(
               ? { i }
               : {
                   i,
+                  // Which grace it opened on — the group's own order. See `graceSeq`.
+                  graceGi: gi,
                   from: {
                     ...anchor,
                     // **AND A GRACE HEAD AT THE OPENING END PULLS THE ARC BACK 3.**
@@ -9133,7 +9181,7 @@ function curveReserves(
    * on a GRACE HEAD rather than on the element — the same stack `layoutCurves` keeps, and
    * for the same reason.
    */
-  const open: { i: number; from?: NoteAnchor }[] = []
+  const open: { i: number; from?: NoteAnchor; graceGi?: number }[] = []
   const centre = (a: NoteAnchor) => a.pitchY
   /**
    * `parent.fixed` — the element's OWN box over its fixed children, so on a beamed note
@@ -9376,9 +9424,7 @@ function curveReserves(
     if (!GRACE_SLURS) continue
     const head = elements[a.element]?.glyphs.find((g) => g.role === 'grace')
     if (head === undefined) continue
-    // abcjs's `Math.min` over PITCHES is our `Math.max` over y, as above.
-    const y = Math.max(head.y, centre(a))
-    reserves.push({ top: y, bottom: y + three })
+    // (the reserve is pushed below, once the MAIN head it pairs with is known)
     // …and the DRAWING's two ends, resolved here because this is where the elements are.
     // `anchor2` is the MAIN notehead, which is not `a.left`: that is a min over every head
     // on the element and the grace heads are in it.
@@ -9398,6 +9444,19 @@ function curveReserves(
     const main = mainHeads[mainHeads.length - 1]
     if (main !== undefined)
       a.graceSlur = { graceX: head.x, graceY: head.y, headX: main.x, headY: main.y }
+    /**
+     * abcjs's `Math.min` over PITCHES is our `Math.max` over y, as above.
+     *
+     * ⚠️ **AND THE NOTE END OF IT IS THE SAME HEAD THE DRAWING TAKES — THE CHORD'S
+     * HIGHEST, NOT THE ANCHOR'S OWN PITCH.** `setRange` runs on the very `TieElem`
+     * `addGraceNotes` built, whose `anchor2` is the head `createNote`'s pitch loop left
+     * behind (`abstract-engraver.js:735, 832`). Reading the anchor's `pitchY` — the
+     * chord's LOWEST head — reserved four pitch too low on every low chord: `{aa}[CEG]2`
+     * came out 3.703px taller than abcjs's page while `{aa}C2` and `{aa}[ceg]2` were
+     * exact, because on those two the two answers coincide or both fall inside the staff.
+     */
+    const y = Math.max(head.y, main?.y ?? centre(a))
+    reserves.push({ top: y, bottom: y + three })
   }
   /**
    * **A CLOSE WITH NOTHING OPEN RESERVES `pitch ± 4` AS INK** — the same arm a tie arriving
@@ -19408,6 +19467,7 @@ function layoutGraces(
        * pixel gate counted this one as a sixth notehead the moment it did not.
        */
       if (event.graceNotes[i]?.acciaccatura === true) {
+        const slashPitch = graceStep + ABCJS_PITCH.graceStemReach * scale + PITCH_ORIGIN
         graceGlyphs.push({
           name: 'graceNoteSlashStemUp',
           x: gx + (beamedGraces ? ENGRAVE.acciaccaturaBeamed : ENGRAVE.acciaccaturaUnbeamed),
@@ -19415,6 +19475,23 @@ function layoutGraces(
           scale,
           role: 'flag',
           graceIndex: i,
+          /**
+           * ⚠️ **AND IT RESERVES A POINT AT ITS OWN PITCH, NOT ITS INK.** The
+           * `RelativeElement` above carries no `thickness`, no `stemHeight` and no
+           * `top`/`bottom`, so `top === bottom === pitch` (`relative-element.js:18-40`) —
+           * pitch 16.2 for a default-scale grace, which is exactly where an UNBEAMED
+           * grace's stem already reaches.
+           *
+           * That is why the defect is invisible on `{/a}` and worth 6.84px on `{/aa}`:
+           * beaming the group retargets the stems DOWN onto the beam, and the slash is
+           * then the only thing left declaring the height. Falling through to the glyph's
+           * ink box left `{/aa}C2` at 145.68 against abcjs's 152.52.
+           */
+          reserve: [
+            stepToY(graceStep + ABCJS_PITCH.graceStemReach * scale),
+            stepToY(graceStep + ABCJS_PITCH.graceStemReach * scale),
+          ] as [number, number],
+          reservePitch: [slashPitch, slashPitch],
         })
       }
       /**
