@@ -70,7 +70,8 @@ describe("a per-pitch !style=…! in a chord", () => {
 });
 
 /**
- * ⚠️ **MEASURED AND NOT BUILT — A STEM-DOWN CHORD HANGS ITS SLUR ON THE TOP HEAD.**
+ * ⚠️ **A STEM-DOWN CHORD HANGS ITS SLUR ON THE TOP HEAD — BUILT, and this assertion is
+ * real now.**
  *
  * abcjs's two tests are `isTopWhenStemIsDown = (stemdir === "up" || dir === "up") && p ===
  * 0` and `isBottomWhenStemIsUp = (stemdir === "down" || dir === "down") && p === pp - 1`
@@ -86,11 +87,16 @@ describe("a per-pitch !style=…! in a chord", () => {
  * ⚠️ **AND THE OBVIOUS FIX IS MEASURED AND WRONG.** Moving the anchor's `first` pitch to
  * the top head for a stem-down chord takes this shape to abcjs's answer AND takes
  * `S8-layout-tune7` off the sibling byte gate's ratchet, five rows — because `first` feeds
- * `pitchStep`/`pitchY`, which every TIE reads too. The slur needs its own step, threaded
- * past the ten sites that read `pitchStep` for both kinds. **One surface's green cannot
- * clear another's**, for the second time on this rule.
+ * `pitchStep`/`pitchY`, which every TIE reads too. **One surface's green cannot clear
+ * another's**, for the second time on this rule.
+ *
+ * ✅ **SO THE SLUR CARRIES ITS OWN STEP** — `NoteAnchor.slurPitchStep`, substituted at the
+ * two element-level slur sites and nowhere a tie can reach. The byte gates are unmoved and
+ * `S7-voices` tune 0 — the one baseline this changed, by 2 pitch on a single slur — is
+ * byte-exact against a FRESH abcjs render. ⚠️ That check had to be made by hand: the
+ * fixture is on the sibling gate's `STALE` list, so its green says nothing about it.
  */
-it.fails("hangs a stem-down chord's slur on the top head", () => {
+it("hangs a stem-down chord's slur on the top head", () => {
   const svg =
     (renderAbc("*", `${HEAD}([ceg]2-[ceg]2)|\n`, { staffwidth: 670 })[0] as { svg?: string })
       ?.svg ?? "";

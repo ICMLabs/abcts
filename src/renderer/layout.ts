@@ -7979,6 +7979,22 @@ interface NoteAnchor {
   readonly tieHeadIndex?: number
   /** Which head a SLUR opening here hangs on — see `PlacedCurve.headOrder`. */
   readonly slurHeadIndex?: number
+  /**
+   * **THE PITCH A SLUR HANGS AT, WHICH IS NOT THE PITCH A TIE READS.**
+   *
+   * abcjs hangs a chord's slur on the head that passes
+   * `isTopWhenStemIsDown = (stemdir === "up" || dir === "up") && p === 0` or
+   * `isBottomWhenStemIsUp = (stemdir === "down" || dir === "down") && p === pp - 1`
+   * (`abstract-engraver.js:692-694`) — `pitches[0]` with the stem up, `pitches[pp-1]`
+   * with it down. Every other consumer of the anchor wants the LOWEST head: `tiePairs`
+   * builds each tie off `tieSteps`, and `pitchStep` is the fallback for a chord of one.
+   *
+   * ⚠️ **WHICH IS WHY MOVING `pitchStep` ITSELF WAS TRIED AND REVERTED.** It fixes
+   * `([ceg]2-[ceg]2)` and takes `S8-layout-tune7` off the sibling ratchet, because every
+   * TIE reads the same field. The two answers coincide on every stem-up chord, which is
+   * why one field looked like enough.
+   */
+  readonly slurPitchStep?: number
   /** Which of `tieSteps` carry their own `-` — see `Chord.tiedPitches`. */
   readonly tiedHeads?: readonly boolean[]
   readonly stemUp: boolean
@@ -8953,10 +8969,19 @@ function layoutCurves(
         )
       }
     }
+    /**
+     * **AND A SLUR HANGS AT ITS OWN HEAD'S PITCH, NOT THE ANCHOR'S** — see
+     * `NoteAnchor.slurPitchStep`. On every stem-up chord the two are the same head, which
+     * is why one field carried both for so long.
+     */
+    const slurAt = (a: NoteAnchor): NoteAnchor =>
+      a.slurPitchStep === undefined
+        ? a
+        : { ...a, pitchStep: a.slurPitchStep, pitchY: stepToY(a.slurPitchStep) }
     // Slurs close before they open, so `(A)(B)` closes on A before opening on B.
-    for (let n = 0; n < event.slurEnds; n++) closeInto(anchor)
+    for (let n = 0; n < event.slurEnds; n++) closeInto(slurAt(anchor))
     for (let n = 0; n < event.slurStarts; n++) {
-      open.push({ i })
+      open.push({ i, from: slurAt(anchor) })
       openSeq.set(open.length - 1, seq++)
     }
     /**
@@ -11628,6 +11653,11 @@ function layoutMeasure(
         tieSteps: tieHeads.map((h) => h.step),
         /** Which head the SLUR hangs on, for the draw order — see `PlacedCurve.headOrder`. */
         slurHeadIndex: stemIsUp ? 0 : Math.max(0, tieHeads.length - 1),
+        // …and the PITCH of that head, which a tie must not read — see `slurPitchStep`.
+        ...(() => {
+          const at = stemIsUp ? tieHeads[0] : tieHeads[tieHeads.length - 1]
+          return at === undefined ? {} : { slurPitchStep: at.step }
+        })(),
         /**
          * Which of those heads carry a `-` of their OWN — see `Chord.tiedPitches`. Absent
          * when the chord ties as a whole or not at all, which is every other case.
