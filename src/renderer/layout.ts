@@ -9019,7 +9019,26 @@ function layoutCurves(
     })
 
     // A tie joins this note to the next SOUNDING one, wherever it falls.
+    /**
+     * ⚠️ **AND A REST TAKES THE TIE'S CLOSE AND DRAWS NOTHING WITH IT, SO THE TIE NEVER
+     * CLOSES AT ALL.** The parse hands `endTie: true` to the REST — abcjs's object says
+     * so — and `addSlursAndTies` has exactly two call sites, `elem.gracenotes[i]` and
+     * `elem.pitches[p]` (`abstract-engraver.js:498`, `:728`), neither of which a rest
+     * reaches. So the open `TieElem` is still open at the end of the line and abcjs draws
+     * it as an OUTGOING HALF: `C-z C|` is one curve from the first C to 143.05, past the
+     * second C and out to the voice's width, NOT a tie to either note.
+     *
+     * Ours tied the C to the REST'S OWN ANCHOR — a 23px curve between two different
+     * pitches — and reserved a pitch for it that abcjs does not.
+     *
+     * Same shape as the `endSlur` rule below: a field that is real in the parse and drawn
+     * by nothing.
+     */
     if (event.tiedToNext || anchor.tiedHeads?.some(Boolean) === true) {
+      if (anchors[i + 1]?.event.type === 'rest') {
+        emitHalf(anchor, 'out')
+        return
+      }
       const next = anchors[i + 1]
       if (next !== undefined)
         for (const [a, b] of tiePairs(anchor, next))
@@ -9579,7 +9598,9 @@ function curveReserves(
     // takes — see `Chord.tiedPitches`. `voice.addOther(tie)` runs whatever the tie's
     // extent, so a reserve missing here is a staff 4 pitch short of abcjs's.
     if (anchor.event.tiedToNext || anchor.tiedHeads?.some(Boolean) === true) {
-      const next = anchors[i + 1]
+      // …and a REST takes the close and draws nothing, so the tie runs off the line — see
+      // `layoutCurves`. Its reserve is the one-anchor arm below, not a paired box.
+      const next = anchors[i + 1]?.event.type === 'rest' ? undefined : anchors[i + 1]
       if (next !== undefined) for (const [a, b] of tiePairs(anchor, next)) add(a, b, 'tie')
       /**
        * **…AND A TIE LEAVING THE SYSTEM RESERVES OFF ITS ONE ANCHOR**, the same way an
@@ -11290,12 +11311,23 @@ function layoutMeasure(
             0,
             dynamicsAbove,
           )
+    /**
+     * ⚠️ **AND THE BARLINE'S OWN RULE IS DRAWN BEFORE ITS DECORATION.** `createBarLine`
+     * builds the bar's `RelativeElement`s and only then reaches the decoration
+     * (`abstract-engraver.js:957-1002`), so `!fermata!|` writes the rule's `<path>` and
+     * the fermata after it. Ours emitted every glyph before every line, which is right for
+     * a NOTE — its heads precede its stem — and backwards for a bar, whose only line IS
+     * the barline. `afterLine` is the emitter's own interleave, already used by a dot.
+     */
     const withMarks =
       marks === null
         ? plain
         : {
             ...plain,
-            glyphs: [...plain.glyphs, ...marks.glyphs],
+            glyphs: [
+              ...plain.glyphs,
+              ...marks.glyphs.map((g) => ({ ...g, afterLine: plain.lines.length })),
+            ],
             texts: [...plain.texts, ...marks.texts],
           }
     const barSpan = { left: 0, right: 0 }
@@ -11861,12 +11893,23 @@ function layoutMeasure(
             0,
             dynamicsAbove,
           )
+    /**
+     * ⚠️ **AND THE BARLINE'S OWN RULE IS DRAWN BEFORE ITS DECORATION.** `createBarLine`
+     * builds the bar's `RelativeElement`s and only then reaches the decoration
+     * (`abstract-engraver.js:957-1002`), so `!fermata!|` writes the rule's `<path>` and
+     * the fermata after it. Ours emitted every glyph before every line, which is right for
+     * a NOTE — its heads precede its stem — and backwards for a bar, whose only line IS
+     * the barline. `afterLine` is the emitter's own interleave, already used by a dot.
+     */
     const withMarks =
       marks === null
         ? plain
         : {
             ...plain,
-            glyphs: [...plain.glyphs, ...marks.glyphs],
+            glyphs: [
+              ...plain.glyphs,
+              ...marks.glyphs.map((g) => ({ ...g, afterLine: plain.lines.length })),
+            ],
             texts: [...plain.texts, ...marks.texts],
           }
     // THE BAR NUMBER, and it is geometry before it is text.

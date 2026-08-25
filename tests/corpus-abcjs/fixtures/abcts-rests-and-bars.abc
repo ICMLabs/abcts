@@ -1,0 +1,58 @@
+%%abcts shapes neither corpus writes, swept through both engines one at a time. Two of
+%%abcts these are rules; four are open rows, measured through abcjs 6.7.0 and NOT built:
+%%abcts   X:4  !trill!z4     a decoration on a REST reserves less here — page 135.368
+%%abcts                      against abcjs's 147.1135, 11.75px.
+%%abcts   X:5  {g}z2         a grace group on a REST: abcjs shifts the whole line 10px
+%%abcts                      right and draws the automatic grace slur (52.05 -> 63.05)
+%%abcts                      where ours draws none — `notehead` is undefined for a rest
+%%abcts                      and abcjs builds the TieElem anyway.
+%%abcts   X:6  [K:G] mid-bar our group is `staff-extra key-signature`; abcjs's is a
+%%abcts                      `note` with `selectable="false" data-index="0"`.
+%%abcts   X:7  [M:2/4] mid-bar a stem runs 77.51 where abcjs's runs 85.23.
+X:1
+T:a decoration on a barline, drawn after the barline's own rule
+L:1/8
+K:C
+!fermata!|CDEF|
+
+X:2
+T:a tie into a rest, which never closes and runs off the line
+L:1/8
+K:C
+C-z C|
+
+X:3
+T:the same tie with no rest, which does close
+L:1/8
+K:C
+C-C C|
+
+X:4
+T:a decoration on a rest
+L:1/8
+K:C
+!trill!z4 C4|
+
+X:5
+T:a grace group on a rest
+L:1/8
+K:C
+{g}z2 C2|
+
+X:6
+T:an inline key change mid-measure
+L:1/8
+K:C
+CD[K:G]EF|
+
+X:7
+T:an inline meter change mid-measure
+L:1/8
+K:C
+CD[M:2/4]EF|
+
+X:8
+T:a decoration on a barline that opens a measure
+L:1/8
+K:C
+CDEF|!fermata!|GABc|

@@ -447,6 +447,8 @@ const WITHIN: Readonly<Record<string, number>> = {
   // …and `abcts-pitch-style.abc`, the per-PITCH `!style=…!`, whose eight are exact on all
   // four axes ON ARRIVAL — the three defects it named are byte-level and move no notehead
   // centre at all: an up-stem's x, a ledger's width and the ORDER two curves go out in.
+  // …and `abcts-rests-and-bars.abc`, a sweep of shapes neither corpus writes. FOUR of its
+  // eight are open rows, each with abcjs's own numbers in the fixture's own note.
   // …and `abcts-endings.abc`, what `letter_to_bar` reads past a barline — all eight
   // byte-exact. ⚠️ Its last row was written up TWICE as "our lexer calls that `[` a
   // barline", and the lexer does no such thing: it matches abcjs exactly (a bare `[` is a
@@ -458,7 +460,7 @@ const WITHIN: Readonly<Record<string, number>> = {
   "0.05": 218,
   "1": 218,
   "5": 218,
-  "25": 218,
+  "25": 219,
 };
 
 const names = readdirSync(fixturesDir)
