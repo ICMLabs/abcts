@@ -2861,7 +2861,12 @@ export function toSVG(
                 curve.carried === true
                   ? Number.NEGATIVE_INFINITY
                   : graceCurve || curve.startElement === undefined
-                    ? TC(curve).x2 - spaces(ABCJS_ARC.endOffset)
+                    ? // …**AND EVERY CURVE OF A GRACE GROUP KEYS AT THE SAME x**, the auto
+                      // slur's far end, so `graceSeq` can order them — see
+                      // `PlacedCurve.graceSeq`.
+                      TC(
+                        curve.groupX === undefined ? curve : { ...curve, x2: curve.groupX },
+                      ).x2 - spaces(ABCJS_ARC.endOffset)
                     : // …**AND A CHORD'S TIES ALL KEY ON THE ELEMENT**, not on the head each
                       // one hangs off — see `PlacedCurve.orderShift`. Transformed with the
                       // curve so the key stays in the drawn frame.
@@ -2873,7 +2878,9 @@ export function toSVG(
               // head keep the order they were collected in; ranking a tie ahead of a slur
               // there instead took `curves-tune2` off the sibling gate's ratchet, five
               // rows. See `PlacedCurve.headOrder`.
-              h: curve.headOrder ?? 0,
+              // …**AND A GRACE GROUP HAS ITS OWN SEQUENCE**, because the automatic slur
+              // takes its turn among the group's marks — see `PlacedCurve.graceSeq`.
+              h: curve.graceSeq ?? curve.headOrder ?? 0,
               s: curveSink.pop() ?? "",
               /**
                * **EVERY CURVE IS `el_type: "slur"`, WHATEVER IT DRAWS** (`draw/tie.js:28`),

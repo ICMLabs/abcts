@@ -447,10 +447,14 @@ const WITHIN: Readonly<Record<string, number>> = {
   // …and `abcts-pitch-style.abc`, the per-PITCH `!style=…!`, whose eight are exact on all
   // four axes ON ARRIVAL — the three defects it named are byte-level and move no notehead
   // centre at all: an up-stem's x, a ledger's width and the ORDER two curves go out in.
+  // …and `abcts-grace-tie.abc`, the `-` INSIDE a grace group. Five of its eight are
+  // byte-exact; the other three are within a pixel and each has a TIE-FREE CONTROL that
+  // differs the same way — a grace group on a CHORD, an ACCIACCATURA and a slurred group
+  // are three defects of their own, named in the checkpoint and not this fixture's.
   "0.05": 216,
-  "1": 216,
-  "5": 216,
-  "25": 216,
+  "1": 217,
+  "5": 217,
+  "25": 217,
 };
 
 const names = readdirSync(fixturesDir)

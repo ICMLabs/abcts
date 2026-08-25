@@ -1,0 +1,50 @@
+%%abcts a `-` INSIDE a grace group. `var inTie` is declared outside the group's own loop,
+%%abcts `getCoreNote` puts `startTie` on the grace whose `-` it read, and the NEXT
+%%abcts iteration takes `endTie` from it (`abc_parse_music.js:685-712`).
+X:1
+T:two graces tied
+L:1/8
+K:C
+{a-a}C2 D2|
+
+X:2
+T:three graces, the middle one both ends
+L:1/8
+K:C
+{a-a-a}C2 D2|
+
+X:3
+T:tied across two different pitches, which draws a SLUR
+L:1/8
+K:C
+{a-b}C2 D2|
+
+X:4
+T:a startTie the group never closes
+L:1/8
+K:C
+{a-}C2 {a}D2|
+
+X:5
+T:a tie inside a group that also carries a slur
+L:1/8
+K:C
+{(a-a)}C2 D2|
+
+X:6
+T:tied graces on a chord
+L:1/8
+K:C
+{a-a}[CEG]2 D2|
+
+X:7
+T:a tied pair beside an acciaccatura
+L:1/8
+K:C
+{/a-a}C2 D2|
+
+X:8
+T:tied graces in a group long enough to beam
+L:1/8
+K:C
+{aa-aa}C2 D2|

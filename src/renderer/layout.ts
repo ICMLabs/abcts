@@ -1782,6 +1782,21 @@ export interface PlacedCurve {
    * indistinguishable until a slur and a tie open on the same chord.
    */
   readonly headOrder?: number
+  /**
+   * **A GRACE GROUP'S CURVES GO OUT IN THE GROUP'S OWN ORDER, KEYED AT THE MAIN NOTE.**
+   *
+   * `addGraceNotes` walks the group once, and the AUTOMATIC grace slur is `addOther`'d at
+   * the END of grace 0's iteration — after that grace's own tie and slur, before grace 1's
+   * (`abstract-engraver.js:497-540`). So `{a-a-a}` writes tie, SLUR, tie: an order no key
+   * built from each curve's own x can produce, because the slur reaches the main head and
+   * the ties do not.
+   *
+   * `groupX` is the x every curve of the group sorts at — the auto slur's own far end,
+   * which is where the emitter already had that one — and `graceSeq` orders them within.
+   */
+  readonly graceSeq?: number
+  /** See `graceSeq`. */
+  readonly groupX?: number
   readonly x1: number
   readonly y1: number
   readonly x2: number
@@ -8505,6 +8520,8 @@ function layoutCurves(
     /** See `PlacedCurve.openSeq` — the `(` order, for two curves opening on one element. */
     openSeqOf?: number,
     internalDown?: boolean,
+    /** Extra fields for a curve inside a GRACE GROUP — see `PlacedCurve.graceSeq`. */
+    extra?: { graceSeq: number; groupX: number },
   ): void => {
     // `.-` and `.(` — the STYLE rides on the element the curve OPENS at, one flag for the
     // tie it starts and one for the slurs opening on it. See `PlacedCurve.dotted`.
@@ -8526,6 +8543,7 @@ function layoutCurves(
         ),
         ...style,
         ...(openSeqOf === undefined ? {} : { openSeq: openSeqOf }),
+        ...(extra ?? {}),
       })
       return
     }
@@ -8694,8 +8712,64 @@ function layoutCurves(
      * it reaches the pitch loop (`abstract-engraver.js:498`, `:728`, `:835`). The anchor is
      * the GRACE head, so the curve stops inside the group rather than at the notehead.
      */
+    /**
+     * The group's own open tie — a `-` inside `{}` never reaches past the braces — with
+     * the grace index it OPENED on, which is where abcjs `addOther`s it. See
+     * `PlacedCurve.graceSeq`.
+     */
+    let graceTieOpen: { at: NoteAnchor; gi: number } | undefined
     if ('graceNotes' in event)
       for (const [gi, g] of event.graceNotes.entries()) {
+        /**
+         * **AND A `-` INSIDE THE GROUP IS A TIE BETWEEN TWO GRACE HEADS**, closed and
+         * opened in the SAME pass and BEFORE this grace's slurs — `addSlursAndTies` tests
+         * `endTie`, then `startTie`, then `endSlur`, then `startSlur`
+         * (`abstract-engraver.js:873-925`). See `GracePitch.startTie`.
+         */
+        const graceAnchorAt = (index: number, inset: number): NoteAnchor | undefined => {
+          const h = anchor.graceHeads?.[index]
+          if (h === undefined) return undefined
+          return {
+            ...anchor,
+            left: h.x - inset,
+            right: h.x,
+            pitchY: h.y,
+            pitchStep: -h.y / ENGRAVE.spacePerStep - PITCH_ORIGIN,
+            stemUp: true,
+          }
+        }
+        if (g.endTie === true && graceTieOpen !== undefined) {
+          const to = graceAnchorAt(gi, 0)
+          /**
+           * ⚠️ **AND `{a-b}` DRAWS A SLUR.** `isTie` is recomputed at draw time from the
+           * two anchors' pitches (`draw/tie.js:39-40`), and abcjs names this one
+           * `data-name="slur"` with the slur's own 1.5-pitch lift — the parse says
+           * `startTie`/`endTie` and the drawing does not care. So the requested kind is
+           * `slur` and `drawnKind` decides, which is what makes `{a-a}` a tie.
+           */
+          // The auto slur's own far end, offset and all — see `PlacedCurve.graceSeq`.
+          const groupX =
+            anchor.graceSlur === undefined
+              ? undefined
+              : anchor.graceSlur.headX + spaces(ABCJS_ARC.endOffset)
+          if (to !== undefined)
+            emit(
+              graceTieOpen.at,
+              to,
+              graceTieOpen.at.pitchStep === to.pitchStep ? 'tie' : 'slur',
+              undefined,
+              undefined,
+              undefined,
+              groupX === undefined
+                ? undefined
+                : { graceSeq: graceTieOpen.gi * 4, groupX },
+            )
+          graceTieOpen = undefined
+        }
+        if (g.startTie === true) {
+          const at = graceAnchorAt(gi, spaces(ABCJS_ARC.graceStartInset))
+          graceTieOpen = at === undefined ? undefined : { at, gi }
+        }
         for (let n = 0; n < (g.slurEnds ?? 0); n++) {
           const rec = open.pop()
           const from = rec === undefined ? undefined : (rec.from ?? anchors[rec.i])
@@ -8772,6 +8846,12 @@ function layoutCurves(
           openSeq.set(open.length - 1, seq++)
         }
       }
+    /**
+     * ⚠️ **AND A `{a-}` THAT NEVER CLOSES IS STILL DRAWN.** The `TieElem` is on the voice
+     * the moment the `-` is read; nothing withdraws it, so abcjs runs it to the end of the
+     * line as the outgoing half of a split tie. See `GracePitch.startTie`.
+     */
+    if (graceTieOpen !== undefined) emitHalf(graceTieOpen.at, 'out')
 
     /**
      * ⚠️ **A REST'S `endSlur` IS PARSE DATA THAT THE DRAWING IGNORES.** `Rest.slurEnds` is
@@ -8916,6 +8996,9 @@ function layoutCurves(
         graceKind === 'tie' ? ABCJS_ARC.tieLift : ABCJS_ARC.slurLift,
       )
       curves[anchor.system]?.push({
+        // …**AND IT TAKES ITS TURN AFTER GRACE 0'S OWN MARKS** — see `PlacedCurve.graceSeq`.
+        graceSeq: 2,
+        groupX: x2,
         x1,
         y1: gs.graceY + lift,
         x2,
@@ -9357,6 +9440,8 @@ function curveReserves(
      * pass over the same marks. `{(CD)}E` reserved NOTHING for its curve and came out one
      * pitch short of abcjs's page.
      */
+    /** This group's own open tie — see `GracePitch.startTie`. */
+    let graceTie: NoteAnchor | undefined
     if ('graceNotes' in anchor.event)
       for (const [gi, g] of anchor.event.graceNotes.entries()) {
         const head = anchor.graceHeads?.[gi]
@@ -9371,6 +9456,13 @@ function curveReserves(
                 pitchStep: -head.y / ENGRAVE.spacePerStep - PITCH_ORIGIN,
                 stemUp: true,
               }
+        // …**AND SO DOES A `-` INSIDE THE GROUP**, closed and opened before this grace's
+        // slurs, exactly as `layoutCurves` walks it. See `GracePitch.startTie`.
+        if (g.endTie === true && graceTie !== undefined && at !== undefined) {
+          add(graceTie, at, 'tie')
+          graceTie = undefined
+        }
+        if (g.startTie === true) graceTie = at
         for (let n = 0; n < (g.slurEnds ?? 0); n++) {
           const rec = open.pop()
           const from = rec === undefined ? undefined : (rec.from ?? anchors[rec.i])
