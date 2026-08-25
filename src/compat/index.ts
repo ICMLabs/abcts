@@ -870,7 +870,19 @@ function renderInto(
       ? { visualTranspose: params.visualTranspose }
       : {}),
   });
-  const staffSpace = STAFF_SPACE_PX * (params.scale ?? 1);
+  const staffSpace = STAFF_SPACE_PX;
+  /**
+   * **THE HOST'S `{scale}` IS `%%scale` BY ANOTHER ROUTE, AND IT IS FLOORED AT 0.1.**
+   *
+   *     this.scale = params.scale ? parseFloat(params.scale) : 0;
+   *     if (!(this.scale > 0.1)) this.scale = undefined;
+   *
+   * (`engraver-controller.js:47-50`.) It reaches the same variable the directive does,
+   * where the DIRECTIVE wins (`:213`). This used to multiply the STAFF SPACE, which is a
+   * different quantity: `{scale: 0.5}` came out 350x72 where abcjs writes 1400x174.
+   */
+  const hostScale =
+    typeof params.scale === "number" && params.scale > 0.1 ? params.scale : undefined;
   // abcjs's staffwidth is the MUSIC AREA in pixels; core's `systemWidth` is the PAGE in
   // staff spaces — `%%staffwidth` maps `staffWidth / 7.75 + 2 * marginX` and the engine
   // default is 700 for abcjs's 670. Dropping the padding here made every justified line
@@ -986,6 +998,7 @@ function renderInto(
         mode: "abcjs-strict",
         ...(systemWidth ? { systemWidth } : {}),
         ...(printing ? { print: true } : {}),
+        ...(hostScale === undefined ? {} : { hostScale }),
       });
     const projection = (): {
       byEvent: ReadonlyMap<MusicEvent, AbcElement>;

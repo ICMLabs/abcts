@@ -10754,6 +10754,17 @@ export interface LayoutOptions {
    */
   readonly print?: boolean
   /**
+   * **THE HOST'S OWN `{scale}`, WHICH IS `%%scale` BY ANOTHER ROUTE.**
+   *
+   * `var scale = abcTune.formatting.scale ? abcTune.formatting.scale : this.scale`
+   * (`engraver-controller.js:213`) — the DIRECTIVE wins, and either one divides the music
+   * width, the four paddings and the header/footer sizes before the whole drawing is
+   * CSS-scaled by it (`:124-126`, `renderer.js:79-86`). abcjs floors the host param at
+   * `> 0.1` and the directive at `NaN`/`0`, so `%%scale 0.05` is honoured where
+   * `{scale: 0.05}` is not (`:47-50`, `abc_parse_directive.js:336-339`).
+   */
+  readonly hostScale?: number
+  /**
    * **WHERE THIS TUNE'S PAGE CURSOR STARTS** — 0 for a tune of its own, and the PREVIOUS
    * tune's `endY` when a whole book is stacked into one SVG. `engraveABC` resets the
    * renderer once and then runs `engraveTune` per tune, so `renderer.y` runs CONTINUOUSLY
@@ -12230,7 +12241,7 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
         // (`engraver-controller.js:124-126`), which is one division of the same sum.
         (score.staffWidth + 2 * (options.print === true ? ABCJS_PX.printPaddingLeft : ABCJS_PX.paddingLeft)) /
         UNIT_PX /
-        (score.scale ?? (options.print === true ? ABCJS_RATIO.printScale : 1))
+        (score.scale ?? options.hostScale ?? (options.print === true ? ABCJS_RATIO.printScale : 1))
       : /**
          * …**AND THE HOST'S OWN WIDTH TAKES THE SAME DIVISION** — `adjustNonScaledItems`
          * divides `this.width` whatever set it (`engraver-controller.js:125`) — **BUT THE
@@ -12241,11 +12252,14 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
          * in doubles, and every `-print` fixture of the sibling byte gate is exact on this
          * number. Dividing unconditionally put all 121 of them 358px wide.
          */
-        score.scale === null
+        // …**AND THE HOST'S OWN `{scale}` TAKES THE SAME DIVISION AS THE DIRECTIVE**, being
+        // the same variable one line down (`engraver-controller.js:213`). See
+        // `LayoutOptions.hostScale`.
+        (score.scale ?? options.hostScale ?? null) === null
           ? (options.systemWidth ?? ENGRAVE.systemWidth)
           : ((options.systemWidth ?? ENGRAVE.systemWidth) *
               (options.print === true ? ABCJS_RATIO.printScale : 1)) /
-            score.scale
+            (score.scale ?? options.hostScale ?? 1)
   // The mode picks the look; `profile` can still override it explicitly.
   const profile: RenderProfile =
     options.profile ?? (isStrict(options.mode ?? defaultMode) ? 'abcjs' : 'standard')
@@ -12266,10 +12280,14 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
    * has only `NaN`/`0` ruled out at parse (`abc_parse_directive.js:336-339`), so
    * `%%scale 0.05` is honoured where `{scale: 0.05}` is not.
    *
-   * ponytail: the host `params.scale` is not read — nothing in either corpus or any gate
-   * passes one, and the directive is what the fixtures write.
+   * The host param reaches the same variable through `LayoutOptions.hostScale`. It used
+   * to multiply the STAFF SPACE instead, which shrank the page where abcjs widens it:
+   * `{scale: 0.5}` gave 350x72 against abcjs's 1400x174, and `{scale: 2}` 1400x288
+   * against 700x258. `%%scale 0.5` was byte-exact throughout — one route was right and
+   * the other was reading the number as something else entirely.
    */
-  const printScale = score.scale ?? (options.print === true ? ABCJS_RATIO.printScale : 1)
+  const printScale =
+    score.scale ?? options.hostScale ?? (options.print === true ? ABCJS_RATIO.printScale : 1)
   PRINT_SCALE = printScale
   PRINT = options.print === true
   // …and the page's own origin, which a stacked book seeds with the tune above's `endY`.

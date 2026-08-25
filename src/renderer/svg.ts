@@ -4084,7 +4084,7 @@ export function toSVG(
     }
   }
 
-  const w = abcjs
+  const wRaw = abcjs
     ? lastDoc.pageWidth * OUT
     : (options.pageWidth ?? lastDoc.width * OUT);
   // …and the LAST tune's height IS the whole page, because its own walk was seeded with
@@ -4106,12 +4106,29 @@ export function toSVG(
   ];
   const lastTitle = titles[titles.length - 1];
   const printScale = lastDoc.printScale ?? 1;
+  /**
+   * ⚠️ **AND THE DIVISION IS ONLY TAKEN WHEN THE SCALE IS UNDER 1.**
+   *
+   *     if (scale < 1) { renderer.paper.setSize(w / scale, h / scale) }
+   *     else renderer.paper.setSize(w, h)
+   *
+   * (`draw/set-paper-size.js:33-38`), where `w` and `h` were multiplied by the scale two
+   * lines up. So the two operations cancel BELOW 1 and compound AT OR ABOVE it: a host
+   * `{scale: 2}` page is 700x258.334 where `{scale: 0.5}` is 1400x174.167. Print is
+   * always 0.75, so only the cancelling branch was ever exercised here and the asymmetry
+   * read as an identity.
+   */
+  const scaleUp = printScale > 1
+  // …and the WIDTH takes the same asymmetry — see `printH`.
+  const w = scaleUp ? wRaw * printScale : wRaw
   const printH =
     lastDoc.print === true
       ? Math.max(h * printScale, ABCJS_PX.printMinHeight) / printScale
       : printScale === 1
         ? h
-        : (h * printScale) / printScale;
+        : scaleUp
+          ? h * printScale
+          : (h * printScale) / printScale;
   const printStyle =
     printScale === 1
       ? ""
