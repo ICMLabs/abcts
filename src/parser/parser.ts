@@ -2029,8 +2029,30 @@ class VoiceBuilder {
   /** `-` reaches back: the tie belongs to the note already emitted. Rests cannot tie. */
   tieLast(dotted = false): void {
     const last = this.last
-    if (last && last.type !== 'rest')
+    if (last && last.type !== 'rest') {
       this.replaceLast({ ...last, tiedToNext: true, ...(dotted ? { tieDotted: true } : {}) })
+      return
+    }
+    /**
+     * ⚠️ **AND A `-` WRITTEN AFTER THE BARLINE STILL TIES THE NOTE BEFORE IT.** abcjs's
+     * tie is a voice-level flag rather than a property of the measure being built, so
+     * `C2|[-1 D2|]` — where the `[-1` reverts to a bare barline and the chord abandons at
+     * the `-` — puts `startTie` on the C and `endTie` on the D across the bar. Ours looked
+     * only at the measure just opened, which is empty, and drew nothing.
+     *
+     * Only reached where the current measure has no event yet: an ordinary `C2-|D2` writes
+     * its `-` BEFORE the barline and never comes here.
+     */
+    if (last !== null) return
+    const previous = this.measures[this.measures.length - 1]
+    const events = previous?.events
+    const at = events === undefined ? -1 : events.length - 1
+    const target = at < 0 ? undefined : events?.[at]
+    if (previous === undefined || events === undefined || target === undefined) return
+    if (target.type === 'rest') return
+    const replaced = [...events]
+    replaced[at] = { ...target, tiedToNext: true, ...(dotted ? { tieDotted: true } : {}) }
+    this.measures[this.measures.length - 1] = { ...previous, events: replaced }
   }
 
   /**
@@ -5814,8 +5836,17 @@ class Parser {
        * three of its four heads — see `Chord.tiedPitches`. It reaches back to the pitch
        * already read, exactly as the outer `-` reaches back to the note.
        */
-      if (token.kind === 'tie') {
-        if (innerTies.length > 0) innerTies[innerTies.length - 1] = true
+      /**
+       * ⚠️ **AND A `-` WITH NO PITCH BEFORE IT IS NOT THE CHORD'S AT ALL.** abcjs reads a
+       * chord's tie inside `getCoreNote`, which needs a pitch; a leading `-` reaches the
+       * `else` and ends the chord like any other stray token (`abc_parse_music.js:352-390`).
+       * `C2|[-1 D2|]` is the shape: the `[` is absorbed into the barline, `getTokenOf`
+       * reads `-1`, the leading `-` REVERTS the whole ending (`:885-886`), and the music
+       * parser re-reads `[-1` — where the chord abandons AT the `-`, which then ties the
+       * C to the D. Swallowing it here drew no tie at all.
+       */
+      if (token.kind === 'tie' && innerTies.length > 0) {
+        innerTies[innerTies.length - 1] = true
         i++
         continue
       }

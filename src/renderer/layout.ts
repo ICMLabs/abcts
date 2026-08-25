@@ -9021,7 +9021,17 @@ function layoutCurves(
     // A tie joins this note to the next SOUNDING one, wherever it falls.
     if (event.tiedToNext || anchor.tiedHeads?.some(Boolean) === true) {
       const next = anchors[i + 1]
-      if (next !== undefined) for (const [a, b] of tiePairs(anchor, next)) emit(a, b, 'tie')
+      if (next !== undefined)
+        for (const [a, b] of tiePairs(anchor, next))
+          /**
+           * ⚠️ **AND A TIE BETWEEN TWO DIFFERENT PITCHES IS DRAWN AS A SLUR.** `isTie` is
+           * recomputed at draw time from the two anchors (`draw/tie.js:39-40`), so the
+           * parse's `startTie` decides nothing about the shape. Every ordinary tie joins
+           * one pitch to itself and the two answers agree; `C2|[-1 D2|]` — where the `-`
+           * ties a C to a D across the barline — is the shape that separates them, and
+           * abcjs gives it the slur's own 1.5-pitch lift and `data-name="slur"`.
+           */
+          emit(a, b, a.pitchStep === b.pitchStep ? 'tie' : 'slur')
     }
 
     // `!slide!` IS A CURVE AT THE NOTE, NOT A GLYPH ABOVE THE STAFF.

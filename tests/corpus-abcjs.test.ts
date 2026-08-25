@@ -447,9 +447,11 @@ const WITHIN: Readonly<Record<string, number>> = {
   // …and `abcts-pitch-style.abc`, the per-PITCH `!style=…!`, whose eight are exact on all
   // four axes ON ARRIVAL — the three defects it named are byte-level and move no notehead
   // centre at all: an up-stem's x, a ledger's width and the ORDER two curves go out in.
-  // …and `abcts-endings.abc`, what `letter_to_bar` reads past a barline. Seven of its
-  // eight are byte-exact; ONE is open and named — `|[-1` re-reads its `[` as a CHORD in
-  // abcjs, where our lexer has already called it a barline.
+  // …and `abcts-endings.abc`, what `letter_to_bar` reads past a barline — all eight
+  // byte-exact. ⚠️ Its last row was written up TWICE as "our lexer calls that `[` a
+  // barline", and the lexer does no such thing: it matches abcjs exactly (a bare `[` is a
+  // bar only before `|`, `1`-`9` or `"`). Reading the rule beside the code would have said
+  // so; the row was three defects of its own, and none of them was the lexer.
   // …and `abcts-grace-tie.abc`, the `-` INSIDE a grace group — exact on all four axes
   // once the ACCIACCATURA SLASH declared its own box, which is one of the three defects
   // its tie-free controls named.
