@@ -10790,6 +10790,15 @@ interface MeasureBlock {
   readonly volta: string | null
   /** …and whether it hangs on this measure's OWN closer — see `Measure.voltaAtClose`. */
   readonly voltaAtClose: boolean
+  /**
+   * …and whether this measure's OPENING barline is the one the ending was declared on.
+   *
+   * Usually there is no opening barline at all — a `|1` closes the measure before it — so
+   * the bracket hangs on the PREVIOUS measure's closer. `C2|["first"] D2` has one, the
+   * `]` the quoted label leaves behind, and it is NOT the bar the ending was read past.
+   * The source ranges settle it, the same join the projection uses.
+   */
+  readonly voltaOnOpeningBar: boolean
   readonly closesVolta: boolean
   /** …and the same for its OPENING barline — see `voltaCarried`. */
   readonly opensAfterVolta: boolean
@@ -11292,7 +11301,23 @@ function layoutMeasure(
     // width is one max and the `minspacing` is the separate sum below.
     const openW = Math.max(barWidthOf(measure.openingBarline, bar, strict), barSpan.right)
     elements.push({ ...bar, minWidth: openW })
-    const openGap = ENGRAVE.prefixGap + endingRoom(measure.volta)
+    /**
+     * ⚠️ **AND ONLY THE BARLINE THE ENDING WAS DECLARED ON PAYS FOR IT.** abcjs adds
+     * `minspacing += textWidth + 10` in `createBarLine`, on the bar carrying
+     * `startEnding` (`abstract-engraver.js:1034-1042`) — ONE bar. Our two sites are the
+     * measure's own opening bar and the PREVIOUS measure's closer, and a `|1` normally
+     * reaches only the second, because the measure a volta opens has no opening barline.
+     *
+     * `C2|["first"] D2` has BOTH: the quoted label's `]` is an invisible barline that
+     * opens the next measure, so the room was spent twice and the staff came out 94.65px
+     * wide of abcjs's — exactly the two labels' own reserves. The source ranges say which
+     * bar it is: the volta's range starts at the barline the digits were read past, which
+     * is the same join the projection uses to hang `startEnding`.
+     */
+    const openCarriesVolta =
+      measure.voltaSourceRange !== null &&
+      measure.openingBarlineSourceRange?.start === measure.voltaSourceRange.start
+    const openGap = ENGRAVE.prefixGap + (openCarriesVolta ? endingRoom(measure.volta) : 0)
     fixed(
       openW + openGap,
       openGap,
@@ -11954,6 +11979,9 @@ function layoutMeasure(
     musicWidth,
     volta: measure.volta,
     voltaAtClose: measure.voltaAtClose === true,
+    voltaOnOpeningBar:
+      measure.voltaSourceRange !== null &&
+      measure.openingBarlineSourceRange?.start === measure.voltaSourceRange.start,
     closesVolta,
     opensAfterVolta,
   }
@@ -14183,7 +14211,11 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
         (plan.blocks[i]?.voltaAtClose === true
           ? barAnchor(i, 'closing', 'endingStart')
           : null) ??
-        barAnchor(i, 'opening', 'endingStart') ??
+        // …and the opening bar only when it is the one the ending was DECLARED on — see
+        // `MeasureBlock.voltaOnOpeningBar`.
+        (plan.blocks[i]?.voltaOnOpeningBar === true
+          ? barAnchor(i, 'opening', 'endingStart')
+          : null) ??
         (i > 0 ? barAnchor(i - 1, 'closing', 'endingStart') : null) ??
         startOf(i)
 
@@ -14208,6 +14240,17 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
               startX: voltaStartOf(i),
               measure: Math.max(0, i - span.start - 1),
             }
+            /**
+             * ⚠️ **AND AN ENDING CAN CLOSE ON THE VERY BAR THAT FOLLOWS ITS OWN.**
+             * `if (inEnding && bar.type !== 'bar_thin') { bar.endEnding = true }`
+             * (`abc_parse_music.js:271-274`) tests every bar in turn, including one this
+             * measure OPENS with: `C2|["first"] D2` starts the ending at the `|` and ends
+             * it at the `]` the quoted label leaves behind, four elements later. Ours ran
+             * on to the `:|` — 63.42px — because the opening-bar test was reached only by
+             * a CARRIED ending.
+             */
+            if (block.opensAfterVolta && !block.voltaOnOpeningBar)
+              closeVolta(barAnchor(i, 'opening', 'endingEnd') ?? startOf(i), true)
           }
           const base = elements.length
           // Every element sits where the LINE's shared cursor put it: notes at the same

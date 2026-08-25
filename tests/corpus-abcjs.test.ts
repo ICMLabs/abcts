@@ -447,18 +447,16 @@ const WITHIN: Readonly<Record<string, number>> = {
   // …and `abcts-pitch-style.abc`, the per-PITCH `!style=…!`, whose eight are exact on all
   // four axes ON ARRIVAL — the three defects it named are byte-level and move no notehead
   // centre at all: an up-stem's x, a ledger's width and the ORDER two curves go out in.
-  // …and `abcts-endings.abc`, what `letter_to_bar` reads past a barline. Six of its eight
-  // are byte-exact; TWO are open and named — a quoted ending label spaces 94.65px wider
-  // than abcjs's (exactly the two labels' own reserves, which abcjs computes identically
-  // and applies somewhere ours does not), and `|[-1` re-reads its `[` as a CHORD in abcjs
-  // where our lexer has already called it a barline.
+  // …and `abcts-endings.abc`, what `letter_to_bar` reads past a barline. Seven of its
+  // eight are byte-exact; ONE is open and named — `|[-1` re-reads its `[` as a CHORD in
+  // abcjs, where our lexer has already called it a barline.
   // …and `abcts-grace-tie.abc`, the `-` INSIDE a grace group — exact on all four axes
   // once the ACCIACCATURA SLASH declared its own box, which is one of the three defects
   // its tie-free controls named.
-  "0.05": 217,
-  "1": 217,
-  "5": 217,
-  "25": 217,
+  "0.05": 218,
+  "1": 218,
+  "5": 218,
+  "25": 218,
 };
 
 const names = readdirSync(fixturesDir)

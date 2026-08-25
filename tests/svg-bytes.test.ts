@@ -120,6 +120,7 @@ const PASSING: readonly string[] = [
    */
   "abcts-grace-tie-tune4",
   "abcts-grace-tie-tune5",
+  "abcts-endings-tune2",
   "abcts-endings-tune0",
   "abcts-endings-tune1",
   "abcts-endings-tune3",
