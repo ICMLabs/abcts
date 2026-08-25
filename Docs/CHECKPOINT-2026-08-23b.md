@@ -1,6 +1,6 @@
 # CHECKPOINT — 2026-08-23b
 
-**Branch `main`. Suite 2,118 passing, 4 EXPECTED-FAIL, no reds. Everything pushed.**
+**Branch `main`. Suite 2,122 passing, NO reds and no expected-fails. Everything pushed.**
 
 Thirteen commits across the day. **FIVE FEATURES LANDED, ONE GATE DEFECT FIXED, AND ONE
 FIX REVERTED** — and the reverted one is worth as much as the rest, because the probe that
@@ -29,8 +29,8 @@ are now built. What is left is §3g's own residue plus two rows that were alread
 | `tune.setupEvents` / `TimingCallbacks` / `extractMeasures` / `selectables` | 0 |
 | audio / MIDI / chord grids / DOM / pixel / editor / animation / synth | 0 |
 
-Everything reads zero except the one byte row. **AND FOUR EXPECTED-FAILS ARE BACK, ON
-PURPOSE** — see §5.
+Everything reads zero except the one byte row. **AND THE FOUR EXPECTED-FAILS §6 OPENED WERE
+CLOSED THE SAME DAY — see §6a**, which is where the rest of the day's lesson is.
 
 ---
 
@@ -245,6 +245,45 @@ return value.
 
 ---
 
+## 6a. AND THEN IT CLOSED — TWO MECHANISMS, NOT ONE
+
+All six shapes byte-identical; both byte gates unmoved at 1 of 383 and 0 of 356. The four
+`.fails` did exactly what they were for: they carried abcjs's numbers until the rule was
+found and then went red.
+
+**THE REASON NO SINGLE RULE FIT THE TABLE IS THAT THERE ARE TWO:**
+
+1. **`delayStartNewLine && !this.lineContinuation`** (`abc_parse_music.js:151-159`). ANY
+   inline `[V:` sets the flag — a repeat of the current voice INCLUDED — and it fires at
+   the next non-header token unless the line CONTINUES the one above. abcjs's own comment
+   on it reads *"fixes bug on this: c[V:2]d"*. Rows 1-3. **This is the half we lacked**, and
+   it is now `VoiceBuilder.inlineVoiceField`.
+2. **`tuneBuilder.setCurrentVoice`'s LINE SCAN**, which runs only on a REAL switch — a
+   repeat early-returns before ever reaching it. Row 4. `VoiceBuilder.switchedTo`, which was
+   already correct, which is why `selectVoice`'s guard had to stay.
+
+Plus one more: ⚠️ **THE FIRST `V:` OF A TUNE IS ALWAYS A REAL SWITCH, EVEN NAMING THE
+DEFAULT.** abcjs's OUTER test is `if (multilineVars.currentVoice)` — whether a voice has
+EVER been made current — and nothing sets it but a `V:`/`[V:`. So on `CDEF|\` +
+`[V:1]GABc|` the implicit voice the first line wrote into is not `currentVoice`, the `[V:1]`
+switches for real, and the scan points past the full line. Ours seeded `currentVoiceId` with
+the default id, so it read as a repeat.
+
+⚠️ **AND INSTRUMENTING BOTH SITES AT ONCE IS WHAT SEPARATED THEM.** Rows 4 and 5 trace
+IDENTICALLY through mechanism 1 — `hasBeginMusic=true delay=true lineContinuation=true`, no
+break — and differ entirely in mechanism 2, where row 4 prints `had=NONE -> SWITCHING` and
+row 5 `-> EARLY RETURN`. **PROBING EITHER ONE ALONE SAYS THE OTHER CANNOT BE THE CAUSE**,
+which is precisely the wrong conclusion §6 recorded and this section had to undo. The rule
+"instrument to answer a question" has a corollary: **when a probe exonerates a site, it has
+only exonerated it FOR THE ROWS YOU RAN**, and a second site can carry the difference.
+
+⚠️ **AND THE FIRST METRIC WAS WRONG.** `abcjs-top-line` counts STAVES, not systems; it
+happened to equal the line count on these tunes, so the table it produced was right by
+luck. Counting `tune.lines` with a staff is what confirmed it before any of it was believed.
+**A metric that agrees with the truth on your controls is not thereby the truth.**
+
+---
+
 ## 7. WHAT IS LEFT
 
 - **§1** — `abcts-directives-tune4`, the `%%stafftopmargin` height (`201.76700000000002`
@@ -254,7 +293,7 @@ return value.
   the `Layout`, which measurably killed this suite's workers once.
 - **§3b** — `K:C clef=none`'s one stem, on no gate. THREE failed attempts say the stem's
   own expression is not the obstacle; instrument `layoutOneItem`'s `er`/`extraWidth` arm.
-- **§6 above** — the inline `[V:` line rule, four `.fails` and a named next probe.
+- ~~**§6**~~ — the inline `[V:` line rule. **CLOSED, see §6a.**
 - **§3g's residue** — pitch-level `style` (a per-PITCH notehead override the engraver reads
   at `abstract-engraver.js:679` that no corpus tune produces), and grace `startBeam`,
   `startTie`, `endTie`, `style`.
@@ -286,5 +325,13 @@ at all.
 rungs had closed.
 
 ⚠️ **AND A HALF-UNDERSTOOD FIX IS WORTH LESS THAN A WRITTEN-DOWN MEASUREMENT**, for the
-sixth time on this branch — this time with the probe that disproves the obvious reading
-recorded beside the numbers, so nobody spends the afternoon again.
+sixth time on this branch — and this time the measurement was cashed the same day, because
+it recorded the four numbers AND the probe that disproved the obvious reading.
+
+⚠️ **AND WHEN A PROBE EXONERATES A SITE, IT HAS EXONERATED IT FOR THE ROWS YOU RAN.** §6
+concluded `setCurrentVoice`'s guard "is not the mechanism" from a trace that was correct;
+the guard IS one of two mechanisms, and the trace could not say so because the other one
+accounted for the rows it was run on. Instrument every candidate site in the same sitting.
+
+⚠️ **AND A METRIC THAT AGREES WITH THE TRUTH ON YOUR CONTROLS IS NOT THEREBY THE TRUTH** —
+`abcjs-top-line` counts staves and was read as systems for a whole session.
