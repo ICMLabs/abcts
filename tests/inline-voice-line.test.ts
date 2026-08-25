@@ -3,8 +3,7 @@ import { describe, expect, it } from "vitest";
 import { renderAbc } from "../src/compat/index.js";
 
 /**
- * **A `[V:x]` WRITTEN AFTER MUSIC ON THE SAME LOGICAL LINE OPENS A NEW SYSTEM IN abcjs, AND
- * NOT HERE — MEASURED, NOT BUILT.**
+ * **A `[V:x]` WRITTEN AFTER MUSIC ON THE SAME LOGICAL LINE OPENS A NEW SYSTEM — CLOSED.**
  *
  * Found while chasing §2e's `transpose` row, which turned out not to be about `transpose`
  * at all: a bare `[V:1]` does the same thing. ⚠️ **MEASURE WHAT THE ROW POINTS AT, NOT WHAT
@@ -20,26 +19,30 @@ import { renderAbc } from "../src/compat/index.js";
  *     [V:1]CDEF|\  +  [V:1]GABc|                         1     1   ✓
  *     [V:1]CDEF|  +  [V:1]GABc|                          2     2   ✓
  *
- * So the rule is not "a repeat switches voice" and it is not "a continuation suppresses the
- * break": the two agreeing rows straddle both. What separates row 4 from row 5 is whether
- * the LOGICAL LINE ITSELF OPENED with a `[V:1]`.
+ * ⚠️ **THERE ARE TWO MECHANISMS AND THEY ARE NOT THE SAME ONE.** That is why no single
+ * rule fits the table, and why the obvious fix passes all six rows and breaks the corpus:
  *
- * ⚠️ **AND `setCurrentVoice`'s GUARD IS NOT THE MECHANISM — PROBED, NOT ASSUMED.** The
- * obvious reading is `if (currentVoice.index === … && staffNum === …) return // there was
- * no change` (`abc_parse_key_voice.js:526-531`), so a repeat does nothing and the early
- * return is what our `selectVoice` already reproduces. A `console.error` on both arms says
- * abcjs takes **EARLY RETURN in row 4 and row 5 alike** — the rows that disagree with each
- * other — so whatever opens the system is somewhere else, and removing our guard is not it.
+ *   1. **`delayStartNewLine && !this.lineContinuation`** (`abc_parse_music.js:151-159`).
+ *      ANY inline `[V:` sets the flag — a repeat of the current voice included — and it
+ *      fires at the next non-header token unless the line CONTINUES the one above. abcjs's
+ *      own comment on it reads *"fixes bug on this: c[V:2]d"*. Rows 1, 2 and 3.
+ *      `VoiceBuilder.inlineVoiceField` is this one.
+ *   2. **`tuneBuilder.setCurrentVoice`'s LINE SCAN**, which runs only on a REAL switch: a
+ *      repeat early-returns at `if (multilineVars.currentVoice) { if (same) return }`
+ *      before ever reaching it (`abc_parse_key_voice.js:526-531`). Row 4, where the first
+ *      line's notes went to the IMPLICIT voice and `currentVoice` was still unset, so
+ *      `[V:1]` switches for real. `VoiceBuilder.switchedTo` is this one.
  *
- * ⚠️ **AND REMOVING IT WAS TRIED AND REVERTED.** All six shapes went to abcjs's answer and
- * `abcjs-visual-parsing-03-v-1-f` and `-09-score-t-b` — two of abcjs's OWN test tunes, both
- * `\`-continued — went from byte-exact to differing. One surface's green cannot clear
- * another's, and this is the shape where that bites.
+ * ⚠️ **AND CONFLATING THEM WAS TRIED AND REVERTED FIRST.** Removing `selectVoice`'s
+ * early return takes all six shapes to abcjs's answer AND takes
+ * `abcjs-visual-parsing-03-v-1-f` and `-09-score-t-b` — two of abcjs's OWN test tunes,
+ * both `\`-continued — from byte-exact to differing. **One surface's green cannot clear
+ * another's.**
  *
- * **THE NEXT MOVE** is to instrument `abc_parse_music.js`'s inline-field arm rather than
- * `parseVoice`: `case "[V:"` returns a fourth element `needsNewLine` whose own
- * `startNewLine()` is COMMENTED OUT (`abc_parse_header.js:400-405`), so the break is being
- * raised by the caller and not by the switch. Find which caller before touching anything.
+ * ⚠️ **AND INSTRUMENTING BOTH SITES AT ONCE IS WHAT SEPARATED THEM.** Rows 4 and 5 trace
+ * IDENTICALLY through mechanism 1 — `hasBeginMusic=true delay=true lineContinuation=true`,
+ * no break — and differ entirely in mechanism 2, where row 4 prints `had=NONE -> SWITCHING`
+ * and row 5 `-> EARLY RETURN`. Probing either one alone says the other cannot be the cause.
  */
 const systems = (abc: string): number =>
   (
@@ -62,23 +65,20 @@ describe("a [V:x] after music on the same logical line", () => {
     expect(systems(`${HEAD}K:C\n[V:1]CDEF|\n[V:1]GABc|\n`)).toBe(2);
   });
 
-  /**
-   * The four rows that differ. abcjs draws TWO systems for each; we draw one. They go RED
-   * the moment the rule above is found and ported, which is what they are for.
-   */
-  it.fails("opens a new system with no V: anywhere", () => {
+  /** The four rows mechanism 1 and mechanism 2 between them account for. */
+  it("opens a new system with no V: anywhere", () => {
     expect(systems(`${HEAD}K:C\nCDEF|[V:1]GABc|\n`)).toBe(2);
   });
 
-  it.fails("opens a new system after a header V:1", () => {
+  it("opens a new system after a header V:1", () => {
     expect(systems(`${HEAD}V:1\nK:C\nCDEF|[V:1]GABc|\n`)).toBe(2);
   });
 
-  it.fails("opens a new system when the line opened with an inline [V:1]", () => {
+  it("opens a new system when the line opened with an inline [V:1]", () => {
     expect(systems(`${HEAD}K:C\n[V:1]CDEF|[V:1]GABc|\n`)).toBe(2);
   });
 
-  it.fails("opens a new system across a continuation the line did not open with", () => {
+  it("opens a new system across a continuation the line did not open with", () => {
     expect(systems(`${HEAD}K:C\nCDEF|\\\n[V:1]GABc|\n`)).toBe(2);
   });
 });

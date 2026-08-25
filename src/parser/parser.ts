@@ -1820,6 +1820,33 @@ class VoiceBuilder {
     if (this.wroteSinceLineStart) this.beginMusicLine()
   }
 
+  /**
+   * **AND AN INLINE `[V:` OPENS A LINE EVEN WHEN IT NAMES THE VOICE ALREADY CURRENT** —
+   * abcjs's OTHER mechanism, and the one this engine was missing.
+   *
+   *     if (retInlineHeader[1] === 'V') delayStartNewLine = true;  // "fixes bug on this: c[V:2]d"
+   *     …
+   *     if (!tuneBuilder.hasBeginMusic() || (delayStartNewLine && !this.lineContinuation))
+   *         this.startNewLine();
+   *
+   * (`abc_parse_music.js:151-159`.) ANY inline `[V:` sets the flag, a repeat included, and
+   * it fires at the next non-header token unless the line is a CONTINUATION.
+   *
+   * ⚠️ **THERE ARE TWO MECHANISMS AND THEY ARE NOT THE SAME ONE.** `switchedTo` above is
+   * `tuneBuilder.setCurrentVoice`'s line scan, which fires only on a REAL switch — a
+   * repeat early-returns before ever reaching it (`abc_parse_key_voice.js:526-531`), which
+   * is why `selectVoice`'s guard is correct and must stay. Conflating the two was tried:
+   * removing that guard takes all six control shapes to abcjs's answer AND takes
+   * `abcjs-visual-parsing-03-v-1-f` and `-09-score-t-b` — both `\`-continued — from
+   * byte-exact to differing. Instrumenting BOTH sites at once is what separated them:
+   * rows 4 and 5 of the ladder trace identically through this gate and differ entirely in
+   * the other.
+   */
+  inlineVoiceField(continued: boolean): void {
+    if (continued || !this.wroteSinceLineStart) return
+    this.beginMusicLine()
+  }
+
   addLyricLine(syllables: Syllable[]): void {
     this.lyricLines.push({ start: this.lineNoteStart, syllables })
   }
@@ -2786,6 +2813,8 @@ class ScoreBuilder {
   textBelow: FreeTextBlock[] = []
   /** Voice ids from `%%score`/`%%staves`, which overrides declaration order. */
   scoreOrder: string[] | null = null
+  /** Has any `V:`/`[V:` made a voice current — abcjs's `multilineVars.currentVoice`. */
+  voiceSelected = false
   private tupletGroups = 0
   private beamGroups = 0
 
@@ -2907,7 +2936,19 @@ class ScoreBuilder {
    * distinct id, and the repeats change nothing. Only a real switch can open a line.
    */
   selectVoice(id: string): void {
-    if (id === this.currentVoiceId && this.voices.has(id)) return
+    /**
+     * ⚠️ **AND THE FIRST `V:` OF A TUNE IS ALWAYS A REAL SWITCH, EVEN NAMING THE DEFAULT.**
+     * abcjs's guard is `if (multilineVars.currentVoice) { if (same index && staffNum)
+     * return }` (`abc_parse_key_voice.js:526-531`) — the OUTER test is whether a voice has
+     * ever been made current, and nothing sets it but a `V:`/`[V:`. So on
+     * `CDEF|\` + `[V:1]GABc|` the implicit voice the first line wrote into is NOT
+     * `currentVoice`, the `[V:1]` switches for real, and `tuneBuilder.setCurrentVoice`'s
+     * scan finds line 0 already full and points past it. Probed: `had=NONE -> SWITCHING`.
+     *
+     * Ours seeds `currentVoiceId` with the default id, so a `[V:1]` looked like a repeat.
+     */
+    if (this.voiceSelected && id === this.currentVoiceId && this.voices.has(id)) return
+    this.voiceSelected = true
     const voice = this.voiceFor(id)
     voice.explicit = true
     voice.switchedTo()
@@ -4345,6 +4386,10 @@ class Parser {
         builder.declareVoice(id, mergesStaff(value))
         if (builder.bodyStarted) {
           builder.selectVoice(id)
+          // …**AND AN INLINE ONE OPENS A LINE EVEN FOR THE VOICE ALREADY CURRENT**, unless
+          // this line continues the one above it. abcjs's second mechanism — see
+          // `VoiceBuilder.inlineVoiceField`, which is NOT the same as `switchedTo`.
+          if (inline) builder.voice.inlineVoiceField(this.lineIsContinuation)
           builder.beganMusic = true
         }
         const octave = octaveModifier(value)
@@ -4600,10 +4645,20 @@ class Parser {
   // (octave marks, then length) plain indexing instead of a peek/rewind protocol.
   /** Whether the music line just read ended with a `\`, so the next continues it. */
   private lineContinued = false
+  /**
+   * abcjs's `this.lineContinuation` as the CURRENT music line is scanned — whether this
+   * line continues the one above it. Read by the inline `[V:` arm; see `switchedTo`.
+   */
+  private lineIsContinuation = false
   /** `%%continueall` — every music line continues (`abc_parse_directive.js:966`). */
   private continueAll = false
 
   private scanMusic(start: number, end: number, continued = false): void {
+    // ⚠️ **AN INLINE `[V:` OPENS A LINE ON A NON-CONTINUED LINE, WHATEVER THE VOICE.** See
+    // `VoiceBuilder.switchedTo`: abcjs's gate is `delayStartNewLine && !this.lineContinuation`
+    // and the flag is set by ANY inline `[V:`, a repeat of the current voice included
+    // (`abc_parse_music.js:151-159`). This is the half of it the field arm needs.
+    this.lineIsContinuation = continued
     const builder = this.ensureScore(start)
     // Music ENDS the header, not just `K:`. Normally the two coincide; they come apart
     // when a line before the `K:` is scanned as music, which strict mode does to `+:`
