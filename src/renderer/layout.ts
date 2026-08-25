@@ -3643,6 +3643,19 @@ function layoutRest(
   // closes its rest/note branch and THEN calls `addGraceNotes`
   // (`abstract-engraver.js:834`). They hang LEFT and push the rest right, exactly as on a
   // note. `(f3 {a})y` was a notehead short of abcjs and 9.6px high on nothing else.
+  /**
+   * ⚠️ **AND ITS ROOM IS MEASURED AND NOT BUILT.** `roomtaken += this.addGraceNotes(…)`
+   * runs for a rest exactly as for a note (`abstract-engraver.js:834`), and abcjs moves
+   * the whole element by it: `{g}z2 C2|` puts its barline at 143.9 against a bare `z2`'s
+   * 133.9 and `{gg}z2` at 153.9 — 10px per grace, every glyph of the element with it —
+   * while `{g}x2` is 133.9, no room at all, the same exclusion that skips the automatic
+   * grace slur (`:528-533`).
+   *
+   * THREE PLACES WERE TRIED AND EACH MOVED NOTHING: the rest's own `rod`, its `x` before
+   * the graces are placed, and its `left` ink. The element's own `x` is replaced by the
+   * line solve, so the term has to enter through whatever that reads — which is the next
+   * thing to instrument, not to guess at a fourth time. See `abcts-rests-and-bars.abc`.
+   */
   const graces = layoutGraces(rest, x, clef, strict, voiceScale)
   x += graces.width
   // `x` and `y` occupy horizontal space but print nothing; a spacer prints nothing and
@@ -8917,6 +8930,73 @@ function layoutCurves(
      */
     if (graceTieOpen !== undefined) emitHalf(graceTieOpen.at, 'out')
 
+    // `!slide!` IS A CURVE AT THE NOTE, NOT A GLYPH ABOVE THE STAFF.
+    //
+    //     var yPos2 = abselem.heads[0].pitch - 2
+    //     var blank1 = new RelativeElement("", -roomtaken - 15, 0, yPos2 - 1)
+    //     var blank2 = new RelativeElement("", -roomtaken -  5, 0, yPos2 + 1)
+    //     voice.addOther(new TieElem({ anchor1: blank1, anchor2: blank2, fixedY: true }))
+    //
+    // (`decoration.js:51-59`.) Two ZERO-WIDTH blanks below and left of the head, and a
+    // tie between them — so it reserves NOTHING above, and it reaches the page through
+    // `addOther`, which is the one route the structural gate is blind to. We had it in
+    // `DECORATIONS` as an above-stacked `brassLiftShort`, a reading taken from abcjs's
+    // SVG back when `addOther` made it "look unsupported", and it pushed the whole first
+    // staff down: `S1-decorations` X:105 sat a uniform 9.67px below abcjs on every one of
+    // its 16 noteheads with dx at exactly 0.00.
+    //
+    // Endpoints read off abcjs's own path for `!slide!C`, which is
+    // `M 61.85 158.49 C … 69.85 150.74 …` against a notehead centred at (75.78, 146.85):
+    // 8px wide, 2 pitch tall, and `fixedY` means the anchors' own pitches with none of a
+    // tie's 1.2 lift.
+    // THE GRACE SLUR, DRAWN. Its reserve is in `curveReserves`; this is the arc, and it
+    // is built here rather than through `buildCurve` because two of that function's three
+    // decisions are made for it: `calcSlurDirection` opens `if (this.isGrace) this.above =
+    // false`, and `calcSlurY`'s beam-retargeting block is guarded on
+    // `anchor1.scalex === 1`, which a 0.6-scaled grace head fails — so BOTH ends are the
+    // plain pitch even when the main note is mid-beam (`tie-element.js:96-98, 163-202`).
+    //
+    // `calcX` pulls the grace end back 3 and `drawArc` adds the usual 6 and 4
+    // (`:118-122`, `draw/tie.js:60-61`), and the 1.5-pitch slur lift goes DOWN because the
+    // curve is below.
+    const gs = anchor.graceSlur
+    if (gs !== undefined) {
+      const x1 = gs.graceX - spaces(ABCJS_ARC.graceStartInset) + spaces(ABCJS_ARC.startOffset)
+      const x2 = gs.headX + spaces(ABCJS_ARC.endOffset)
+      /**
+       * …**AND IT IS DRAWN AS A TIE WHENEVER ITS TWO ENDS SHARE A PITCH** — see
+       * `drawnKind`. A grace slur has no internal notes by construction (both anchors are
+       * children of ONE `AbsoluteElement`), so the pitch test is the whole rule. `{^c}^c`
+       * in `flattener-23` is exactly that, and the 0.3 pitch between the two lifts is the
+       * 1.16px it came out low.
+       */
+      const graceKind = gs.graceY === gs.headY ? ('tie' as const) : ('slur' as const)
+      const lift = spacesOfPitch(
+        graceKind === 'tie' ? ABCJS_ARC.tieLift : ABCJS_ARC.slurLift,
+      )
+      curves[anchor.system]?.push({
+        // …**AND IT TAKES ITS TURN AFTER GRACE 0'S OWN MARKS** — see `PlacedCurve.graceSeq`.
+        graceSeq: 2,
+        groupX: x2,
+        x1,
+        y1: gs.graceY + lift,
+        x2,
+        y2: gs.headY + lift,
+        // Below, so the arc bows DOWNWARD — `buildCurve`'s `direction` is +1 there.
+        bulge: Math.min(
+          ENGRAVE.curveMaxBulge,
+          Math.max(ENGRAVE.curveMinBulge, Math.max(0, x2 - x1) * ENGRAVE.curveBulgeRatio),
+        ),
+        midThickness: LINE_WEIGHTS.slurMidpoint,
+        kind: graceKind,
+        // BOTH ANCHORS ARE THE SAME ELEMENT — a grace head and the main head are children
+        // of one `AbsoluteElement`, so the class reads `abcjs-start-m0-n0 abcjs-end-m0-n0`
+        // off the same counters twice.
+        startElement: anchor.element,
+        endElement: anchor.element,
+      })
+    }
+
     /**
      * ⚠️ **A REST'S `endSlur` IS PARSE DATA THAT THE DRAWING IGNORES.** `Rest.slurEnds` is
      * real — abcjs keeps `endSlur: [101]` on the rest element and a host reads it — but
@@ -9053,72 +9133,6 @@ function layoutCurves(
           emit(a, b, a.pitchStep === b.pitchStep ? 'tie' : 'slur')
     }
 
-    // `!slide!` IS A CURVE AT THE NOTE, NOT A GLYPH ABOVE THE STAFF.
-    //
-    //     var yPos2 = abselem.heads[0].pitch - 2
-    //     var blank1 = new RelativeElement("", -roomtaken - 15, 0, yPos2 - 1)
-    //     var blank2 = new RelativeElement("", -roomtaken -  5, 0, yPos2 + 1)
-    //     voice.addOther(new TieElem({ anchor1: blank1, anchor2: blank2, fixedY: true }))
-    //
-    // (`decoration.js:51-59`.) Two ZERO-WIDTH blanks below and left of the head, and a
-    // tie between them — so it reserves NOTHING above, and it reaches the page through
-    // `addOther`, which is the one route the structural gate is blind to. We had it in
-    // `DECORATIONS` as an above-stacked `brassLiftShort`, a reading taken from abcjs's
-    // SVG back when `addOther` made it "look unsupported", and it pushed the whole first
-    // staff down: `S1-decorations` X:105 sat a uniform 9.67px below abcjs on every one of
-    // its 16 noteheads with dx at exactly 0.00.
-    //
-    // Endpoints read off abcjs's own path for `!slide!C`, which is
-    // `M 61.85 158.49 C … 69.85 150.74 …` against a notehead centred at (75.78, 146.85):
-    // 8px wide, 2 pitch tall, and `fixedY` means the anchors' own pitches with none of a
-    // tie's 1.2 lift.
-    // THE GRACE SLUR, DRAWN. Its reserve is in `curveReserves`; this is the arc, and it
-    // is built here rather than through `buildCurve` because two of that function's three
-    // decisions are made for it: `calcSlurDirection` opens `if (this.isGrace) this.above =
-    // false`, and `calcSlurY`'s beam-retargeting block is guarded on
-    // `anchor1.scalex === 1`, which a 0.6-scaled grace head fails — so BOTH ends are the
-    // plain pitch even when the main note is mid-beam (`tie-element.js:96-98, 163-202`).
-    //
-    // `calcX` pulls the grace end back 3 and `drawArc` adds the usual 6 and 4
-    // (`:118-122`, `draw/tie.js:60-61`), and the 1.5-pitch slur lift goes DOWN because the
-    // curve is below.
-    const gs = anchor.graceSlur
-    if (gs !== undefined) {
-      const x1 = gs.graceX - spaces(ABCJS_ARC.graceStartInset) + spaces(ABCJS_ARC.startOffset)
-      const x2 = gs.headX + spaces(ABCJS_ARC.endOffset)
-      /**
-       * …**AND IT IS DRAWN AS A TIE WHENEVER ITS TWO ENDS SHARE A PITCH** — see
-       * `drawnKind`. A grace slur has no internal notes by construction (both anchors are
-       * children of ONE `AbsoluteElement`), so the pitch test is the whole rule. `{^c}^c`
-       * in `flattener-23` is exactly that, and the 0.3 pitch between the two lifts is the
-       * 1.16px it came out low.
-       */
-      const graceKind = gs.graceY === gs.headY ? ('tie' as const) : ('slur' as const)
-      const lift = spacesOfPitch(
-        graceKind === 'tie' ? ABCJS_ARC.tieLift : ABCJS_ARC.slurLift,
-      )
-      curves[anchor.system]?.push({
-        // …**AND IT TAKES ITS TURN AFTER GRACE 0'S OWN MARKS** — see `PlacedCurve.graceSeq`.
-        graceSeq: 2,
-        groupX: x2,
-        x1,
-        y1: gs.graceY + lift,
-        x2,
-        y2: gs.headY + lift,
-        // Below, so the arc bows DOWNWARD — `buildCurve`'s `direction` is +1 there.
-        bulge: Math.min(
-          ENGRAVE.curveMaxBulge,
-          Math.max(ENGRAVE.curveMinBulge, Math.max(0, x2 - x1) * ENGRAVE.curveBulgeRatio),
-        ),
-        midThickness: LINE_WEIGHTS.slurMidpoint,
-        kind: graceKind,
-        // BOTH ANCHORS ARE THE SAME ELEMENT — a grace head and the main head are children
-        // of one `AbsoluteElement`, so the class reads `abcjs-start-m0-n0 abcjs-end-m0-n0`
-        // off the same counters twice.
-        startElement: anchor.element,
-        endElement: anchor.element,
-      })
-    }
 
     if (event.decorations.includes('slide')) {
       /**
@@ -9492,8 +9506,16 @@ function curveReserves(
      * ordinary slur follows — that one is chosen in `addSlursAndTies`, per pitch; this one
      * is whatever the loop left behind.
      */
+    /**
+     * ⚠️ **AND A REST IS ONE OF THEM — ITS OWN GLYPH IS THE SLUR'S SECOND ANCHOR.**
+     * `createNote` hands `addGraceNotes` whatever `notehead` it has, and for a rest that
+     * is the REST's `RelativeElement`: instrumented on `{g}z2 C2`, abcjs prints
+     * `gracePitch 11 notePitch 7` — pitch 7 is the quarter rest, not a notehead. Only an
+     * INVISIBLE rest or a spacer skips the slur (`abstract-engraver.js:528-533`), which
+     * the guard above already tests. Requiring a `notehead*` name drew no slur at all.
+     */
     const mainHeads = (elements[a.element]?.glyphs ?? []).filter(
-      (g) => g.role !== 'grace' && g.name.startsWith('notehead'),
+      (g) => g.role !== 'grace' && (g.name.startsWith('notehead') || g.name.startsWith('rest')),
     )
     const main = mainHeads[mainHeads.length - 1]
     if (main !== undefined)

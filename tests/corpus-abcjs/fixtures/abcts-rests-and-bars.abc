@@ -2,10 +2,18 @@
 %%abcts these are rules; four are open rows, measured through abcjs 6.7.0 and NOT built:
 %%abcts   X:4  !trill!z4     a decoration on a REST reserves less here — page 135.368
 %%abcts                      against abcjs's 147.1135, 11.75px.
-%%abcts   X:5  {g}z2         a grace group on a REST: abcjs shifts the whole line 10px
-%%abcts                      right and draws the automatic grace slur (52.05 -> 63.05)
-%%abcts                      where ours draws none — `notehead` is undefined for a rest
-%%abcts                      and abcjs builds the TieElem anyway.
+%%abcts   X:5  {g}z2         the automatic grace slur is BUILT — abcjs's `notehead` for a
+%%abcts                      rest is the REST'S OWN GLYPH (instrumented: `gracePitch 11
+%%abcts                      notePitch 7`), and our y matches to the digit. What is left
+%%abcts                      is its ROOM: abcjs moves the whole element 10px per grace
+%%abcts                      (bar 143.9 against a bare `z2`'s 133.9, `{gg}z2` 153.9) and
+%%abcts                      an INVISIBLE rest takes none (`{g}x2` 133.9). Three places
+%%abcts                      were tried — the rod, the x before placing, the left ink —
+%%abcts                      and each moved nothing, because the line solve replaces the
+%%abcts                      element's own x. Instrument what it reads; do not guess a
+%%abcts                      fourth time.
+%%abcts        ⚠️ AND abcjs ITSELF WRITES `M NaN` for the grace flag on `{g}x2` — a bug of
+%%abcts        its own, and the one row here we could only reproduce by reproducing a NaN.
 %%abcts   X:6  [K:G] mid-bar our group is `staff-extra key-signature`; abcjs's is a
 %%abcts                      `note` with `selectable="false" data-index="0"`.
 %%abcts   X:7  [M:2/4] mid-bar a stem runs 77.51 where abcjs's runs 85.23.
