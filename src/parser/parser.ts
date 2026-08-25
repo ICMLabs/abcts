@@ -5618,6 +5618,8 @@ class Parser {
   ): { chord: Chord; next: number; innerDecorations: string[] } {
     const open = tokens[index] as Token
     const pitches: Pitch[] = []
+    /** Where an abandoned chord hands the source back — see the warn arm below. */
+    let abandonedAt: number | null = null
     const innerMultipliers: Rational[] = []
     let accidental: Accidental | null = null
     let i = index + 1
@@ -5728,9 +5730,42 @@ class Parser {
         i++
         continue
       }
+      /**
+       * ⚠️ **AND ONLY ONE `!…!` MAY STAND BEFORE A HEAD.** abcjs's loop runs
+       * `letter_to_accent` ONCE per iteration and then requires a pitch
+       * (`abc_parse_music.js:352-357`), so a SECOND mark falls to the arm below and ends
+       * the chord where it stands. `[!>!!tenuto!CEG]2|` is three separate notes in abcjs,
+       * the first carrying `!tenuto!` alone — the `!>!` was consumed by the failed
+       * iteration and is LOST — and `]2` an invisible barline opening ending "2".
+       *
+       * Ours took any number and drew one chord. It is not a `style=` rule: the same
+       * happens with two ordinary decorations, and it is why the fixture's first attempt
+       * at `[!>!!style=harmonic!CEG]` measured as a defect that was nothing to do with
+       * the per-pitch style it was written for.
+       */
+      /**
+       * ⚠️ **AND A SPACE INSIDE THE BRACKETS IS RECOVERED FROM, NOT FATAL — AND IT DROPS
+       * THE ACCENT.** abcjs warns "Spaces are not allowed in chords", skips the character
+       * and starts the iteration over (`abc_parse_music.js:392-395`), so the `!…!` the
+       * failed iteration had already read is thrown away with it: `[!>! !tenuto!CEG]` is
+       * ONE chord carrying `["tenuto"]` alone. Ours reached the arm below and abandoned
+       * the whole chord.
+       */
+      if (token.kind === 'whitespace') {
+        this.warn(
+          'chord-space',
+          'spaces are not allowed in chords',
+          sourceRange(token.start, token.start + 1),
+        )
+        pendingInner = []
+        pendingHeadStyle = null
+        i++
+        continue
+      }
+      const tookAccent = pendingInner.length > 0 || pendingHeadStyle !== null
       // …**AND `style=` IS CAUGHT BEFORE `chordDecoration`, WHICH DELIBERATELY DROPS IT**
       // — it is not the chord's decoration, it is the next head's. See `Pitch.style`.
-      if (token.kind === 'decoration') {
+      if (token.kind === 'decoration' && !tookAccent) {
         const named = /^style=(.+)$/.exec(
           this.src.slice(token.start + 1, token.start + token.length - 1),
         )?.[1]
@@ -5740,7 +5775,7 @@ class Parser {
           continue
         }
       }
-      const decoration = this.chordDecoration(token, builder)
+      const decoration = tookAccent ? null : this.chordDecoration(token, builder)
       if (decoration !== null) {
         pendingInner.push(decoration)
         i++
@@ -5769,6 +5804,18 @@ class Parser {
         "expected ']' to end the chords",
         sourceRange(token.start, token.start + 1),
       )
+      /**
+       * ⚠️ **AND WITH NO PITCH READ, THE CHORD IS ABANDONED AND THE SOURCE IS RE-READ FROM
+       * HERE.** abcjs appends only `if (el.pitches !== undefined)` (`:475-486`) and leaves
+       * `i` on the token that stopped it, so the outer loop parses the rest as ordinary
+       * music — with the decoration it had already consumed thrown away.
+       *
+       * `letter_to_accent` runs ONCE per iteration, so `[!>!!tenuto!CEG]2|` fails on the
+       * second `!`: abcjs draws THREE separate notes, gives the first `!tenuto!` alone —
+       * the `!>!` is LOST — and reads `]2` as an invisible barline opening ending "2".
+       * Ours built a two-`!` chord and drew one. Measured through abcjs's `parseOnly`.
+       */
+      if (pitches.length === 0) abandonedAt = i
       break
     }
     if ((tokens[i] as Token | undefined)?.kind === 'closeBracket') i++
@@ -5820,7 +5867,9 @@ class Parser {
         ...noAttachments(), // filled in by emit()
         sourceRange: sourceRange(open.start, last.start + last.length),
       },
-      next: post.next,
+      // …**AND AN ABANDONED CHORD HANDS BACK THE TOKEN THAT STOPPED IT**, not the end of
+      // what it read. The caller emits nothing, since `pitches` is empty. See the warn arm.
+      next: abandonedAt ?? post.next,
       innerDecorations,
     }
   }

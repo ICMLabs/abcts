@@ -99,8 +99,12 @@ it.fails("hangs a stem-down chord's slur on the top head", () => {
 });
 
 /**
- * ⚠️ **MEASURED AND NOT BUILT — TWO `!…!` WRITTEN BACK-TO-BACK BREAK THE CHORD THEY OPEN,
- * AND THE FIRST OF THEM IS LOST.** Measured through abcjs 6.7.0, `parseOnly`:
+ * ⚠️ **TWO `!…!` WRITTEN BACK-TO-BACK BREAK THE CHORD THEY OPEN, AND THE FIRST OF THEM IS
+ * LOST — BUILT, and this assertion is real now.** `letter_to_accent` runs ONCE per
+ * iteration of the chord loop and a pitch must follow (`abc_parse_music.js:352-357`); a
+ * second mark falls to the `else`, which warns and appends only `if (el.pitches !==
+ * undefined)`, leaving the source to be re-read from there (`:472-489`). Measured through
+ * abcjs 6.7.0, `parseOnly`, and all four rows now agree:
  *
  *     [!>!!tenuto!CEG]2|   THREE notes, the first carrying `decoration: ["tenuto"]`,
  *                          then a `bar_invisible` with `startEnding: "2"` — the `]2`
@@ -113,7 +117,7 @@ it.fails("hangs a stem-down chord's slur on the top head", () => {
  * with `style=`, which is why `abcts-pitch-style` does not carry the shape — the fixture
  * was written with it and the row it opened was about `!…!!…!`, not about `style=`.
  */
-it.fails("breaks the chord when two !…! open it, losing the first", () => {
+it("breaks the chord when two !…! open it, losing the first", () => {
   const voice = (
     parseOnly(`${HEAD}[!>!!tenuto!CEG]2|\n`)[0] as unknown as {
       lines: { staff: { voices: { el_type: string; decoration?: string[] }[][] }[] }[];
@@ -121,4 +125,27 @@ it.fails("breaks the chord when two !…! open it, losing the first", () => {
   ).lines[0]?.staff[0]?.voices[0];
   expect(voice?.filter((e) => e.el_type === "note")).toHaveLength(3);
   expect(voice?.[0]?.decoration).toEqual(["tenuto"]);
+});
+
+/**
+ * …**AND A SPACE IS RECOVERED FROM RATHER THAN FATAL, DROPPING THE ACCENT WITH IT.**
+ * abcjs warns "Spaces are not allowed in chords", skips the character and starts the
+ * iteration over (`abc_parse_music.js:392-395`), so the mark the failed iteration had
+ * already read is thrown away and the chord survives. The pair below is what separates
+ * the two arms: the same two decorations, one chord or three notes depending on a space.
+ */
+it("recovers from a space in a chord, losing the accent the failed iteration read", () => {
+  const notes = (abc: string) =>
+    (
+      parseOnly(abc)[0] as unknown as {
+        lines: { staff: { voices: { el_type: string; decoration?: string[] }[][] }[] }[];
+      }
+    ).lines[0]?.staff[0]?.voices[0]?.filter((e) => e.el_type === "note") ?? [];
+  const spaced = notes(`${HEAD}[!>! !tenuto!CEG]2|\n`);
+  expect(spaced).toHaveLength(1);
+  expect(spaced[0]?.decoration).toEqual(["tenuto"]);
+  // …and a mark written AFTER a head opens a fresh iteration, so both survive.
+  const inner = notes(`${HEAD}[!tenuto!C!>!EG]2|\n`);
+  expect(inner).toHaveLength(1);
+  expect(inner[0]?.decoration).toEqual(["tenuto", "accent"]);
 });

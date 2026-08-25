@@ -235,6 +235,18 @@ const AS_ABCJS: Record<
    * `warn("Expected ']' to end the chords", line, index)` (`abc_parse_music.js:487`). The
    * same line-and-column shape as `nested-triplet` below.
    */
+  /**
+   * `Spaces are not allowed in chords`, pointing at the space —
+   * `warn("Spaces are not allowed in chords", line, i)` (`abc_parse_music.js:393`). abcjs
+   * RECOVERS from it: the character is skipped and the chord goes on, minus whatever
+   * decoration the failed iteration had read. See the chord loop.
+   */
+  "chord-space": (diagnostic, abc) => {
+    const at = diagnostic.range?.start ?? 0;
+    let start = 0;
+    for (let i = 0; i < at; i += 1) if (abc[i] === "\n") start = i + 1;
+    return { message: "Spaces are not allowed in chords", column: at - start };
+  },
   "chord-unterminated": (diagnostic, abc) => {
     const at = diagnostic.range?.start ?? 0;
     let start = 0;
