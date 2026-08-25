@@ -155,3 +155,63 @@ it("recovers from a space in a chord, losing the accent the failed iteration rea
   expect(inner).toHaveLength(1);
   expect(inner[0]?.decoration).toEqual(["tenuto", "accent"]);
 });
+
+/**
+ * **A REPEAT ENDING AT THE END OF A LINE — `C2|1|` — KEEPS ITS LABEL.**
+ *
+ * A volta rides on the measure its barline OPENS and the projection matches it back to
+ * that barline by position, so `C2|1 D2|` works: the `D2` measure closes and consumes it.
+ * `C2|1|` has no such measure — the second `|` leaves a `pendingOpening` and the line ends
+ * — so the label was set and never taken. abcjs writes `bar_thin startEnding "1"` spanning
+ * `|1`, and the same character costs the SPAN as well as the label.
+ *
+ * ⚠️ **FOUND WHILE CHASING SOMETHING ELSE, AND THE FIRST READING WAS WRONG.** It looked
+ * like a defect of the ABANDONED-CHORD path, because `[!>!!tenuto!CEG]2|` showed it and
+ * `CEG]2 D2|` did not. The control that separates them is `CEG]2|`: it is the trailing
+ * `|`, not the chord, and it costs an ending on ordinary music. **Measure the control
+ * before naming the cause.**
+ */
+it("keeps a repeat ending whose measure never closes", () => {
+  const bars = (abc: string) =>
+    (
+      parseOnly(abc)[0] as unknown as {
+        lines: {
+          staff: {
+            voices: { el_type: string; startEnding?: string; startChar: number; endChar: number }[][];
+          }[];
+        }[];
+      }
+    ).lines[0]?.staff[0]?.voices[0]?.filter((e) => e.el_type === "bar") ?? [];
+  const trailing = bars(`${HEAD}C2|1|\n`);
+  expect(trailing[0]?.startEnding).toBe("1");
+  // …and the digit is INSIDE that barline's element, which is what `|1` is in abcjs.
+  expect(trailing[0]?.endChar).toBe((trailing[0]?.startChar ?? 0) + 2);
+  // The stray-`]` spelling of the same shape, which is how it was found.
+  expect(bars(`${HEAD}CEG]2|\n`)[0]?.startEnding).toBe("2");
+  // …and it did not disturb the one that always worked.
+  expect(bars(`${HEAD}C2|1 D2|\n`)[0]?.startEnding).toBe("1");
+});
+
+/**
+ * ⚠️ **MEASURED AND NOT BUILT — AN ABANDONED CHORD'S CHARACTERS BELONG TO NOTHING.**
+ *
+ * abcjs leaves `startI` at the token that ended the chord, so the re-read note's element
+ * opens at the SURVIVING `!…!` and the `[` with the lost `!>!` is owned by no element at
+ * all. Measured through abcjs 6.7.0 on `[!>!!tenuto!CEG]2|`:
+ *
+ *     abcjs   note startChar 22 — the `!tenuto!`
+ *     ours    note startChar 18 — the `[`
+ *
+ * Ours tiles the line, so the first element of a line opens at the line's start; there is
+ * nowhere yet to say "these four characters were consumed and discarded". Everything else
+ * about the shape agrees — see the test above it. The character-ownership gate is at 100%
+ * and no corpus tune writes this, so the plumbing is not owed to anything yet.
+ */
+it.fails("opens the re-read note at the surviving decoration", () => {
+  const first = (
+    parseOnly(`${HEAD}[!>!!tenuto!CEG]2|\n`)[0] as unknown as {
+      lines: { staff: { voices: { el_type: string; startChar: number }[][] }[] }[];
+    }
+  ).lines[0]?.staff[0]?.voices[0]?.find((e) => e.el_type === "note");
+  expect(first?.startChar).toBe(22);
+});

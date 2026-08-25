@@ -2293,8 +2293,19 @@ class VoiceBuilder {
           keyChangeSourceRange: null,
           meterChange: null,
           meterChangeSourceRange: null,
-          volta: null,
-          voltaSourceRange: null,
+          /**
+           * ⚠️ **AND IT TAKES A REPEAT ENDING THAT NOTHING ELSE WILL.** A volta rides on
+           * the measure the barline OPENS, and the projection matches it back to that
+           * barline by position — so `C2|1 D2|` works because the `D2` measure closes and
+           * consumes it. `C2|1|` has no such measure: the second `|` leaves a
+           * `pendingOpening` and the line ends, so the label was set and never taken, and
+           * abcjs writes `bar_thin startEnding "1"` spanning `|1`.
+           *
+           * The same one character costs the SPAN as well as the label, since the digit is
+           * inside the barline's element in abcjs and outside ours.
+           */
+          volta: this.pendingVolta?.label ?? null,
+          voltaSourceRange: this.pendingVolta?.range ?? null,
           partLabel: null,
           partLabelSourceRange: null,
           startsSystem: false,
@@ -2304,6 +2315,7 @@ class VoiceBuilder {
           closingBarlineSourceRange: trailing.range,
           sourceRange: trailing.range,
         }
+        this.pendingVolta = null
         this.measures.push(
           trailing.decorations.length === 0
             ? bare
