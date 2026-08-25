@@ -1087,6 +1087,10 @@ function noteFields(
       // note.duration / (default_length * 8)` (`abc_parse_music.js:694`), so a bare grace
       // is 0.125 whatever the unit note length is, and `{B2}` is 0.25.
       duration: ratToNumber(g.length) / 8,
+      // …and the `-` that ties it to the grace after it, which abcjs writes as the empty
+      // object a note's own `startTie` is. See `GracePitch.startTie`.
+      ...(g.startTie === true ? { startTie: {} } : {}),
+      ...(g.endTie === true ? { endTie: true } : {}),
       // …**AND A GRACE NOTE TAKES THE SAME SUBTRACTION** from the same clef
       // (`parse/tune-builder.js:925-928`).
       verticalPos: abcjsPitch(g) - clefMid,

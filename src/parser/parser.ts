@@ -6302,6 +6302,8 @@ function parseGracePitches(raw: string): {
    * fell through to the "unknown character" arm and warned about both parens.
    */
   let pendingSlurs = 0
+  /** `var inTie` — the group's own carry, not the tune's. See `GracePitch.startTie`. */
+  let inTie = false
   let i = 0
   while (i < text.length) {
     if (text[i] === '/') {
@@ -6358,6 +6360,10 @@ function parseGracePitches(raw: string): {
     // the multiplier normalises over their sum, so the unit note length never enters.
     const lengthStart = i
     while (i < text.length && /[0-9/]/.test(text[i] as string)) i++
+    // …**AND THE `-` AFTER IT TIES THIS GRACE TO THE NEXT** — `getCoreNote` reads it onto
+    // this note and the group's `inTie` carries it one iteration. See `GracePitch.startTie`.
+    const startsTie = text[i] === '-'
+    if (startsTie) i++
     pitches.push({
       step: letter.toLowerCase() as DiatonicStep,
       octave,
@@ -6365,7 +6371,10 @@ function parseGracePitches(raw: string): {
       length: graceLength(text.slice(lengthStart, i)),
       ...(pendingSlurs === 0 ? {} : { slurStarts: pendingSlurs }),
       ...(pendingAcciaccatura ? { acciaccatura: true as const } : {}),
+      ...(startsTie ? { startTie: true as const } : {}),
+      ...(inTie ? { endTie: true as const } : {}),
     })
+    inTie = startsTie
     pendingSlurs = 0
     pendingAcciaccatura = false
   }

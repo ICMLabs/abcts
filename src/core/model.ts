@@ -721,6 +721,27 @@ export interface GracePitch extends Pitch {
    */
   readonly endBeam?: true
   /**
+   * **A `-` INSIDE A GRACE GROUP TIES ONE GRACE TO THE NEXT**, and the group carries the
+   * state itself: `var inTie = false` is declared OUTSIDE the group's loop, `getCoreNote`
+   * puts `startTie` on the grace whose `-` it read, and the NEXT iteration takes
+   * `note.endTie = true` from it (`abc_parse_music.js:685-712`).
+   *
+   * So `{a-a}` is `startTie` then `endTie`, `{a-a-a}` gives the middle grace BOTH, and
+   * the two ends need not share a pitch — `{a-b}` ties `a` to `b`, because the carry is
+   * positional and nothing compares them.
+   *
+   * ⚠️ **AND A TRAILING `{a-}` KEEPS ITS `startTie` WITH NOTHING TO CLOSE IT.** The flag
+   * is written before the group ends and abcjs never withdraws it; the main note that
+   * follows takes no `endTie`, so the tie is declared and never drawn.
+   *
+   * ⚠️ **AND A LEADING `-` IS A DIFFERENT MECHANISM** — `{a.-a}` gives the second grace an
+   * `endTie` that abcjs writes FIRST in the object, because `getCoreNote` read the `-`
+   * before the pitch rather than after it. Measured, not built: see the checkpoint.
+   */
+  readonly startTie?: true
+  /** The other end of the rule above. */
+  readonly endTie?: true
+  /**
    * **A `)` WRITTEN AFTER A GRACE GROUP CLOSES ON THE LAST GRACE, NOT ON THE NOTE**, and a
    * `(` inside one opens on the grace it precedes. Both are `Pitch.slurStarts`/`slurEnds`
    * now — the same two counts a chord's own head carries, because abcjs numbers them the
