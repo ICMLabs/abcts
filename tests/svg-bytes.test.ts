@@ -565,6 +565,25 @@ const PASSING: readonly string[] = [
    * (138.492 / 76.64); with one, the root height differs in its last bits, which is the
    * y-versus-pitch asymmetry a staff carrying a heading block already has. Two different
    * formulations of the margin produce the identical double, which is what says so.
+   *
+   * 🔬 **AND THE TERM IS NOW LOCATED, ON A FOUR-RUNG LADDER.** `%%stafftopmargin 0` with a
+   * title is exact and `12` and `30` are not, so it is the margin itself and not the
+   * block; without a title every value is exact, so it is the branch that carries one.
+   *
+   * abcjs puts the margin on the STAFF — `staff.top += renderer.spacing.staffTopMargin /
+   * spacing.STEP` (`set-upper-and-lower-elements.js:92`) — which `calcHeight` sums in
+   * PITCH and multiplies by `STEP` once, and the top-text block is never in `staff.top`
+   * at all. Ours takes the music-only extent WITHOUT the margin (`verticalExtent(…,
+   * false)`), so `blockSpan` — the difference between that and the full extent — swallows
+   * it as a LENGTH, and the height recovers it divided-back-and-re-multiplied.
+   *
+   * ⚠️ **THREE SHAPES WERE TRIED AND ALL THREE WERE REVERTED**, each measured rather than
+   * reasoned: spending the pitch in the titled `stacked` branch (fixes the staff ORIGIN
+   * and leaves the height one ULP out); letting the music-only extent carry the margin
+   * (double-counts it, +40px); and moving it from `blockSpan` to `topTerm` by hand (also
+   * +40px — `blockSpan` reaches the page height by a route this did not follow). **FIND
+   * WHERE `blockSpan` IS SPENT ON THE PAGE FIRST**; that is the next probe, not a fourth
+   * formulation.
    */
   "abcts-directives-tune0",
   "abcts-directives-tune1",
