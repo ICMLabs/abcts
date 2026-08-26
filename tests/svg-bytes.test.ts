@@ -495,8 +495,13 @@ const PASSING: readonly string[] = [
    * `beamDirections` reading the VOICE's clef where abcjs reads the one in force at the
    * note, and tune10 (two voices, 12.78px) is `runningClefBefore` — the clef is a running
    * PARSER value and it leaks across voices.
+   *
+   * ⚠️ **AND THE FIXTURE'S SECOND HALF (16-22) IS THE THIRD ROUND OF THE SAME LOOP.** A
+   * clef change with NOTHING after it was dropped outright — abcjs draws a cautionary
+   * `clefs.F` after the last note and the next voice's line opens in it. tune22 is the
+   * control that says a trailing KEY change is not this shape.
    */
-  ...Array.from({ length: 15 }, (_, i) => `abcts-clef-midmeasure-tune${i}`),
+  ...Array.from({ length: 22 }, (_, i) => `abcts-clef-midmeasure-tune${i}`),
   /**
    * `abcts-voice-style.abc` — `V:… style=`, the first of the three modifiers the V:
    * enumeration left as a FEATURE. All five shapes, one voice each.

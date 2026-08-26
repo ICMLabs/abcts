@@ -1145,6 +1145,22 @@ export interface Measure {
    */
   readonly clefChangeSourceRange?: SourceRange | null
   readonly clefChangeInline?: boolean
+  /**
+   * **A CLEF CHANGE WITH NOTHING AFTER IT — abcjs STILL DRAWS ONE.** `K:C clef=bass` on a
+   * line of its own at the end of a voice's music, or `|[K:C bass]` after the last barline,
+   * appends a `clef` element to the voice's stream all the same, so the line ends with a
+   * cautionary `clefs.F` after its last note and the page is unchanged in height.
+   *
+   * It rides the LAST measure because there is no next one to carry it — the same shape the
+   * trailing volta above takes, and for the same reason. The renderer feeds it into
+   * `layoutMeasure`'s existing `nextClefChange` slot, which already draws a cautionary clef
+   * for a change that leads the NEXT system; only the producer was missing.
+   *
+   * ⚠️ **AND IT IS ALSO A RUNNING VALUE**: the clef it names is what the next VOICE's line
+   * opens in, so it has to reach `runningClefs` whether or not anything draws it.
+   */
+  readonly trailingClef?: Clef | null
+  readonly trailingClefSourceRange?: SourceRange | null
   /** A mid-tune `M:` taking effect at this measure. */
   readonly meterChange: Meter | null
   readonly meterChangeSourceRange: SourceRange | null

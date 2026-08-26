@@ -94,3 +94,66 @@ T:Inline Clef None Mid Measure
 L:1/4
 K:C
 CD[K:C clef=none]EF|
+
+X:16
+T:Trailing Standalone Clef
+L:1/4
+K:C
+CDEF|
+K:C clef=bass
+
+X:17
+T:Trailing Inline Clef
+L:1/4
+K:C
+CDEF|[K:C bass]
+
+X:18
+T:Standalone Clef Between Voices
+L:1/4
+K:C
+V:1
+CDEF|
+K:C clef=bass
+V:2
+GABc|
+
+X:19
+T:Three Voices Running Clef
+L:1/4
+K:C
+V:1
+CD[K:C bass]EF|
+V:2
+GABc|
+V:3
+cdef|
+
+X:20
+T:Declared Clefs Resist The Running One
+L:1/4
+K:C
+V:1 clef=treble
+V:2 clef=treble
+V:1
+CD[K:C bass]EF|
+V:2
+GABc|
+
+X:21
+T:Voice Order Interleaved
+L:1/4
+K:C
+V:1
+CD[K:C bass]EF|
+V:2
+GABc|
+V:1
+cdef|
+
+X:22
+T:Trailing Standalone Key Only
+L:1/4
+K:C
+CDEF|
+K:Am

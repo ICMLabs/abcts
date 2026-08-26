@@ -12913,16 +12913,21 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
    */
   const runningClefs: { readonly at: number; readonly clef: Clef }[] = voices
     .flatMap((v) => v?.measures ?? [])
-    .flatMap((m) =>
-      m.clefChange == null
+    .flatMap((m) => [
+      ...(m.clefChange == null
+        ? []
+        : [{ at: m.clefChangeSourceRange?.start ?? musicStartsAt(m), clef: m.clefChange }]),
+      // …and a trailing one, which draws nothing in some shapes and is a running value in
+      // every one of them. See `Measure.trailingClef`.
+      ...(m.trailingClef == null
         ? []
         : [
             {
-              at: m.clefChangeSourceRange?.start ?? musicStartsAt(m),
-              clef: m.clefChange,
+              at: m.trailingClefSourceRange?.start ?? Number.POSITIVE_INFINITY,
+              clef: m.trailingClef,
             },
-          ],
-    )
+          ]),
+    ])
     .sort((a, b) => a.at - b.at)
   /** The clef in force where character `at` was written, or null before any change. */
   const runningClefBefore = (at: number): Clef | null => {
@@ -13141,7 +13146,9 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
         meterInForce,
         (() => {
           const next = (voice?.measures ?? [])[measureIndex + 1]
-          return next?.startsSystem === true ? (next.clefChange ?? null) : null
+          // …and with NO next measure, a trailing `K: clef=` draws the same cautionary.
+          if (next === undefined) return measure.trailingClef ?? null
+          return next.startsSystem === true ? (next.clefChange ?? null) : null
         })(),
         (voicesOfStaff.find((m) => m.includes(voiceIndex))?.length ?? 1) > 1,
         (() => {
@@ -13189,7 +13196,8 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
         measureIndex === 0,
         (() => {
           const next = (voice?.measures ?? [])[measureIndex + 1]
-          return next?.startsSystem === true ? (next.clefChangeSourceRange ?? null) : null
+          if (next === undefined) return measure.trailingClefSourceRange ?? null
+          return next.startsSystem === true ? (next.clefChangeSourceRange ?? null) : null
         })(),
         (() => {
           const next = (voice?.measures ?? [])[measureIndex + 1]

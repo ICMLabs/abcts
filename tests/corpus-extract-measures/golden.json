@@ -3094,6 +3094,72 @@
     }
    ],
    "hasPickup": false
+  },
+  {
+   "header": "X:16\nT:Trailing Standalone Clef\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:17\nT:Trailing Inline Clef\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:18\nT:Standalone Clef Between Voices\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:19\nT:Three Voices Running Clef\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "CD[K:C bass]EF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:20\nT:Declared Clefs Resist The Running One\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "CD[K:C bass]EF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:21\nT:Voice Order Interleaved\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "CD[K:C bass]EF|"
+    },
+    {
+     "abc": "cdef|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:22\nT:Trailing Standalone Key Only\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    }
+   ],
+   "hasPickup": false
   }
  ],
  "repo/abcts-decorations": [

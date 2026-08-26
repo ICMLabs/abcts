@@ -2405,6 +2405,35 @@ class VoiceBuilder {
 
   finish(): Omit<Voice, 'declaredIndex'> {
     this.closeUnterminatedMeasure()
+    /**
+     * ⚠️ **A CLEF CHANGE WITH NOTHING AFTER IT RIDES THE LAST MEASURE.** `CDEF|` then a
+     * standalone `K:C clef=bass` line — or `CDEF|[K:C bass]` — leaves a pending change no
+     * measure will ever close over, and it was DROPPED: abcjs draws a cautionary `clefs.F`
+     * after the last note at the same page height, and the next VOICE's line opens in it.
+     * See `Measure.trailingClef`.
+     *
+     * ⚠️ **HERE AND NOT IN `closeUnterminatedMeasure`**, which is also every LINE's flush:
+     * put there, it stamped `CDEF| / K:C clef=bass / CDEF|`'s change onto measure 0 as a
+     * trailing clef and nulled the pending, so measure 1 lost the change it was waiting for
+     * and the cautionary at the end of line 1 went with it. A byte-exact rung of the same
+     * ladder is what said so.
+     *
+     * A trailing KEY change is not this shape and needs nothing — measured, `CDEF|` then
+     * `K:Am` is byte-exact both ways.
+     */
+    if (this.pendingClefChange !== null) {
+      const lastMeasure = this.measures[this.measures.length - 1]
+      if (lastMeasure !== undefined) {
+        this.measures[this.measures.length - 1] = {
+          ...lastMeasure,
+          trailingClef: this.pendingClefChange,
+          trailingClefSourceRange: this.pendingClefChangeRange,
+        }
+      }
+      this.pendingClefChange = null
+      this.pendingClefChangeRange = null
+      this.pendingClefChangeInline = false
+    }
     this.applyLyrics()
     this.applySymbols()
     // `V:2 clef=bass octave=-2` moves the WRITTEN pitch, so it is baked into the model
