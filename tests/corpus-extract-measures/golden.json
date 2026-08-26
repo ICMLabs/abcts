@@ -3208,6 +3208,195 @@
    "hasPickup": false
   }
  ],
+ "repo/abcts-endings": [
+  {
+   "header": "%%abcts what `letter_to_bar` reads past a barline for its ending label: whitespace, an\n%%abcts optional `[` absorbed into the barline's own length, then a token of\n%%abcts `1234567890-,` — and NOTHING when that token is empty or opens with a `-`,\n%%abcts which reverts the `[` too (`abc_parse_music.js:868-887`).\nX:1\nT:a bracketted ending number\nL:1/8\nK:C\n",
+   "measures": [
+    {
+     "abc": "C2|[1",
+     "startEnding": "1"
+    },
+    {
+     "abc": " D2:|[2",
+     "startEnding": "2",
+     "endEnding": true
+    },
+    {
+     "abc": " E2|]",
+     "endEnding": true
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "%%abcts what `letter_to_bar` reads past a barline for its ending label: whitespace, an\n%%abcts optional `[` absorbed into the barline's own length, then a token of\n%%abcts `1234567890-,` — and NOTHING when that token is empty or opens with a `-`,\n%%abcts which reverts the `[` too (`abc_parse_music.js:868-887`).\nX:2\nT:whitespace before the bracket, which is absorbed with it\nL:1/8\nK:C\n",
+   "measures": [
+    {
+     "abc": "C2| [1",
+     "startEnding": "1"
+    },
+    {
+     "abc": " D2|]",
+     "endEnding": true
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "%%abcts what `letter_to_bar` reads past a barline for its ending label: whitespace, an\n%%abcts optional `[` absorbed into the barline's own length, then a token of\n%%abcts `1234567890-,` — and NOTHING when that token is empty or opens with a `-`,\n%%abcts which reverts the `[` too (`abc_parse_music.js:868-887`).\nX:3\nT:a quoted ending label, whose closing bracket is its own barline\nL:1/8\nK:C\n",
+   "measures": [
+    {
+     "abc": "C2|[\"first\"",
+     "startEnding": "first"
+    },
+    {
+     "abc": "] D2:|[\"second\"",
+     "startEnding": "second"
+    },
+    {
+     "abc": "] E2|]"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "%%abcts what `letter_to_bar` reads past a barline for its ending label: whitespace, an\n%%abcts optional `[` absorbed into the barline's own length, then a token of\n%%abcts `1234567890-,` — and NOTHING when that token is empty or opens with a `-`,\n%%abcts which reverts the `[` too (`abc_parse_music.js:868-887`).\nX:4\nT:an ending with nothing whatever after it\nL:1/8\nK:C\n",
+   "measures": [
+    {
+     "abc": "C2|1",
+     "startEnding": "1"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "%%abcts what `letter_to_bar` reads past a barline for its ending label: whitespace, an\n%%abcts optional `[` absorbed into the barline's own length, then a token of\n%%abcts `1234567890-,` — and NOTHING when that token is empty or opens with a `-`,\n%%abcts which reverts the `[` too (`abc_parse_music.js:868-887`).\nX:5\nT:an ending whose measure never closes\nL:1/8\nK:C\n",
+   "measures": [
+    {
+     "abc": "C2|1",
+     "startEnding": "1"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "%%abcts what `letter_to_bar` reads past a barline for its ending label: whitespace, an\n%%abcts optional `[` absorbed into the barline's own length, then a token of\n%%abcts `1234567890-,` — and NOTHING when that token is empty or opens with a `-`,\n%%abcts which reverts the `[` too (`abc_parse_music.js:868-887`).\nX:6\nT:a leading dash is not an ending, and the bracket reverts with it\nL:1/8\nK:C\n",
+   "measures": [
+    {
+     "abc": "C2|"
+    },
+    {
+     "abc": " D2|]"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "%%abcts what `letter_to_bar` reads past a barline for its ending label: whitespace, an\n%%abcts optional `[` absorbed into the barline's own length, then a token of\n%%abcts `1234567890-,` — and NOTHING when that token is empty or opens with a `-`,\n%%abcts which reverts the `[` too (`abc_parse_music.js:868-887`).\nX:7\nT:a real chord after a barline is not an ending\nL:1/8\nK:C\n",
+   "measures": [
+    {
+     "abc": "C2|"
+    },
+    {
+     "abc": "[CEG]2|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "%%abcts what `letter_to_bar` reads past a barline for its ending label: whitespace, an\n%%abcts optional `[` absorbed into the barline's own length, then a token of\n%%abcts `1234567890-,` — and NOTHING when that token is empty or opens with a `-`,\n%%abcts which reverts the `[` too (`abc_parse_music.js:868-887`).\nX:8\nT:one ending for several passes\nL:1/8\nK:C\n",
+   "measures": [
+    {
+     "abc": "C2|1,3",
+     "startEnding": "1,3"
+    },
+    {
+     "abc": " D2:|2,4",
+     "startEnding": "2,4",
+     "endEnding": true
+    },
+    {
+     "abc": " E2|]",
+     "endEnding": true
+    }
+   ],
+   "hasPickup": true
+  }
+ ],
+ "repo/abcts-grace-tie": [
+  {
+   "header": "%%abcts a `-` INSIDE a grace group. `var inTie` is declared outside the group's own loop,\n%%abcts `getCoreNote` puts `startTie` on the grace whose `-` it read, and the NEXT\n%%abcts iteration takes `endTie` from it (`abc_parse_music.js:685-712`).\nX:1\nT:two graces tied\nL:1/8\nK:C\n",
+   "measures": [
+    {
+     "abc": "{a-a}C2 D2|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "%%abcts a `-` INSIDE a grace group. `var inTie` is declared outside the group's own loop,\n%%abcts `getCoreNote` puts `startTie` on the grace whose `-` it read, and the NEXT\n%%abcts iteration takes `endTie` from it (`abc_parse_music.js:685-712`).\nX:2\nT:three graces, the middle one both ends\nL:1/8\nK:C\n",
+   "measures": [
+    {
+     "abc": "{a-a-a}C2 D2|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "%%abcts a `-` INSIDE a grace group. `var inTie` is declared outside the group's own loop,\n%%abcts `getCoreNote` puts `startTie` on the grace whose `-` it read, and the NEXT\n%%abcts iteration takes `endTie` from it (`abc_parse_music.js:685-712`).\nX:3\nT:tied across two different pitches, which draws a SLUR\nL:1/8\nK:C\n",
+   "measures": [
+    {
+     "abc": "{a-b}C2 D2|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "%%abcts a `-` INSIDE a grace group. `var inTie` is declared outside the group's own loop,\n%%abcts `getCoreNote` puts `startTie` on the grace whose `-` it read, and the NEXT\n%%abcts iteration takes `endTie` from it (`abc_parse_music.js:685-712`).\nX:4\nT:a startTie the group never closes\nL:1/8\nK:C\n",
+   "measures": [
+    {
+     "abc": "{a-}C2 {a}D2|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "%%abcts a `-` INSIDE a grace group. `var inTie` is declared outside the group's own loop,\n%%abcts `getCoreNote` puts `startTie` on the grace whose `-` it read, and the NEXT\n%%abcts iteration takes `endTie` from it (`abc_parse_music.js:685-712`).\nX:5\nT:a tie inside a group that also carries a slur\nL:1/8\nK:C\n",
+   "measures": [
+    {
+     "abc": "{(a-a)}C2 D2|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "%%abcts a `-` INSIDE a grace group. `var inTie` is declared outside the group's own loop,\n%%abcts `getCoreNote` puts `startTie` on the grace whose `-` it read, and the NEXT\n%%abcts iteration takes `endTie` from it (`abc_parse_music.js:685-712`).\nX:6\nT:tied graces on a chord\nL:1/8\nK:C\n",
+   "measures": [
+    {
+     "abc": "{a-a}[CEG]2 D2|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "%%abcts a `-` INSIDE a grace group. `var inTie` is declared outside the group's own loop,\n%%abcts `getCoreNote` puts `startTie` on the grace whose `-` it read, and the NEXT\n%%abcts iteration takes `endTie` from it (`abc_parse_music.js:685-712`).\nX:7\nT:a tied pair beside an acciaccatura\nL:1/8\nK:C\n",
+   "measures": [
+    {
+     "abc": "{/a-a}C2 D2|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "%%abcts a `-` INSIDE a grace group. `var inTie` is declared outside the group's own loop,\n%%abcts `getCoreNote` puts `startTie` on the grace whose `-` it read, and the NEXT\n%%abcts iteration takes `endTie` from it (`abc_parse_music.js:685-712`).\nX:8\nT:tied graces in a group long enough to beam\nL:1/8\nK:C\n",
+   "measures": [
+    {
+     "abc": "{aa-aa}C2 D2|"
+    }
+   ],
+   "hasPickup": true
+  }
+ ],
  "repo/abcts-key-modifiers": [
   {
    "header": "X:1\nT:Key Minor Natural\nL:1/8\nK:C m=B\n",
@@ -3343,6 +3532,18 @@
   },
   {
    "header": "X:12\nT:Key Clef Alto Two\nL:1/8\nK:C clef=alto2\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    },
+    {
+     "abc": "GAB[ceg]2|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "X:13\nT:Key Clef None\nL:1/8\nK:C clef=none\n",
    "measures": [
     {
      "abc": "CDEF|"
@@ -4465,6 +4666,80 @@
    "hasPickup": false
   }
  ],
+ "repo/abcts-pitch-style": [
+  {
+   "header": "%%abcts a per-PITCH notehead style, which is the ONE decoration inside brackets that is\n%%abcts not the chord's (abc_parse_music.js:375-379). The engraver reads it per head\n%%abcts (abstract-engraver.js:679), and three OTHER quantities read the head it picks:\n%%abcts the up-stem's x is heads[0].w, the ledger's width is the MAX over the loop.\nX:1\nT:style on the lowest head\nL:1/8\nK:C\n",
+   "measures": [
+    {
+     "abc": "[!style=harmonic!CEG]2 [C!style=x!EG]2|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "%%abcts a per-PITCH notehead style, which is the ONE decoration inside brackets that is\n%%abcts not the chord's (abc_parse_music.js:375-379). The engraver reads it per head\n%%abcts (abstract-engraver.js:679), and three OTHER quantities read the head it picks:\n%%abcts the up-stem's x is heads[0].w, the ledger's width is the MAX over the loop.\nX:2\nT:style on a head needing a ledger\nL:1/8\nK:C\n",
+   "measures": [
+    {
+     "abc": "[!style=x!C,EG]4 [C,EG]4|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "%%abcts a per-PITCH notehead style, which is the ONE decoration inside brackets that is\n%%abcts not the chord's (abc_parse_music.js:375-379). The engraver reads it per head\n%%abcts (abstract-engraver.js:679), and three OTHER quantities read the head it picks:\n%%abcts the up-stem's x is heads[0].w, the ledger's width is the MAX over the loop.\nX:3\nT:two styles in one chord\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "[!style=x!C!style=triangle!EG]2 [CEG]2|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "%%abcts a per-PITCH notehead style, which is the ONE decoration inside brackets that is\n%%abcts not the chord's (abc_parse_music.js:375-379). The engraver reads it per head\n%%abcts (abstract-engraver.js:679), and three OTHER quantities read the head it picks:\n%%abcts the up-stem's x is heads[0].w, the ledger's width is the MAX over the loop.\nX:4\nT:a style beside an ordinary decoration on another head\nL:1/8\nK:C\n",
+   "measures": [
+    {
+     "abc": "[!>!C!style=harmonic!EG]2 [!>!CEG]2|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "%%abcts a per-PITCH notehead style, which is the ONE decoration inside brackets that is\n%%abcts not the chord's (abc_parse_music.js:375-379). The engraver reads it per head\n%%abcts (abstract-engraver.js:679), and three OTHER quantities read the head it picks:\n%%abcts the up-stem's x is heads[0].w, the ledger's width is the MAX over the loop.\nX:5\nT:down-stemmed, where heads[0] is not the stem's\nL:1/8\nK:C\n",
+   "measures": [
+    {
+     "abc": "[!style=harmonic!ceg]2 [ceg]2|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "%%abcts a per-PITCH notehead style, which is the ONE decoration inside brackets that is\n%%abcts not the chord's (abc_parse_music.js:375-379). The engraver reads it per head\n%%abcts (abstract-engraver.js:679), and three OTHER quantities read the head it picks:\n%%abcts the up-stem's x is heads[0].w, the ledger's width is the MAX over the loop.\nX:6\nT:a style on a whole note and on a half\nL:1/1\nK:C\n",
+   "measures": [
+    {
+     "abc": "[!style=x!CEG] [!style=harmonic!CEG]|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "%%abcts a per-PITCH notehead style, which is the ONE decoration inside brackets that is\n%%abcts not the chord's (abc_parse_music.js:375-379). The engraver reads it per head\n%%abcts (abstract-engraver.js:679), and three OTHER quantities read the head it picks:\n%%abcts the up-stem's x is heads[0].w, the ledger's width is the MAX over the loop.\nX:7\nT:a styled head under a tie and a slur\nL:1/8\nK:C\n",
+   "measures": [
+    {
+     "abc": "([!style=x!CEG]2-[CEG]2)|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "%%abcts a per-PITCH notehead style, which is the ONE decoration inside brackets that is\n%%abcts not the chord's (abc_parse_music.js:375-379). The engraver reads it per head\n%%abcts (abstract-engraver.js:679), and three OTHER quantities read the head it picks:\n%%abcts the up-stem's x is heads[0].w, the ledger's width is the MAX over the loop.\nX:8\nT:a style with the element's own style beside it\nL:1/8\nK:C\n",
+   "measures": [
+    {
+     "abc": "!style=x![!style=harmonic!CEG]2 [CEG]2|"
+    }
+   ],
+   "hasPickup": true
+  }
+ ],
  "repo/abcts-positioning": [
   {
    "header": "X:1\nT:Vocal Above\nL:1/8\n%%vocal above\nK:C\n",
@@ -4558,6 +4833,161 @@
     },
     {
      "abc": "\"Bm\"GABc|"
+    }
+   ],
+   "hasPickup": true
+  }
+ ],
+ "repo/abcts-rests-and-bars": [
+  {
+   "header": "%%abcts shapes neither corpus writes, swept through both engines one at a time. Two of\n%%abcts these are rules; four are open rows, measured through abcjs 6.7.0 and NOT built:\n%%abcts   X:4  !trill!z4     BUILT. A rest takes its decorations like any element, after\n%%abcts                      its own glyph — and X:9 is the MULTIMEASURE case, which is a\n%%abcts                      SECOND call with its own box. One shared call, whose box has\n%%abcts                      to be invented, took three of that ladder's rungs off exact.\n%%abcts   X:5  {g}z2         BUILT, on two terms neither of which was guessable from the\n%%abcts                      page width: the grace group's own WIDTH is left ink on a rest\n%%abcts                      exactly as on a note, and the slur's far anchor is the rest's\n%%abcts                      declared PITCH — its box's midpoint — not where its glyph is\n%%abcts                      drawn. Printing a graced note's fields beside a graced rest\n%%abcts                      (`left=10.00` against `left=0.00`) is what named the first.\n%%abcts        ⚠️ AND abcjs ITSELF WRITES `M NaN` for the grace flag on `{g}x2` — a bug of\n%%abcts        its own, and the one shape here that byte parity could reach only by\n%%abcts        reproducing a NaN. See Docs/ABCJS-DIFFERENCES.md.\n%%abcts   X:6  [K:G] mid-bar BUILT — it prints where it stands, on the same index the\n",
+   "measures": [
+    {
+     "abc": "!fermata!|CDEF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "%%abcts shapes neither corpus writes, swept through both engines one at a time. Two of\n%%abcts these are rules; four are open rows, measured through abcjs 6.7.0 and NOT built:\n%%abcts   X:4  !trill!z4     BUILT. A rest takes its decorations like any element, after\n%%abcts                      its own glyph — and X:9 is the MULTIMEASURE case, which is a\n%%abcts                      SECOND call with its own box. One shared call, whose box has\n%%abcts                      to be invented, took three of that ladder's rungs off exact.\n%%abcts   X:5  {g}z2         BUILT, on two terms neither of which was guessable from the\n%%abcts                      page width: the grace group's own WIDTH is left ink on a rest\n%%abcts                      exactly as on a note, and the slur's far anchor is the rest's\n%%abcts                      declared PITCH — its box's midpoint — not where its glyph is\n%%abcts                      drawn. Printing a graced note's fields beside a graced rest\n%%abcts                      (`left=10.00` against `left=0.00`) is what named the first.\n%%abcts        ⚠️ AND abcjs ITSELF WRITES `M NaN` for the grace flag on `{g}x2` — a bug of\n%%abcts        its own, and the one shape here that byte parity could reach only by\n%%abcts        reproducing a NaN. See Docs/ABCJS-DIFFERENCES.md.\n%%abcts   X:6  [K:G] mid-bar BUILT — it prints where it stands, on the same index the\n",
+   "measures": [
+    {
+     "abc": "C-z C|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "%%abcts shapes neither corpus writes, swept through both engines one at a time. Two of\n%%abcts these are rules; four are open rows, measured through abcjs 6.7.0 and NOT built:\n%%abcts   X:4  !trill!z4     BUILT. A rest takes its decorations like any element, after\n%%abcts                      its own glyph — and X:9 is the MULTIMEASURE case, which is a\n%%abcts                      SECOND call with its own box. One shared call, whose box has\n%%abcts                      to be invented, took three of that ladder's rungs off exact.\n%%abcts   X:5  {g}z2         BUILT, on two terms neither of which was guessable from the\n%%abcts                      page width: the grace group's own WIDTH is left ink on a rest\n%%abcts                      exactly as on a note, and the slur's far anchor is the rest's\n%%abcts                      declared PITCH — its box's midpoint — not where its glyph is\n%%abcts                      drawn. Printing a graced note's fields beside a graced rest\n%%abcts                      (`left=10.00` against `left=0.00`) is what named the first.\n%%abcts        ⚠️ AND abcjs ITSELF WRITES `M NaN` for the grace flag on `{g}x2` — a bug of\n%%abcts        its own, and the one shape here that byte parity could reach only by\n%%abcts        reproducing a NaN. See Docs/ABCJS-DIFFERENCES.md.\n%%abcts   X:6  [K:G] mid-bar BUILT — it prints where it stands, on the same index the\n",
+   "measures": [
+    {
+     "abc": "C-C C|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "%%abcts shapes neither corpus writes, swept through both engines one at a time. Two of\n%%abcts these are rules; four are open rows, measured through abcjs 6.7.0 and NOT built:\n%%abcts   X:4  !trill!z4     BUILT. A rest takes its decorations like any element, after\n%%abcts                      its own glyph — and X:9 is the MULTIMEASURE case, which is a\n%%abcts                      SECOND call with its own box. One shared call, whose box has\n%%abcts                      to be invented, took three of that ladder's rungs off exact.\n%%abcts   X:5  {g}z2         BUILT, on two terms neither of which was guessable from the\n%%abcts                      page width: the grace group's own WIDTH is left ink on a rest\n%%abcts                      exactly as on a note, and the slur's far anchor is the rest's\n%%abcts                      declared PITCH — its box's midpoint — not where its glyph is\n%%abcts                      drawn. Printing a graced note's fields beside a graced rest\n%%abcts                      (`left=10.00` against `left=0.00`) is what named the first.\n%%abcts        ⚠️ AND abcjs ITSELF WRITES `M NaN` for the grace flag on `{g}x2` — a bug of\n%%abcts        its own, and the one shape here that byte parity could reach only by\n%%abcts        reproducing a NaN. See Docs/ABCJS-DIFFERENCES.md.\n%%abcts   X:6  [K:G] mid-bar BUILT — it prints where it stands, on the same index the\n",
+   "measures": [
+    {
+     "abc": "!trill!z4 C4|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "%%abcts shapes neither corpus writes, swept through both engines one at a time. Two of\n%%abcts these are rules; four are open rows, measured through abcjs 6.7.0 and NOT built:\n%%abcts   X:4  !trill!z4     BUILT. A rest takes its decorations like any element, after\n%%abcts                      its own glyph — and X:9 is the MULTIMEASURE case, which is a\n%%abcts                      SECOND call with its own box. One shared call, whose box has\n%%abcts                      to be invented, took three of that ladder's rungs off exact.\n%%abcts   X:5  {g}z2         BUILT, on two terms neither of which was guessable from the\n%%abcts                      page width: the grace group's own WIDTH is left ink on a rest\n%%abcts                      exactly as on a note, and the slur's far anchor is the rest's\n%%abcts                      declared PITCH — its box's midpoint — not where its glyph is\n%%abcts                      drawn. Printing a graced note's fields beside a graced rest\n%%abcts                      (`left=10.00` against `left=0.00`) is what named the first.\n%%abcts        ⚠️ AND abcjs ITSELF WRITES `M NaN` for the grace flag on `{g}x2` — a bug of\n%%abcts        its own, and the one shape here that byte parity could reach only by\n%%abcts        reproducing a NaN. See Docs/ABCJS-DIFFERENCES.md.\n%%abcts   X:6  [K:G] mid-bar BUILT — it prints where it stands, on the same index the\n",
+   "measures": [
+    {
+     "abc": "{g}z2 C2|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "%%abcts shapes neither corpus writes, swept through both engines one at a time. Two of\n%%abcts these are rules; four are open rows, measured through abcjs 6.7.0 and NOT built:\n%%abcts   X:4  !trill!z4     BUILT. A rest takes its decorations like any element, after\n%%abcts                      its own glyph — and X:9 is the MULTIMEASURE case, which is a\n%%abcts                      SECOND call with its own box. One shared call, whose box has\n%%abcts                      to be invented, took three of that ladder's rungs off exact.\n%%abcts   X:5  {g}z2         BUILT, on two terms neither of which was guessable from the\n%%abcts                      page width: the grace group's own WIDTH is left ink on a rest\n%%abcts                      exactly as on a note, and the slur's far anchor is the rest's\n%%abcts                      declared PITCH — its box's midpoint — not where its glyph is\n%%abcts                      drawn. Printing a graced note's fields beside a graced rest\n%%abcts                      (`left=10.00` against `left=0.00`) is what named the first.\n%%abcts        ⚠️ AND abcjs ITSELF WRITES `M NaN` for the grace flag on `{g}x2` — a bug of\n%%abcts        its own, and the one shape here that byte parity could reach only by\n%%abcts        reproducing a NaN. See Docs/ABCJS-DIFFERENCES.md.\n%%abcts   X:6  [K:G] mid-bar BUILT — it prints where it stands, on the same index the\n",
+   "measures": [
+    {
+     "abc": "CD[K:G]EF|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "%%abcts shapes neither corpus writes, swept through both engines one at a time. Two of\n%%abcts these are rules; four are open rows, measured through abcjs 6.7.0 and NOT built:\n%%abcts   X:4  !trill!z4     BUILT. A rest takes its decorations like any element, after\n%%abcts                      its own glyph — and X:9 is the MULTIMEASURE case, which is a\n%%abcts                      SECOND call with its own box. One shared call, whose box has\n%%abcts                      to be invented, took three of that ladder's rungs off exact.\n%%abcts   X:5  {g}z2         BUILT, on two terms neither of which was guessable from the\n%%abcts                      page width: the grace group's own WIDTH is left ink on a rest\n%%abcts                      exactly as on a note, and the slur's far anchor is the rest's\n%%abcts                      declared PITCH — its box's midpoint — not where its glyph is\n%%abcts                      drawn. Printing a graced note's fields beside a graced rest\n%%abcts                      (`left=10.00` against `left=0.00`) is what named the first.\n%%abcts        ⚠️ AND abcjs ITSELF WRITES `M NaN` for the grace flag on `{g}x2` — a bug of\n%%abcts        its own, and the one shape here that byte parity could reach only by\n%%abcts        reproducing a NaN. See Docs/ABCJS-DIFFERENCES.md.\n%%abcts   X:6  [K:G] mid-bar BUILT — it prints where it stands, on the same index the\n",
+   "measures": [
+    {
+     "abc": "CD[M:2/4]EF|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "%%abcts shapes neither corpus writes, swept through both engines one at a time. Two of\n%%abcts these are rules; four are open rows, measured through abcjs 6.7.0 and NOT built:\n%%abcts   X:4  !trill!z4     BUILT. A rest takes its decorations like any element, after\n%%abcts                      its own glyph — and X:9 is the MULTIMEASURE case, which is a\n%%abcts                      SECOND call with its own box. One shared call, whose box has\n%%abcts                      to be invented, took three of that ladder's rungs off exact.\n%%abcts   X:5  {g}z2         BUILT, on two terms neither of which was guessable from the\n%%abcts                      page width: the grace group's own WIDTH is left ink on a rest\n%%abcts                      exactly as on a note, and the slur's far anchor is the rest's\n%%abcts                      declared PITCH — its box's midpoint — not where its glyph is\n%%abcts                      drawn. Printing a graced note's fields beside a graced rest\n%%abcts                      (`left=10.00` against `left=0.00`) is what named the first.\n%%abcts        ⚠️ AND abcjs ITSELF WRITES `M NaN` for the grace flag on `{g}x2` — a bug of\n%%abcts        its own, and the one shape here that byte parity could reach only by\n%%abcts        reproducing a NaN. See Docs/ABCJS-DIFFERENCES.md.\n%%abcts   X:6  [K:G] mid-bar BUILT — it prints where it stands, on the same index the\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    },
+    {
+     "abc": "!fermata!|GABc|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "%%abcts shapes neither corpus writes, swept through both engines one at a time. Two of\n%%abcts these are rules; four are open rows, measured through abcjs 6.7.0 and NOT built:\n%%abcts   X:4  !trill!z4     BUILT. A rest takes its decorations like any element, after\n%%abcts                      its own glyph — and X:9 is the MULTIMEASURE case, which is a\n%%abcts                      SECOND call with its own box. One shared call, whose box has\n%%abcts                      to be invented, took three of that ladder's rungs off exact.\n%%abcts   X:5  {g}z2         BUILT, on two terms neither of which was guessable from the\n%%abcts                      page width: the grace group's own WIDTH is left ink on a rest\n%%abcts                      exactly as on a note, and the slur's far anchor is the rest's\n%%abcts                      declared PITCH — its box's midpoint — not where its glyph is\n%%abcts                      drawn. Printing a graced note's fields beside a graced rest\n%%abcts                      (`left=10.00` against `left=0.00`) is what named the first.\n%%abcts        ⚠️ AND abcjs ITSELF WRITES `M NaN` for the grace flag on `{g}x2` — a bug of\n%%abcts        its own, and the one shape here that byte parity could reach only by\n%%abcts        reproducing a NaN. See Docs/ABCJS-DIFFERENCES.md.\n%%abcts   X:6  [K:G] mid-bar BUILT — it prints where it stands, on the same index the\n",
+   "measures": [
+    {
+     "abc": "!fermata!Z2 C4|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "%%abcts shapes neither corpus writes, swept through both engines one at a time. Two of\n%%abcts these are rules; four are open rows, measured through abcjs 6.7.0 and NOT built:\n%%abcts   X:4  !trill!z4     BUILT. A rest takes its decorations like any element, after\n%%abcts                      its own glyph — and X:9 is the MULTIMEASURE case, which is a\n%%abcts                      SECOND call with its own box. One shared call, whose box has\n%%abcts                      to be invented, took three of that ladder's rungs off exact.\n%%abcts   X:5  {g}z2         BUILT, on two terms neither of which was guessable from the\n%%abcts                      page width: the grace group's own WIDTH is left ink on a rest\n%%abcts                      exactly as on a note, and the slur's far anchor is the rest's\n%%abcts                      declared PITCH — its box's midpoint — not where its glyph is\n%%abcts                      drawn. Printing a graced note's fields beside a graced rest\n%%abcts                      (`left=10.00` against `left=0.00`) is what named the first.\n%%abcts        ⚠️ AND abcjs ITSELF WRITES `M NaN` for the grace flag on `{g}x2` — a bug of\n%%abcts        its own, and the one shape here that byte parity could reach only by\n%%abcts        reproducing a NaN. See Docs/ABCJS-DIFFERENCES.md.\n%%abcts   X:6  [K:G] mid-bar BUILT — it prints where it stands, on the same index the\n",
+   "measures": [
+    {
+     "abc": "Z2 C4|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "%%abcts shapes neither corpus writes, swept through both engines one at a time. Two of\n%%abcts these are rules; four are open rows, measured through abcjs 6.7.0 and NOT built:\n%%abcts   X:4  !trill!z4     BUILT. A rest takes its decorations like any element, after\n%%abcts                      its own glyph — and X:9 is the MULTIMEASURE case, which is a\n%%abcts                      SECOND call with its own box. One shared call, whose box has\n%%abcts                      to be invented, took three of that ladder's rungs off exact.\n%%abcts   X:5  {g}z2         BUILT, on two terms neither of which was guessable from the\n%%abcts                      page width: the grace group's own WIDTH is left ink on a rest\n%%abcts                      exactly as on a note, and the slur's far anchor is the rest's\n%%abcts                      declared PITCH — its box's midpoint — not where its glyph is\n%%abcts                      drawn. Printing a graced note's fields beside a graced rest\n%%abcts                      (`left=10.00` against `left=0.00`) is what named the first.\n%%abcts        ⚠️ AND abcjs ITSELF WRITES `M NaN` for the grace flag on `{g}x2` — a bug of\n%%abcts        its own, and the one shape here that byte parity could reach only by\n%%abcts        reproducing a NaN. See Docs/ABCJS-DIFFERENCES.md.\n%%abcts   X:6  [K:G] mid-bar BUILT — it prints where it stands, on the same index the\n",
+   "measures": [
+    {
+     "abc": "[CEG]!arpeggio!|"
+    },
+    {
+     "abc": "C4!arpeggio!|"
+    },
+    {
+     "abc": "D4|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "%%abcts shapes neither corpus writes, swept through both engines one at a time. Two of\n%%abcts these are rules; four are open rows, measured through abcjs 6.7.0 and NOT built:\n%%abcts   X:4  !trill!z4     BUILT. A rest takes its decorations like any element, after\n%%abcts                      its own glyph — and X:9 is the MULTIMEASURE case, which is a\n%%abcts                      SECOND call with its own box. One shared call, whose box has\n%%abcts                      to be invented, took three of that ladder's rungs off exact.\n%%abcts   X:5  {g}z2         BUILT, on two terms neither of which was guessable from the\n%%abcts                      page width: the grace group's own WIDTH is left ink on a rest\n%%abcts                      exactly as on a note, and the slur's far anchor is the rest's\n%%abcts                      declared PITCH — its box's midpoint — not where its glyph is\n%%abcts                      drawn. Printing a graced note's fields beside a graced rest\n%%abcts                      (`left=10.00` against `left=0.00`) is what named the first.\n%%abcts        ⚠️ AND abcjs ITSELF WRITES `M NaN` for the grace flag on `{g}x2` — a bug of\n%%abcts        its own, and the one shape here that byte parity could reach only by\n%%abcts        reproducing a NaN. See Docs/ABCJS-DIFFERENCES.md.\n%%abcts   X:6  [K:G] mid-bar BUILT — it prints where it stands, on the same index the\n",
+   "measures": [
+    {
+     "abc": "!arpeggio!z4 !arpeggio!C4|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "%%abcts shapes neither corpus writes, swept through both engines one at a time. Two of\n%%abcts these are rules; four are open rows, measured through abcjs 6.7.0 and NOT built:\n%%abcts   X:4  !trill!z4     BUILT. A rest takes its decorations like any element, after\n%%abcts                      its own glyph — and X:9 is the MULTIMEASURE case, which is a\n%%abcts                      SECOND call with its own box. One shared call, whose box has\n%%abcts                      to be invented, took three of that ladder's rungs off exact.\n%%abcts   X:5  {g}z2         BUILT, on two terms neither of which was guessable from the\n%%abcts                      page width: the grace group's own WIDTH is left ink on a rest\n%%abcts                      exactly as on a note, and the slur's far anchor is the rest's\n%%abcts                      declared PITCH — its box's midpoint — not where its glyph is\n%%abcts                      drawn. Printing a graced note's fields beside a graced rest\n%%abcts                      (`left=10.00` against `left=0.00`) is what named the first.\n%%abcts        ⚠️ AND abcjs ITSELF WRITES `M NaN` for the grace flag on `{g}x2` — a bug of\n%%abcts        its own, and the one shape here that byte parity could reach only by\n%%abcts        reproducing a NaN. See Docs/ABCJS-DIFFERENCES.md.\n%%abcts   X:6  [K:G] mid-bar BUILT — it prints where it stands, on the same index the\n",
+   "measures": [
+    {
+     "abc": "C17 D17|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "%%abcts shapes neither corpus writes, swept through both engines one at a time. Two of\n%%abcts these are rules; four are open rows, measured through abcjs 6.7.0 and NOT built:\n%%abcts   X:4  !trill!z4     BUILT. A rest takes its decorations like any element, after\n%%abcts                      its own glyph — and X:9 is the MULTIMEASURE case, which is a\n%%abcts                      SECOND call with its own box. One shared call, whose box has\n%%abcts                      to be invented, took three of that ladder's rungs off exact.\n%%abcts   X:5  {g}z2         BUILT, on two terms neither of which was guessable from the\n%%abcts                      page width: the grace group's own WIDTH is left ink on a rest\n%%abcts                      exactly as on a note, and the slur's far anchor is the rest's\n%%abcts                      declared PITCH — its box's midpoint — not where its glyph is\n%%abcts                      drawn. Printing a graced note's fields beside a graced rest\n%%abcts                      (`left=10.00` against `left=0.00`) is what named the first.\n%%abcts        ⚠️ AND abcjs ITSELF WRITES `M NaN` for the grace flag on `{g}x2` — a bug of\n%%abcts        its own, and the one shape here that byte parity could reach only by\n%%abcts        reproducing a NaN. See Docs/ABCJS-DIFFERENCES.md.\n%%abcts   X:6  [K:G] mid-bar BUILT — it prints where it stands, on the same index the\n",
+   "measures": [
+    {
+     "abc": "C16 D8|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "%%abcts shapes neither corpus writes, swept through both engines one at a time. Two of\n%%abcts these are rules; four are open rows, measured through abcjs 6.7.0 and NOT built:\n%%abcts   X:4  !trill!z4     BUILT. A rest takes its decorations like any element, after\n%%abcts                      its own glyph — and X:9 is the MULTIMEASURE case, which is a\n%%abcts                      SECOND call with its own box. One shared call, whose box has\n%%abcts                      to be invented, took three of that ladder's rungs off exact.\n%%abcts   X:5  {g}z2         BUILT, on two terms neither of which was guessable from the\n%%abcts                      page width: the grace group's own WIDTH is left ink on a rest\n%%abcts                      exactly as on a note, and the slur's far anchor is the rest's\n%%abcts                      declared PITCH — its box's midpoint — not where its glyph is\n%%abcts                      drawn. Printing a graced note's fields beside a graced rest\n%%abcts                      (`left=10.00` against `left=0.00`) is what named the first.\n%%abcts        ⚠️ AND abcjs ITSELF WRITES `M NaN` for the grace flag on `{g}x2` — a bug of\n%%abcts        its own, and the one shape here that byte parity could reach only by\n%%abcts        reproducing a NaN. See Docs/ABCJS-DIFFERENCES.md.\n%%abcts   X:6  [K:G] mid-bar BUILT — it prints where it stands, on the same index the\n",
+   "measures": [
+    {
+     "abc": "C32 D32|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "%%abcts shapes neither corpus writes, swept through both engines one at a time. Two of\n%%abcts these are rules; four are open rows, measured through abcjs 6.7.0 and NOT built:\n%%abcts   X:4  !trill!z4     BUILT. A rest takes its decorations like any element, after\n%%abcts                      its own glyph — and X:9 is the MULTIMEASURE case, which is a\n%%abcts                      SECOND call with its own box. One shared call, whose box has\n%%abcts                      to be invented, took three of that ladder's rungs off exact.\n%%abcts   X:5  {g}z2         BUILT, on two terms neither of which was guessable from the\n%%abcts                      page width: the grace group's own WIDTH is left ink on a rest\n%%abcts                      exactly as on a note, and the slur's far anchor is the rest's\n%%abcts                      declared PITCH — its box's midpoint — not where its glyph is\n%%abcts                      drawn. Printing a graced note's fields beside a graced rest\n%%abcts                      (`left=10.00` against `left=0.00`) is what named the first.\n%%abcts        ⚠️ AND abcjs ITSELF WRITES `M NaN` for the grace flag on `{g}x2` — a bug of\n%%abcts        its own, and the one shape here that byte parity could reach only by\n%%abcts        reproducing a NaN. See Docs/ABCJS-DIFFERENCES.md.\n%%abcts   X:6  [K:G] mid-bar BUILT — it prints where it stands, on the same index the\n",
+   "measures": [
+    {
+     "abc": "C/16 D/16 C/8 D/8|"
     }
    ],
    "hasPickup": true

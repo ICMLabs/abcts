@@ -152,7 +152,23 @@ function meterOf(score: Score): Meter {
         : [
             {
               meter: measure.meterChange,
-              at: 0,
+              /**
+               * ⚠️ **AND THE SINGULAR CHANGE CARRIES NO INDEX, SO IT IS DERIVED FROM ITS
+               * RANGE** — how many of the measure's events were WRITTEN before the field,
+               * which is `meterEventIndex` in the layout. Assuming 0 made a MID-MEASURE
+               * `[M:]` stamp the staff: `CD[M:2/4]EF|` reported 2/4 where abcjs reports
+               * 4/4, because `getMeter` reads `line.staff[j].meter` and a field written
+               * after music is a STREAM element that never becomes one
+               * (`abc_tune.js:181-193`, `tune-builder.js:272-295`).
+               *
+               * It reached three surfaces at once — `getMeter`, `getBarLength` and
+               * `getPickupLength`, which is what `extractMeasures`' `hasPickup` reads.
+               */
+              at: measure.events.filter(
+                (e) =>
+                  (e.sourceRange?.start ?? Number.POSITIVE_INFINITY) <
+                  (measure.meterChangeSourceRange?.start ?? Number.POSITIVE_INFINITY),
+              ).length,
               inline: measure.meterChangeInline === true,
             },
           ])
