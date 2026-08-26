@@ -5,18 +5,15 @@
 %%abcts                      no rest glyph — `!fermata!Z2 C4|` is 157.4125 in abcjs
 %%abcts                      against our 144.186, and hoisting the call out of the glyph
 %%abcts                      branch to reach it took three other rungs off exact.
-%%abcts   X:5  {g}z2         the automatic grace slur is BUILT — abcjs's `notehead` for a
-%%abcts                      rest is the REST'S OWN GLYPH (instrumented: `gracePitch 11
-%%abcts                      notePitch 7`), and our y matches to the digit. What is left
-%%abcts                      is its ROOM: abcjs moves the whole element 10px per grace
-%%abcts                      (bar 143.9 against a bare `z2`'s 133.9, `{gg}z2` 153.9) and
-%%abcts                      an INVISIBLE rest takes none (`{g}x2` 133.9). Three places
-%%abcts                      were tried — the rod, the x before placing, the left ink —
-%%abcts                      and each moved nothing, because the line solve replaces the
-%%abcts                      element's own x. Instrument what it reads; do not guess a
-%%abcts                      fourth time.
+%%abcts   X:5  {g}z2         BUILT, on two terms neither of which was guessable from the
+%%abcts                      page width: the grace group's own WIDTH is left ink on a rest
+%%abcts                      exactly as on a note, and the slur's far anchor is the rest's
+%%abcts                      declared PITCH — its box's midpoint — not where its glyph is
+%%abcts                      drawn. Printing a graced note's fields beside a graced rest
+%%abcts                      (`left=10.00` against `left=0.00`) is what named the first.
 %%abcts        ⚠️ AND abcjs ITSELF WRITES `M NaN` for the grace flag on `{g}x2` — a bug of
-%%abcts        its own, and the one row here we could only reproduce by reproducing a NaN.
+%%abcts        its own, and the one shape here that byte parity could reach only by
+%%abcts        reproducing a NaN. See Docs/ABCJS-DIFFERENCES.md.
 %%abcts   X:6  [K:G] mid-bar BUILT — it prints where it stands, on the same index the
 %%abcts                      meter and the clef beside it already used.
 %%abcts   X:7  [M:2/4] mid-bar BUILT — any NON-NOTE element ends the beam, and an inline

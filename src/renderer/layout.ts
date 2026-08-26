@@ -3964,7 +3964,20 @@ function layoutRest(
       // subtracting it back off flat reported a rest under a chord one pixel narrow.
       textSpan.right,
     ),
-    left: Math.max(textSpan.left, graces.left),
+    /**
+     * ⚠️ **AND A GRACE GROUP'S OWN WIDTH IS LEFT INK ON A REST, EXACTLY AS ON A NOTE.**
+     * The note's `left` maxes in `graceWidth` — `graceoffsets[0]` plus the gap — and the
+     * rest's did not, so a graced rest and everything after it sat 10px per grace to the
+     * left: `{g}z2 C2|` put abcjs's barline at 143.9 against our 133.9, `{gg}z2` at 153.9.
+     *
+     * ⚠️ **THE ELEMENT'S OWN `x` IS NOT THE FIELD** — the line solve replaces it. Three
+     * earlier attempts moved nothing at all (the `rod`, the `x` before the graces are
+     * placed, and `left` with the wrong term, `graces.room`), because `left` is what the
+     * solve reads and `room` is what the DECORATIONS after it start from. Printing the
+     * fields of a graced NOTE beside a graced REST — `left=10.00` against `left=0.00` —
+     * is what named it; the term is not derivable from the two page widths.
+     */
+    left: Math.max(textSpan.left, graces.left, graces.width),
     // abcjs's `rest.type === 'rest'` after `createNote` has had its say — see `plainRest`.
     plainRest: !invisible && rest.kind !== 'spacer' && rest.measureCount === 0 && !fillsMeasure,
     /**
@@ -9559,7 +9572,25 @@ function curveReserves(
     )
     const main = mainHeads[mainHeads.length - 1]
     if (main !== undefined)
-      a.graceSlur = { graceX: head.x, graceY: head.y, headX: main.x, headY: main.y }
+      a.graceSlur = {
+        graceX: head.x,
+        graceY: head.y,
+        headX: main.x,
+        /**
+         * ⚠️ **AND A REST'S ANCHOR IS ITS PITCH, NOT WHERE ITS GLYPH IS DRAWN.** abcjs's
+         * `notehead` for a rest is a `RelativeElement` at `restpitch` — instrumented,
+         * `notePitch 7` — while the glyph itself is drawn at its own step, which for a
+         * rest is not `restpitch` at all. A notehead's two answers coincide and a rest's
+         * do not: the slur came out one pitch low, 3.87px, with both x's already exact.
+         * The declared box carries the pitch — its midpoint IS `restpitch` — where the
+         * glyph's `anchorPitch` is where it is DRAWN, which is why substituting that
+         * changed nothing.
+         */
+        headY:
+          main.name.startsWith('rest') && main.reservePitch !== undefined
+            ? stepToY((main.reservePitch[0] + main.reservePitch[1]) / 2 - PITCH_ORIGIN)
+            : main.y,
+      }
     /**
      * abcjs's `Math.min` over PITCHES is our `Math.max` over y, as above.
      *

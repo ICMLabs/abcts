@@ -203,6 +203,20 @@ changing the pitch a reader sees.
 
 *Verified: element dump of `^3/2G _3/2A`.*
 
+### A grace note on an invisible rest is drawn at `NaN`
+
+`{g}x2` puts abcjs's grace FLAG at `M NaN 66.87` — a literal `NaN` in the path's first
+coordinate, so the glyph is not drawn at all by any renderer that parses the `d`. The
+grace's head and stem are placed normally; only the flag's x is lost. An ordinary rest
+(`{g}z2`) is fine, and so is a note.
+
+abcts draws the flag at the x the head and stem imply. **This is the one difference in
+this file that strict mode does NOT reproduce**, because reproducing it means emitting a
+`NaN` into a path — output that is invalid rather than merely different.
+
+*Verified: `{g}x2 C2|` through abcjs 6.7.0 at `{staffwidth: 670}`, and the same shape with
+a visible rest for contrast.*
+
 ### `%%vocalfont` is parsed and never used
 
 abcjs stamps the resolved font onto `el.fonts` at parse time and reads `.fonts` nowhere in

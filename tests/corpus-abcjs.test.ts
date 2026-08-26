@@ -457,7 +457,7 @@ const WITHIN: Readonly<Record<string, number>> = {
   // …and `abcts-grace-tie.abc`, the `-` INSIDE a grace group — exact on all four axes
   // once the ACCIACCATURA SLASH declared its own box, which is one of the three defects
   // its tie-free controls named.
-  "0.05": 218,
+  "0.05": 219,
   "1": 219,
   "5": 219,
   "25": 219,
