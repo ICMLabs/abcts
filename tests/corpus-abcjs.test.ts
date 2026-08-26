@@ -458,8 +458,8 @@ const WITHIN: Readonly<Record<string, number>> = {
   // once the ACCIACCATURA SLASH declared its own box, which is one of the three defects
   // its tie-free controls named.
   "0.05": 218,
-  "1": 218,
-  "5": 218,
+  "1": 219,
+  "5": 219,
   "25": 219,
 };
 

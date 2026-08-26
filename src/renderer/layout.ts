@@ -11290,8 +11290,18 @@ function layoutMeasure(
   // proves it is in tune 1, which the structural gate never looks at.
   const keyChangeAt = measure.keyChangeSourceRange?.start ?? Number.POSITIVE_INFINITY
   const openingBarAt = measure.openingBarlineSourceRange?.start ?? Number.POSITIVE_INFINITY
-  const drawKeyChange = (): void => {
+  /**
+   * **AND A MID-MEASURE `[K:]` PRINTS WHERE IT STANDS TOO** — the same question the meter
+   * and the clef beside it already answer. abcjs appends the key element to the voice's
+   * child list where it is READ, so `CD[K:G]EF|` draws two notes, the signature, then two
+   * more; ours hoisted every key change into the measure's PREFIX. Its x and the page were
+   * already right — only the order was wrong, which no gate but a byte one can state.
+   */
+  const drawKeyChange = (inStream = false): void => {
     if (measure.keyChange === null || keyInForce === null) return
+    // …and NOT AT THE HEAD when it was written after some of the measure's music — the
+    // event loop calls this again at the right index. See `keyChangeIndex`.
+    if (!inStream && meterEventIndex(measure.keyChangeSourceRange) > 0) return
     // **`%%keywarn 0` STOPS IT BEING DRAWN, not taking effect** — `appendStartingElement`
     // is guarded on it, so no key element enters the stream while every note after the
     // change is still spelled in the new key. See `Score.keywarn`.
@@ -11661,6 +11671,9 @@ function layoutMeasure(
   for (const [eventIndex, event] of measure.events.entries()) {
     drawMetersBefore(eventIndex)
     drawClefBefore(eventIndex)
+    // …and a mid-measure key change — see `keyChangeIndex`.
+    const keyAt = meterEventIndex(measure.keyChangeSourceRange)
+    if (keyAt > 0 && keyAt === eventIndex) drawKeyChange(true)
     if (measure.partLabel !== null && eventIndex === partIndex && partIndex > 0) {
       elements.push(layoutPart(x, measure.partLabel, measure.partLabelSourceRange))
       fixed(0, 0, 'part')
