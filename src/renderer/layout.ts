@@ -3638,6 +3638,8 @@ function layoutRest(
    * scale, which is abcjs's own `// TODO scale the dot as well`. See `Voice.scale`.
    */
   voiceScale = 1,
+  /** Dynamics above the staff when the tune sings — see the decoration block below. */
+  dynamicsAbove = true,
 ): LayoutElement {
   // A REST CARRIES ITS GRACES, by the same line that gives it a chord symbol: `createNote`
   // closes its rest/note branch and THEN calls `addGraceNotes`
@@ -3878,7 +3880,45 @@ function layoutRest(
         (strict ? glyphsFor(strict).width('augmentationDot') : step)
     }
     glyphs.push(restGlyph)
+    /**
+     * **A REST TAKES ITS DECORATIONS LIKE ANY OTHER ELEMENT, AND AFTER ITS OWN GLYPH.**
+     * `createDecoration` is called OUTSIDE `createNote`'s rest/note branch
+     * (`abstract-engraver.js:842`), on the same line that gives a rest its graces and its
+     * chord symbol — so `!trill!z4` draws a trill above the rest. Ours drew NOTHING at
+     * all: the whole call lived in the note builder, and the page came out 11.75px short.
+     *
+     * The box it stacks on is the REST's own declared one, and the width it centres over
+     * is `(notehead) ? notehead.w : 0` — which for a rest is the rest's own element, the
+     * same fact that gives it a grace slur.
+     *
+     * ⚠️ **AND IT SITS INSIDE THE GLYPH BRANCH ON PURPOSE.** Hoisting it out, to reach a
+     * MULTIMEASURE rest — which draws a bar and a number rather than a rest glyph, and
+     * whose decoration abcjs does draw — took three of this ladder's six rungs OFF exact,
+     * because the box it then had to invent is not the one the glyph declares. `Z2` is
+     * measured and open: `!fermata!Z2 C4|` is 157.4125 in abcjs against our 144.186.
+     */
+    if (rest.decorations.length > 0) {
+      const restStep = restBoxPitch - PITCH_ORIGIN
+      const decorated = decorationGlyphs(
+        rest.decorations,
+        x,
+        restWidth,
+        restStep + restHalfPitch,
+        restStep - restHalfPitch,
+        true,
+        restStep + restHalfPitch,
+        restStep - restHalfPitch,
+        false,
+        strict,
+        0,
+        dynamicsAbove,
+      )
+      glyphs.push(...decorated.glyphs)
+      texts.push(...decorated.texts)
+    }
+
   }
+
 
   // A REST IS A ROD LIKE ANY NOTE. abcjs's `getMinWidth` is `child.w` whatever the type,
   // and a rest's `w` is its glyph — an eighth rest reports 7.534 and pushes `minx` by
@@ -19299,6 +19339,7 @@ function layoutEvent(
     sharedStaff && !isOverlayLayer ? voiceStem : null,
     measureLength,
     voiceScale,
+    dynamicsAbove,
   )
 }
 

@@ -1,7 +1,10 @@
 %%abcts shapes neither corpus writes, swept through both engines one at a time. Two of
 %%abcts these are rules; four are open rows, measured through abcjs 6.7.0 and NOT built:
-%%abcts   X:4  !trill!z4     a decoration on a REST reserves less here — page 135.368
-%%abcts                      against abcjs's 147.1135, 11.75px.
+%%abcts   X:4  !trill!z4     BUILT. A rest takes its decorations like any element, after
+%%abcts                      its own glyph. Still open: a MULTIMEASURE rest, which draws
+%%abcts                      no rest glyph — `!fermata!Z2 C4|` is 157.4125 in abcjs
+%%abcts                      against our 144.186, and hoisting the call out of the glyph
+%%abcts                      branch to reach it took three other rungs off exact.
 %%abcts   X:5  {g}z2         the automatic grace slur is BUILT — abcjs's `notehead` for a
 %%abcts                      rest is the REST'S OWN GLYPH (instrumented: `gracePitch 11
 %%abcts                      notePitch 7`), and our y matches to the digit. What is left
