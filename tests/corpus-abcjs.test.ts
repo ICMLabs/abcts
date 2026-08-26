@@ -463,10 +463,12 @@ const WITHIN: Readonly<Record<string, number>> = {
   // the one in force at the note; and a line opens in the RUNNING clef, which leaks across
   // voices — `startNewLine`'s `staves[n].clef ?? multilineVars.clef`.
   // …and `abcts-lyric-verses.abc`, `w:` lines that do NOT cover every note.
-  "0.05": 221,
-  "1": 221,
-  "5": 221,
-  "25": 221,
+  // …and `abcts-inline-fields-and-blocks.abc`, the mid-measure `[Q:]`, the left/right
+  // annotations and the `%%begintext` block before the music.
+  "0.05": 222,
+  "1": 222,
+  "5": 222,
+  "25": 222,
 };
 
 const names = readdirSync(fixturesDir)

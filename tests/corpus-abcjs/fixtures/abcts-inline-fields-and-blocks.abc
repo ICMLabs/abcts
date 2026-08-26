@@ -1,0 +1,106 @@
+X:1
+T:Inline Q Mid Measure
+L:1/4
+K:C
+CD[Q:1/4=90]EF|
+
+X:2
+T:Inline Q Leading
+L:1/4
+K:C
+[Q:1/4=90]CDEF|
+
+X:3
+T:Inline Q After Barline
+L:1/4
+K:C
+CDEF|[Q:1/4=90]GABc|
+
+X:4
+T:Inline Q Before Last Note
+L:1/4
+K:C
+CDE[Q:1/4=90]F|
+
+X:5
+T:Inline Q With Text
+L:1/4
+K:C
+CD[Q:"Fast"]EF|
+
+X:6
+T:Left And Right Annotations
+L:1/4
+K:C
+"<l"E">r"F|
+
+X:7
+T:Left Annotation Only
+L:1/4
+K:C
+"<l"E|
+
+X:8
+T:Right Annotation Only
+L:1/4
+K:C
+">r"F|
+
+X:9
+T:Two Left Annotations
+L:1/4
+K:C
+"<l"E"<m"F|
+
+X:10
+T:Both Sides One Note
+L:1/4
+K:C
+"<l">r"E|
+
+X:11
+T:Begintext Before Music
+L:1/4
+K:C
+%%begintext
+%%hello there
+%%endtext
+CDEF|
+
+X:12
+T:Begintext After Music
+L:1/4
+K:C
+CDEF|
+%%begintext
+%%after
+%%endtext
+
+X:13
+T:Begintext In Header
+L:1/4
+%%begintext
+%%header block
+%%endtext
+K:C
+CDEF|
+
+X:14
+T:Begintext Three Lines
+L:1/4
+K:C
+%%begintext
+%%one
+%%two
+%%three
+%%endtext
+CDEF|
+
+X:15
+T:Begintext Align
+L:1/4
+K:C
+%%begintext align
+%%centred
+%%endtext
+CDEF|

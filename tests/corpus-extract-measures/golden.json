@@ -3612,6 +3612,142 @@
    "hasPickup": true
   }
  ],
+ "repo/abcts-inline-fields-and-blocks": [
+  {
+   "header": "X:1\nT:Inline Q Mid Measure\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "CD[Q:1/4=90]EF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:2\nT:Inline Q Leading\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "[Q:1/4=90]CDEF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:3\nT:Inline Q After Barline\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    },
+    {
+     "abc": "[Q:1/4=90]GABc|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:4\nT:Inline Q Before Last Note\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDE[Q:1/4=90]F|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:5\nT:Inline Q With Text\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "CD[Q:\"Fast\"]EF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:6\nT:Left And Right Annotations\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "\"<l\"E\">r\"F|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "X:7\nT:Left Annotation Only\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "\"<l\"E|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "X:8\nT:Right Annotation Only\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "\">r\"F|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "X:9\nT:Two Left Annotations\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "\"<l\"E\"<m\"F|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "X:10\nT:Both Sides One Note\nL:1/4\nK:C\n",
+   "measures": [],
+   "hasPickup": false
+  },
+  {
+   "header": "X:11\nT:Begintext Before Music\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:12\nT:Begintext After Music\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:13\nT:Begintext In Header\nL:1/4\n%%begintext\n%%header block\n%%endtext\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:14\nT:Begintext Three Lines\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:15\nT:Begintext Align\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
  "repo/abcts-key-modifiers": [
   {
    "header": "X:1\nT:Key Minor Natural\nL:1/8\nK:C m=B\n",

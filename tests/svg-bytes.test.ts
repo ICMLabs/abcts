@@ -516,6 +516,27 @@ const PASSING: readonly string[] = [
    */
   ...Array.from({ length: 12 }, (_, i) => `abcts-lyric-verses-tune${i}`),
   /**
+   * `abcts-inline-fields-and-blocks.abc` — §1(c), (d) and (e) of the 2026-08-26 handoff,
+   * which turned out to be two defects and one row that had already closed.
+   *
+   * **A MID-MEASURE `[Q:]` DRAWS WHERE IT STANDS**, the same rule `[K:]` and `[M:]` already
+   * had: abcjs's group order is `note note tempo note note bar` where ours put the tempo at
+   * the measure's head. Tunes 1-5.
+   *
+   * **AND A `%%text` BLOCK BEFORE THE MUSIC SPENDS ITS ROWS ONE AT A TIME, BEFORE
+   * `staffSeparation`** — ours walked `15 → +7.56 → +61.33 → +33.77` where abcjs walks
+   * `15 → +7.56 → +10.5 → +23.27 → +61.33`. Same total, one ULP of the root `height`.
+   * Tunes 11-15. **A SUM CANNOT SEE AN ORDER**, for the fifth time on this branch.
+   *
+   * ⚠️ **AND (d) WAS ALREADY EXACT** — the left/right annotation spacing the handoff
+   * measured at 6.74px closed under one of the day's earlier landings and nothing said so.
+   * Tunes 6-10 are its gate now, so it cannot rot again.
+   */
+  ...Array.from(
+    { length: 15 },
+    (_, i) => `abcts-inline-fields-and-blocks-tune${i}`,
+  ),
+  /**
    * `abcts-voice-style.abc` — `V:… style=`, the first of the three modifiers the V:
    * enumeration left as a FEATURE. All five shapes, one voice each.
    *

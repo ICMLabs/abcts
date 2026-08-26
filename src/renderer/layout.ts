@@ -11784,8 +11784,15 @@ function layoutMeasure(
   const staffMeterHere = measure.meterChange != null && measure.meterChangeInline !== true
   // A `Q:` AFTER THE FIRST prints where it stands, on its OWN voice's staff — an ordinary
   // element in that voice's stream. Zero width, like the tune's own mark.
+  /**
+   * **AND A MID-MEASURE `[Q:]` IS THE SAME QUESTION AS `[K:]` AND `[M:]`** — `CD[Q:1/4=90]EF|`
+   * draws the mark between the second and third notes, because abcjs appends it to the
+   * voice's child list where it is READ. Measured through abcjs 6.7.0: its group order is
+   * `note note tempo note note bar` where ours was `tempo note note note note bar`.
+   */
+  const tempoChangeAt = meterEventIndex(measure.tempoChangeSourceRange)
   const drawTempoChange = (): void => {
-    if (measure.tempoChange == null) return
+    if (measure.tempoChange == null || tempoChangeAt > 0) return
     const tempo = layoutTempo(x, measure.tempoChange, strict, measure.tempoChangeSourceRange)
     if (tempo === null) return
     elements.push(tempo)
@@ -11829,9 +11836,18 @@ function layoutMeasure(
     }
     clefNow = measure.clefChange
   }
+  /** …and the mid-measure `[Q:]`, at the event it was written before. */
+  const drawTempoBefore = (eventIndex: number): void => {
+    if (measure.tempoChange == null || tempoChangeAt === 0 || tempoChangeAt !== eventIndex) return
+    const tempo = layoutTempo(x, measure.tempoChange, strict, measure.tempoChangeSourceRange)
+    if (tempo === null) return
+    elements.push(tempo)
+    fixed(0, 0)
+  }
   for (const [eventIndex, event] of measure.events.entries()) {
     drawMetersBefore(eventIndex)
     drawClefBefore(eventIndex)
+    drawTempoBefore(eventIndex)
     // …and a mid-measure key change — see `keyChangeIndex`.
     const keyAt = meterEventIndex(measure.keyChangeSourceRange)
     if (keyAt > 0 && keyAt === eventIndex) drawKeyChange(true)
@@ -16612,7 +16628,17 @@ function topTextBlock(
   advances.push(musicSpace)
   y += musicSpace
   // …and NOT onto `rows`: from here on the block is `tune.lines`'s business, not TopText's.
-  y = appendFreeText(texts, textAbove, y, width / 2, fonts, rules, true, [], blockRows)
+  //
+  // ⚠️ **BUT ITS ADVANCES ARE THE PAGE'S, AND THEY WERE BEING THROWN AWAY.** abcjs walks a
+  // `%%text` / `%%begintext` line before the music as `abcLine.nonMusic`, one `moveY` PER
+  // ROW, and only THEN spends `staffSeparation` (`draw/draw.js:44-58`). Passing `[]` here
+  // dropped both rows, so the page reached them as ONE remainder AFTER the separation:
+  // ours walked `15 → +7.56 → +61.33 → +33.77` where abcjs walks
+  // `15 → +7.56 → +10.5 → +23.27 → +61.33`. Same total, different doubles —
+  // `117.65999999999998` against `117.66` — and one ULP of the root `height`.
+  //
+  // **A SUM CANNOT SEE AN ORDER**, for the fifth time on this branch.
+  y = appendFreeText(texts, textAbove, y, width / 2, fonts, rules, true, advances, blockRows)
 
   // `drawSeparator` centres on `renderer.controller.width` — the STAFF width, which is
   // what `width` is here — and paints a 1px rule at `Math.round(renderer.y)`
