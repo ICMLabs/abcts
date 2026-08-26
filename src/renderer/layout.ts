@@ -15004,6 +15004,22 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
        * music, which is right for the ink and wrong for the height — held separately here
        * so the page can spend it in abcjs's order.
        */
+      /**
+       * **`%%stafftopmargin` IN PITCH — IT BELONGS TO THE STAFF, NOT TO THE BLOCK.**
+       * `staff.top += renderer.spacing.staffTopMargin / spacing.STEP`
+       * (`set-upper-and-lower-elements.js:92`), and `calcHeight` sums `staff.top` in PITCH
+       * and multiplies by `STEP` once; the top-text block is never in `staff.top` at all.
+       *
+       * The music-only extent is taken WITHOUT it, so it sits inside `extent.top` alone —
+       * which puts it in `blockSpan`, a LENGTH, and the height then recovers it divided
+       * back and re-multiplied. All three terms have to move together or the REMAINDER in
+       * `originAdvances` absorbs the change: the block's lead loses it, the staff's own
+       * origin gains it as a pitch, and `topTerm` with them. Three earlier attempts each
+       * moved ONE and were each cancelled by that remainder.
+       */
+      const marginPitch =
+        SPACING.stafftopmargin === undefined ? 0 : SPACING.stafftopmargin / ENGRAVE.spacePerStep
+      const marginLength = marginPitch * ENGRAVE.spacePerStep
       let blockSpan = 0
       /** The music-only extent top, when a heading is stacked above it. */
       let musicOnlyTop: number | undefined
@@ -15098,7 +15114,12 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
       const stacked =
         musicOnlyTop === undefined
           ? cursor + clampedTopPitch * ENGRAVE.spacePerStep
-          : cursor - extent.top
+          : // …**AND THE TITLED BRANCH SPENDS THE BLOCK AS A LENGTH AND THE STAFF AS A
+            // PITCH**, which is abcjs's own split: `nonMusic` walks the rows onto the page
+            // cursor and `moveY(STEP, staff.top)` follows (`draw/staff-group.js:25-26`).
+            cursor +
+            (musicOnlyTop - extent.top - marginLength) +
+            ((musicOnlyTopPitch ?? 0) + marginPitch) * ENGRAVE.spacePerStep
       // **THE BLOCK BELONGS TO THE PAGE'S CURSOR, NOT TO THE STAFF'S OWN SPAN.** abcjs's
       // `staffGroup.height` knows nothing about the top text: the page walks THROUGH the
       // block and only then reaches the staff (`draw/draw.js:14-18`). So the span is
@@ -15106,7 +15127,7 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
       // row's ink reaches above its own box and the old total carried that overshoot.
       // Assuming the declared height instead lost a whole subtitle row (27.05px) on
       // `synth-timing-05` and 93.18 on `visual-options-01`.
-      blockSpan = musicOnlyTop === undefined ? 0 : musicOnlyTop - extent.top
+      blockSpan = musicOnlyTop === undefined ? 0 : musicOnlyTop - extent.top - marginLength
       if (staffIndexInSystem === 0) {
         leadingCursor = cursor + blockSpan
         firstTopPitch = musicOnlyTopPitch ?? extent.topPitch
@@ -15201,7 +15222,8 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
          * `ABCTS_CHECK` below.
          */
         const named = terms.reduce((t, a) => t + a, 0)
-        const rest = flat - named - (musicOnlyTopPitch ?? 0) * ENGRAVE.spacePerStep
+        const rest =
+          flat - named - ((musicOnlyTopPitch ?? 0) + marginPitch) * ENGRAVE.spacePerStep
         // …and only when it is a REAL term. Below a nanopixel it is the same quantity
         // reached by a different association — the very thing this walk exists to remove —
         // and spending it puts the ULP straight back. Measured: keeping it took the byte
@@ -15210,7 +15232,7 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
       })()
       const originPitch =
         walksTopBlock || walksMidBlock
-          ? (musicOnlyTopPitch ?? 0)
+          ? (musicOnlyTopPitch ?? 0) + marginPitch
           : musicOnlyTop === undefined
             ? clampedTopPitch
             : 0
@@ -15238,7 +15260,9 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
       // is a length with no pitch, which is true of the SPAN and not of what is left after
       // it: `visual-tablature-08`'s root `height` was the last token on that fixture.
       const topTerm =
-        blockSpan === 0 ? clampedTopPitch : (musicOnlyTopPitch ?? -(extent.top + blockSpan) / ENGRAVE.spacePerStep)
+        musicOnlyTop === undefined
+          ? clampedTopPitch
+          : (musicOnlyTopPitch ?? -(extent.top + blockSpan) / ENGRAVE.spacePerStep) + marginPitch
       heightPitch += topTerm
       heightPitch += -extent.bottomPitch
       if (process.env.ABCTS_H)

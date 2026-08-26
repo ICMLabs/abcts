@@ -560,35 +560,30 @@ const PASSING: readonly string[] = [
    * mentioned, and that MOVE its output. Measured by rendering one tune through abcjs with
    * and without each of the forty-one absent ones: thirty-one are inert in that shape.
    *
-   * ⚠️ **`abcts-directives-tune4` (`%%stafftopmargin`) IS NOT HERE, AND ITS RESIDUE IS NOT
-   * THE DIRECTIVE.** The same tune WITHOUT a title is byte-identical in both engines
-   * (138.492 / 76.64); with one, the root height differs in its last bits, which is the
-   * y-versus-pitch asymmetry a staff carrying a heading block already has. Two different
-   * formulations of the margin produce the identical double, which is what says so.
-   *
-   * 🔬 **AND THE TERM IS NOW LOCATED, ON A FOUR-RUNG LADDER.** `%%stafftopmargin 0` with a
-   * title is exact and `12` and `30` are not, so it is the margin itself and not the
-   * block; without a title every value is exact, so it is the branch that carries one.
+   * ✅ **`abcts-directives-tune4` (`%%stafftopmargin`) IS HERE — THE LAST BYTE ROW.** It
+   * had been open since 2026-08-21, filed as "the deferred y-versus-pitch refactor", and a
+   * four-rung ladder is what located it: `0` with a title is exact, `12` and `30` are not,
+   * and `30` WITHOUT a title is exact. So it was the margin, and only on the branch that
+   * carries a heading block.
    *
    * abcjs puts the margin on the STAFF — `staff.top += renderer.spacing.staffTopMargin /
-   * spacing.STEP` (`set-upper-and-lower-elements.js:92`) — which `calcHeight` sums in
-   * PITCH and multiplies by `STEP` once, and the top-text block is never in `staff.top`
-   * at all. Ours takes the music-only extent WITHOUT the margin (`verticalExtent(…,
-   * false)`), so `blockSpan` — the difference between that and the full extent — swallows
-   * it as a LENGTH, and the height recovers it divided-back-and-re-multiplied.
+   * spacing.STEP` (`set-upper-and-lower-elements.js:92`) — where `calcHeight` sums it in
+   * PITCH and multiplies by `STEP` once. Ours took the music-only extent without it, so it
+   * lived in `blockSpan`, a LENGTH, and the height recovered it divided back and
+   * re-multiplied.
    *
-   * ⚠️ **THREE SHAPES WERE TRIED AND ALL THREE WERE REVERTED**, each measured rather than
-   * reasoned: spending the pitch in the titled `stacked` branch (fixes the staff ORIGIN
-   * and leaves the height one ULP out); letting the music-only extent carry the margin
-   * (double-counts it, +40px); and moving it from `blockSpan` to `topTerm` by hand (also
-   * +40px — `blockSpan` reaches the page height by a route this did not follow). **FIND
-   * WHERE `blockSpan` IS SPENT ON THE PAGE FIRST**; that is the next probe, not a fourth
-   * formulation.
+   * ⚠️ **AND THE REMAINDER IS WHY THREE EARLIER ATTEMPTS EACH DID NOTHING.**
+   * `originAdvances` closes on `rest = flat - named - topPitch * STEP`, so moving ONE term
+   * is absorbed there and the page is unchanged — or doubled, when the term is also added
+   * somewhere else. All four move together now: the block's lead loses the margin, the
+   * staff's origin gains it as a pitch, `topTerm` gains it, and the remainder is told
+   * about it. **WHEN A DECOMPOSITION HAS A BALANCING TERM, EVERY PART MOVES OR NONE DOES.**
    */
   "abcts-directives-tune0",
   "abcts-directives-tune1",
   "abcts-directives-tune2",
   "abcts-directives-tune3",
+  "abcts-directives-tune4",
   "abcts-directives-tune5",
   "abcts-directives-tune6",
   "abcts-directives-tune7",
