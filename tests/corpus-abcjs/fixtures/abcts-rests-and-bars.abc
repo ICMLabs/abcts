@@ -1,10 +1,9 @@
 %%abcts shapes neither corpus writes, swept through both engines one at a time. Two of
 %%abcts these are rules; four are open rows, measured through abcjs 6.7.0 and NOT built:
 %%abcts   X:4  !trill!z4     BUILT. A rest takes its decorations like any element, after
-%%abcts                      its own glyph. Still open: a MULTIMEASURE rest, which draws
-%%abcts                      no rest glyph — `!fermata!Z2 C4|` is 157.4125 in abcjs
-%%abcts                      against our 144.186, and hoisting the call out of the glyph
-%%abcts                      branch to reach it took three other rungs off exact.
+%%abcts                      its own glyph — and X:9 is the MULTIMEASURE case, which is a
+%%abcts                      SECOND call with its own box. One shared call, whose box has
+%%abcts                      to be invented, took three of that ladder's rungs off exact.
 %%abcts   X:5  {g}z2         BUILT, on two terms neither of which was guessable from the
 %%abcts                      page width: the grace group's own WIDTH is left ink on a rest
 %%abcts                      exactly as on a note, and the slur's far anchor is the rest's
@@ -65,3 +64,15 @@ T:a decoration on a barline that opens a measure
 L:1/8
 K:C
 CDEF|!fermata!|GABc|
+
+X:9
+T:a decorated multimeasure rest, whose count comes between bar and mark
+L:1/8
+K:C
+!fermata!Z2 C4|
+
+X:10
+T:a multimeasure rest with no decoration at all
+L:1/8
+K:C
+Z2 C4|

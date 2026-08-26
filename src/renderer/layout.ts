@@ -3750,6 +3750,38 @@ function layoutRest(
       // no thickness, so `top === bottom === pitch` (`relative-element.js:18-21`).
       reserve: [stepToY(10), stepToY(10)],
     })
+    /**
+     * **A MULTIMEASURE REST TAKES ITS DECORATIONS TOO, AND AFTER ITS OWN GLYPH.**
+     * `createDecoration` runs outside `createNote`'s branch (`abstract-engraver.js:842`),
+     * so `!fermata!Z2` draws the mark straight after `rests.multimeasure` — abcjs puts it
+     * at x 31.7755, and the page is 157.4125 against our 144.186 without it.
+     *
+     * The box is the bar's own declared one: `addHead(new RelativeElement(c, mmWidth,
+     * mmWidth * 2, 7))` (`:596`) — pitch 7, which is step 1 here, with the glyph's
+     * declared height for its half. ⚠️ **Hoisting the ORDINARY rest's call out to cover
+     * this branch as well took three of that ladder's rungs off exact**, because the box a
+     * shared call has to invent is not the one either glyph declares. Two calls, two
+     * boxes.
+     */
+    const mmHalf = (glyphsFor(strict).get('restHBar')?.declaredHeight ?? 0) / 2
+    const mmMarks =
+      rest.decorations.length === 0
+        ? { glyphs: [] as PlacedGlyph[], texts: [] as PlacedText[] }
+        : decorationGlyphs(
+            rest.decorations,
+            x,
+            0,
+            1 + mmHalf,
+            1 - mmHalf,
+            true,
+            1 + mmHalf,
+            1 - mmHalf,
+            false,
+            strict,
+            0,
+            dynamicsAbove,
+          )
+    texts.push(...mmMarks.texts)
     return {
       type: 'rest',
       sourceEvent: rest,
@@ -3772,7 +3804,7 @@ function layoutRest(
       // `getMinWidth` alone — see `Advance.width`.
       rodWidth: 3 * mm,
       staffSteps: [],
-      glyphs: [...glyphs, ...graces.glyphs],
+      glyphs: [...glyphs, ...mmMarks.glyphs, ...graces.glyphs],
       lines: graces.lines,
       texts,
     }

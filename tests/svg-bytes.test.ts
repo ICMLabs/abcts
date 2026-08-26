@@ -124,6 +124,8 @@ const PASSING: readonly string[] = [
   "abcts-rests-and-bars-tune0",
   "abcts-rests-and-bars-tune1",
   "abcts-rests-and-bars-tune2",
+  "abcts-rests-and-bars-tune8",
+  "abcts-rests-and-bars-tune9",
   "abcts-rests-and-bars-tune4",
   "abcts-rests-and-bars-tune5",
   "abcts-rests-and-bars-tune6",

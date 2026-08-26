@@ -3439,6 +3439,15 @@ export function toSVG(
                       el.glyphs[i]?.graceIndex === undefined
                     )
                       i += 1;
+                    /**
+                     * ⚠️ **AND A MULTIMEASURE REST'S BAR ENDS THE RUN BY ITSELF.** Its
+                     * glyph carries no pitch role, so the scan stops at zero and every
+                     * glyph lands in the trailing run — which puts the count TEXT, flushed
+                     * between the two runs, ahead of the bar it belongs to. abcjs writes
+                     * bar, count, then any decoration (`abstract-engraver.js:592-596`,
+                     * `:842`).
+                     */
+                    if (i === 0 && el.glyphs[0]?.name === "restHBar") return 1;
                     return i;
                   })()
                 : el.glyphs.length;
@@ -3664,7 +3673,12 @@ export function toSVG(
             );
           }
           if (abcjs) {
-            for (const t of textParts.filter((t) => t.role === "lyric"))
+            // …**AND A MULTIMEASURE REST'S COUNT WITH THEM**, which abcjs adds right after
+            // the bar it belongs to and BEFORE any decoration on the element
+            // (`abstract-engraver.js:592-596`, then `:842`): `!fermata!Z2` reads bar,
+            // count, fermata. Its `role` is `rest`, the same handle the emitter already
+            // uses for its class.
+            for (const t of textParts.filter((t) => t.role === "lyric" || t.role === "rest"))
               parts.push(t.s);
           }
           // …and everything the engraver added AFTER the stem — decorations, graces.
@@ -3747,6 +3761,8 @@ export function toSVG(
             for (const t of textParts.filter(
               (t) =>
                 t.role !== "lyric" &&
+                // …and a MULTIMEASURE REST'S COUNT, flushed with them above.
+                t.role !== "rest" &&
                 !isChordText(t) &&
                 !(el.type === "tempo" && t.dataName === "pre"),
             )) {
