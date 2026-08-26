@@ -193,7 +193,7 @@ it("keeps a repeat ending whose measure never closes", () => {
 });
 
 /**
- * ⚠️ **MEASURED AND NOT BUILT — AN ABANDONED CHORD'S CHARACTERS BELONG TO NOTHING.**
+ * ✅ **AN ABANDONED CHORD'S CHARACTERS BELONG TO NOTHING — BUILT.**
  *
  * abcjs leaves `startI` at the token that ended the chord, so the re-read note's element
  * opens at the SURVIVING `!…!` and the `[` with the lost `!>!` is owned by no element at
@@ -202,12 +202,13 @@ it("keeps a repeat ending whose measure never closes", () => {
  *     abcjs   note startChar 22 — the `!tenuto!`
  *     ours    note startChar 18 — the `[`
  *
- * Ours tiles the line, so the first element of a line opens at the line's start; there is
- * nowhere yet to say "these four characters were consumed and discarded". Everything else
- * about the shape agrees — see the test above it. The character-ownership gate is at 100%
- * and no corpus tune writes this, so the plumbing is not owed to anything yet.
+ * The channel was already there: `Score.unreadable` is what the parser uses to say it
+ * could not read something, and `tile` pushes an element's opening past every range on it.
+ * The abandoned chord pushes one now — and so does a `-` that reaches back across a
+ * barline, which `extractMeasures` was asking for at the same time. TWO SURFACES, ONE
+ * RULE, AND NO NEW MECHANISM.
  */
-it.fails("opens the re-read note at the surviving decoration", () => {
+it("opens the re-read note at the surviving decoration", () => {
   const first = (
     parseOnly(`${HEAD}[!>!!tenuto!CEG]2|\n`)[0] as unknown as {
       lines: { staff: { voices: { el_type: string; startChar: number }[][] }[] }[];

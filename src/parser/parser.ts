@@ -5343,9 +5343,28 @@ class Parser {
           break
         }
         case 'tie': {
+          /**
+           * ⚠️ **AND A `-` THAT REACHES BACK ACROSS THE BARLINE OWNS NO CHARACTERS.**
+           * abcjs retakes `startI` at the top of every `parseMusic` iteration, so one that
+           * has an EFFECT but appends no element leaves its characters to nobody — the
+           * `-` of `C2|[-1 D2|]` ties the C and is owned by nothing, and the `1` after it
+           * is the reverted ending's own token, likewise dead. abcjs opens the D at 24;
+           * ours opened it at the barline.
+           *
+           * Only reached where the measure has no event yet, which is the same test
+           * `tieLast` uses to decide it must reach back at all — an ordinary `C2-D2` is
+           * read INSIDE `getCoreNote` and never comes here.
+           */
+          const reachesBack = voice().last === null
+          const from = token.start
           voice().tieLast(dottedCurve)
           dottedCurve = false
           i++
+          if (reachesBack) {
+            while ((tokens[i] as Token | undefined)?.kind === 'digit') i += 1
+            const end = (tokens[i] as Token | undefined)?.start ?? from + 1
+            builder.unreadable.push(sourceRange(from, end))
+          }
           break
         }
         case 'rparen': {
@@ -5946,7 +5965,21 @@ class Parser {
        * the `!>!` is LOST — and reads `]2` as an invisible barline opening ending "2".
        * Ours built a two-`!` chord and drew one. Measured through abcjs's `parseOnly`.
        */
-      if (pitches.length === 0) abandonedAt = i
+      if (pitches.length === 0) {
+        abandonedAt = i
+        /**
+         * ⚠️ **AND THE CHARACTERS THE FAILED ITERATION ATE BELONG TO NOTHING.** abcjs
+         * retakes `startI` at the top of every `parseMusic` iteration, so one that reads
+         * something and appends NOTHING leaves its characters to nobody and the next
+         * element opens PAST them (`abc_parse_music.js:342-489`). `[!>!!tenuto!CEG]2|`
+         * gives abcjs a note at 22 — the surviving `!tenuto!` — where the `[` and the lost
+         * `!>!` are owned by no element at all.
+         *
+         * `Score.unreadable` is the existing channel for exactly this, and `tile` already
+         * pushes an element's opening past every range on it.
+         */
+        builder.unreadable.push(sourceRange(open.start, token.start))
+      }
       break
     }
     if ((tokens[i] as Token | undefined)?.kind === 'closeBracket') i++
