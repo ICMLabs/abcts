@@ -92,7 +92,24 @@ const CASES: Case[] = readdirSync(fixtures)
  * empty until something is written up in `Docs/ABCJS-DIFFERENCES.md` — a slug here without
  * an entry there is a tolerance wearing a disguise.
  */
-const DIVERGENT: readonly string[] = [];
+const DIVERGENT: readonly string[] = [
+  /**
+   * **abcjs DRAWS A DEBUG STRING FOR A NOTE LONGER THAN A BREVE, IN RED, IN THE SHIPPED
+   * OUTPUT.** `chartable.note[-durlog]` runs out one entry past the breve, and
+   * `createNoteHead` answers an undefined glyph with
+   * `new RelativeElement("pitch is undefined", 0, 0, 0, { type: "debug" })`
+   * (`create-note-head.js:24-25`) — which draws as
+   * `<text stroke="#ff0000" text-decoration="underline">pitch is undefined</text>` and
+   * reserves a 4-pitch chord lane, 19.18px of page, on a tune with no chord symbol in it.
+   *
+   * Everything else about the element IS reproduced — no head, no stem, and the ledger at
+   * `getSymbolWidth(undefined)`, so the rule is the bare 4px overhang (47.05 to 51.05 in
+   * both engines). We decline the marker and the lane it takes.
+   *
+   * See `Docs/ABCJS-DIFFERENCES.md`.
+   */
+  "abcts-rests-and-bars-tune14",
+];
 
 /**
  * Slugs that are BYTE-EXACT and must stay so. Grows, never shrinks.

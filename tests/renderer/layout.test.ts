@@ -1525,18 +1525,21 @@ describe("noteGlyph", () => {
       head: "noteheadDoubleWhole",
       dots: 1,
     });
-    // ponytail: abcjs draws NOTHING past a breve — `durlog` reaches 2 and
-    // `chartable.note[-2]` is undefined, so `createNoteHead` builds a headless element.
-    // Reproducing a vanishing notehead needs a fixture that writes one, and neither
-    // corpus does; a breve is the nearest thing that is still a note.
-    expect(noteGlyph(rational(4, 1))).toMatchObject({
-      head: "noteheadDoubleWhole",
-      dots: 0,
-    });
-    expect(noteGlyph(rational(6, 1))).toMatchObject({
-      head: "noteheadDoubleWhole",
-      dots: 1,
-    });
+    /**
+     * ✅ **AND PAST A BREVE THERE IS NO HEAD — the `ponytail:` that stood here is now a
+     * measurement.** It read: "abcjs draws NOTHING past a breve … reproducing a vanishing
+     * notehead needs a fixture that writes one, and neither corpus does; a breve is the
+     * nearest thing that is still a note." Every clause was right, including the last —
+     * so the fixture was written (`abcts-rests-and-bars.abc` X:15) and these two rows
+     * flipped from asserting a breve to asserting the null the caller draws nothing for.
+     *
+     * `chartable.note[-durlog]` has one entry past the breve and no more
+     * (`abstract-engraver.js:646`), so `durlog >= 2` is `c === undefined`: no head, no
+     * stem, ledgers at zero width, and abcjs's own red debug string, which we decline —
+     * see `Docs/ABCJS-DIFFERENCES.md`.
+     */
+    expect(noteGlyph(rational(4, 1))).toBeNull();
+    expect(noteGlyph(rational(6, 1))).toBeNull();
   });
 
   /**

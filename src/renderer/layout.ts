@@ -2378,6 +2378,15 @@ export function noteGlyph(notated: Rational): NoteGlyphSpec | null {
   const durlog = Math.floor(Math.log(written) / Math.log(2))
   let dots = 0
   for (let tot = Math.pow(2, durlog), inc = tot / 2; tot < written; dots += 1, tot += inc, inc /= 2);
+  /**
+   * ⚠️ **AND `chartable.note` RUNS OUT ONE ENTRY PAST THE BREVE.** `noteSymbol =
+   * chartable[style][-durlog]` (`abstract-engraver.js:646`) indexes an array whose last
+   * entry is `-durlog === -1`, so a duration of four whole notes or more yields
+   * `c === undefined` — no head, no stem, and `createNoteHead`'s debug marker instead. The
+   * null return is that state; see the caller, which still draws the LEDGERS and still
+   * reserves the chord lane the marker declares.
+   */
+  if (durlog >= 2) return null
   const whole = Math.pow(2, durlog)
   // A BREVE IS ITS OWN NOTEHEAD, and we drew a semibreve for one. abcjs indexes
   // `chartable.note[-durlog]` with `durlog = Math.floor(Math.log2(duration))`
@@ -4377,8 +4386,32 @@ function layoutNoteheads(
   const spec = noteGlyph(notated)
 
   if (spec === null || steps.length === 0) {
-    // Unsupported duration — see noteGlyph. Emit the position with no ink rather than
-    // the wrong notehead, so the gap is visible in output and in the gate.
+    /**
+     * **A NOTE WITH NO HEAD STILL DRAWS ITS LEDGERS AND STILL RESERVES A CHORD LANE.**
+     *
+     *     if (c === undefined)
+     *       abselem.addFixed(new RelativeElement("pitch is undefined", 0, 0, 0,
+     *         { type: "debug" }));
+     *
+     * (`create-note-head.js:24-25`.) `chartable.note[-durlog]` runs out one entry past the
+     * breve, so `C32` under `L:1/8` — four whole notes — reaches this with `c` undefined,
+     * and abcjs adds a DEBUG element that ships in the released build. `addFixed` puts it
+     * through `_addChild`, so its `top`/`bottom` of 0 enter the element's box and its
+     * `chordHeightAbove` — the `debug` arm of `RelativeElement`'s type switch, `height`
+     * defaulting to 4 (`relative-element.js:37, 54-56`) — reserves a CHORD LANE on a tune
+     * with no chord symbol in it. Instrumented: `incTop chordHeightAbove 4`.
+     *
+     * ⚠️ **AND THE MARKER IS DRAWN, IN RED, IN THE SHIPPED OUTPUT**: `<text
+     * stroke="#ff0000" … text-decoration="underline">pitch is undefined</text>`. We
+     * decline both the text and the lane it reserves — see `Docs/ABCJS-DIFFERENCES.md`.
+     * Everything else about the element is reproduced: no head, no stem, and the ledger
+     * at `getSymbolWidth(undefined)` — zero — so the rule is the bare 4px overhang.
+     *
+     * The LEDGER is drawn either way, at `getSymbolWidth(undefined)` — zero — so the rule
+     * is the bare 4px overhang: abcjs's runs 47.05 to 51.05 where a headed note's runs to
+     * 67.88.
+     */
+    const bare = steps.length === 0 ? [] : ledgerLines(lowest, x, 0, highest)
     return {
       type: 'note',
       x,
@@ -4387,7 +4420,7 @@ function layoutNoteheads(
       rod: 0,
       staffSteps: steps,
       glyphs: [],
-      lines: [],
+      lines: bare,
       texts: [],
     }
   }

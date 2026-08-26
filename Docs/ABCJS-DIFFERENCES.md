@@ -203,6 +203,29 @@ changing the pitch a reader sees.
 
 *Verified: element dump of `^3/2G _3/2A`.*
 
+### A note longer than a breve draws a red debug string
+
+`chartable.note[-durlog]` has one entry past the breve and no more, so a duration of four
+whole notes or greater reaches `createNoteHead` with an undefined glyph. abcjs answers that
+with a DEBUG element that ships in the released build:
+
+    if (c === undefined)
+      abselem.addFixed(new RelativeElement("pitch is undefined", 0, 0, 0, { type: "debug" }));
+
+It draws as `<text stroke="#ff0000" text-decoration="underline">pitch is undefined</text>`
+at the note's own x, and — because `RelativeElement`'s `debug` arm sets `chordHeightAbove`
+to its default `height` of 4 — it reserves a CHORD LANE, 19.18px of page, on a tune with no
+chord symbol anywhere in it.
+
+abcts reproduces everything else about the element: no notehead, no stem, and the ledger
+lines at `getSymbolWidth(undefined)`, which makes the rule the bare 4px overhang (47.05 to
+51.05 in both engines). It does not draw the marker, and it does not reserve the lane the
+marker takes.
+
+*Verified: `C32 D32|` under `L:1/8` through abcjs 6.7.0 at `{staffwidth: 670}`, with
+`C16` — a breve, the last duration that has a glyph — exact in both engines. Instrumented
+at `incTop`, which prints `chordHeightAbove 4`.*
+
 ### A grace note on an invisible rest is drawn at `NaN`
 
 `{g}x2` puts abcjs's grace FLAG at `M NaN 66.87` — a literal `NaN` in the path's first

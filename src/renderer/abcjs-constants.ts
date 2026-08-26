@@ -675,6 +675,15 @@ export const ABCJS_PITCH = {
   accidentalColumnPitch: 6,
   /** A decoration written before a BARLINE attaches at this fixed pitch (`abstract-engraver.js:1002`). */
   barDecorationPitch: 12,
+  /**
+   * **`RelativeElement`'s DEFAULT `height`, WHICH A `debug` ELEMENT SPENDS AS A CHORD
+   * LANE** — `this.height = opt.height ? opt.height : 4` and then
+   * `case "debug": this.chordHeightAbove = this.height` (`relative-element.js:37, 54-56`).
+   * Reached by exactly one thing: a note whose `chartable.note[-durlog]` lookup failed,
+   * which abcjs marks with `new RelativeElement("pitch is undefined", 0, 0, 0,
+   * {type: "debug"})` (`create-note-head.js:24-25`).
+   */
+  debugChordHeight: 4,
 } as const
 
 // ─── Unitless ratios and counts ──────────────────────────────────────────────

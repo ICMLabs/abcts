@@ -100,3 +100,9 @@ T:the breve boundary either side of it
 L:1/8
 K:C
 C16 D8|
+
+X:15
+T:a note longer than a breve, which abcjs marks with a debug string
+L:1/8
+K:C
+C32 D32|
