@@ -503,6 +503,19 @@ const PASSING: readonly string[] = [
    */
   ...Array.from({ length: 22 }, (_, i) => `abcts-clef-midmeasure-tune${i}`),
   /**
+   * `abcts-lyric-verses.abc` — `w:` lines that do NOT cover every note, which neither
+   * corpus writes. Two defects, and both are abcjs doing the un-engraved thing:
+   *
+   * ⚠️ **THE LANE IS THE FIRST VERSE'S, WHATEVER VERSE THIS NOTE'S FIRST SYLLABLE IS** —
+   * `elem.lyric` is the NOTE's own dense array, so a note the first `w:` never reached puts
+   * its SECOND verse's syllable on the first ROW. 20.4px, and ours had it "right".
+   *
+   * ⚠️ **AND THE STRICT `_` IS A DIVIDER, NOT "A HOLD FOLLOWS"** — `a_` prints an
+   * underscore and `a _` does not, though both hold the next note (`addWord`'s
+   * `div = words[i]`). Tunes 8-10 are the three spellings side by side.
+   */
+  ...Array.from({ length: 12 }, (_, i) => `abcts-lyric-verses-tune${i}`),
+  /**
    * `abcts-voice-style.abc` — `V:… style=`, the first of the three modifiers the V:
    * enumeration left as a FEATURE. All five shapes, one voice each.
    *

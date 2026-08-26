@@ -7514,7 +7514,18 @@ function noteText(
       // abcjs's lyric RelativeElement has `dx = 0` and the golden agrees to the pixel:
       // `text-anchor="middle" x="106.03"` under a note placed at 106.03.
       x: headX,
-      y: stepToY(ENGRAVE.lyricStep - index * ENGRAVE.lyricLineStep),
+      /**
+       * **THE LANE IS THE FIRST VERSE'S, WHATEVER VERSE THIS NOTE'S FIRST SYLLABLE IS.**
+       * abcjs has no verse index to offset by: `elem.lyric` is the NOTE's own dense array,
+       * so a note the first `w:` line never reached puts its second verse's syllable on the
+       * first ROW. `w:a b` over `CDEF|` followed by `w:x y z w` draws `z` and `w` at the
+       * same y as `a`/`x` — measured, `y="96.79"` on all four.
+       *
+       * Ours offset by `index`, which is the verse's, and dropped those two a whole
+       * `lyricLineStep` — 20.4px. It looks like the engraving anyone would want and it is
+       * not what abcjs does.
+       */
+      y: stepToY(ENGRAVE.lyricStep),
       size,
       // BOLD BY DEFAULT — abcjs's `vocalfont` is Times New Roman 13pt **bold**
       // (`parse/abc_parse_directive.js:30`) and its goldens draw every syllable with

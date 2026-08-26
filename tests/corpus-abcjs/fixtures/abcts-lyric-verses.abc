@@ -1,0 +1,96 @@
+X:1
+T:Short Verse Then Long
+L:1/4
+K:C
+CDEF|
+w:a b
+w:x y z w
+
+X:2
+T:Short Short Long
+L:1/4
+K:C
+CDEF|
+w:a b
+w:x y
+w:p q r s
+
+X:3
+T:Stars Then Full
+L:1/4
+K:C
+CDEF|
+w:* * c d
+w:x y z w
+
+X:4
+T:Long Then Short
+L:1/4
+K:C
+CDEF|
+w:a b c d
+w:x y
+
+X:5
+T:Hyphenated First Verse
+L:1/4
+K:C
+CDEF|
+w:a-b-c d
+w:x y z w
+
+X:6
+T:Two Bars Uneven Verses
+L:1/4
+K:C
+CDEF|GABc|
+w:a b
+w:x y z w p q r s
+
+X:7
+T:Held Note One Syllable
+L:1/4
+K:C
+CD E2|
+w:a
+w:x y z
+
+X:8
+T:Standalone Melisma Holds
+L:1/4
+K:C
+CDEF|
+w:a _ _ _
+
+X:9
+T:Attached Melisma Divider
+L:1/4
+K:C
+CDEF|
+w:a_ b c d
+
+X:10
+T:Standalone Hold Mid Line
+L:1/4
+K:C
+CDEF|
+w:a _ c d
+
+X:11
+T:Standalone Holds With Second Verse
+L:1/4
+K:C
+CDEF|
+w:a _ _ _
+w:x y z w
+
+X:12
+T:Verses On A Second Voice
+L:1/4
+K:C
+V:1
+CDEF|
+w:a b
+w:x y z w
+V:2
+GABc|

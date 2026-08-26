@@ -462,10 +462,11 @@ const WITHIN: Readonly<Record<string, number>> = {
   // was pitched in the new one; `beamDirections` read the VOICE's clef where abcjs reads
   // the one in force at the note; and a line opens in the RUNNING clef, which leaks across
   // voices — `startNewLine`'s `staves[n].clef ?? multilineVars.clef`.
-  "0.05": 220,
-  "1": 220,
-  "5": 220,
-  "25": 220,
+  // …and `abcts-lyric-verses.abc`, `w:` lines that do NOT cover every note.
+  "0.05": 221,
+  "1": 221,
+  "5": 221,
+  "25": 221,
 };
 
 const names = readdirSync(fixturesDir)

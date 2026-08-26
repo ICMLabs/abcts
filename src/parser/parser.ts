@@ -1986,8 +1986,14 @@ class VoiceBuilder {
           // with both in view — `verses` is indexed by note position, and the holds are
           // the entries that follow. Looking ahead one is enough: a run of several holds
           // still starts at exactly one syllable.
+          // ⚠️ **THE STRICT LITERAL IS THE DIVIDER, NOT "A HOLD FOLLOWS"** — `a_` prints an
+          // underscore and `a _` does not, though both hold the next note. See
+          // `Syllable.melismaDivider`.
           lyricMelismaStart:
-            first !== undefined && first.kind !== 'melisma' && next?.kind === 'melisma',
+            first !== undefined &&
+            first.kind !== 'melisma' &&
+            first.melismaDivider === true &&
+            next?.kind === 'melisma',
           extraVerses: extras,
         }
       }),
@@ -6802,6 +6808,18 @@ interface Syllable {
    * its segments. Gonzato §4.1.4 is exactly that case — one line, three fonts.
    */
   font: LyricFont | null
+  /**
+   * **THE `_` WAS WRITTEN AGAINST THIS SYLLABLE, WITH NO SPACE BEFORE IT.** abcjs's
+   * `addWord` takes `div = words[i]` — the character that ENDED the word — so `a_` gives
+   * `{syllable: 'a', divider: '_'}` while `a _` gives `{syllable: 'a', divider: ' '}` and a
+   * bare skip after it (`abc_parse.js:236-241`, `:260-264`). The divider is what
+   * `addLyric` appends to the drawn string, so only the attached form prints an underscore.
+   *
+   * Ours derived the strict literal from "a melisma token follows", which is true of BOTH
+   * spellings — so `w:a _ _ _` drew `a_` where abcjs draws `a`, and moved the syllable
+   * 4.25px with it. See `MusicEvent.lyricMelismaStart`.
+   */
+  melismaDivider?: boolean
 }
 
 /**
@@ -6849,7 +6867,7 @@ function parseLyricSyllables(
     // ungated; abcjs's goldens have said `"Xiao", "", "yan", ""` all along.
     let buffer = ''
     let bufferStart = tokenStart
-    const flush = (end: number, hyphen: boolean): void => {
+    const flush = (end: number, hyphen: boolean, melismaDivider = false): void => {
       if (buffer === '') return
       const raw = buffer.split('~').join(' ') // `~` is a hard space
       out.push({
@@ -6857,6 +6875,8 @@ function parseLyricSyllables(
         text: decodeTextString(raw) + (hyphen ? '-' : ''),
         range: sourceRange(base + bufferStart, base + end),
         font,
+        // abcjs's `divider`, which is the character that ENDED the word — see `Syllable`.
+        ...(melismaDivider ? { melismaDivider: true } : {}),
       })
       buffer = ''
     }
@@ -6878,7 +6898,7 @@ function parseLyricSyllables(
         flush(j, true)
         bufferStart = j + 1
       } else if (ch === '_') {
-        flush(j, false)
+        flush(j, false, true)
         out.push({ kind: 'melisma', text: null, range: null, font: null })
         bufferStart = j + 1
       } else if (ch === '*') {
