@@ -19,12 +19,19 @@ passing, NO reds and NO expected-fails.
 defect. All 27 of today's findings came from writing a shape neither corpus
 contains.
 
-THE INSTRUMENT THAT PAID: two 36-shape SWEEPS of odd-but-legal ABC, one shape at a
-time through both engines. 72 shapes, nine differing, all nine resolved. Pick a
-territory the sweeps have NOT touched — multi-voice and %%score, & overlays,
-mid-line clef changes, transposition, lyric alignment, tempo shapes, or any
-boundary between two features — write 36 shapes, render both, diff, and only then
-reason. An hour's work, and it is where the defects are.
+⭐ A THIRD SWEEP IS ALREADY RUN AND SEVEN ROWS ARE WAITING — §4 of WHAT IS LEFT
+has all seven with both engines' numbers. Start with (a): an inline [K: … clef=]
+pitches the WHOLE measure instead of the notes after it, 27px of page, and the
+PARSE is already exact so it is the layout alone. Its first hypothesis was
+backwards and a ZZCLEF probe says why — read that before writing anything.
+
+THE INSTRUMENT THAT PAID: three 36-shape SWEEPS of odd-but-legal ABC, one shape at
+a time through both engines. 108 shapes, sixteen differing. When §4 is spent, pick
+a territory the sweeps have not touched and write 36 more.
+
+⚠️ AND WRITE THEM WITH printf '%b', NOT '%s' — the third sweep's first run reported
+36 of 36 EXACT because every \n stayed literal and both engines agreed on garbage.
+A SWEEP THAT AGREES EVERYWHERE HAS PROBABLY NOT RUN.
 
 AND A FIXTURE FINDS WHAT A LADDER CANNOT: every sweep row that closed opened two
 or three more the moment it became a fixture, because a fixture renders a whole
