@@ -222,9 +222,15 @@ lines at `getSymbolWidth(undefined)`, which makes the rule the bare 4px overhang
 51.05 in both engines). It does not draw the marker, and it does not reserve the lane the
 marker takes.
 
-*Verified: `C32 D32|` under `L:1/8` through abcjs 6.7.0 at `{staffwidth: 670}`, with
-`C16` — a breve, the last duration that has a glyph — exact in both engines. Instrumented
-at `incTop`, which prints `chordHeightAbove 4`.*
+**The short end reaches the same marker.** `note` runs out again past key 7, so a 256th
+(`C/32` under `L:1/8`) is headless too — and there abcjs keeps the STEM, because
+`hasStem = !nostem && durlog <= -1` is still true. abcts draws neither the marker nor that
+stem; the head, the flag table's own limit (`uflags` stops at the 64th, so a 128th has a
+head and a stem and no flag) and the ledgers are all reproduced.
+
+*Verified: `C32 D32|` and `C/32 D/32|` under `L:1/8` through abcjs 6.7.0 at
+`{staffwidth: 670}`, with `C16` — a breve — and `C/16` — a 128th — exact in both engines on
+either side of the two limits. Instrumented at `incTop`, which prints `chordHeightAbove 4`.*
 
 ### A grace note on an invisible rest is drawn at `NaN`
 

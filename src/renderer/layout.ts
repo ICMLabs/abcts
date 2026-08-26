@@ -2408,7 +2408,22 @@ export function noteGlyph(notated: Rational): NoteGlyphSpec | null {
   if (!Number.isInteger(log)) return null
 
   if (log === 1) return { head: 'noteheadHalf', stemmed: true, flags: 0, dots }
-  return { head: 'noteheadBlack', stemmed: true, flags: Math.max(0, log - 2), dots }
+  /**
+   * ⚠️ **AND `uflags` STOPS AT THE 64TH WHERE `note` GOES TWO FURTHER.** abcjs's own table
+   * is the whole rule (`abstract-engraver.js:37-43`):
+   *
+   *     note:   {-1: dbl, 0: whole, 1: half, 2..7: quarter, nostem: quarter}
+   *     uflags: {3: u8th, 4: u16th, 5: u32nd, 6: u64th}
+   *
+   * so `flag = chartable.uflags[-durlog]` (`:677`) is UNDEFINED for a 128th and shorter —
+   * abcjs draws the head and the stem and NO FLAG — while the head survives to key 7 and
+   * vanishes only at a 256th. Ours kept adding flags, so `C/16` under `L:1/8` drew a
+   * `flags.u64th` abcjs does not and ran the staff 12px wide.
+   */
+  // …and past key 7 the HEAD is gone too — the same `c === undefined` the long end
+  // reaches, one table away. See the null caller.
+  if (log >= 8) return null
+  return { head: 'noteheadBlack', stemmed: true, flags: log > 6 ? 0 : Math.max(0, log - 2), dots }
 }
 
 /**

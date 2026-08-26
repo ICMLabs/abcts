@@ -106,3 +106,9 @@ T:a note longer than a breve, which abcjs marks with a debug string
 L:1/8
 K:C
 C32 D32|
+
+X:16
+T:a note shorter than a 64th, whose flag table has run out
+L:1/8
+K:C
+C/16 D/16 C/8 D/8|
