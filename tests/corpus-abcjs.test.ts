@@ -457,10 +457,15 @@ const WITHIN: Readonly<Record<string, number>> = {
   // …and `abcts-grace-tie.abc`, the `-` INSIDE a grace group — exact on all four axes
   // once the ACCIACCATURA SLASH declared its own box, which is one of the three defects
   // its tie-free controls named.
-  "0.05": 219,
-  "1": 219,
-  "5": 219,
-  "25": 219,
+  // …and `abcts-clef-midmeasure.abc`, an inline `[K: … clef=]` written INSIDE a measure.
+  // Three defects: `layoutMeasure` was handed the already-advanced clef so the whole bar
+  // was pitched in the new one; `beamDirections` read the VOICE's clef where abcjs reads
+  // the one in force at the note; and a line opens in the RUNNING clef, which leaks across
+  // voices — `startNewLine`'s `staves[n].clef ?? multilineVars.clef`.
+  "0.05": 220,
+  "1": 220,
+  "5": 220,
+  "25": 220,
 };
 
 const names = readdirSync(fixturesDir)

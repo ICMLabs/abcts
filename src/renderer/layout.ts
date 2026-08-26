@@ -12894,15 +12894,55 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
     return Number.POSITIVE_INFINITY
   }
 
+  /**
+   * **THE CLEF IS A RUNNING PARSER VALUE AND IT LEAKS ACROSS VOICES.** `startNewLine`
+   * opens a line with `staves[voice.staffNum].clef` IF THAT IS DEFINED, and otherwise with
+   * `multilineVars.clef` (`abc_parse_music.js:961`) — a single global the last `K:` or
+   * `[K: … clef=]` replaced, wherever it was written. And `staves[n].clef` is set from ONE
+   * place, a `V:… clef=` declaration (`abc_parse_key_voice.js:858`), so a voice that never
+   * declared one takes whatever clef the tokenizer had reached when its line opened.
+   *
+   * MEASURED on a seven-rung ladder through abcjs 6.7.0. `V:1` carrying a mid-measure
+   * `[K:C bass]` and a plain `V:2` after it draws `clefs.G clefs.F clefs.F` — V:2's own
+   * staff is in BASS, and so is every later line of V:1 and a third voice below them. The
+   * control with no change is `clefs.G clefs.G`, and declaring `V:1 clef=treble` /
+   * `V:2 clef=treble` protects both, which is the `staves[n].clef` branch.
+   *
+   * Ours accumulated the clef PER VOICE, so voice 2 opened in the tune's `K:` clef. 12.78px
+   * of page on the two-voice shape, and a whole staff drawn in the wrong clef.
+   */
+  const runningClefs: { readonly at: number; readonly clef: Clef }[] = voices
+    .flatMap((v) => v?.measures ?? [])
+    .flatMap((m) =>
+      m.clefChange == null
+        ? []
+        : [
+            {
+              at: m.clefChangeSourceRange?.start ?? musicStartsAt(m),
+              clef: m.clefChange,
+            },
+          ],
+    )
+    .sort((a, b) => a.at - b.at)
+  /** The clef in force where character `at` was written, or null before any change. */
+  const runningClefBefore = (at: number): Clef | null => {
+    let found: Clef | null = null
+    for (const c of runningClefs) {
+      if (c.at >= at) break
+      found = c.clef
+    }
+    return found
+  }
+
   const plans: VoicePlan[] = voices.map((voice, voiceIndex) => {
     // A voice's own `clef=` wins over the tune's `K:` clef; treble is the fallback.
     // A bare `V:… stafflines=` rides on the VOICE, not its clef, so that it can apply to
     // an inherited clef without replacing it. Resolve it here, where the clef is picked.
     const resolved = voice?.clef ?? score.clef
-    const clef =
-      voice?.staffLineOverride == null
-        ? resolved
-        : { ...resolved, staffLines: voice.staffLineOverride }
+    /** `V:… stafflines=` rides the voice, so it survives every clef this one opens in. */
+    const withStaffLines = (c: Clef): Clef =>
+      voice?.staffLineOverride == null ? c : { ...c, staffLines: voice.staffLineOverride }
+    const clef = withStaffLines(resolved)
     const directions = beamDirections(voice, clef, (measureIndex) =>
       stemForVoiceOn(voiceIndex, lineOfMeasure[measureIndex] ?? 0),
     )
@@ -12978,6 +13018,16 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
        * drew ONE clef, at the head, in the wrong shape — the same test
        * `keyChangeLeadsLine` already makes for the key.
        */
+      // …AND A LINE OPENS IN THE RUNNING CLEF, unless this voice declared its own. See
+      // `runningClefBefore`: this is `startNewLine`'s `staves[n].clef ?? multilineVars.clef`.
+      // ⚠️ `== null`, not `=== undefined`: an undeclared voice's clef is NULL in this model
+      // (`Voice.clef`), so the strict test protected every voice and the whole rule was
+      // dead. The change measured as moving NOTHING, which is what a guard nobody passes
+      // looks like.
+      if ((measureIndex === 0 || measure.startsSystem === true) && voice?.clef == null) {
+        const running = runningClefBefore(musicStartsAt(measure))
+        if (running !== null) clefInForce = withStaffLines(running)
+      }
       const clefLeadsHere =
         measure.clefChange == null ||
         !(measureIndex === 0 || measure.startsSystem === true) ||

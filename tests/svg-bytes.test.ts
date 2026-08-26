@@ -490,14 +490,13 @@ const PASSING: readonly string[] = [
    * for the clef a measure OPENS in.
    *
    * ⚠️ **THE FIXTURE FOUND TWO MORE THE MOMENT IT WAS A PAGE**, which is what a fixture does
-   * that a ladder cannot. tune11 — a clef mid-BEAM — was 30.83px, and it is CLOSED: the beam
-   * direction read the VOICE's clef where abcjs reads the one in force at the note (see
-   * `clefNow` in `beamDirections`). tune10 is open: with a mid-measure `[K: … clef=]` in
-   * `V:1`, abcjs gives `V:2` the BASS clef too, 12.78px of page.
+   * that a ladder cannot — the ladder's ten shapes were all one bar and one voice. Both are
+   * closed and neither was the defect above: tune11 (a clef mid-BEAM, 30.83px) is
+   * `beamDirections` reading the VOICE's clef where abcjs reads the one in force at the
+   * note, and tune10 (two voices, 12.78px) is `runningClefBefore` — the clef is a running
+   * PARSER value and it leaks across voices.
    */
-  ...[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 12, 13, 14].map(
-    (i) => `abcts-clef-midmeasure-tune${i}`,
-  ),
+  ...Array.from({ length: 15 }, (_, i) => `abcts-clef-midmeasure-tune${i}`),
   /**
    * `abcts-voice-style.abc` — `V:… style=`, the first of the three modifiers the V:
    * enumeration left as a FEATURE. All five shapes, one voice each.
