@@ -1539,11 +1539,24 @@ describe("noteGlyph", () => {
     });
   });
 
-  it("still refuses a duration no notehead and dots can write", () => {
-    // A wrong notehead is worse than none, and the structural gate would never catch it
-    // because the staff position stays right.
-    expect(noteGlyph(rational(1, 6))).toBeNull(); // triplet eighth — but see below
-    expect(noteGlyph(rational(5, 8))).toBeNull();
+  /**
+   * ⚠️ **THIS ASSERTED A REFUSAL abcjs DOES NOT MAKE, and said so in a comment: "a wrong
+   * notehead is worse than none".** abcjs never refuses — `durlog = floor(log2(duration))`
+   * picks the head and a halving loop APPROXIMATES the rest as dots
+   * (`abstract-engraver.js:794-796`), so a duration no dotted value can spell still draws.
+   * Measured through abcjs: a triplet eighth is `flags.u8th` + one `dots.dot`, and 5/8 is
+   * a dotted half.
+   *
+   * The cost of the old reading was a note that VANISHED: `C17` under `L:1/8` is 2.125
+   * whole notes, and ours drew nothing at all where abcjs draws a dotted breve.
+   */
+  it("approximates a duration no notehead and dots can write, as abcjs does", () => {
+    expect(noteGlyph(rational(1, 6))).toMatchObject({
+      head: "noteheadBlack",
+      flags: 1,
+      dots: 1,
+    });
+    expect(noteGlyph(rational(5, 8))).toMatchObject({ head: "noteheadHalf", dots: 1 });
   });
 
   it("draws a ZERO-length note as a stemless quarter head, as abcjs does", () => {

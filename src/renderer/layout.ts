@@ -2356,12 +2356,29 @@ export function noteGlyph(notated: Rational): NoteGlyphSpec | null {
   // rewrite of `duration` does.
   if (notated.numerator === 0) return { head: 'noteheadBlack', stemmed: false, flags: 0, dots: 0 }
 
-  const split = splitDots(notated)
-  if (split === null) return null
-  const { base, dots } = split
-
-  const whole = ratToNumber(base)
-  if (!(whole > 0)) return null
+  /**
+   * **THE HEAD AND THE DOTS COME FROM ONE FLOOR AND ONE HALVING LOOP, AND EVERY DURATION
+   * REACHES THEM.**
+   *
+   *     var durlog = Math.floor(Math.log(duration) / Math.log(2));
+   *     var dot = 0;
+   *     for (var tot = Math.pow(2, durlog), inc = tot / 2; tot < duration;
+   *          dot++, tot += inc, inc /= 2);
+   *
+   * (`abstract-engraver.js:794-796`.) The loop APPROXIMATES the remainder rather than
+   * requiring it to be a clean dotted value, so `C17` under `L:1/8` — 2.125 whole notes,
+   * which no number of dots can spell — is a BREVE WITH ONE DOT in abcjs. Ours asked
+   * `splitDots` for an exact decomposition, got null, and drew NO NOTE AT ALL.
+   *
+   * ⚠️ **AND PAST A BREVE THERE IS NO HEAD.** `chartable.note[-durlog]` runs out one entry
+   * after the breve, so `C32` — four whole notes — yields `c === undefined`.
+   */
+  const written = ratToNumber(notated)
+  if (!(written > 0)) return null
+  const durlog = Math.floor(Math.log(written) / Math.log(2))
+  let dots = 0
+  for (let tot = Math.pow(2, durlog), inc = tot / 2; tot < written; dots += 1, tot += inc, inc /= 2);
+  const whole = Math.pow(2, durlog)
   // A BREVE IS ITS OWN NOTEHEAD, and we drew a semibreve for one. abcjs indexes
   // `chartable.note[-durlog]` with `durlog = Math.floor(Math.log2(duration))`
   // (`abstract-engraver.js:36, 793`), so a duration of 2 lands on `noteheads.dbl` — a

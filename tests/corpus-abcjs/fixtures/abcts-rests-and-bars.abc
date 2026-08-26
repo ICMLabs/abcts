@@ -88,3 +88,15 @@ T:an arpeggio on a rest, whose min and max pitch are one
 L:1/8
 K:C
 !arpeggio!z4 !arpeggio!C4|
+
+X:13
+T:a duration no notehead and dots can spell, which is still drawn
+L:1/8
+K:C
+C17 D17|
+
+X:14
+T:the breve boundary either side of it
+L:1/8
+K:C
+C16 D8|
