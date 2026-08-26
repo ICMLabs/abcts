@@ -76,3 +76,15 @@ T:a multimeasure rest with no decoration at all
 L:1/8
 K:C
 Z2 C4|
+
+X:11
+T:an arpeggio on a barline, which abcjs parses and does not draw
+L:1/8
+K:C
+[CEG]!arpeggio!|C4!arpeggio!|D4|
+
+X:12
+T:an arpeggio on a rest, whose min and max pitch are one
+L:1/8
+K:C
+!arpeggio!z4 !arpeggio!C4|

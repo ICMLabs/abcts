@@ -3663,6 +3663,8 @@ function layoutRest(
   // `x` and `y` occupy horizontal space but print nothing; a spacer prints nothing and
   // is not even a rest musically. Both still advance, so following notes stay put.
   const invisible = rest.kind === 'invisible' || rest.kind === 'invisibleMultiMeasure'
+  /** How far left a decoration reaches past the rest — an arpeggio, and only it. */
+  let restDecorationLeft = 0
   // A REST THAT EXACTLY FILLS ITS MEASURE BECOMES A WHOLE REST, whatever it was written as:
   //
   //     if (this.measureLength === duration && elem.rest.type !== 'invisible' &&
@@ -3944,9 +3946,15 @@ function layoutRest(
         strict,
         0,
         dynamicsAbove,
+        // …**AND AN ARPEGGIO'S BOUNDS ARE THE REST'S OWN PITCH**, both of them — see the
+        // loop in `decorationGlyphs`.
+        restStep,
+        restStep,
       )
       glyphs.push(...decorated.glyphs)
       texts.push(...decorated.texts)
+      // …and its LEFT REACH is the element's, which the note path has always spent.
+      restDecorationLeft = decorated.leftReach
     }
 
   }
@@ -4009,7 +4017,7 @@ function layoutRest(
      * fields of a graced NOTE beside a graced REST — `left=10.00` against `left=0.00` —
      * is what named it; the term is not derivable from the two page widths.
      */
-    left: Math.max(textSpan.left, graces.left, graces.width),
+    left: Math.max(textSpan.left, graces.left, graces.width, restDecorationLeft),
     // abcjs's `rest.type === 'rest'` after `createNote` has had its say — see `plainRest`.
     plainRest: !invisible && rest.kind !== 'spacer' && rest.measureCount === 0 && !fillsMeasure,
     /**
@@ -6133,6 +6141,9 @@ function decorationGlyphs(
   roomTaken: number,
   /** Dynamics above the staff when the tune sings, below when it does not. */
   dynamicsAbove: boolean,
+  /** An arpeggio's own bounds, where they are not the box — see the loop below. */
+  arpeggioTop?: number,
+  arpeggioBottom?: number,
 ): { glyphs: PlacedGlyph[]; texts: PlacedText[]; leftReach: number } {
   /** How far LEFT of the note any decoration reaches — an arpeggio, and only it. */
   let leftReach = 0
@@ -6386,7 +6397,17 @@ function decorationGlyphs(
         const width = glyphsFor(strict).width(glyph)
         const half = (table.get(glyph)?.declaredHeight ?? 0) / 2
         const at = headX - 2 * width - roomTaken
-        for (let step = bottomStep - 1; step <= topStep; step += 2) {
+        /**
+         * ⚠️ **AND ITS BOUNDS ARE THE ELEMENT'S PITCHES, NOT ITS BOX.** abcjs loops
+         * `abcelem.minpitch - 1` to `abcelem.maxpitch` (`decoration.js:285`) where every
+         * other decoration stacks on `abselem.top`/`bottom` — two quantities that coincide
+         * on a chord and part on a REST, whose min and max are both `restpitch`
+         * (instrumented: `min 7 max 7`) while its declared box spans more. Ours drew TWO
+         * strokes over a half rest where abcjs draws one.
+         */
+        const arpTop = arpeggioTop ?? topStep
+        const arpBottom = arpeggioBottom ?? bottomStep
+        for (let step = arpBottom - 1; step <= arpTop; step += 2) {
           const y = stepToY(step + 2)
           out.push({
             name: glyph,
@@ -11433,7 +11454,8 @@ function layoutMeasure(
       openDecorations.length === 0
         ? null
         : decorationGlyphs(
-            openDecorations,
+            // …and the same on an OPENING barline — see the note at the closing one.
+            openDecorations.filter((d) => d !== 'arpeggio'),
             x,
             barDecorationWidth(measure.openingBarline),
             6,
@@ -12017,7 +12039,18 @@ function layoutMeasure(
       barDecorations.length === 0
         ? null
         : decorationGlyphs(
-            barDecorations,
+            /**
+             * ⚠️ **AN ARPEGGIO ON A BARLINE DRAWS NOTHING.** Its loop runs
+             * `for (var j = abselem.abcelem.minpitch - 1; j <= abselem.abcelem.maxpitch; j += 2)`
+             * (`decoration.js:285`), and a BAR's `abcelem` has neither bound — so the test
+             * is `NaN <= undefined`, which is false, and the body never runs. The mark is
+             * still on the bar in the PARSE, which our own rule already reproduces; it is
+             * only the drawing that stops.
+             *
+             * Ours drew one stroke and reserved 2.19px of page for it. `[CEG]!arpeggio!|`
+             * and `C4!arpeggio!|D4|` are the two spellings that reach it.
+             */
+            barDecorations.filter((d) => d !== 'arpeggio'),
             x,
             barDecorationWidth(measure.closingBarline),
             6,
