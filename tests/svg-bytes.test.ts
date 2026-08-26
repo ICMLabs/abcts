@@ -483,6 +483,20 @@ const PASSING: readonly string[] = [
    */
   ...Array.from({ length: 13 }, (_, i) => `abcts-key-modifiers-tune${i}`),
   /**
+   * `abcts-clef-midmeasure.abc` — an inline `[K: … clef=]` written INSIDE a measure, which
+   * pitched the whole bar in the new clef because `layoutMeasure` was handed the
+   * already-advanced `clefInForce`. See `clefLeadsMeasure` in `layout.ts`: "leads the LINE"
+   * decides the prefix and is true for every mid-line measure, so it is the wrong question
+   * for the clef a measure OPENS in.
+   *
+   * ⚠️ **TWO TUNES ARE OPEN AND THEY ARE NOT THIS DEFECT** — the fixture found them, which
+   * is what a fixture does that a ladder cannot: tune10 (two voices) is 12.78px of page and
+   * tune11 (a clef mid-BEAM) 30.83px, both HEIGHT and both taller than abcjs's.
+   */
+  ...[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 12, 13, 14].map(
+    (i) => `abcts-clef-midmeasure-tune${i}`,
+  ),
+  /**
    * `abcts-voice-style.abc` — `V:… style=`, the first of the three modifiers the V:
    * enumeration left as a FEATURE. All five shapes, one voice each.
    *

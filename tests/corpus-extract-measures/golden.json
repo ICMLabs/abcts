@@ -2947,6 +2947,155 @@
    "hasPickup": false
   }
  ],
+ "repo/abcts-clef-midmeasure": [
+  {
+   "header": "X:1\nT:Inline Clef Mid Measure Bass\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "CD[K:C bass]EF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:2\nT:Inline Clef Mid Measure Alto\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "CD[K:C clef=alto]EF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:3\nT:Standalone Clef Line Mid Tune\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    },
+    {
+     "abc": "K:C clef=bass\nCDEF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:4\nT:Two Inline Clefs One Line\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "CD[K:C treble]EF|"
+    },
+    {
+     "abc": "GA[K:C bass]Bc|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:5\nT:Inline Clef Leading Its Measure\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:6\nT:Inline Clef Before Last Note\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDE[K:C tenor]F|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:7\nT:Inline Clef Then Plain Bar\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "CD[K:C bass]EF|"
+    },
+    {
+     "abc": "GABc|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:8\nT:Inline Clef Then Next Line\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "CD[K:C bass]EF|"
+    },
+    {
+     "abc": "GABc|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:9\nT:Inline Clef Perc Mid Measure\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "C2[K:C perc]D2|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:10\nT:Inline Clef With Chord And Accidental\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "^C[ceg][K:C bass]_E=F|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:11\nT:Inline Clef Mid Measure Two Voices\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "CD[K:C bass]EF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:12\nT:Inline Clef Mid Beam\nL:1/8\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEF[K:C bass]GABc|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:13\nT:Inline Clef With Lyrics\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "CD[K:C bass]EF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:14\nT:Inline Clef Octave Shift\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "CD[K:C bass-8]EF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:15\nT:Inline Clef None Mid Measure\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "CD[K:C clef=none]EF|"
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
  "repo/abcts-decorations": [
   {
    "header": "X:1\nT:Slide\nL:1/8\nK:C\n",

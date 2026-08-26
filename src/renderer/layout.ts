@@ -12983,6 +12983,23 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
         !(measureIndex === 0 || measure.startsSystem === true) ||
         (measure.clefChangeSourceRange?.start ?? Number.POSITIVE_INFINITY) <
           musicStartsAt(measure)
+      /**
+       * ⚠️ **AND "LEADS THE LINE" IS NOT "LEADS THE MEASURE".** `clefLeadsHere` answers
+       * which clef the PREFIX prints; `layoutMeasure` needs the clef the measure OPENS in,
+       * so its own `clefNow` can switch at the event where the change is written. On a
+       * mid-line measure the two disagree — `!(measureIndex === 0 || startsSystem)` makes
+       * `clefLeadsHere` true for every one of them — and handing `layoutMeasure` the
+       * already-advanced `clefInForce` pitched the WHOLE bar in the new clef.
+       *
+       * Measured on `CD[K:C bass]EF|`: abcjs draws C,D in treble (y 80.68, 76.81) and E,F
+       * in bass; ours drew all four in bass, 46.5px — six staff steps — high. The PARSE was
+       * already exact (`verticalPos` 0, 1, 14, 15 both ways), so this was the layout alone.
+       */
+      const clefLeadsMeasure =
+        measure.clefChange == null ||
+        (measure.clefChangeSourceRange?.start ?? Number.NEGATIVE_INFINITY) <
+          musicStartsAt(measure)
+      const clefEnteringMeasure = clefInForce
       if (measure.clefChange != null && clefLeadsHere) clefInForce = measure.clefChange
       clefAtMeasure.push(clefInForce)
       if (measure.clefChange != null && !clefLeadsHere) clefInForce = measure.clefChange
@@ -13050,7 +13067,7 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
       keyBeforeLine.push(keyAtPreviousLine)
       const block = layoutMeasure(
         measure,
-        clefInForce,
+        clefLeadsMeasure ? clefInForce : clefEnteringMeasure,
         directions,
         spacingScale,
         strict,

@@ -1,0 +1,96 @@
+X:1
+T:Inline Clef Mid Measure Bass
+L:1/4
+K:C
+CD[K:C bass]EF|
+
+X:2
+T:Inline Clef Mid Measure Alto
+L:1/4
+K:C
+CD[K:C clef=alto]EF|
+
+X:3
+T:Standalone Clef Line Mid Tune
+L:1/4
+K:C
+CDEF|
+K:C clef=bass
+CDEF|
+
+X:4
+T:Two Inline Clefs One Line
+L:1/4
+K:C
+CD[K:C treble]EF|GA[K:C bass]Bc|
+
+X:5
+T:Inline Clef Leading Its Measure
+L:1/4
+K:C
+[K:C bass]CDEF|
+
+X:6
+T:Inline Clef Before Last Note
+L:1/4
+K:C
+CDE[K:C tenor]F|
+
+X:7
+T:Inline Clef Then Plain Bar
+L:1/4
+K:C
+CD[K:C bass]EF|GABc|
+
+X:8
+T:Inline Clef Then Next Line
+L:1/4
+K:C
+CD[K:C bass]EF|
+GABc|
+
+X:9
+T:Inline Clef Perc Mid Measure
+L:1/4
+K:C
+C2[K:C perc]D2|
+
+X:10
+T:Inline Clef With Chord And Accidental
+L:1/4
+K:C
+^C[ceg][K:C bass]_E=F|
+
+X:11
+T:Inline Clef Mid Measure Two Voices
+L:1/4
+K:C
+V:1
+CD[K:C bass]EF|
+V:2
+GABc|
+
+X:12
+T:Inline Clef Mid Beam
+L:1/8
+K:C
+CDEF[K:C bass]GABc|
+
+X:13
+T:Inline Clef With Lyrics
+L:1/4
+K:C
+CD[K:C bass]EF|
+w:one two three four
+
+X:14
+T:Inline Clef Octave Shift
+L:1/4
+K:C
+CD[K:C bass-8]EF|
+
+X:15
+T:Inline Clef None Mid Measure
+L:1/4
+K:C
+CD[K:C clef=none]EF|
