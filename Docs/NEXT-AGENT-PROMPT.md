@@ -1,79 +1,75 @@
-# NEXT AGENT PROMPT — abcts, 2026-08-26
+# NEXT AGENT PROMPT — abcts, 2026-08-26b
 
 Paste the block below.
 
 ---
 
 ```
-start here: abcts/Docs/HANDOFF-2026-08-26.md
+start here: abcts/Docs/HANDOFF-2026-08-26b.md
 
-Work in /Users/lrettberg/ICMLabs/Code/abcts. Read WHAT PAID TODAY first — it is the
-method, and the method is the whole brief.
+Work in /Users/lrettberg/ICMLabs/Code/abcts.
 
-EVERY GATE IN THIS REPO READS ZERO. The SVG byte gate closed today at 0 of 424
-with one ruled divergence; the sibling gate is 0 of 356, the character gate
-607,177 of 607,177, and the other dozen are at zero beside them. Suite 2,180
-passing, NO reds and NO expected-fails.
+⚠️ THERE IS NO WORK LIST WAITING. §1 of the previous handoff — seven measured rows —
+is SPENT, closed in six commits, and every gate in this repo reads zero: the SVG byte
+gate 0 of 473 with one ruled divergence, the harvested corpus 0 of 222, extractMeasures
+0 of 268 files, and the other dozen at zero beside them. Suite 2,232 passing, NO reds
+and NO expected-fails. THAT IS THE NORMAL CONDITION HERE. No gate can name the next
+defect and none has for weeks.
 
-⚠️ THAT IS THE NORMAL CONDITION HERE, NOT A FINISH LINE. No gate can name the next
-defect. All 27 of today's findings came from writing a shape neither corpus
-contains.
+SO WRITE A SHAPE NEITHER CORPUS CONTAINS. §1 of WHAT IS LEFT names the untouched
+territory: %%MIDI and audio-facing directives against the DRAWING, V: modifiers beyond
+style=, %%repeat, staff-line counts, %%map/%%percmap, microtones past the quarter-tone
+pair, and anything at the boundary between two features. 36 shapes is an hour and the
+last two sessions ran at roughly one defect per five.
 
-⭐ A THIRD SWEEP IS ALREADY RUN AND SEVEN ROWS ARE WAITING — §1 of WHAT IS LEFT
-has all seven with both engines' numbers. Start with (a): an inline [K: … clef=]
-pitches the WHOLE measure instead of the notes after it, 27px of page, and the
-PARSE is already exact so it is the layout alone. Its first hypothesis was
-backwards and a ZZCLEF probe says why — read that before writing anything.
+THE THING THAT PAID MOST YESTERDAY WAS NOT THE LADDER. Ten control shapes closed six
+rows; the FIXTURE built to gate them opened TWO MORE the moment they were a page,
+because every ladder shape was one bar and one voice. And a second sweep over the same
+territory found a defect the first could not have seen, because it was masked by the
+one the first closed. LADDER → FIX → FIXTURE → SWEEP AGAIN.
 
-THE INSTRUMENT THAT PAID: three 36-shape SWEEPS of odd-but-legal ABC, one shape at
-a time through both engines. 108 shapes, sixteen differing. When §1 is spent, pick
-a territory the sweeps have not touched and write 36 more.
+WRITE THE SWEEP RUNNER FIRST — twenty lines, both engines over a numbered directory,
+exact/DIFFERS per row. Build it around three traps that have each bitten:
+  ⚠️ printf '%b', NEVER '%s' — a sweep reported 36 of 36 EXACT with every \n literal.
+  ⚠️ EXIT if any abcjs SVG is empty — a missing reference reads as a clean column.
+  ⚠️ Run everything from the repo root. `cd` into /tmp broke `npx tsx scripts/…` again.
+AND `git stash` IS THE PROOF IT RAN: stash the fix, re-run, and confirm the rows you
+just closed turn DIFFERS. Nothing else separates a real fix from a harness that idled.
 
-⚠️ AND WRITE THEM WITH printf '%b', NOT '%s' — the third sweep's first run reported
-36 of 36 EXACT because every \n stayed literal and both engines agreed on garbage.
-A SWEEP THAT AGREES EVERYWHERE HAS PROBABLY NOT RUN.
+FOUR RULES FROM YESTERDAY, each of which cost something:
+  ⚠️ A GUARD NOBODY PASSES LOOKS LIKE A RULE THAT DOES NOT APPLY — a correct fix moved
+     NOTHING because it tested `=== undefined` on a field that is `null`.
+  ⚠️ A PROBE THAT NAMES THE SYMPTOM HAS NOT NAMED THE CAUSE — the ZZCLEF probe was
+     right about what it printed and sent the search one step past the defect.
+  ⚠️ PUT A NEW WRITE WHERE THE THING ENDS, NOT WHERE IT LOOKS LIKE IT ENDS —
+     closeUnterminatedMeasure reads like end-of-voice and is every LINE's flush.
+  ⚠️ A SUM CANNOT SEE AN ORDER — fifth time. ZZMOVEY beside ABCTS_Y prints both page
+     walks term for term; that is the instrument for the whole ULP family.
 
-AND A FIXTURE FINDS WHAT A LADDER CANNOT: every sweep row that closed opened two
-or three more the moment it became a fixture, because a fixture renders a whole
-page. Turn each closed row into one.
-
-FIVE RULES THIS SESSION EARNED, and each cost something:
-  ⚠️ A ROW WITHOUT A GATE CANNOT REPORT ITS OWN CLOSURE — the `clef=none` stem had
-     been open across three handoffs and had silently fixed itself.
-  ⚠️ WHEN A DECOMPOSITION HAS A BALANCING TERM, EVERY PART MOVES OR NONE DOES —
-     the last byte row survived four attempts to that remainder.
-  ⚠️ BEFORE BUILDING PLUMBING, GREP FOR IT — the mechanism two gates wanted had
-     existed for eight days.
-  ⚠️ ASK THE WORKING PATH WHAT IT CARRIES — one print of a working element beside
-     a broken one beat three guesses.
-  ⚠️ A GREEN TEST CARRIES AN INFERENCE AS FIRMLY AS A COMMENT — two more flipped
-     today, the fourth and fifth on this branch.
-
-DO NOT START the `abselem` decision (§5 of WHAT IS LEFT) — it is the OWNER's, and
-it means retaining the `Layout` that killed this suite's workers once.
+DO NOT START the `abselem` decision (§4 of WHAT IS LEFT) — it is the OWNER's, and it
+means retaining the `Layout` that killed this suite's workers once.
 
 Before any abcjs instrumentation, check /tmp/gp/abcjs still exists — it is cleaned
-periodically. THE HARNESS lists every probe now in it and where it goes.
-⚠️ ABCJS_VERSION=6.7.0 IS NOT OPTIONAL, and `cd` bit again today: check the abcjs
-SVG EXISTS before believing a column of EXACTs.
+periodically, and it now carries ZZMOVEY on Renderer.prototype.moveY.
+⚠️ ABCJS_VERSION=6.7.0 IS NOT OPTIONAL — dump-svg.js defaults to 6.6.3.
 
-Run npx tsc --noEmit before every commit, diff every regenerated golden against
-HEAD asserting only new keys appeared, re-ratchet every gate's PASSING list in the
-same commit, and commit and push after every landing. Never --force.
+Run npx tsc --noEmit before every commit, diff every regenerated golden against HEAD
+asserting only new keys appeared, regenerate the extractMeasures oracle whenever a
+fixture grows, re-ratchet every gate's PASSING list in the same commit, and commit and
+push after every landing. Never --force.
 ```
 
 ---
 
 ## Why this is the order
 
-**The sweep first.** It is the only instrument that has produced defects lately, it is
-cheap, and its territory is far from exhausted.
+**The sweep, because nothing else can speak.** Every gate is at zero and every defect for
+weeks has come from writing a shape neither corpus contains.
 
-**Then the ledger.** 100 entries, two paid today, and both had gone stale in the same
-way — describing the CODE rather than the OUTPUT.
+**The fixture, because it is where the yield is.** Five of yesterday's eight defects were
+found by fixtures written to gate the other three.
 
-**The two ruled divergences are decisions**, not work: abcjs prints an internal failure
-into the page in both, and matching it means emitting invalid or nonsense output. One
-small change each if the owner wants byte parity over valid output.
+**The ledger after that.** 100 entries, and the ones that pay are the ones describing the
+CODE where they should describe the OUTPUT.
 
 **`abselem` is not the next agent's.**
