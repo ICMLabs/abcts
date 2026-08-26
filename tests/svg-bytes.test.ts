@@ -489,11 +489,13 @@ const PASSING: readonly string[] = [
    * decides the prefix and is true for every mid-line measure, so it is the wrong question
    * for the clef a measure OPENS in.
    *
-   * ⚠️ **TWO TUNES ARE OPEN AND THEY ARE NOT THIS DEFECT** — the fixture found them, which
-   * is what a fixture does that a ladder cannot: tune10 (two voices) is 12.78px of page and
-   * tune11 (a clef mid-BEAM) 30.83px, both HEIGHT and both taller than abcjs's.
+   * ⚠️ **THE FIXTURE FOUND TWO MORE THE MOMENT IT WAS A PAGE**, which is what a fixture does
+   * that a ladder cannot. tune11 — a clef mid-BEAM — was 30.83px, and it is CLOSED: the beam
+   * direction read the VOICE's clef where abcjs reads the one in force at the note (see
+   * `clefNow` in `beamDirections`). tune10 is open: with a mid-measure `[K: … clef=]` in
+   * `V:1`, abcjs gives `V:2` the BASS clef too, 12.78px of page.
    */
-  ...[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 12, 13, 14].map(
+  ...[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 12, 13, 14].map(
     (i) => `abcts-clef-midmeasure-tune${i}`,
   ),
   /**
@@ -699,6 +701,9 @@ function run(c: Case): Diff | null {
 }
 
 describe("strict SVG vs abcjs, byte for byte", () => {
+  // 15s, not vitest's 5s default: this renders every case of the corpus TWICE — 439 rows
+  // now — and under full-suite contention it crossed the default the run after the corpus
+  // grew. A timeout that tracks the corpus size is a gate that fails for growing.
   it("writes the ranked table", () => {
     const rows = CASES.map((c) => {
       let diff: Diff | null;
@@ -725,7 +730,7 @@ describe("strict SVG vs abcjs, byte for byte", () => {
     ].join("\n");
     writeFileSync("/tmp/abcts-svg-bytes-ranked.txt", `${text}\n`);
     expect(rows.length).toBe(CASES.length);
-  });
+  }, 15_000);
 
   for (const slug of PASSING) {
     it(`is byte-exact — ${slug}`, () => {

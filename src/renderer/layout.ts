@@ -19599,14 +19599,30 @@ function beamDirections(
   // averages 4.75 and beams UP where its extremes are symmetric about the line and beamed
   // DOWN. That was 16.52px of staff, and all of `visual-transpose-05`.
   const totals = new Map<number, { total: number; count: number; forced: boolean | null }>()
+  /**
+   * **AND THE PITCH IS READ AGAINST THE CLEF IN FORCE AT THE NOTE, NOT THE VOICE'S.**
+   * `averagepitch` is stamped by the PARSER, where `getCoreNote` reads
+   * `multilineVars.clef` — a running value an inline `[K: … clef=]` replaces mid-measure.
+   * Ours took the voice's declared clef for the whole walk, so on
+   * `CDEF[K:C bass]GABc|` the second group averaged as though it were still treble, beamed
+   * UP where abcjs beams DOWN, and the ledgers that went with it were 30.83px of page.
+   */
+  let clefNow = clef
   for (const [measureIndex, measure] of (voice?.measures ?? []).entries()) {
+    const change = measure.clefChange
+    // A change with no range leads its measure; otherwise it takes effect at the first
+    // event WRITTEN after it, which is the same question `clefChangeAt` asks by index.
+    const changeAt = measure.clefChangeSourceRange?.start ?? Number.NEGATIVE_INFINITY
     for (const event of measure.events) {
+      if (change != null && (event.sourceRange?.start ?? Number.POSITIVE_INFINITY) >= changeAt)
+        clefNow = change
       if (event.type === 'rest' || event.beamGroup === null) continue
       const pitches = event.type === 'chord' ? event.pitches : [event.pitch]
       if (pitches.length === 0) continue
       // abcjs's `averagepitch`, in ITS pitch units so the rounding lands where its does.
       const average =
-        pitches.reduce((sum, p) => sum + pitchToStep(p, clef), 0) / pitches.length + PITCH_ORIGIN
+        pitches.reduce((sum, p) => sum + pitchToStep(p, clefNow), 0) / pitches.length +
+        PITCH_ORIGIN
       const seen = totals.get(event.beamGroup)
       if (seen === undefined)
         // A beam group never spans a line break, so `this.stemdir` at the group's FIRST
