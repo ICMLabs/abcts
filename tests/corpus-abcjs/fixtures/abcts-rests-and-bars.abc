@@ -17,9 +17,13 @@
 %%abcts                      fourth time.
 %%abcts        ⚠️ AND abcjs ITSELF WRITES `M NaN` for the grace flag on `{g}x2` — a bug of
 %%abcts        its own, and the one row here we could only reproduce by reproducing a NaN.
-%%abcts   X:6  [K:G] mid-bar our group is `staff-extra key-signature`; abcjs's is a
-%%abcts                      `note` with `selectable="false" data-index="0"`.
-%%abcts   X:7  [M:2/4] mid-bar a stem runs 77.51 where abcjs's runs 85.23.
+%%abcts   X:6  [K:G] mid-bar the beam break is BUILT; what is left is PLACEMENT — abcjs
+%%abcts                      prints the new signature WHERE IT STANDS, after the C and the
+%%abcts                      D, and ours hoists it into the measure's prefix. Every x and
+%%abcts                      the page height already agree; only the order differs. A
+%%abcts                      mid-bar `[M:]` is in the stream here and a `[K:]` is not.
+%%abcts   X:7  [M:2/4] mid-bar BUILT — any NON-NOTE element ends the beam, and an inline
+%%abcts                      field is one. Ours beamed all four notes as a run.
 X:1
 T:a decoration on a barline, drawn after the barline's own rule
 L:1/8

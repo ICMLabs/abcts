@@ -5460,7 +5460,18 @@ class Parser {
           // Beam-run indices are resolved against whatever voice is current when the run
           // closes, so a voice switch must close it first — otherwise voice 1's notes
           // went unbeamed and its indices were applied to voice 2.
-          if (colon === 1 && text[0] === 'V') closeBeamRun()
+          /**
+           * ⚠️ **AND ANY NON-NOTE ELEMENT ENDS THE BEAM, WHICH IS EVERY INLINE FIELD THAT
+           * APPENDS ONE.** `appendElement`'s else-arm is one line and abcjs's own comment
+           * says it: *"It's not a note, so there definitely isn't beaming after it"* —
+           * `endBeamLast(tune)` (`tune-builder.js:216-218`). A REST is `el_type: 'note'`
+           * there, which is why a rest inside a run changes nothing; a `[K:]`, `[M:]`,
+           * `[Q:]` or `[P:]` is not, and breaks it.
+           *
+           * Only `V:` closed the run here, so `CD[M:2/4]EF` came out as ONE beam over four
+           * notes where abcjs draws two, and every stem of the bar ran 7.72px long.
+           */
+          if (colon === 1 && 'VKMQP'.includes(text[0] as string)) closeBeamRun()
           if (colon === 1) {
             this.applyField(
               text[0] as string,
