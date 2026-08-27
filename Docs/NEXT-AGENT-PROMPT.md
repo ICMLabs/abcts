@@ -10,33 +10,42 @@ start here: abcts/Docs/HANDOFF-2026-08-26b.md
 Work in /Users/lrettberg/ICMLabs/Code/abcts.
 
 ⚠️ THERE IS NO WORK LIST WAITING. §1 of the previous handoff — seven measured rows —
-is SPENT, closed in six commits, and every gate in this repo reads zero: the SVG byte
-gate 0 of 473 with one ruled divergence, the harvested corpus 0 of 222, extractMeasures
-0 of 268 files, and the other dozen at zero beside them. Suite 2,232 passing, NO reds
-and NO expected-fails. THAT IS THE NORMAL CONDITION HERE. No gate can name the next
-defect and none has for weeks.
+is SPENT, and two sweeps of new territory went with it: SEVENTEEN defects, ten commits,
+six new fixtures. Every gate but one reads zero: the SVG byte gate 0 of 564 with one
+ruled divergence, the harvested corpus 0 of 224, extractMeasures 0 of 270 files, and
+the other dozen at zero beside them. Suite 2,325 passing, NO reds and NO
+expected-fails. THAT IS THE NORMAL CONDITION HERE.
 
-SO WRITE A SHAPE NEITHER CORPUS CONTAINS. §1 of WHAT IS LEFT names the untouched
-territory: %%MIDI and audio-facing directives against the DRAWING, V: modifiers beyond
-style=, %%repeat, staff-line counts, %%map/%%percmap, microtones past the quarter-tone
-pair, and anything at the boundary between two features. 36 shapes is an hour and the
-last two sessions ran at roughly one defect per five.
+THE ONE OPEN ROW IS THE WARNINGS GATE, 1 of 688, and it is written up in the test
+itself: `C2|[-1 D2|]` wants two more "Unknown character ignored" after the chord
+fails, where our tie and digit arms consume them silently. Its geometry has been
+byte-exact throughout. Making either arm warn unconditionally is a change with reach,
+so it wants a ladder of its own rather than a guess.
 
-THE THING THAT PAID MOST YESTERDAY WAS NOT THE LADDER. Ten control shapes closed six
-rows; the FIXTURE built to gate them opened TWO MORE the moment they were a page,
-because every ladder shape was one bar and one voice. And a second sweep over the same
-territory found a defect the first could not have seen, because it was masked by the
-one the first closed. LADDER → FIX → FIXTURE → SWEEP AGAIN.
+⚠️ AND THE SWEEP'S YIELD IS FALLING WHILE THE FIXTURE'S IS NOT. Three sweeps ago it
+was one defect per four shapes; yesterday's first sweep was one per twelve and the
+second one per thirty-six — and that one find was a barline SPELLING, not a feature.
+NINE OF THE SEVENTEEN CAME FROM TURNING A CLOSED ROW INTO A FIXTURE, and the last five
+came from a gate the sweeps were not aimed at: two byte-exact sweep fixtures moved
+`tests/warnings.test.ts` the moment they were pages.
 
-WRITE THE SWEEP RUNNER FIRST — twenty lines, both engines over a numbered directory,
-exact/DIFFERS per row. Build it around three traps that have each bitten:
-  ⚠️ printf '%b', NEVER '%s' — a sweep reported 36 of 36 EXACT with every \n literal.
-  ⚠️ EXIT if any abcjs SVG is empty — a missing reference reads as a clean column.
-  ⚠️ Run everything from the repo root. `cd` into /tmp broke `npx tsx scripts/…` again.
-AND `git stash` IS THE PROOF IT RAN: stash the fix, re-run, and confirm the rows you
-just closed turn DIFFERS. Nothing else separates a real fix from a harness that idled.
+SO DO NOT JUST WRITE 36 MORE SHAPES OF THE SAME KIND. The pattern still paying is
+LADDER → FIX → FIXTURE → READ EVERY OTHER GATE. §7.1 of the checkpoint names what is
+untouched: %%text/%%center variants, %%staffsep/%%sysstaffsep/%%vskip combinations,
+multi-voice lyric alignment, U: redefinitions, P: part sequencing, and the boundary
+between an `&` overlay and everything else.
 
-FOUR RULES FROM YESTERDAY, each of which cost something:
+THE SWEEP RUNNER IS A SCRIPT NOW: `npx tsx scripts/zzsweep.ts <dir>`, from the repo
+root, over any directory of `.abc` files. It carries the traps that used to be prose.
+Two are still yours:
+  ⚠️ printf '%b', NEVER '%s' — a sweep reported 36 of 36 EXACT with every \n literal,
+     and the runner cannot check that for you.
+  ⚠️ Put a control that MUST differ in the same run — `C32|` is a ruled divergence and
+     reads DIFFERS forever. Cheaper than the git-stash proof, and it cannot go wrong:
+     `git stash` on a CLEAN tree stashes nothing, so the pop after it pops somebody
+     else's entry. That happened, into layout.ts, as a conflicted merge.
+
+SIX RULES FROM YESTERDAY, each of which cost something:
   ⚠️ A GUARD NOBODY PASSES LOOKS LIKE A RULE THAT DOES NOT APPLY — a correct fix moved
      NOTHING because it tested `=== undefined` on a field that is `null`.
   ⚠️ A PROBE THAT NAMES THE SYMPTOM HAS NOT NAMED THE CAUSE — the ZZCLEF probe was
@@ -45,6 +54,10 @@ FOUR RULES FROM YESTERDAY, each of which cost something:
      closeUnterminatedMeasure reads like end-of-voice and is every LINE's flush.
   ⚠️ A SUM CANNOT SEE AN ORDER — fifth time. ZZMOVEY beside ABCTS_Y prints both page
      walks term for term; that is the instrument for the whole ULP family.
+  ⚠️ A GATE'S RATCHET IS ONLY AS BROAD AS WHAT SOMEBODY ADDED TO IT — the warnings one
+     held 14 rows while 39 agreed, and its own failure message had been saying so.
+  ⚠️ A RULE RIGHT ON THE FIXTURE THAT NAMED IT CAN BE WRONG ON THE ONE BESIDE IT —
+     a line-numbering rule derived from two fixtures took that gate from 2 to 9.
 
 DO NOT START the `abselem` decision (§4 of WHAT IS LEFT) — it is the OWNER's, and it
 means retaining the `Layout` that killed this suite's workers once.
@@ -63,11 +76,14 @@ push after every landing. Never --force.
 
 ## Why this is the order
 
-**The sweep, because nothing else can speak.** Every gate is at zero and every defect for
-weeks has come from writing a shape neither corpus contains.
+**The one open row first**, because it is measured and it is the only thing any gate can
+name.
 
-**The fixture, because it is where the yield is.** Five of yesterday's eight defects were
-found by fixtures written to gate the other three.
+**Then the FIXTURE rather than the sweep.** Nine of seventeen defects came from turning a
+closed row into a page; the second sweep's 36 shapes bought one, and it was a spelling.
+
+**And read every other gate after each landing.** The last five defects came from the
+warnings gate, which neither sweep was aimed at and which both sweep fixtures moved.
 
 **The ledger after that.** 100 entries, and the ones that pay are the ones describing the
 CODE where they should describe the OUTPUT.
