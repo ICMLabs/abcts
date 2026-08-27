@@ -14278,6 +14278,17 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
         voiceIndex !== (carrier < 0 ? 0 : carrier)
           ? []
           : (blocksBeforeSystem[systemIndex] ?? [])
+      /**
+       * **DOES THIS BLOCK HAVE A ROW OF ITS OWN?** — which is a different question from
+       * whether it has INK, and from `block.height`, which carries the unconditional
+       * `spacing.music` even on a tune with no title and no text at all. An EMPTY `%%text`
+       * is a row and no ink (`free-text.js:8-10`); asking `height` instead gave every tune
+       * in the corpus a zero-size heading element and moved six visual baselines.
+       */
+      const blockHasRows =
+        systemIndex === 0 && voiceIndex === 0
+          ? score.textAbove.length > 0 || score.metadata.titles.length > 0
+          : midTune.length > 0
       const block: { texts: PlacedText[]; lines: PlacedLine[]; height: number } =
         systemIndex === 0 && voiceIndex === 0
           ? (() => {
@@ -14323,7 +14334,12 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
             : { texts: [], lines: [], height: 0 }
       const blockLines: readonly PlacedLine[] = block.lines
       const heading: LayoutElement[] =
-        block.texts.length === 0 && blockLines.length === 0
+        // …**AND A BLOCK WITH A ROW AND NO INK IS STILL A BLOCK.** An empty `%%text` draws
+        // nothing and moves `font-size * 2` (`free-text.js:8-10`), and this guard read only
+        // the INK — so such a block never reached `musicOnlyTop`, `walksTopBlock` was false,
+        // and the page walked straight past it. See `blockHasRows`, which is the narrower
+        // question, and `appendFreeText`.
+        block.texts.length === 0 && blockLines.length === 0 && !blockHasRows
           ? []
           : [
               {
@@ -16942,32 +16958,47 @@ function appendFreeText(
     }
     const textSize = sizeOf('textfont')
     /**
-     * ⚠️ **AN EMPTY `%%text` DRAWS NOTHING AND MOVES TWICE THE FONT SIZE — MEASURED,
-     * IMPLEMENTED AND REVERTED.** `FreeText`'s first arm is
-     * `if (text === "") this.rows.push({ move: hash.attr['font-size'] * 2 })` under its own
-     * comment — *"we do want to print out blank lines if they have been specified"* — with
-     * NO text row beside it (`free-text.js:8-10`). The `* 2` is the line PLUS the margin a
-     * non-empty row spends as `size / 2` and `size`, so a blank row is TALLER than a full
-     * one. Ours draws an empty `<text>` and moves 33.77 where abcjs moves 42.
+     * ⚠️ **AN EMPTY `%%text` DRAWS NOTHING AND MOVES TWICE THE FONT SIZE.** `FreeText`'s
+     * first arm is `if (text === "") this.rows.push({ move: hash.attr['font-size'] * 2 })`
+     * under its own comment — *"we do want to print out blank lines if they have been
+     * specified"* — with NO text row beside it (`free-text.js:8-10`). The `* 2` is the line
+     * PLUS the margin a non-empty row spends as `size / 2` and `size`, so a blank row is
+     * TALLER than a full one. Ours drew an empty `<text>` and moved 33.77 where abcjs
+     * moves 42.
      *
      * Measured on a six-rung ladder — a bare `%%text`, one with a trailing space, an empty
      * `%%center`, two in a row, one before a full one, and one mid-tune. Page heights,
      * abcjs against ours: 198.119/189.889, 240.119/223.659, 231.889/223.659. **8.23px per
      * blank line.**
      *
-     * ⚠️ **AND THE ONE-LINE FIX MAKES IT WORSE, WHICH IS WHY IT IS NOT HERE.** Spending
-     * `textSize * 2` and drawing nothing takes the page to 156.119 — 42px SHORT — because
-     * on a HEADINGLESS tune the block's rows never reach the page cursor at all: `Y lead`
-     * reads one advance of 68.89, which is `spacing.music + staffSeparation` and no block.
-     * What made the old number nearly right was the block's TEXT INK pushing the staff down
-     * through `musicOnlyTop`, a different mechanism that happens to agree while there is
-     * text to measure and vanishes when there is not.
-     *
-     * **So the row is the block-placement machinery, not this branch**: `walksTopBlock`
-     * needs `musicOnlyTop`, which an inkless block does not produce. Fixing it means giving
-     * a headingless tune the same row walk `topAdvances` already gives a titled one — the
-     * same shape as the `%%begintext` ULP, one case over.
+     * ⚠️ **AND IT IS TWO CHANGES, NOT ONE — this branch ALONE took the page 42px SHORT.**
+     * Spending the row is useless while the block cannot REACH the page: the `heading`
+     * element was built only for a block with INK, so an inkless one produced no
+     * `musicOnlyTop`, `walksTopBlock` was false, and the page walk read ONE advance of
+     * 68.89 — `spacing.music + staffSeparation`, and no block at all. What made the old
+     * number nearly right was the block's TEXT INK pushing the staff down, a different
+     * mechanism that agrees while there is text to measure and vanishes when there is not.
+     * See the `heading` guard, which now admits a block with HEIGHT and no ink.
      */
+    if (block.fromBlock !== true && block.lines.length === 1 && (block.lines[0] ?? '') === '') {
+      /**
+       * ⚠️ **AND AN EMPTY `%%center` IS THE OTHER ARM AND COSTS NOTHING.** `addCentered`
+       * pushes `{text: [{text: str, center: true}]}` — an ARRAY — so `info.text` is
+       * undefined and `FreeText` falls PAST the `text === ""` branch, past
+       * `typeof text === 'string'` and past `else if (text)` to its final `else`, which
+       * writes one row and moves `getTextSize.calc('')`. That height is zero.
+       *
+       * MEASURED: an empty `%%center` gives abcjs 156.119 — the same page as no directive
+       * at all — where an empty `%%text` gives 198.119. **Two spellings of "nothing to
+       * say" that differ by 42px**, and the ARRAY is the whole reason.
+       */
+      // ⚠️ **AND A `%%begintext` BLOCK IS NEVER THIS ARM.** Its text is a STRING that abcjs
+      // builds as `textBlock += line.trim() + "\n"` per line (`abc_parse_directive.js:948`),
+      // so a block of one blank line is `"\n"` and not `""` — it takes the
+      // `typeof text === 'string'` arm and measures. See `FreeTextBlock.fromBlock`.
+      spend(block.align === 'center' ? 0 : textSize * 2)
+      continue
+    }
     if (block.align === 'left') spend(textSize / 2)
     /**
      * **A `%%begintext` BLOCK IS ONE `<text>`, NOT ONE PER LINE.** `FreeText` pushes a

@@ -609,14 +609,24 @@ const PASSING: readonly string[] = [
    * lyric shape, `%%staffsep`, `%%sysstaffsep`, `%%musicspace`, `%%topspace` and
    * `%%titlespace` were already right.
    *
-   * ⚠️ **TEN ROWS ARE OPEN AND NAMED, IN TWO FAMILIES. Neither is a tolerance.**
+   * ⚠️ **ONE ROW IS OPEN AND NAMED — tune 34. It is not a tolerance.**
    *
-   * **(a) AN EMPTY `%%text` DRAWS NOTHING AND MOVES TWICE THE FONT SIZE** — tunes 2, 36-40.
-   * `FreeText`'s first arm is `if (text === "") rows.push({move: font-size * 2})` with no
-   * text row beside it (`free-text.js:8-10`), so a BLANK row is taller than a full one:
-   * 8.23px each. **The one-line fix makes it worse** — see the reverted note at
-   * `appendFreeText`: on a headingless tune the block's rows never reach the page cursor at
-   * all, and what made our number nearly right was the text INK pushing the staff down.
+   * ✅ **(a) AN EMPTY `%%text` DRAWS NOTHING AND MOVES TWICE THE FONT SIZE — CLOSED, AND IT
+   * WAS THREE CHANGES.** `FreeText`'s first arm is `if (text === "")
+   * rows.push({move: font-size * 2})` with no text row beside it (`free-text.js:8-10`), so
+   * a BLANK row is TALLER than a full one: 8.23px each.
+   *
+   * ⚠️ Spending it ALONE takes the page 42px SHORT, because the `heading` element was built
+   * only for a block with INK — an inkless one produced no `musicOnlyTop`, `walksTopBlock`
+   * was false, and the page walked straight past it. ⚠️ And keying that guard on
+   * `block.height` instead is TOO BROAD: the height carries the unconditional
+   * `spacing.music`, so every tune in the corpus got a zero-size heading element and six
+   * visual baselines moved. `blockHasRows` is the narrower question.
+   *
+   * ⚠️ **AND AN EMPTY `%%center` IS THE OTHER ARM AND COSTS NOTHING.** `addCentered` pushes
+   * an ARRAY, so `info.text` is undefined and `FreeText` falls past that first branch to its
+   * final `else`, which measures the empty string. **Two spellings of "nothing to say" that
+   * differ by 42px**, and the array is the whole reason.
    *
    * ✅ **(b) A `%%vskip` BEFORE A `%%text` IS THAT BLOCK'S FIRST ROW — CLOSED.**
    * `pushLine` stamps a pending vskip onto whatever LINE comes next, text lines included,
@@ -655,7 +665,7 @@ const PASSING: readonly string[] = [
    * ruling, 2026-08-27 — see `Docs/ABCJS-DIFFERENCES.md`.
    */
   ...[
-    0, 1, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55
+    0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55
   ].map((i) => `abcts-text-udef-parts-overlays-tune${i}`),
   /**
    * `abcts-voice-style.abc` — `V:… style=`, the first of the three modifiers the V:
