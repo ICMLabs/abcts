@@ -9,16 +9,16 @@ down. The other five came out of the fixtures written to gate the first three.
 
 | Gate | Then | Now |
 |---|---|---|
-| SVG bytes, in-repo | 0 of 424 | **8 of 622** — all eight NAMED in §8, 1 ruled divergent |
-| harvested corpus, four axes | 0 of 219 | **1 of 226** — the same fixture |
-| `extractMeasures` | 265 files | **0 of 272 files, 1,751 measures** |
-| **warnings** | 0 of 507 | **0 of 746** — CLOSED, 47 rows ratcheted from 14 |
+| **SVG bytes, in-repo** | 0 of 424 | **0 of 635** — 1 ruled divergent |
+| harvested corpus, four axes | 0 of 219 | **0 of 226** |
+| `extractMeasures` | 265 files | **0 of 270 files, 3,199 of 3,199 rows** |
+| **warnings** | 0 of 507 | **0 of 759** — CLOSED, 49 rows ratcheted from 14 |
 | everything else | 0 | 0 |
 
-⚠️ **THE BYTE GATE IS OFF ZERO ON PURPOSE.** The eight rows are the third sweep's, and each
-is measured, cited and written up — two of them implemented and REVERTED with the reason at
-the site. A row named in a fixture can report its own closure; one left out of the corpus
-cannot.
+✅ **EVERY GATE IS AT ZERO.** The byte gate spent part of the session OFF zero on purpose,
+with eight measured rows NAMED in a fixture rather than left out of the corpus — and all
+eight are closed in §8. **A row named in a fixture can report its own closure; one left out
+of the corpus cannot**, which is the rule two sessions have now paid for.
 
 Eight new fixtures, 198 tunes:
 `abcts-clef-midmeasure.abc` (22), `abcts-lyric-verses.abc` (12),
@@ -264,49 +264,88 @@ overlay shape, every multi-voice lyric shape, `%%staffsep`, `%%sysstaffsep`, `%%
 `%%topspace` and `%%titlespace` were already right. Two closed — an unknown `U:` macro warns
 and expands to nothing, and a bare `%%center` is a centred EMPTY line — and eight are named.
 
-## 8. THE EIGHT OPEN ROWS, AND WHY TWO OF THEM WERE REVERTED
+## 8. THE EIGHT ROWS, AND WHAT CLOSING THEM COST
 
-All eight are in `abcts-text-udef-parts-overlays.abc` and named in `svg-bytes`'s PASSING
-note. **None is a tolerance.**
+All eight closed. **Two of the three families had a MEASURED WRONG ANSWER recorded beside
+them first**, and that is what made the second attempt cheap rather than what made it slow.
 
-**(a) AN EMPTY `%%text` DRAWS NOTHING AND MOVES TWICE THE FONT SIZE** — tunes 2, 35-39.
-`FreeText`'s first arm is `if (text === "") rows.push({move: font-size * 2})` with NO text
-row beside it (`free-text.js:8-10`), so a BLANK row is TALLER than a full one: 8.23px each.
-Measured on six rungs; page heights abcjs/ours 198.119/189.889, 240.119/223.659,
-231.889/223.659.
+### 8.1 AN EMPTY `%%text` MOVES TWICE THE FONT SIZE — three changes, not one
 
-⚠️ **THE ONE-LINE FIX MAKES IT WORSE.** Spending `textSize * 2` and drawing nothing takes the
-page 42px SHORT, because on a HEADINGLESS tune the block's rows never reach the page cursor
-at all — `Y lead` reads ONE advance of 68.89, which is `spacing.music + staffSeparation` and
-no block. What made the old number nearly right was the block's TEXT INK pushing the staff
-down through `musicOnlyTop`, a different mechanism that agrees while there is text to measure
-and vanishes when there is not. **The row is the block-placement machinery, not the branch**:
-`walksTopBlock` needs `musicOnlyTop`, which an inkless block does not produce.
+`FreeText`'s first arm is `if (text === "") rows.push({ move: font-size * 2 })` with NO text
+row beside it (`free-text.js:8-10`), so **a blank row is TALLER than a full one**: 8.23px.
 
-**(b) A `%%vskip` BEFORE A `%%text` IS THAT BLOCK'S FIRST ROW** — tune 7. `pushLine` stamps a
-pending vskip onto whatever LINE comes next, text lines included, and `FreeText(info, vskip)`
-pushes `{move: vskip}` ahead of everything (`tune-builder.js:904-908`, `free-text.js:5-6`).
-Ours holds vskip on the SYSTEM, so it lands after the text: 20px. **`%%text` then `%%vskip`
-is exact, which is what says the rule is the ORDER.**
+⚠️ Spending it ALONE takes the page 42px SHORT. The `heading` element was built only for a
+block with INK, so an inkless one produced no `musicOnlyTop`, `walksTopBlock` was false, and
+the page walk read ONE advance of 68.89 — `spacing.music + staffSeparation`, no block at all.
+⚠️ And keying that guard on `block.height` is TOO BROAD: the height carries the unconditional
+`spacing.music`, so every tune got a zero-size heading element, two `begintext` fixtures came
+off byte-exact and six visual baselines moved. `blockHasRows` is the narrower question.
 
-**(c) A CLOSE DECORATION'S DRAWN y IS ONE ULP OUT** — tune 34. `printSymbol` draws at
-`calcY(offset + ycorr)`, one sum and one multiply, where the emitter spends the correction on
-a finished y as a LENGTH. ⚠️ `PlacedGlyph.drawPitch` looks like the field for it and is NOT:
-its branch is an ABSOLUTE pitch with no staff origin, which the DYNAMIC gets away with only
-because its lane is shifted afterwards. Setting it put the sforzato 23px low. The row wants
-either a second field carrying the origin or `drawPitch` to mean "a pitch in this staff's
-frame" at both sites.
+⚠️ **AND AN EMPTY `%%center` IS THE OTHER ARM AND COSTS NOTHING.** `addCentered` pushes an
+ARRAY, so `info.text` is undefined and `FreeText` falls past that branch to its final `else`,
+which measures the empty string. **Two spellings of "nothing to say" that differ by 42px.**
 
-## 9. AND ONE ROW IS A MODE QUESTION RATHER THAN A DEFECT
+### 8.2 A `%%vskip` BEFORE A `%%text` IS THAT BLOCK'S FIRST ROW
+
+`pushLine` stamps a pending vskip onto whatever LINE comes next, text lines included, and
+`FreeText(info, vskip)` pushes `{move: vskip}` ahead of everything (`tune-builder.js:904-908`,
+`free-text.js:5-6`). **The page TOTAL was right to the digit on every rung** and the text sat
+20px high — a sum cannot see an order, and that is why this one was safe where 8.1 was not.
+
+Its own ladder then opened two more: **a `T:` after `K:` but before any NOTE is a top-block
+subtitle** (`addSubtitle` is a bare `pushLine`, so placement follows where the line lands;
+ours tested `bodyStarted`, which the `K:` itself sets), and **a `%%vskip` before a subtitle is
+consumed and THROWN AWAY** — the controller builds `new Subtitle(…)` with no vskip argument
+(`engraver-controller.js:239`) where the FreeText arm one line below takes one. ⚠️ The
+consuming is the point: left pending, the STAFF takes it.
+
+### 8.3 A CLOSE DECORATION'S ONE ULP — and the note that had written the field off
+
+`printSymbol` draws at `calcY(offset + ycorr)`, one sum and one multiply, where the emitter
+given only a y spends the correction as a LENGTH. `PlacedGlyph.drawPitch` IS the field.
+
+⚠️ **A note here said it was NOT**, written after the sforzato landed 23.25px low. The value
+passed had been `toStep(closeY)` where the emitter wants an abcjs PITCH, and **23.25 is
+`PITCH_ORIGIN * spacePerStep` exactly**. **A number that is exactly one constant is a UNIT
+ERROR, not a rebuttal** — and it had been allowed to stand as a rebuttal, in a note, which is
+the same failure mode this branch has been bitten by five times in the other direction.
+
+### 8.4 AND THE LAST ROW WAS TWO DEFECTS, THE SECOND HIDING BEHIND THE FIRST
+
+A `%%text` between two VOICES. Its ULP of root height was the **trailing block's rows being
+summed instead of spent one at a time** — the same hole `topTextBlock` had before the
+`%%begintext` ULP, one block over. Once that closed, the byte comparison moved from offset
+153 to 452 and showed the real one: **the staff line ran to 219.76 where abcjs runs it to
+685.** A block written INSIDE the system counts as trailing, so the line is not the LAST line
+and abcjs justifies it; `score.textBelow` never saw that one because it lands in
+`blocksAfterLastSystem`. Three rungs, and only the middle one moved.
+
+⚠️ **THE SECOND WAS ONLY REACHABLE ONCE THE FIRST CLOSED.** A single-number diff hands you
+one defect at a time, which is the argument for it.
+
+## 9. THE INLINE `U:` RULING — the FEATURE stays, as a MODE SPLIT
 
 **abcjs HAS NO INLINE `U:` AT ALL.** `letter_to_inline_header` switches on exactly eight —
 `[I: [M: [K: [P: [L: [Q: [V: [r:` (`abc_parse_header.js:347-410`) — so `[U:n=!accent!]` is
 read as a CHORD, fails, and yields seven warnings, an invisible barline carrying the
-`!accent!`, and four plain notes. **We support it, which is ABC 2.1 and not abcjs.**
+`!accent!`, and four plain notes. ABC 2.1 §4.19 allows any body field inline.
 
-Closing it means the LEXER refusing the field rather than the parser ignoring it, and it
-takes `[w:` and `[T:` with it. That is a mode ruling, not a sweep row. The two shapes are out
-of the fixture on purpose — `extractMeasures` is all-or-nothing and is what found it.
+⚖️ **OWNER'S RULING, 2026-08-27: *"we should support U:"*.** The SPLIT is how it stays:
+strict reproduces abcjs because that is what strict is for, and `abc2.1`/`extended` define
+the macro. A HEADER `U:` works in both, abcjs having that one. Both corpora write only those
+eight letters inline, so the restriction costs nothing measurable.
+
+⚠️ **AND THE LEXER CHANGE ALONE WAS NOT ENOUGH.** An accidental with no note letter after it
+is a failed attempt too — `getCoreNote` leaves `state = 'pitch'` and `isComplete` answers
+FALSE for it, so anything but a pitch letter returns null and every character of the attempt
+warns on its own. The `=` of `n=!accent!` is warning five of seven, and ours held the natural
+PENDING and stamped it on the `C` four characters later.
+
+⚠️ **AND MY FIRST MODE PROBE LIED, BECAUSE I INVENTED THE MODE STRINGS.** It reported all
+three modes identical and the split not working; the modes are `abcjs-strict`, `abc2.1`,
+`extended` and I passed `abcjsStrict`/`abc2_1`, so `isStrict` answered false everywhere and
+the probe measured the default twice. The byte gate had already said otherwise. **A probe
+that disagrees with a gate is the PROBE's problem until proven otherwise.**
 
 ## 10. WHAT IS LEFT
 
