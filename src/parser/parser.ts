@@ -2213,6 +2213,11 @@ class VoiceBuilder {
    * empty array — a measure carrying `textBefore: []` would read as "there was text".
    */
   /** `%%vskip` waiting for the next line — see `Measure.vskip`. */
+  /**
+   * ⚠️ **AND A TEXT BLOCK MAY HAVE TAKEN IT ALREADY** — `takeBlockVskip` clears the same
+   * slot, because `pushLine` stamps a pending vskip onto whatever LINE comes next and a
+   * `%%text` line is one. So this reads whatever is LEFT, which is the staff case.
+   */
   private takeVskip(startsSystem: boolean): { vskip?: number } {
     if (!startsSystem || this.pendingVskip.value === null) return {}
     const n = this.pendingVskip.value
@@ -3364,6 +3369,7 @@ class Parser {
       lines: this.textBlock,
       align: 'left',
       fromBlock: true,
+      ...this.takeBlockVskip(),
       sourceRange: sourceRange(
         at,
         at + this.textBlock.reduce((n, l) => n + l.length + 1, 0) + 7,
@@ -3714,7 +3720,11 @@ class Parser {
       // Before any music it heads the tune; after it, it trails — and trailing text is
       // what stops the last music line being the last line, so abcjs justifies it.
       const target = builder.voice.isEmpty ? builder.textAbove : builder.textBelow
-      target.push({ lines: [decodeTextString((centred[1] ?? '').trim())], align: 'center' })
+      target.push({
+        lines: [decodeTextString((centred[1] ?? '').trim())],
+        align: 'center',
+        ...this.takeBlockVskip(),
+      })
       return
     }
     // `%%text <line>` — the same element left-aligned, one block per directive. Two
@@ -3728,6 +3738,7 @@ class Parser {
         lines: [decodeTextString((freeText[1] ?? '').trim())],
         align: 'left',
         sourceRange: sourceRange(start, end),
+        ...this.takeBlockVskip(),
       })
       return
     }
@@ -4296,6 +4307,20 @@ class Parser {
    * verse 2 — so a continuation that used it would stack the second half of one line
    * underneath the first instead of after it.
    */
+  /**
+   * **THE `%%vskip` WAITING FOR THE NEXT LINE, WHEN THAT LINE IS A TEXT BLOCK.**
+   * `pushLine` stamps it onto whatever line is pushed next and a `%%text`, `%%center`,
+   * `%%begintext` or mid-tune `T:` is one (`tune-builder.js:904-908`); `FreeText` and
+   * `Subtitle` then open their rows with it. See `FreeTextBlock.vskip`.
+   */
+  private takeBlockVskip(): { vskip?: number } {
+    const pending = this.builder?.pendingVskip
+    if (pending?.value == null) return {}
+    const n = pending.value
+    pending.value = null
+    return { vskip: n }
+  }
+
   private continueLyric(content: string, start: number, end: number): void {
     const builder = this.ensureScore(start)
     const offset = start + (end - start - content.length)
@@ -4388,6 +4413,7 @@ class Parser {
           // `FreeTextBlock.rich`. `setTitle` splits the fonts BEFORE it branches.
           const rich = parseFontChangeLine(theReverser(decodeTextString(value)), builder.setfont)
           builder.textBelow.push({
+            ...this.takeBlockVskip(),
             lines: [theReverser(decodeTextString(value))],
             align: 'center',
             role: 'subtitle',

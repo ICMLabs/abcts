@@ -342,3 +342,45 @@ T:Inline Udef Midline
 K:C
 L:1/4
 CDEF|[U:n=!accent!]nGABc|
+
+X:46
+T:Vskip Then Center
+L:1/4
+K:C
+%%vskip 20
+%%center mid
+CDEF|
+
+X:47
+T:Vskip Only
+L:1/4
+K:C
+%%vskip 20
+CDEF|
+
+X:48
+T:Vskip Then Two Texts
+L:1/4
+K:C
+%%vskip 20
+%%text a
+%%text b
+CDEF|
+
+X:49
+T:Vskip Midtune Text
+L:1/4
+K:C
+CDEF|
+%%vskip 20
+%%text mid
+GABc|
+
+X:50
+T:Vskip Then Subtitle
+T:t
+L:1/4
+K:C
+%%vskip 20
+T:sub
+CDEF|

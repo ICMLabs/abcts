@@ -413,6 +413,18 @@ export interface FreeTextBlock {
    */
   readonly align: 'center' | 'left'
   /**
+   * **A `%%vskip` STANDING BEFORE THIS BLOCK, WHICH IS THE BLOCK'S OWN FIRST ROW.**
+   * `pushLine` stamps a pending vskip onto whatever LINE is pushed next — a text line as
+   * readily as a staff one (`tune-builder.js:904-908`) — and `FreeText(info, vskip)` opens
+   * its row list with `if (vskip) rows.push({ move: vskip })` (`free-text.js:5-6`).
+   *
+   * Ours held it on the SYSTEM alone, so it was spent AFTER the text: the page total was
+   * right to the digit on every rung and the text sat 20px high. **A SUM CANNOT SEE AN
+   * ORDER**, for the sixth time on this branch. `%%text` then `%%vskip` is exact either
+   * way, which is what says the rule is the order rather than the number.
+   */
+  readonly vskip?: number
+  /**
    * A mid-tune `T:` — a SUBTITLE line, not free text. It takes `subtitlefont` and abcjs's
    * `spacing.subtitle` above it, and its own measured height below with no `* 1.1`
    * (`elements/subtitle.js`). Measured on a control pair: 27.05px against `%%text`'s 33.77.

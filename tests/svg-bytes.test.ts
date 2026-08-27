@@ -618,12 +618,18 @@ const PASSING: readonly string[] = [
    * `appendFreeText`: on a headingless tune the block's rows never reach the page cursor at
    * all, and what made our number nearly right was the text INK pushing the staff down.
    *
-   * **(b) A `%%vskip` BEFORE A `%%text` IS THAT BLOCK'S FIRST ROW** — tune 7.
+   * ✅ **(b) A `%%vskip` BEFORE A `%%text` IS THAT BLOCK'S FIRST ROW — CLOSED.**
    * `pushLine` stamps a pending vskip onto whatever LINE comes next, text lines included,
    * and `FreeText(info, vskip)` pushes `{move: vskip}` ahead of everything
-   * (`tune-builder.js:904-908`, `free-text.js:5-6`). Ours holds vskip on the SYSTEM, so it
-   * lands after the text: 20px. `%%text` then `%%vskip` is exact, which is what says the
-   * rule is the ORDER.
+   * (`tune-builder.js:904-908`, `free-text.js:5-6`). Ours held it on the SYSTEM, so it was
+   * spent AFTER the text: the page TOTAL was right to the digit on every rung and the text
+   * sat 20px high. **A SUM CANNOT SEE AN ORDER**, sixth time. `%%text` then `%%vskip` is
+   * exact either way, which is what says the rule is the ORDER rather than the number.
+   *
+   * ⚠️ **AND ONE RUNG OF ITS LADDER IS STILL OPEN — tune 49, `%%vskip` before a mid-tune
+   * `T:`.** It was open BEFORE this landed (checked by stashing the change and re-running,
+   * which is the only thing that separates a pre-existing row from a regression) and it is
+   * 44px, not 20 — so it is the SUBTITLE's own spacing, not the vskip.
    *
    * **AND ONE MORE, ITS OWN FAMILY:** a close decoration's drawn y is one ULP out — tune 34
    * — because `getYCorr` joins the PITCH in abcjs and the LENGTH here.
@@ -638,7 +644,7 @@ const PASSING: readonly string[] = [
    * ruling, 2026-08-27 — see `Docs/ABCJS-DIFFERENCES.md`.
    */
   ...[
-    0, 1, 3, 4, 5, 6, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 40, 41, 42, 43, 44
+    0, 1, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 40, 41, 42, 43, 44, 45, 46, 47, 48
   ].map((i) => `abcts-text-udef-parts-overlays-tune${i}`),
   /**
    * `abcts-voice-style.abc` — `V:… style=`, the first of the three modifiers the V:

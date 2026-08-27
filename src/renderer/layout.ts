@@ -16877,6 +16877,14 @@ function appendFreeText(
     const tag: { nonMusicIndex?: number } = tagNonMusic ? { nonMusicIndex: blockIndex } : {}
     rows = blockRows === undefined ? undefined : []
     if (rows !== undefined && blockRows !== undefined) blockRows.set(block, rows)
+    /**
+     * **A `%%vskip` STANDING BEFORE THIS BLOCK IS ITS FIRST ROW** — `FreeText` opens with
+     * `if (vskip) this.rows.push({ move: vskip })` before it looks at the text at all
+     * (`free-text.js:5-6`), and `Subtitle` does the same. See `FreeTextBlock.vskip`: ours
+     * held it on the SYSTEM, so it was spent AFTER the block and the text sat 20px high on
+     * a page whose TOTAL was right to the digit.
+     */
+    if (block.vskip !== undefined) spend(block.vskip)
     if (block.separator !== undefined) {
       // The RULE COSTS NO HEIGHT — `drawSeparator` paints at the cursor and moves nothing
       // — so the line is worth exactly its two spaces. Points to staff spaces on the way.
