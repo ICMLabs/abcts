@@ -1,6 +1,6 @@
 # CHECKPOINT — 2026-08-26b
 
-**Branch `main`. Suite 2,325 passing, NO reds and NO expected-fails. Everything pushed.**
+**Branch `main`. Suite 2,377 passing, NO reds and NO expected-fails. Everything pushed.**
 
 ## 1. §1 OF THE PREVIOUS HANDOFF IS SPENT — ALL SEVEN ROWS
 
@@ -9,19 +9,25 @@ down. The other five came out of the fixtures written to gate the first three.
 
 | Gate | Then | Now |
 |---|---|---|
-| SVG bytes, in-repo | 0 of 424 | **0 of 564** (1 ruled divergent) |
-| harvested corpus, four axes | 0 of 219 | **0 of 224** |
-| `extractMeasures` | 265 files | **270 files, 1,682 measures** |
-| warnings | 0 of 507 | **1 of 688**, 45 ratcheted from 14 |
+| SVG bytes, in-repo | 0 of 424 | **8 of 622** — all eight NAMED in §8, 1 ruled divergent |
+| harvested corpus, four axes | 0 of 219 | **1 of 226** — the same fixture |
+| `extractMeasures` | 265 files | **0 of 272 files, 1,751 measures** |
+| **warnings** | 0 of 507 | **0 of 746** — CLOSED, 47 rows ratcheted from 14 |
 | everything else | 0 | 0 |
 
-Six new fixtures, 140 tunes, every one byte-exact and ratcheted:
+⚠️ **THE BYTE GATE IS OFF ZERO ON PURPOSE.** The eight rows are the third sweep's, and each
+is measured, cited and written up — two of them implemented and REVERTED with the reason at
+the site. A row named in a fixture can report its own closure; one left out of the corpus
+cannot.
+
+Eight new fixtures, 198 tunes:
 `abcts-clef-midmeasure.abc` (22), `abcts-lyric-verses.abc` (12),
 `abcts-inline-fields-and-blocks.abc` (15), `abcts-stafflines-and-modifiers.abc` (50),
-`abcts-bars-graces-and-groups.abc` (41).
+`abcts-bars-graces-and-groups.abc` (41), `abcts-void-notes-and-stray-ties.abc` (15),
+`abcts-text-udef-parts-overlays.abc` (43).
 
-**SEVENTEEN DEFECTS IN ALL** — eight closing the handoff's §1, nine from two sweeps of
-territory no earlier sweep had touched.
+**TWENTY-SEVEN DEFECTS IN ALL** — eight closing the handoff's §1, nineteen from three sweeps
+of territory no earlier sweep had touched and the ladders they opened.
 
 ## 2. THE EIGHT
 
@@ -224,7 +230,85 @@ wants two more "Unknown character ignored" after the chord fails, where our tie 
 arms consume them silently. Making either arm warn unconditionally is a change with reach —
 our tokenizer consumes things abcjs's loop does not — so it wants a ladder of its own.
 
-## 7. WHAT IS LEFT
+## 7. AND THE WARNINGS GATE CLOSED, THEN A THIRD SWEEP OPENED EIGHT NAMED ROWS
+
+### 7.1 THE LAST WARNING ROW WAS WORTH TWO GEOMETRY DEFECTS
+
+`C2|[-1 D2|]` had been written up as wanting a ladder rather than a guess. It got one:
+
+⚠️ **A DIGIT AFTER A NOTE'S LENGTH AND ITS TRAILING SPACE VOIDS THE WHOLE NOTE.**
+`getCoreNote`'s digit case leaves `state = 'broken_rhythm'` after a fraction, and the digit
+case has no arm for that state: `else return null` (`abc_parse_music.js:1194-1210`). `C2 1 D2|`
+is ONE note in abcjs — the `D` — and three warnings; ours drew both. `C 1 D|` keeps its `C`
+and `C2 x1 D2|` keeps it too, which is what pins the rule to the PAIR rather than the digit.
+
+⚠️ **A SPLIT TIE TAKES THE 20px STUB WHERE A SPLIT SLUR TAKES THE PREFIX.**
+`setStartX(this.startlimitelem)` is called only in the branch that opens a SLUR — so which
+arm `calcX` reaches is decided by how the curve was WRITTEN, a DIFFERENT question from
+`isTie`, which is recomputed at draw time from the two pitches. They part company on exactly
+one shape: a `-` between different pitches.
+
+⚠️ **AND A CHARACTER THAT WARNS IS OWNED BY NOTHING**, which `extractMeasures` said from the
+other side once the fixture existed — `-CDEF|` against our `CDEF|` (a successful `-` is part
+of the note) and `CDEF|` against our `1CDEF|` (a stray digit is not). **Two rows, opposite
+directions, one rule.**
+
+⚠️ **AND THE WARNINGS RATCHET HELD 14 ROWS WHILE 39 AGREED.** Twenty-five could have
+regressed in silence. The gate was built to say so and its own message had been saying so.
+
+### 7.2 THE THIRD SWEEP — 31 of 36 EXACT, AND THE OPEN ROWS ARE THE FINDING
+
+`%%text`/`%%center` variants, spacing directives, multi-voice lyric alignment, `U:`
+redefinitions, `P:` part sequencing, `&` overlay boundaries. Every `P:` shape, every `&`
+overlay shape, every multi-voice lyric shape, `%%staffsep`, `%%sysstaffsep`, `%%musicspace`,
+`%%topspace` and `%%titlespace` were already right. Two closed — an unknown `U:` macro warns
+and expands to nothing, and a bare `%%center` is a centred EMPTY line — and eight are named.
+
+## 8. THE EIGHT OPEN ROWS, AND WHY TWO OF THEM WERE REVERTED
+
+All eight are in `abcts-text-udef-parts-overlays.abc` and named in `svg-bytes`'s PASSING
+note. **None is a tolerance.**
+
+**(a) AN EMPTY `%%text` DRAWS NOTHING AND MOVES TWICE THE FONT SIZE** — tunes 2, 35-39.
+`FreeText`'s first arm is `if (text === "") rows.push({move: font-size * 2})` with NO text
+row beside it (`free-text.js:8-10`), so a BLANK row is TALLER than a full one: 8.23px each.
+Measured on six rungs; page heights abcjs/ours 198.119/189.889, 240.119/223.659,
+231.889/223.659.
+
+⚠️ **THE ONE-LINE FIX MAKES IT WORSE.** Spending `textSize * 2` and drawing nothing takes the
+page 42px SHORT, because on a HEADINGLESS tune the block's rows never reach the page cursor
+at all — `Y lead` reads ONE advance of 68.89, which is `spacing.music + staffSeparation` and
+no block. What made the old number nearly right was the block's TEXT INK pushing the staff
+down through `musicOnlyTop`, a different mechanism that agrees while there is text to measure
+and vanishes when there is not. **The row is the block-placement machinery, not the branch**:
+`walksTopBlock` needs `musicOnlyTop`, which an inkless block does not produce.
+
+**(b) A `%%vskip` BEFORE A `%%text` IS THAT BLOCK'S FIRST ROW** — tune 7. `pushLine` stamps a
+pending vskip onto whatever LINE comes next, text lines included, and `FreeText(info, vskip)`
+pushes `{move: vskip}` ahead of everything (`tune-builder.js:904-908`, `free-text.js:5-6`).
+Ours holds vskip on the SYSTEM, so it lands after the text: 20px. **`%%text` then `%%vskip`
+is exact, which is what says the rule is the ORDER.**
+
+**(c) A CLOSE DECORATION'S DRAWN y IS ONE ULP OUT** — tune 34. `printSymbol` draws at
+`calcY(offset + ycorr)`, one sum and one multiply, where the emitter spends the correction on
+a finished y as a LENGTH. ⚠️ `PlacedGlyph.drawPitch` looks like the field for it and is NOT:
+its branch is an ABSOLUTE pitch with no staff origin, which the DYNAMIC gets away with only
+because its lane is shifted afterwards. Setting it put the sforzato 23px low. The row wants
+either a second field carrying the origin or `drawPitch` to mean "a pitch in this staff's
+frame" at both sites.
+
+## 9. AND ONE ROW IS A MODE QUESTION RATHER THAN A DEFECT
+
+**abcjs HAS NO INLINE `U:` AT ALL.** `letter_to_inline_header` switches on exactly eight —
+`[I: [M: [K: [P: [L: [Q: [V: [r:` (`abc_parse_header.js:347-410`) — so `[U:n=!accent!]` is
+read as a CHORD, fails, and yields seven warnings, an invisible barline carrying the
+`!accent!`, and four plain notes. **We support it, which is ABC 2.1 and not abcjs.**
+
+Closing it means the LEXER refusing the field rather than the parser ignoring it, and it
+takes `[w:` and `[T:` with it. That is a mode ruling, not a sweep row. The two shapes are out
+of the fixture on purpose — `extractMeasures` is all-or-nothing and is what found it.
+
+## 10. WHAT IS LEFT
 
 ### 1. THE SWEEP'S REMAINING TERRITORY, AND THE YIELD IS FALLING
 
