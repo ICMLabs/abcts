@@ -1824,7 +1824,17 @@ the other modes are correct:
 | Three-quarter tones | draws NOTHING, as abcjs does | draws the three-quarter glyph |
 | `%%vocalfont` | realized, per music LINE (abcjs's staff granularity) | realized, per lyric SEGMENT |
 | `+:` in a lyric continuation | abcjs's leak, reproduced | ABC 2.1 semantics |
+| **inline `[U:` / `[w:` / `[T:`** | **not a field at all — abcjs has only eight** | **read, as ABC 2.1 §4.19 says** |
 | `<defs>`/`<use>` | off, so markup stays abcjs-shaped | on, 0.34x the bytes |
+
+⚖️ **THE INLINE-FIELD ROW IS AN OWNER RULING, 2026-08-27: *"we should support U:"*.** The
+split is HOW it is supported. `letter_to_inline_header` switches on exactly `[I: [M: [K: [P:
+[L: [Q: [V: [r:` (`abc_parse_header.js:347-410`); anything else abcjs reads as a failed CHORD
+— `[U:n=!accent!]nCDEF|` gives it seven warnings, an invisible barline carrying the accent,
+and four plain notes. Strict reproduces that because strict exists to; every other mode
+defines the macro. A HEADER `U:` works in both, abcjs having that one. See
+`Docs/ABCJS-DIFFERENCES.md`, and note that the table above says **two** and has listed more
+than two for a while.
 
 THREE GATES, complementary — **pixel parity** catches DIFFERENT-ON-SCREEN (vs abcjs's own
 SVG, glyph outlines excepted), structure catches WRONG (vs abcjs's laid-out elements),

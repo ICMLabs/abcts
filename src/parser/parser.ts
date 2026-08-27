@@ -4955,7 +4955,7 @@ class Parser {
     // Re-read through the builder rather than capturing: an inline `[V:2]` mid-line
     // switches which voice subsequent events belong to.
     const voice = () => builder.voice
-    const lexer = new Lexer(this.src.slice(0, end), start)
+    const lexer = new Lexer(this.src.slice(0, end), start, isStrict(this.mode))
     const tokens: Token[] = []
     for (;;) {
       const token = lexer.next()
@@ -5227,6 +5227,42 @@ class Parser {
                     )
                 }
               }
+              accidentalStart = null
+            }
+          }
+          /**
+           * ⚠️ **AND AN ACCIDENTAL WITH NO NOTE LETTER AFTER IT IS A FAILED ATTEMPT.**
+           * `getCoreNote` leaves `state = 'pitch'` once it has read one, and `isComplete`
+           * answers FALSE for that state — so anything but a pitch letter falls to the
+           * arm's `else return null` (`abc_parse_music.js:1053-1056` and each accidental
+           * case). The note is abandoned, the iteration re-reads from the accidental, and
+           * every character of the attempt reaches `if (i === startI)` on its own.
+           *
+           * MEASURED on `[U:n=!accent!]nCDEF|`, which reaches this because abcjs has no
+           * inline `U:` and reads the whole thing as music: its `=` is warning five of
+           * seven, and ours held the natural pending and stamped it on the `C` four
+           * characters later — `=C` where abcjs draws a plain `C`.
+           *
+           * Strict only. Every other mode keeps the accidental, which is what ABC 2.1 says
+           * and what the `[U:]` split above is for.
+           */
+          if (isStrict(this.mode) && accidentalStart !== null) {
+            const nextKind = (tokens[i] as Token | undefined)?.kind
+            if (nextKind !== 'noteLetter' && nextKind !== 'accidental') {
+              for (let at = accidentalStart; at < token.start + token.length; at += 1) {
+                const ch = this.src[at]
+                if (ch !== ' ' && ch !== '`')
+                  this.warn(
+                    'unknown-character',
+                    'unknown character ignored',
+                    sourceRange(at, at + 1),
+                  )
+              }
+              builder.unreadable.push(
+                sourceRange(accidentalStart, token.start + token.length),
+              )
+              pendingAccidental = null
+              pendingMicrotone = 0
               accidentalStart = null
             }
           }

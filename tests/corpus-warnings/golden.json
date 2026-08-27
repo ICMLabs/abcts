@@ -1106,6 +1106,24 @@
  "repo/abcts-text-udef-parts-overlays-tune40": null,
  "repo/abcts-text-udef-parts-overlays-tune41": null,
  "repo/abcts-text-udef-parts-overlays-tune42": null,
+ "repo/abcts-text-udef-parts-overlays-tune43": [
+  "Music Line:5:2: Expected ']' to end the chords:  [<span style=\"text-decoration:underline;font-size:1.3em;font-weight:bold;\">U</span>:n=!accent!]nCDEF|",
+  "Music Line:5:2: Unknown character ignored:  [<span style=\"text-decoration:underline;font-size:1.3em;font-weight:bold;\">U</span>:n=!accent!]nCDEF|",
+  "Music Line:5:3: Unknown bar symbol:  [U<span style=\"text-decoration:underline;font-size:1.3em;font-weight:bold;\">:</span>n=!accent!]nCDEF|",
+  "Music Line:5:3: Unknown bar type:  [U<span style=\"text-decoration:underline;font-size:1.3em;font-weight:bold;\">:</span>n=!accent!]nCDEF|",
+  "Music Line:5:4: Unknown character ignored:  [U:<span style=\"text-decoration:underline;font-size:1.3em;font-weight:bold;\">n</span>=!accent!]nCDEF|",
+  "Music Line:5:5: Unknown character ignored:  [U:n<span style=\"text-decoration:underline;font-size:1.3em;font-weight:bold;\">=</span>!accent!]nCDEF|",
+  "Music Line:5:15: Unknown character ignored:  [U:n=!accent!]<span style=\"text-decoration:underline;font-size:1.3em;font-weight:bold;\">n</span>CDEF|"
+ ],
+ "repo/abcts-text-udef-parts-overlays-tune44": [
+  "Music Line:5:7: Expected ']' to end the chords:  CDEF|[<span style=\"text-decoration:underline;font-size:1.3em;font-weight:bold;\">U</span>:n=!accent!]nGABc|",
+  "Music Line:5:7: Unknown character ignored:  CDEF|[<span style=\"text-decoration:underline;font-size:1.3em;font-weight:bold;\">U</span>:n=!accent!]nGABc|",
+  "Music Line:5:8: Unknown bar symbol:  CDEF|[U<span style=\"text-decoration:underline;font-size:1.3em;font-weight:bold;\">:</span>n=!accent!]nGABc|",
+  "Music Line:5:8: Unknown bar type:  CDEF|[U<span style=\"text-decoration:underline;font-size:1.3em;font-weight:bold;\">:</span>n=!accent!]nGABc|",
+  "Music Line:5:9: Unknown character ignored:  CDEF|[U:<span style=\"text-decoration:underline;font-size:1.3em;font-weight:bold;\">n</span>=!accent!]nGABc|",
+  "Music Line:5:10: Unknown character ignored:  CDEF|[U:n<span style=\"text-decoration:underline;font-size:1.3em;font-weight:bold;\">=</span>!accent!]nGABc|",
+  "Music Line:5:20: Unknown character ignored:  CDEF|[U:n=!accent!]<span style=\"text-decoration:underline;font-size:1.3em;font-weight:bold;\">n</span>GABc|"
+ ],
  "repo/abcts-visualtranspose-tune0": null,
  "repo/abcts-visualtranspose-tune1": null,
  "repo/abcts-visualtranspose-tune2": null,

@@ -330,3 +330,15 @@ T:Plain Accent
 L:1/4
 K:C
 !accent!CDEF|
+
+X:44
+T:Inline Udef
+K:C
+L:1/4
+[U:n=!accent!]nCDEF|
+
+X:45
+T:Inline Udef Midline
+K:C
+L:1/4
+CDEF|[U:n=!accent!]nGABc|

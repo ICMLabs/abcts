@@ -146,6 +146,36 @@ Times-Bold 16` puts "vocalfont", "Times", "Bold" and "16" under four noteheads.
 
 *Verified: parse tree of the Gonzato §4.1.4 fixture.*
 
+### There are only eight inline fields, and `[U:` is not one — MODE SPLIT
+
+`letter_to_inline_header` is a switch on `line.substring(i, i+3)` with exactly eight arms:
+`[I:`, `[M:`, `[K:`, `[P:`, `[L:`, `[Q:`, `[V:` and `[r:` (`abc_parse_header.js:347-410`).
+ABC 2.1 §4.19 allows any field inline that is legal in a tune body, which includes `U:`,
+`w:` and `T:`. Anything outside the eight falls past the switch, so abcjs reads the `[` as a
+CHORD, fails on the field letter, and warns its way through the characters one at a time.
+
+`[U:n=!accent!]nCDEF|` is therefore, in abcjs: seven warnings — `Expected ']' to end the
+chords`, `Unknown character ignored` on the `U`, `Unknown bar symbol` and `Unknown bar type`
+on the `:`, `Unknown character ignored` on the `n`, the `=` and the later `n` — an
+**invisible barline** spanning `!accent!]` and carrying that decoration, and four plain
+notes. The macro is never defined and the `n` before `C` is discarded.
+
+| | `abcjs-strict` | `abc2.1` / `extended` |
+|---|---|---|
+| `[U:n=!accent!]` | reproduced: no field, seven warnings, the accent on an invisible bar | the macro is defined and `n` is an accent |
+
+A **header** `U:` works in both — abcjs supports that one.
+
+⚖️ **Owner's ruling, 2026-08-27: the FEATURE stays.** The split is how it stays: strict
+exists to be byte-equal to abcjs, and every other mode is where ABC 2.1 is read correctly —
+the same shape as the melisma, the three-quarter tone and `%%vocalfont` above.
+
+*Verified: `abcjs.parseOnly` on the shape above, element by element and warning by warning,
+against `tests/corpus-abcjs/fixtures/abcts-text-udef-parts-overlays.abc` tunes 44-45, which
+are byte-exact in strict. The set of eight is confirmed against both corpora, which between
+them write `[V:` 201 times, `[K:` 78, `[Q:` 24, `[M:` 14, `[I:` 4, `[L:` 3, `[P:` 2 and
+`[r:` once — this set exactly and nothing else.*
+
 ### `!staccato!` is dropped, while `.` works
 
 abcjs accepts a `!name!` decoration only if the name appears in one of its five decoration

@@ -630,17 +630,15 @@ const PASSING: readonly string[] = [
    * `PlacedGlyph.drawPitch` looks like the field for it and is NOT; measured, tried and
    * reverted at the `scripts.sforzato` push in `decorationGlyphs`.
    *
-   * ⚠️ **AND TWO SHAPES ARE NOT IN THIS FIXTURE ON PURPOSE: `[U:n=!accent!]`.**
-   * **abcjs HAS NO INLINE `U:` AT ALL** — `letter_to_inline_header` switches on exactly
-   * eight, `[I: [M: [K: [P: [L: [Q: [V: [r:` (`abc_parse_header.js:347-410`) — so it reads
-   * the `[` as a CHORD, fails, and emits seven warnings, an invisible barline carrying the
-   * `!accent!` decoration, and four plain notes. We support it, which is ABC 2.1 and not
-   * abcjs. Closing it means the LEXER refusing the field, not the parser ignoring it, and
-   * it would take `[w:` and `[T:` with it — a mode question rather than a defect, and too
-   * big to land beside a sweep. See `Docs/CHECKPOINT-2026-08-26b.md`.
+   * ✅ **AND `[U:n=!accent!]` IS A MODE SPLIT NOW — tunes 43 and 44.** abcjs has no inline
+   * `U:` at all: `letter_to_inline_header` switches on exactly eight, `[I: [M: [K: [P: [L:
+   * [Q: [V: [r:` (`abc_parse_header.js:347-410`), so it reads the `[` as a CHORD, fails,
+   * and emits seven warnings, an invisible barline carrying the `!accent!`, and four plain
+   * notes. **Strict reproduces that; `abc2.1` and `extended` keep the feature.** Owner's
+   * ruling, 2026-08-27 — see `Docs/ABCJS-DIFFERENCES.md`.
    */
   ...[
-    0, 1, 3, 4, 5, 6, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 40, 41, 42
+    0, 1, 3, 4, 5, 6, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 40, 41, 42, 43, 44
   ].map((i) => `abcts-text-udef-parts-overlays-tune${i}`),
   /**
    * `abcts-voice-style.abc` — `V:… style=`, the first of the three modifiers the V:

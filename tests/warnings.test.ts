@@ -134,6 +134,8 @@ const PASSING: readonly string[] = [
    */
   "repo/abcts-text-udef-parts-overlays-tune18",
   "repo/abcts-text-udef-parts-overlays-tune19",
+  "repo/abcts-text-udef-parts-overlays-tune43",
+  "repo/abcts-text-udef-parts-overlays-tune44",
   "repo/abcts-bars-graces-and-groups-tune0",
   "repo/abcts-bars-graces-and-groups-tune40",
   "repo/abcts-bars-graces-and-groups-tune6",

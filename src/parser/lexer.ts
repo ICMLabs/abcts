@@ -56,12 +56,30 @@ function delimited(src: string, from: number, close: string): number {
   return src.length
 }
 
+/**
+ * **THE EIGHT INLINE FIELDS abcjs HAS, AND IT HAS NO OTHERS.**
+ * `letter_to_inline_header` is a switch on `line.substring(i, i+3)` with exactly these arms
+ * (`abc_parse_header.js:347-410`) — anything else falls past it, so abcjs reads the `[` as a
+ * CHORD, fails, and warns its way through the characters one at a time.
+ *
+ * Both corpora between them write `[V:` 201 times, `[K:` 78, `[Q:` 24, `[M:` 14, `[I:` 4,
+ * `[L:` 3, `[P:` 2 and `[r:` once — **this set exactly, and nothing else.**
+ */
+const ABCJS_INLINE_FIELDS = new Set(['I', 'M', 'K', 'P', 'L', 'Q', 'V', 'r'])
+
 export class Lexer {
   private pos: number
 
   constructor(
     private readonly src: string,
     start = 0,
+    /**
+     * **`abcjs-strict` ONLY, and it decides whether `[U:…]` IS A FIELD AT ALL.** See
+     * `ABCJS_INLINE_FIELDS` and the mode split in `Docs/ABCJS-DIFFERENCES.md`: abcjs has no
+     * inline `U:`, `w:` or `T:`, and strict reproduces that; `abc2.1` and `extended` read
+     * them as ABC 2.1 says to. Ruled by the owner on 2026-08-27 — the FEATURE stays.
+     */
+    private readonly strictFields = false,
   ) {
     this.pos = start
   }
@@ -155,7 +173,12 @@ export class Lexer {
 
     // `[K:C]` is an inline field; a bare `[` opens a chord.
     if (c === '[') {
-      if (start + 2 < src.length && src[start + 2] === ':') {
+      if (
+        start + 2 < src.length &&
+        src[start + 2] === ':' &&
+        // …and in STRICT only the eight abcjs knows — see `ABCJS_INLINE_FIELDS`.
+        (!this.strictFields || ABCJS_INLINE_FIELDS.has(src[start + 1] as string))
+      ) {
         return token('inlineField', delimited(src, start, ']') - start)
       }
       return token('openBracket', 1)
