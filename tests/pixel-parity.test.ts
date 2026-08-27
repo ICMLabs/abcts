@@ -724,10 +724,7 @@ describe("pixel parity vs abcjs rendered SVG", () => {
   // fixture, never pooled — see `fixtureMedianDistance`), and how many fixtures land
   // within 25 / 50 / 100px of abcjs. The corpus figure is the median of the per-fixture
   // medians, which is the number the checkpoint tracks.
-    // 15s, not vitest's 5s default: this renders the whole corpus and crossed the
-  // default under full-suite contention the run after the corpus grew. A timeout
-  // that does not track the corpus is a gate that fails for growing.
-  it("records its geometry for the parity tracker", () => {
+    it("records its geometry for the parity tracker", () => {
     const perFixture = withGoldens
       .map((target) => ({
         name: target.key,
@@ -753,7 +750,7 @@ describe("pixel parity vs abcjs rendered SVG", () => {
     // of the axis is that it is not yet at parity, so a zero here means it measured nothing.
     expect(perFixture.length).toBe(withGoldens.length);
     expect(perFixture.every((f) => Number.isFinite(f.median))).toBe(true);
-  }, 15_000);
+  });
 
   /**
    * THE RANKED TABLE, the way `corpus-abcjs-ranked` writes one for the harvested corpus.

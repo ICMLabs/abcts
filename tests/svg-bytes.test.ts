@@ -843,9 +843,6 @@ function run(c: Case): Diff | null {
 }
 
 describe("strict SVG vs abcjs, byte for byte", () => {
-  // 15s, not vitest's 5s default: this renders every case of the corpus TWICE — 439 rows
-  // now — and under full-suite contention it crossed the default the run after the corpus
-  // grew. A timeout that tracks the corpus size is a gate that fails for growing.
   it("writes the ranked table", () => {
     const rows = CASES.map((c) => {
       let diff: Diff | null;
@@ -872,7 +869,7 @@ describe("strict SVG vs abcjs, byte for byte", () => {
     ].join("\n");
     writeFileSync("/tmp/abcts-svg-bytes-ranked.txt", `${text}\n`);
     expect(rows.length).toBe(CASES.length);
-  }, 15_000);
+  });
 
   for (const slug of PASSING) {
     it(`is byte-exact — ${slug}`, () => {
