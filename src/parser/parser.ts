@@ -1565,11 +1565,19 @@ class VoiceBuilder {
   }
 
   /** A mid-tune `K:… clef=` or `[K: bass]`. Delta, like the key change. */
-  setClefChange(clef: Clef, range: SourceRange | null = null, inline = false): void {
+  setClefChange(
+    clef: Clef,
+    range: SourceRange | null = null,
+    inline = false,
+    /** No clef NAME was written, so nothing is drawn — see `Measure.clefChangeSilent`. */
+    silent = false,
+  ): void {
     this.pendingClefChange = clef
     this.pendingClefChangeRange = range
     this.pendingClefChangeInline = inline
+    this.pendingClefChangeSilent = silent
   }
+  private pendingClefChangeSilent = false
 
   /**
    * A `%%MIDI` written INSIDE the music — an element in the stream, not a tune setting.
@@ -1642,6 +1650,7 @@ class VoiceBuilder {
       clefChange: this.pendingClefChange,
       clefChangeSourceRange: this.pendingClefChangeRange,
       ...(this.pendingClefChangeInline ? { clefChangeInline: true } : {}),
+      ...(this.pendingClefChangeSilent ? { clefChangeSilent: true } : {}),
       tempoChange: this.pendingTempoChange,
       tempoChangeSourceRange: this.pendingTempoChangeRange,
       ...(this.pendingMidi.length > 0 ? { midiCommands: this.pendingMidi } : {}),
@@ -1665,6 +1674,7 @@ class VoiceBuilder {
     this.pendingClefChange = null
     this.pendingClefChangeRange = null
     this.pendingClefChangeInline = false
+    this.pendingClefChangeSilent = false
     this.pendingTempoChange = null
     this.pendingTempoChangeRange = null
     this.pendingMidi = []
@@ -2641,6 +2651,16 @@ class ScoreBuilder {
    */
   key: KeySignature = { ...defaultKey(), none: true }
   clef: Clef = defaultClef
+  /**
+   * **abcjs's `multilineVars.clef` — the RUNNING clef, mutated in place by every `K:`.**
+   * `builder.clef` beside it is the tune's HEADER clef and stops moving once the body
+   * opens; this one carries every mid-tune change, because a `K:` modifier with no clef
+   * NAME beside it (`[K:C stafflines=1]`, `K:C middle=d`) writes onto the running object
+   * and is otherwise lost (`abc_parse_key_voice.js:409-438`).
+   *
+   * See `Measure.clefChangeSilent` for what such a change draws, which is nothing.
+   */
+  clefInForce: Clef = defaultClef
   tempo: Tempo | null = null
   tempoSourceRange: SourceRange | null = null
   /** The tune's `Q:` was written INLINE — drawn, but not the audio clock's. */
@@ -4495,8 +4515,30 @@ class Parser {
           builder.voiceFor(id).transpose = Number.parseInt(shift[1], 10)
         }
         const voiceClef = parseClef(value)
-        if (voiceClef !== null) builder.voiceFor(id).clef = voiceClef
-        const bare = bareStaffLines(value)
+        /**
+         * ⚠️ **A `V:… stafflines=0` IS IGNORED, BECAUSE ABCJS'S GUARD IS FALSY.**
+         * `if (multilineVars.currentVoice.stafflines) params.stafflines = …`
+         * (`abc_parse_music.js:1019-1020`) — and `0` never gets past it, so the staff keeps
+         * its five lines. Measured: `V:1 stafflines=0` draws all five in abcjs while
+         * `K:C stafflines=0` draws NONE, because the `K:` path writes
+         * `multilineVars.clef.stafflines` outright with no guard at all
+         * (`abc_parse_key_voice.js:428`). **Two spellings of one setting that disagree only
+         * at zero.**
+         *
+         * THIRD TIME ON THIS BRANCH that a declared value of 0 is not declared at all — a
+         * stem's `bottom: p1 - 1` and a mezzosoprano clef's edge were the first two. Both
+         * were written up as belonging to their own site; this is the rule.
+         *
+         * Our own doc block had reasoned the other way — "`stafflines=0` is a real value,
+         * not 'unset' — it draws no staff at all — so the range test has to admit it". True
+         * of the `K:` path, and an inference on the `V:` one.
+         */
+        const zeroDropped = /\bstafflines=0\b/i.test(value)
+        if (voiceClef !== null)
+          builder.voiceFor(id).clef = zeroDropped
+            ? { ...voiceClef, staffLines: DEFAULT_STAFF_LINES }
+            : voiceClef
+        const bare = zeroDropped ? null : bareStaffLines(value)
         if (bare !== null) builder.voiceFor(id).staffLineOverride = bare
         const stems = stemModifier(value)
         if (stems !== null) builder.voiceFor(id).stemDirection = stems
@@ -4657,7 +4699,27 @@ class Parser {
               inline,
               builder.keywarn,
             )
-          if (midClef !== null) builder.voice.setClefChange(midClef, range, inline)
+          if (midClef !== null) {
+            builder.clefInForce = midClef
+            builder.voice.setClefChange(midClef, range, inline)
+          } else if (staffLinesWritten(value) || middleLineOverride(value) !== null) {
+            /**
+             * **A `K:` MODIFIER WITH NO CLEF NAME STILL MOVES THE RUNNING CLEF.**
+             * `parseKey`'s inner switch writes `multilineVars.clef.stafflines` /
+             * `.verticalPos` outright (`abc_parse_key_voice.js:409-438`), and
+             * `startNewLine` copies that object — so `[K:C stafflines=1]` opens its line
+             * with ONE staff line. Nothing is DRAWN, because
+             * `appendStartingElement('clef', …)` is guarded on `result.foundClef` and only
+             * a clef NAME sets it. See `Measure.clefChangeSilent`.
+             *
+             * ⚠️ **AND IT IS BUILT ON THE RUNNING CLEF, NOT THE HEADER'S** —
+             * `builder.clef` stops moving once the body opens, so reading it would put a
+             * `[K:C stafflines=1]` after a `[K:C bass]` back into treble.
+             */
+            const changed = clefWith(builder.clefInForce, value)
+            builder.clefInForce = changed
+            builder.voice.setClefChange(changed, range, inline, true)
+          }
           // A MID-TUNE `K: octave=` is GLOBAL and takes effect from here. abcjs reads it
           // per note as the fallback under the voice's own `octave=`, so `parse-note-id-01`
           // — whose second half is written an octave lower on purpose — printed 27.1px
@@ -4675,6 +4737,8 @@ class Parser {
         builder.keySourceRange = range
         // `K:C bass` sets the tune's clef; a `V:… clef=` still overrides it per voice.
         builder.clef = clefWith(builder.clef, value)
+        // …and the RUNNING clef opens on the header's. See `clefInForce`.
+        builder.clefInForce = builder.clef
         /**
          * **`transpose=` RIDES ON `K:` TOO, AND IT IS THE SAME SWITCH.** abcjs's clef
          * modifiers are read by ONE function for both fields, and its `case "transpose"`

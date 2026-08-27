@@ -3760,7 +3760,14 @@ function layoutRest(
   // 66% fill that makes abcjs justify it at all.
   if (rest.kind === 'multiMeasure' && rest.measureCount > 0) {
     const mm = glyphsFor(strict).width('restHBar')
-    glyphs.push(glyphAt('restHBar', x + mm, 1))
+    // ⚠️ **THE `dx` IS CARRIED, NOT RE-DERIVED.** abcjs's `RelativeElement` holds
+    // `dx = mmWidth` and `setX` re-places the child at `x + dx`
+    // (`abstract-engraver.js:593-598`, `relative-element.js:124-125`), where recovering it
+    // as `(x + mm) - x` is a different double: a `Z` that `centerWholeRests` moves — any
+    // `Z` with an element before it — came out `115.2642034355964` against abcjs's
+    // `115.26420343559641`. Same rule as a flag's `headx` and a dot's offset; see
+    // `PlacedGlyph.dx`.
+    glyphs.push({ ...glyphAt('restHBar', x + mm, 1), dx: mm })
     texts.push({
       text: String(rest.measureCount),
       /**
@@ -11629,7 +11636,8 @@ function layoutMeasure(
      * dropped it outright: `abcts-ledger-gaps-2` tune 6 came out 36px narrow with one clef
      * where abcjs draws two.
      */
-    if (measure.clefChange == null) return
+    // …and a change carrying only a modifier draws NOTHING — see `Measure.clefChangeSilent`.
+    if (measure.clefChange == null || measure.clefChangeSilent === true) return
     // …and NOT AT THE HEAD when it was written after some of the measure's music — see
     // `clefChangeAt`. The event loop has it.
     if (clefChangeAt > 0) return
@@ -11823,7 +11831,17 @@ function layoutMeasure(
    */
   let clefNow = clef
   const drawClefBefore = (eventIndex: number): void => {
-    if (measure.clefChange == null || clefChangeAt === 0 || clefChangeAt !== eventIndex) return
+    if (
+      measure.clefChange == null ||
+      measure.clefChangeSilent === true ||
+      clefChangeAt === 0 ||
+      clefChangeAt !== eventIndex
+    ) {
+      // A SILENT change still switches the clef every later pitch is read against.
+      if (measure.clefChange != null && measure.clefChangeSilent === true && clefChangeAt === eventIndex)
+        clefNow = measure.clefChange
+      return
+    }
     const change = layoutClef(x, measure.clefChange, strict)
     if (change !== null) {
       elements.push(
@@ -13175,6 +13193,7 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
           const next = (voice?.measures ?? [])[measureIndex + 1]
           // …and with NO next measure, a trailing `K: clef=` draws the same cautionary.
           if (next === undefined) return measure.trailingClef ?? null
+          if (next.clefChangeSilent === true) return null
           return next.startsSystem === true ? (next.clefChange ?? null) : null
         })(),
         (voicesOfStaff.find((m) => m.includes(voiceIndex))?.length ?? 1) > 1,
@@ -14774,7 +14793,15 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
         // `el.width` centred it on the SPRING and put the glyph 37px left of abcjs's.
         const ink = (el.rod ?? el.width) - ENGRAVE.noteRodGap
         const midpoint = (after.x - before.x) / 2 + before.x
-        elements[j] = shiftElement(el, midpoint - ink / 2 - el.x)
+        // **PLACE IT ON THE CENTRE, DON'T SHIFT IT THERE.** `absolute-element.js:238` is
+        // `this.x = midpoint - this.w / 2` and then `children[k].setX(this.x)` — one
+        // assignment, not an addition — which is `placeElement`'s whole reason to exist.
+        //
+        // ⚠️ **AND ON ITS OWN THIS MOVED NOTHING.** The `Z` ULP beside it was the GLYPH's
+        // `dx` being re-derived, not the element's x being shifted; the two look alike and
+        // only one was the defect. Kept because it is what abcjs does, and written down so
+        // it is not "simplified" back into a shift the next time it measures as free.
+        elements[j] = placeElement(el, midpoint - ink / 2)
       }
 
       const beams: PlacedLine[] = []
@@ -14852,7 +14879,12 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
         // How many lines this voice's staff draws — `V:… stafflines=`. The MERGE keeps the
         // first voice's, which is abcjs's answer too: `stafflines` is read off the staff's
         // clef (`abstract-engraver.js:182`), and a staff has one.
-        staffLineCount: plan.clef.staffLines,
+        // …**AND IT IS THE CLEF THIS SYSTEM OPENS IN, NOT THE VOICE'S DECLARED ONE.**
+        // abcjs reads `abcstaff.clef.stafflines` and `startNewLine` stamps that clef per
+        // LINE (`abstract-engraver.js:182`), so a mid-tune `K:C stafflines=1` changes the
+        // staff from its own line onward. Ours read the voice's clef once and drew five
+        // lines for the whole tune. See `VoicePlan.clefAt`.
+        staffLineCount: plan.clefAt(span.start).staffLines,
         staffLines: [],
         beams,
         curves: [],

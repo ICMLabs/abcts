@@ -465,10 +465,12 @@ const WITHIN: Readonly<Record<string, number>> = {
   // …and `abcts-lyric-verses.abc`, `w:` lines that do NOT cover every note.
   // …and `abcts-inline-fields-and-blocks.abc`, the mid-measure `[Q:]`, the left/right
   // annotations and the `%%begintext` block before the music.
-  "0.05": 222,
-  "1": 222,
-  "5": 222,
-  "25": 222,
+  // …and `abcts-stafflines-and-modifiers.abc`, a 36-shape sweep over untouched territory
+  // plus the three ladders that closed what it found.
+  "0.05": 223,
+  "1": 223,
+  "5": 223,
+  "25": 223,
 };
 
 const names = readdirSync(fixturesDir)

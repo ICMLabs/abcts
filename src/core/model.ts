@@ -1159,6 +1159,17 @@ export interface Measure {
    * ⚠️ **AND IT IS ALSO A RUNNING VALUE**: the clef it names is what the next VOICE's line
    * opens in, so it has to reach `runningClefs` whether or not anything draws it.
    */
+  /**
+   * **THE CHANGE CARRIES A CLEF AND DRAWS NO CLEF ELEMENT.** A `K:` modifier written with
+   * no clef NAME beside it — `[K:C stafflines=1]`, `K:C middle=d` — writes onto abcjs's
+   * running `multilineVars.clef` all the same (`abc_parse_key_voice.js:409-438`), so the
+   * line it leads opens with the new value; but `appendStartingElement('clef', …)` is
+   * guarded on `result.foundClef`, which only a clef NAME sets, so nothing is printed.
+   *
+   * Measured: `[K:C stafflines=1]CDEF|` draws ONE staff line at 52.14 and no clef glyph
+   * where ours drew five lines at 36.64 and the `staff-extra clef` it always had.
+   */
+  readonly clefChangeSilent?: boolean
   readonly trailingClef?: Clef | null
   readonly trailingClefSourceRange?: SourceRange | null
   /** A mid-tune `M:` taking effect at this measure. */

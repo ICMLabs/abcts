@@ -1,0 +1,340 @@
+X:1
+T:Stafflines 1
+L:1/4
+K:C
+V:1 stafflines=1
+CDEF|
+
+X:2
+T:Stafflines 0
+L:1/4
+K:C
+V:1 stafflines=0
+CDEF|
+
+X:3
+T:Stafflines 3
+L:1/4
+K:C
+V:1 stafflines=3
+CDEF|
+
+X:4
+T:Stafflines Key
+L:1/4
+K:C stafflines=2
+CDEF|
+
+X:5
+T:Stafflines Midtune
+L:1/4
+K:C
+CDEF|
+[K:C stafflines=1]GABc|
+
+X:6
+T:Stafflines Two Voices
+L:1/4
+K:C
+V:1 stafflines=1
+V:2
+V:1
+CDEF|
+V:2
+GABc|
+
+X:7
+T:Repeat Bare
+L:1/4
+K:C
+CDEF|
+%%repeat
+
+X:8
+T:Repeat N
+L:1/4
+K:C
+CDEF|
+%%repeat 2
+
+X:9
+T:Repeat Two Bars
+L:1/4
+K:C
+CDEF|GABc|
+%%repeat 1 2
+
+X:10
+T:Percmap
+L:1/4
+%%percmap D 38
+K:C perc
+DDDD|
+
+X:11
+T:Map Plain
+L:1/4
+%%map mymap C heads=x
+K:C
+%%voicemap mymap
+CDEF|
+
+X:12
+T:Map Allnotes
+L:1/4
+%%map mymap * heads=triangle
+K:C
+%%voicemap mymap
+CDEF|
+
+X:13
+T:Percmap Name
+L:1/4
+%%percmap E snare
+K:C perc
+EEEE|
+
+X:14
+T:V Name
+L:1/4
+K:C
+V:1 name="Fiddle"
+CDEF|
+
+X:15
+T:V Sname
+L:1/4
+K:C
+V:1 name="Fiddle" sname="Fdl"
+CDEF|
+GABc|
+
+X:16
+T:V Gstem
+L:1/4
+K:C
+V:1 gstem=up
+C{d}DEF|
+
+X:17
+T:V Stem Down
+L:1/4
+K:C
+V:1 stem=down
+CDEF|
+
+X:18
+T:V Scale
+L:1/4
+K:C
+V:1 scale=1.5
+CDEF|
+
+X:19
+T:V Octave
+L:1/4
+K:C
+V:1 octave=1
+CDEF|
+
+X:20
+T:V Transpose
+L:1/4
+K:C
+V:1 transpose=2
+CDEF|
+
+X:21
+T:V Merge
+L:1/4
+K:C
+V:1
+CDEF|
+V:2 merge
+GABc|
+
+X:22
+T:V Space
+L:1/4
+K:C
+V:1 space=20
+CDEF|
+
+X:23
+T:Micro Quarter Sharp
+L:1/4
+K:C
+^/C DEF|
+
+X:24
+T:Micro Three Quarter
+L:1/4
+K:C
+^3/2C DEF|
+
+X:25
+T:Micro Quarter Flat
+L:1/4
+K:C
+_/C DEF|
+
+X:26
+T:Micro Numeric
+L:1/4
+K:C
+^2/3C DEF|
+
+X:27
+T:Midi Gchord
+L:1/4
+K:C
+%%MIDI gchord fzczfzcz
+"C"CDEF|
+
+X:28
+T:Midi Drum
+L:1/4
+K:C
+%%MIDI drum dddd 35 35 35 35
+CDEF|
+
+X:29
+T:Midi Transpose
+L:1/4
+K:C
+%%MIDI transpose 2
+CDEF|
+
+X:30
+T:Midi Channel
+L:1/4
+K:C
+%%MIDI channel 10
+CDEF|
+
+X:31
+T:Tuplet Across Clef
+L:1/8
+K:C
+(3CDE[K:C bass](3FGA|
+
+X:32
+T:Slur Across Clef
+L:1/4
+K:C
+(CD[K:C bass]EF)|
+
+X:33
+T:Grace With Clef
+L:1/4
+K:C
+CD[K:C bass]{g}EF|
+
+X:34
+T:Lyric Across Voices
+L:1/4
+K:C
+V:1
+CDEF|
+w:a b c d
+V:2
+GABc|
+w:e f g h
+
+X:35
+T:Volta With Tempo
+L:1/4
+K:C
+CDEF|1[Q:1/4=90]GABc:|2cdef|]
+
+X:36
+T:Decoration On Rest
+L:1/4
+K:C
+!fermata!z!trill!Z|
+
+X:37
+T:K Zero
+L:1/4
+K:C stafflines=0
+CDEF|
+
+X:38
+T:Inline K Zero
+L:1/4
+K:C
+[K:C stafflines=0]CDEF|
+
+X:39
+T:K One
+L:1/4
+K:C stafflines=1
+CDEF|
+
+X:40
+T:Inline 1
+L:1/4
+K:C
+[K:C stafflines=1]CDEF|
+
+X:41
+T:Inline 3
+L:1/4
+K:C
+[K:C stafflines=3]CDEF|
+
+X:42
+T:Standalone 1
+L:1/4
+K:C
+CDEF|
+K:C stafflines=1
+GABc|
+
+X:43
+T:Inline Midbar
+L:1/4
+K:C
+CD[K:C stafflines=1]EF|
+
+X:44
+T:Inline With Clef
+L:1/4
+K:C
+[K:C bass stafflines=1]CDEF|
+
+X:45
+T:Plain Z
+L:1/4
+K:C
+Z|
+
+X:46
+T:Z Then Z
+L:1/4
+K:C
+z Z|
+
+X:47
+T:Decorated Z
+L:1/4
+K:C
+!trill!Z|
+
+X:48
+T:Fermata Z
+L:1/4
+K:C
+!fermata!z|
+
+X:49
+T:Z4
+L:1/4
+K:C
+Z4|
+
+X:50
+T:Note Then Z
+L:1/4
+K:C
+C Z|

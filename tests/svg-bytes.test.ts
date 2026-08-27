@@ -537,6 +537,33 @@ const PASSING: readonly string[] = [
     (_, i) => `abcts-inline-fields-and-blocks-tune${i}`,
   ),
   /**
+   * `abcts-stafflines-and-modifiers.abc` — a 36-shape SWEEP over territory no earlier sweep
+   * had touched (staff-line counts, `%%repeat`, `%%map`/`%%percmap`, `V:` modifiers past
+   * `style=`, microtones, `%%MIDI` against the DRAWING, and four feature boundaries) plus
+   * the three ladders that closed what it found. **Three defects out of 36 shapes.**
+   *
+   * ⚠️ **`V:… stafflines=0` DRAWS ALL FIVE AND `K:C stafflines=0` DRAWS NONE.** abcjs's
+   * `V:` path is guarded `if (multilineVars.currentVoice.stafflines)`
+   * (`abc_parse_music.js:1019`) and `0` is FALSY, where the `K:` path writes
+   * `multilineVars.clef.stafflines` outright (`abc_parse_key_voice.js:428`). **Two
+   * spellings of one setting that disagree at zero and nowhere else** — and the THIRD time
+   * on this branch that a declared 0 is not declared at all.
+   *
+   * ⚠️ **AND A MID-TUNE `stafflines=` CHANGES THE STAFF AND DRAWS NO CLEF.** A `K:` modifier
+   * with no clef NAME beside it still writes the running `multilineVars.clef`, which
+   * `startNewLine` copies — but `appendStartingElement('clef', …)` is guarded on
+   * `foundClef`. See `Measure.clefChangeSilent`. Ours ignored it entirely and drew five
+   * lines for the whole tune.
+   *
+   * ⚠️ **AND A CENTRED `Z`'S GLYPH `dx` WAS RE-DERIVED**, `(x + mm) - x` against abcjs's
+   * carried `mmWidth` — `115.2642034355964` against `115.26420343559641`, on any `Z` with
+   * an element before it. An offset is CONSTRUCTED, never recovered.
+   */
+  ...Array.from(
+    { length: 50 },
+    (_, i) => `abcts-stafflines-and-modifiers-tune${i}`,
+  ),
+  /**
    * `abcts-voice-style.abc` — `V:… style=`, the first of the three modifiers the V:
    * enumeration left as a FEATURE. All five shapes, one voice each.
    *

@@ -220,9 +220,18 @@ describe("clefs", () => {
     expect(five).toHaveLength(5);
     expect(rules("X:1\nK:C\nV:1 stafflines=3\nC|\n")).toEqual(five.slice(0, 3));
     expect(rules("X:1\nK:C\nV:1 stafflines=1\nC|\n")).toEqual([five[2]]);
-    expect(rules("X:1\nK:C\nV:1 stafflines=0\nC|\n")).toEqual([]);
+    // ⚠️ **AND `V:… stafflines=0` DRAWS ALL FIVE, BECAUSE ABCJS'S GUARD IS FALSY.**
+    // `if (multilineVars.currentVoice.stafflines)` (`abc_parse_music.js:1019`) — `0` never
+    // gets past it. This line asserted `[]` under a comment reading "zero draws no staff at
+    // all", which is our own inference and is true of the `K:` path only: that one writes
+    // `multilineVars.clef.stafflines` outright (`abc_parse_key_voice.js:428`). **Two
+    // spellings of one setting that disagree at zero and nowhere else.**
+    expect(rules("X:1\nK:C\nV:1 stafflines=0\nC|\n")).toEqual(five);
     // It rides on K: too, and alongside a `clef=` rather than instead of one.
     expect(rules("X:1\nK:C stafflines=2\nC|\n")).toEqual(five.slice(0, 2));
+    expect(rules("X:1\nK:C stafflines=0\nC|\n")).toEqual([]);
+    // …and a MID-TUNE one changes the staff from its own line onward, drawing no clef.
+    expect(rules("X:1\nK:C\n[K:C stafflines=1]C|\n")).toEqual([five[2]]);
     expect(rules("X:1\nK:C\nV:1 clef=bass stafflines=1\nC|\n")).toEqual([
       five[2],
     ]);

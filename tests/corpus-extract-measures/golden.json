@@ -5549,6 +5549,480 @@
    "hasPickup": true
   }
  ],
+ "repo/abcts-stafflines-and-modifiers": [
+  {
+   "header": "X:1\nT:Stafflines 1\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:2\nT:Stafflines 0\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:3\nT:Stafflines 3\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:4\nT:Stafflines Key\nL:1/4\nK:C stafflines=2\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:5\nT:Stafflines Midtune\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    },
+    {
+     "abc": "[K:C stafflines=1]GABc|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:6\nT:Stafflines Two Voices\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:7\nT:Repeat Bare\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:8\nT:Repeat N\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:9\nT:Repeat Two Bars\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    },
+    {
+     "abc": "GABc|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:10\nT:Percmap\nL:1/4\n%%percmap D 38\nK:C perc\n",
+   "measures": [
+    {
+     "abc": "DDDD|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:11\nT:Map Plain\nL:1/4\n%%map mymap C heads=x\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:12\nT:Map Allnotes\nL:1/4\n%%map mymap * heads=triangle\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:13\nT:Percmap Name\nL:1/4\n%%percmap E snare\nK:C perc\n",
+   "measures": [
+    {
+     "abc": "EEEE|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:14\nT:V Name\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:15\nT:V Sname\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    },
+    {
+     "abc": "GABc|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:16\nT:V Gstem\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "C{d}DEF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:17\nT:V Stem Down\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:18\nT:V Scale\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:19\nT:V Octave\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:20\nT:V Transpose\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:21\nT:V Merge\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:22\nT:V Space\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:23\nT:Micro Quarter Sharp\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "^/C DEF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:24\nT:Micro Three Quarter\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "C DEF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:25\nT:Micro Quarter Flat\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "_/C DEF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:26\nT:Micro Numeric\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "C DEF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:27\nT:Midi Gchord\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "\"C\"CDEF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:28\nT:Midi Drum\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:29\nT:Midi Transpose\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:30\nT:Midi Channel\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:31\nT:Tuplet Across Clef\nL:1/8\nK:C\n",
+   "measures": [
+    {
+     "abc": "(3CDE[K:C bass](3FGA|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "X:32\nT:Slur Across Clef\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "(CD[K:C bass]EF)|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:33\nT:Grace With Clef\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "CD[K:C bass]{g}EF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:34\nT:Lyric Across Voices\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:35\nT:Volta With Tempo\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEF|1",
+     "startEnding": "1"
+    },
+    {
+     "abc": "[Q:1/4=90]GABc:|2",
+     "startEnding": "2",
+     "endEnding": true
+    },
+    {
+     "abc": "cdef|]",
+     "endEnding": true
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:36\nT:Decoration On Rest\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "!fermata!z!trill!Z|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "X:37\nT:K Zero\nL:1/4\nK:C stafflines=0\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:38\nT:Inline K Zero\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:39\nT:K One\nL:1/4\nK:C stafflines=1\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:40\nT:Inline 1\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:41\nT:Inline 3\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:42\nT:Standalone 1\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    },
+    {
+     "abc": "K:C stafflines=1\nGABc|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:43\nT:Inline Midbar\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "CD[K:C stafflines=1]EF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:44\nT:Inline With Clef\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:45\nT:Plain Z\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "Z|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:46\nT:Z Then Z\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "z Z|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "X:47\nT:Decorated Z\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "!trill!Z|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:48\nT:Fermata Z\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "!fermata!z|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "X:49\nT:Z4\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "Z4|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:50\nT:Note Then Z\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "C Z|"
+    }
+   ],
+   "hasPickup": true
+  }
+ ],
  "repo/abcts-start-char": [
   {
    "header": "M:4/4\nK:C\n",
