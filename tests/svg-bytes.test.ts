@@ -564,6 +564,22 @@ const PASSING: readonly string[] = [
     (_, i) => `abcts-stafflines-and-modifiers-tune${i}`,
   ),
   /**
+   * `abcts-bars-graces-and-groups.abc` — a second 36-shape SWEEP: barlines and repeats,
+   * grace-note edge cases, chord symbols, tuplet shapes, `%%score`/`%%staves` grouping,
+   * accidental propagation, broken rhythm and page directives. **ONE defect in 36.**
+   *
+   * ⚠️ **`:|:` IS A RIGHT REPEAT AND A WARNING, NOT A DOUBLE REPEAT.** `getBarLine`'s `:|`
+   * case falls through to `{len: 2, token: "bar_right_repeat"}` for anything that is not
+   * `]` or `|` (`abc_tokenizer.js:175-203`), so the trailing `:` is left in the stream and
+   * re-enters as `{len: 1, warn: "Unknown bar symbol"}`. `:||:` (len 4) and `::` (len 2)
+   * ARE doubles and were both already exact — **the three spellings of one barline agree
+   * everywhere except the shortest**, which is why a greedy run looked right.
+   */
+  ...Array.from(
+    { length: 41 },
+    (_, i) => `abcts-bars-graces-and-groups-tune${i}`,
+  ),
+  /**
    * `abcts-voice-style.abc` — `V:… style=`, the first of the three modifiers the V:
    * enumeration left as a FEATURE. All five shapes, one voice each.
    *

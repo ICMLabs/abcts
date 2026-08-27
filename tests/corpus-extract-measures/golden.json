@@ -2947,6 +2947,445 @@
    "hasPickup": false
   }
  ],
+ "repo/abcts-bars-graces-and-groups": [
+  {
+   "header": "X:1\nT:Double Repeat\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "|:CDEF:|"
+    },
+    {
+     "abc": "GABc:|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:2\nT:Ending 3\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "|:CDEF|1",
+     "startEnding": "1"
+    },
+    {
+     "abc": "GABc:|3",
+     "startEnding": "3",
+     "endEnding": true
+    },
+    {
+     "abc": "cdef|]",
+     "endEnding": true
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:3\nT:Ending List\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "|:CDEF|[1,3",
+     "startEnding": "1,3"
+    },
+    {
+     "abc": "GABc:|[2",
+     "startEnding": "2",
+     "endEnding": true
+    },
+    {
+     "abc": "cdef|]",
+     "endEnding": true
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:4\nT:Invisible Bar\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "CD[|]"
+    },
+    {
+     "abc": "EF|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "X:5\nT:Dotted Bar\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "CD.|"
+    },
+    {
+     "abc": "EF|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "X:6\nT:Thick Thin\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEF[|]"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:7\nT:Grace Chord\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "{[ceg]}CDEF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:8\nT:Grace Long\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "{abcdefg}CDEF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:9\nT:Grace Acciaccatura\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "{/a}CDEF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:10\nT:Grace With Accidental\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "{^a_b=c}CDEF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:11\nT:Grace On Rest\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "{a}z DEF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:12\nT:Grace Tied\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "{a-}CDEF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:13\nT:Chord Slash\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "\"C/G\"CDEF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:14\nT:Chord Complex\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "\"Cmaj7#11\"CDEF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:15\nT:Chord Newline\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "\"C\\nAm\"CDEF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:16\nT:Chord And Annotation\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "\"C\"\"^top\"CDEF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:17\nT:Chord Flat Sharp\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "\"Ab\"C\"F#m\"DEF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:18\nT:Tuplet Nested Ratio\nL:1/8\nK:C\n",
+   "measures": [
+    {
+     "abc": "(5:4:5CDEFG|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "X:19\nT:Tuplet With Rest\nL:1/8\nK:C\n",
+   "measures": [
+    {
+     "abc": "(3CzE DEFG|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "X:20\nT:Tuplet Across Bar\nL:1/8\nK:C\n",
+   "measures": [
+    {
+     "abc": "(3CD|"
+    },
+    {
+     "abc": "EFGA|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "X:21\nT:Tuplet Beamed Mixed\nL:1/8\nK:C\n",
+   "measures": [
+    {
+     "abc": "(3C2DE FGAB|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "X:22\nT:Score Braces\nL:1/4\n%%score {1 2}\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:23\nT:Score Brackets\nL:1/4\n%%score [1 2]\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:24\nT:Score Continued\nL:1/4\n%%score (1 2)\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:25\nT:Staves Nested\nL:1/4\n%%staves {[1 2] 3}\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:26\nT:Acc Across Octave\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "^CDEc|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:27\nT:Acc After Bar\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "^CDEF|"
+    },
+    {
+     "abc": "CDEF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:28\nT:Acc In Chord\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "[^CE]C DE|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:29\nT:Acc Tied Over Bar\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDE^F-|"
+    },
+    {
+     "abc": "^FGAB|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:30\nT:Broken Double\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "C>>D E<<F|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:31\nT:Broken With Tuplet\nL:1/8\nK:C\n",
+   "measures": [
+    {
+     "abc": "(3C>DE FGAB|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "X:32\nT:Broken Across Rest\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "C>z E>F|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:33\nT:Stretchlast\nL:1/4\n%%stretchlast 1\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    },
+    {
+     "abc": "GABc|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:34\nT:Maxstaves\nL:1/4\n%%maxstaves 1\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:35\nT:Barsperstaff\nL:1/4\n%%barsperstaff 1\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    },
+    {
+     "abc": "GABc|"
+    },
+    {
+     "abc": "cdef|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:36\nT:Measurenb\nL:1/4\n%%measurenb 1\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    },
+    {
+     "abc": "GABc|"
+    },
+    {
+     "abc": "cdef|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:37\nT:Close Then Open\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "|:CDEF:||:"
+    },
+    {
+     "abc": "GABc:|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:38\nT:Double Colon\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "|:CDEF::"
+    },
+    {
+     "abc": "GABc:|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:39\nT:Plain Repeat\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "|:CDEF:|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:40\nT:Open Only\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "|:CDEF|"
+    },
+    {
+     "abc": "GABc|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:41\nT:Colon Bar Colon 3\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "|:CDEF:|"
+    },
+    {
+     "abc": "GABc:|"
+    },
+    {
+     "abc": "cdef:|"
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
  "repo/abcts-clef-midmeasure": [
   {
    "header": "X:1\nT:Inline Clef Mid Measure Bass\nL:1/4\nK:C\n",

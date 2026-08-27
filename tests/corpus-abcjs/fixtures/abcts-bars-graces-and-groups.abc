@@ -1,0 +1,271 @@
+X:1
+T:Double Repeat
+L:1/4
+K:C
+|:CDEF:|:GABc:|
+
+X:2
+T:Ending 3
+L:1/4
+K:C
+|:CDEF|1GABc:|3cdef|]
+
+X:3
+T:Ending List
+L:1/4
+K:C
+|:CDEF|[1,3GABc:|[2cdef|]
+
+X:4
+T:Invisible Bar
+L:1/4
+K:C
+CD[|]EF|
+
+X:5
+T:Dotted Bar
+L:1/4
+K:C
+CD.|EF|
+
+X:6
+T:Thick Thin
+L:1/4
+K:C
+CDEF[|]
+
+X:7
+T:Grace Chord
+L:1/4
+K:C
+{[ceg]}CDEF|
+
+X:8
+T:Grace Long
+L:1/4
+K:C
+{abcdefg}CDEF|
+
+X:9
+T:Grace Acciaccatura
+L:1/4
+K:C
+{/a}CDEF|
+
+X:10
+T:Grace With Accidental
+L:1/4
+K:C
+{^a_b=c}CDEF|
+
+X:11
+T:Grace On Rest
+L:1/4
+K:C
+{a}z DEF|
+
+X:12
+T:Grace Tied
+L:1/4
+K:C
+{a-}CDEF|
+
+X:13
+T:Chord Slash
+L:1/4
+K:C
+"C/G"CDEF|
+
+X:14
+T:Chord Complex
+L:1/4
+K:C
+"Cmaj7#11"CDEF|
+
+X:15
+T:Chord Newline
+L:1/4
+K:C
+"C\nAm"CDEF|
+
+X:16
+T:Chord And Annotation
+L:1/4
+K:C
+"C""^top"CDEF|
+
+X:17
+T:Chord Flat Sharp
+L:1/4
+K:C
+"Ab"C"F#m"DEF|
+
+X:18
+T:Tuplet Nested Ratio
+L:1/8
+K:C
+(5:4:5CDEFG|
+
+X:19
+T:Tuplet With Rest
+L:1/8
+K:C
+(3CzE DEFG|
+
+X:20
+T:Tuplet Across Bar
+L:1/8
+K:C
+(3CD|EFGA|
+
+X:21
+T:Tuplet Beamed Mixed
+L:1/8
+K:C
+(3C2DE FGAB|
+
+X:22
+T:Score Braces
+L:1/4
+%%score {1 2}
+K:C
+V:1
+CDEF|
+V:2
+GABc|
+
+X:23
+T:Score Brackets
+L:1/4
+%%score [1 2]
+K:C
+V:1
+CDEF|
+V:2
+GABc|
+
+X:24
+T:Score Continued
+L:1/4
+%%score (1 2)
+K:C
+V:1
+CDEF|
+V:2
+GABc|
+
+X:25
+T:Staves Nested
+L:1/4
+%%staves {[1 2] 3}
+K:C
+V:1
+CDEF|
+V:2
+GABc|
+V:3
+cdef|
+
+X:26
+T:Acc Across Octave
+L:1/4
+K:C
+^CDEc|
+
+X:27
+T:Acc After Bar
+L:1/4
+K:C
+^CDEF|CDEF|
+
+X:28
+T:Acc In Chord
+L:1/4
+K:C
+[^CE]C DE|
+
+X:29
+T:Acc Tied Over Bar
+L:1/4
+K:C
+CDE^F-|^FGAB|
+
+X:30
+T:Broken Double
+L:1/4
+K:C
+C>>D E<<F|
+
+X:31
+T:Broken With Tuplet
+L:1/8
+K:C
+(3C>DE FGAB|
+
+X:32
+T:Broken Across Rest
+L:1/4
+K:C
+C>z E>F|
+
+X:33
+T:Stretchlast
+L:1/4
+%%stretchlast 1
+K:C
+CDEF|
+GABc|
+
+X:34
+T:Maxstaves
+L:1/4
+%%maxstaves 1
+K:C
+V:1
+CDEF|
+V:2
+GABc|
+
+X:35
+T:Barsperstaff
+L:1/4
+%%barsperstaff 1
+K:C
+CDEF|GABc|cdef|
+
+X:36
+T:Measurenb
+L:1/4
+%%measurenb 1
+K:C
+CDEF|GABc|cdef|
+
+X:37
+T:Close Then Open
+L:1/4
+K:C
+|:CDEF:||:GABc:|
+
+X:38
+T:Double Colon
+L:1/4
+K:C
+|:CDEF::GABc:|
+
+X:39
+T:Plain Repeat
+L:1/4
+K:C
+|:CDEF:|
+
+X:40
+T:Open Only
+L:1/4
+K:C
+|:CDEF|GABc|
+
+X:41
+T:Colon Bar Colon 3
+L:1/4
+K:C
+|:CDEF:|:GABc:|:cdef:|

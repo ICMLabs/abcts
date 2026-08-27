@@ -98,13 +98,41 @@ export class Lexer {
       return token('digit', i - start)
     }
 
-    // Greedy run: `|`, `||`, `|]`, `:|`, `|:`, `::`, `[|` all lex as one barline.
+    // Greedy run: `|`, `||`, `|]`, `|:`, `[|` all lex as one barline.
     // `[` must be tested for a following `|` here, BEFORE the chord-open branch below —
     // otherwise `[|` opens a chord that never closes.
     // A LONE `:` is not a barline: it is the separator in the general tuplet form
     // `(p:q:r`. It only joins a barline next to `|` or another `:`.
     const colonStartsBarline = c === ':' && (src[start + 1] === '|' || src[start + 1] === ':')
-    if (c === '|' || colonStartsBarline || (c === '[' && src[start + 1] === '|')) {
+    /**
+     * ⚠️ **AND THE COLON ARM IS NOT A GREEDY RUN — `:|:` IS A RIGHT REPEAT AND A WARNING.**
+     * `getBarLine`'s `:` branch is a fixed decision tree, and its `:|` case falls through to
+     * `{len: 2, token: "bar_right_repeat"}` for anything that is not `]` or `|`
+     * (`abc_tokenizer.js:175-203`). So the trailing `:` of `:|:` is NOT consumed: abcjs
+     * re-enters on it, reaches `default: {len: 1, warn: "Unknown bar symbol"}`, and draws a
+     * plain close repeat with no reopening dots at all.
+     *
+     * MEASURED on `|:CDEF:|:GABc:|` — abcjs's middle bar is two lines and two dots where
+     * ours drew three lines and four, and the extra ink pushed every note of the first bar
+     * 1px left. `:||:` (len 4) and `::` (len 2) ARE double repeats, and both were already
+     * exact, which is why a greedy run looked right: **the three spellings of one barline
+     * agree everywhere except the shortest.**
+     *
+     * The four lengths, in abcjs's own order — longest first so a prefix cannot win.
+     */
+    const colonBarLength = (): number => {
+      const at = (n: number): string => src[start + n] ?? ''
+      if (at(1) === ':') return 2 // `::` — bar_dbl_repeat
+      if (at(1) !== '|') return 0 // a lone `:` is the tuplet separator, not a bar
+      if (at(2) === ']') return at(3) === '|' && at(4) === ':' ? 5 : 3 // `:|]|:` / `:|]`
+      if (at(2) === '|') return at(3) === ':' ? 4 : 3 // `:||:` / `:||`
+      return 2 // `:|`, and the tree stops here whatever follows
+    }
+    if (colonStartsBarline) {
+      const length = colonBarLength()
+      if (length > 0) return token('barline', length)
+    }
+    if (c === '|' || (c === '[' && src[start + 1] === '|')) {
       let i = start + 1 // the opening char is part of the run by construction
       while (i < src.length) {
         const d = src[i]

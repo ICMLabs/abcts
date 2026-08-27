@@ -600,8 +600,12 @@ const BARLINES: Record<string, Barline> = {
   '|:': 'repeatStart',
   ':|': 'repeatEnd',
   '::': 'repeatBoth',
-  ':|:': 'repeatBoth',
   ':||:': 'repeatBoth',
+  // …and the two spellings the `]` branch of `getBarLine` reaches. ⚠️ **`:|:` IS NOT HERE**
+  // — abcjs's tree stops at `:|` and warns on the stray colon; see `colonBarLength`.
+  ':|]|:': 'repeatBoth',
+  ':|]': 'repeatEnd',
+  ':||': 'repeatEnd',
 }
 
 const DEFAULT_VOICE_ID = '1'

@@ -467,10 +467,11 @@ const WITHIN: Readonly<Record<string, number>> = {
   // annotations and the `%%begintext` block before the music.
   // …and `abcts-stafflines-and-modifiers.abc`, a 36-shape sweep over untouched territory
   // plus the three ladders that closed what it found.
-  "0.05": 223,
-  "1": 223,
-  "5": 223,
-  "25": 223,
+  // …and `abcts-bars-graces-and-groups.abc`, a second 36-shape sweep.
+  "0.05": 224,
+  "1": 224,
+  "5": 224,
+  "25": 224,
 };
 
 const names = readdirSync(fixturesDir)

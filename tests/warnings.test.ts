@@ -104,6 +104,64 @@ const PASSING: readonly string[] = [
    * `clef=` — so the column travels with the diagnostic; see `Diagnostic.column`.
    */
   "repo/abcts-key-modifiers-tune9",
+  /**
+   * **EVERY `abcts-*` FIXTURE'S AGREEING ROW.** These are the rows where our parser already
+   * says exactly what abcjs says, and most of them have agreed for weeks: each fixture opens
+   * with an `%%abcts` header comment, which abcjs answers with `Unknown directive: abcts`,
+   * and nothing had ever ratcheted them.
+   *
+   * ⚠️ **A GATE'S RATCHET IS ONLY AS BROAD AS WHAT SOMEBODY ADDED TO IT.** The list held
+   * fourteen rows while thirty-nine agreed, so twenty-five could have regressed in silence
+   * — the same shape as the byte gate holding 4% of what was green. The gate itself was
+   * built to say so and its message says so ("these agree — add them to PASSING"); it just
+   * had to be read.
+   */
+  "repo/abcts-bars-graces-and-groups-tune0",
+  "repo/abcts-bars-graces-and-groups-tune40",
+  "repo/abcts-bars-graces-and-groups-tune6",
+  "repo/abcts-endings-tune0",
+  "repo/abcts-endings-tune1",
+  "repo/abcts-endings-tune2",
+  "repo/abcts-endings-tune3",
+  "repo/abcts-endings-tune4",
+  "repo/abcts-endings-tune6",
+  "repo/abcts-endings-tune7",
+  "repo/abcts-grace-tie-tune0",
+  "repo/abcts-grace-tie-tune1",
+  "repo/abcts-grace-tie-tune2",
+  "repo/abcts-grace-tie-tune3",
+  "repo/abcts-grace-tie-tune4",
+  "repo/abcts-grace-tie-tune5",
+  "repo/abcts-grace-tie-tune6",
+  "repo/abcts-grace-tie-tune7",
+  "repo/abcts-pitch-style-tune0",
+  "repo/abcts-pitch-style-tune1",
+  "repo/abcts-pitch-style-tune2",
+  "repo/abcts-pitch-style-tune3",
+  "repo/abcts-pitch-style-tune4",
+  "repo/abcts-pitch-style-tune5",
+  "repo/abcts-pitch-style-tune6",
+  "repo/abcts-pitch-style-tune7",
+  "repo/abcts-rests-and-bars-tune0",
+  "repo/abcts-rests-and-bars-tune1",
+  "repo/abcts-rests-and-bars-tune10",
+  "repo/abcts-rests-and-bars-tune11",
+  "repo/abcts-rests-and-bars-tune12",
+  "repo/abcts-rests-and-bars-tune13",
+  "repo/abcts-rests-and-bars-tune14",
+  "repo/abcts-rests-and-bars-tune2",
+  "repo/abcts-rests-and-bars-tune3",
+  "repo/abcts-rests-and-bars-tune4",
+  "repo/abcts-rests-and-bars-tune5",
+  "repo/abcts-rests-and-bars-tune6",
+  "repo/abcts-rests-and-bars-tune7",
+  "repo/abcts-rests-and-bars-tune8",
+  "repo/abcts-rests-and-bars-tune9",
+  "repo/abcts-stafflines-and-modifiers-tune23",
+  "repo/abcts-stafflines-and-modifiers-tune25",
+  "repo/abcts-stafflines-and-modifiers-tune6",
+  "repo/abcts-stafflines-and-modifiers-tune7",
+  "repo/abcts-stafflines-and-modifiers-tune8",
   "sib/S1-decorations-tune0",
   "sib/S3-note-syntax-tune1",
   "sib/S3-note-syntax-tune6",
