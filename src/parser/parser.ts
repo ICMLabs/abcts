@@ -608,7 +608,20 @@ const BARLINES: Record<string, Barline> = {
   ':||': 'repeatEnd',
 }
 
-const DEFAULT_VOICE_ID = '1'
+/**
+ * **EVERY DURATION A NOTEHEAD CAN SPELL, SHORTER THAN A WHOLE NOTE** — abcjs's `durations`
+ * (`abc_parse_settings.js:114-120`), which is each power of two from a half down to a 64th
+ * followed by its five dotted forms. Anything else warns; see `emit`.
+ *
+ * Built rather than transcribed, because the list is a rule: `base * (2 - 2^-dots)`.
+ */
+const REPRESENTABLE: readonly Rational[] = [2, 4, 8, 16, 32, 64].flatMap((base) =>
+  [0, 1, 2, 3, 4, 5].map((dots) =>
+    rational(2 ** (dots + 1) - 1, base * 2 ** dots),
+  ),
+)
+
+const DEFAULT_VOICE_ID = '1' 
 
 /**
  * Named ABC clefs → shape and default staff line.
@@ -4049,6 +4062,35 @@ class Parser {
     // draws on a percussion staff. Two or three whitespace-separated tokens; anything else
     // is a warning and no entry (`abc_parse_directive.js:393-409`). Only the HEAD is
     // modelled; the drum sound is audio.
+    /**
+     * ⚠️ **AND BOTH OF ITS FAILURES WARN.** `interpretPercMap` returns an `error` for a
+     * token count that is not 2 or 3 and for a sound that resolves to no drum, and the
+     * caller raises it at column 8 (`abc_parse_directive.js:393-409`, `:1195-1198`). Ours
+     * dropped the entry in silence, so `%%percmap E snare` — a plausible name that is not
+     * in the 47-entry list — said nothing at all. **A feature's REFUSALS are part of its
+     * contract**, which the chord-grid arc already found from the other side.
+     */
+    if (/^percmap\b/.test(body)) {
+      const tokens = body.slice('percmap'.length).trim().split(/\s+/).filter((t) => t !== '')
+      if (tokens.length !== 2 && tokens.length !== 3) {
+        this.info(
+          'percmap-parameters',
+          'percmap expects 2 or 3 parameters',
+          sourceRange(start, end),
+        )
+        return
+      }
+      const raw = tokens[1] ?? ''
+      const asNumber = Number.parseInt(raw, 10)
+      const resolved =
+        Number.isNaN(asNumber) || asNumber < 35 || asNumber > 81
+          ? DRUM_NAMES.indexOf(raw.toLowerCase()) + 35
+          : asNumber
+      if (resolved < 35 || resolved > 81) {
+        this.info('percmap-drum-name', `percmap drum name: ${raw}`, sourceRange(start, end))
+        return
+      }
+    }
     const percMap = /^percmap\s+(\S+)\s+(\S+)(?:\s+(\S+))?\s*$/.exec(body)
     if (percMap?.[1] !== undefined) {
       // THE SOUND IS A NUMBER **OR** A NAME, and abcjs resolves the name by POSITION in a
@@ -4220,6 +4262,19 @@ class Parser {
       const b = this.ensureScore(start)
       b.jazzChords = true
       b.noteFormatting('jazzchords')
+      return
+    }
+    /**
+     * ⚠️ **abcjs KNOWS `%%map` AND SAYS NOTHING ABOUT IT.** Its switch carries
+     * `case "map": case "playtempo": case "auquality": case "continuous":
+     * case "nobarcheck": tune.formatting[cmd] = restOfString` under a `TODO-PER: Actually
+     * handle the parameters of these` (`abc_parse_directive.js:1214-1220`) — so they are
+     * RECORDED and unimplemented rather than unknown, and only `%%voicemap` beside them
+     * warns. Ours warned on all five.
+     */
+    const RECORDED_ONLY = /^(map|playtempo|auquality|continuous|nobarcheck)\b/.exec(body)
+    if (RECORDED_ONLY !== null) {
+      this.ensureScore(start).noteFormatting(RECORDED_ONLY[1] as string)
       return
     }
     this.info(
@@ -5000,6 +5055,41 @@ class Parser {
 
     const emit = (event: MusicEvent): void => {
       ignoredSinceNote = false
+      /**
+       * ⚠️ **A DURATION NO NOTEHEAD CAN SPELL WARNS, AND THE TEST IS A TABLE.**
+       * `if (el.duration < 1 && durations.indexOf(el.duration) === -1 && el.duration !== 0)
+       * { if (!el.rest || el.rest.type !== 'spacer') warn("Duration not representable: " +
+       * line.substring(startI, i), line, i) }` (`abc_parse_music.js:560-566`). `durations`
+       * is every power of two from a half down to a 64th with up to five dots
+       * (`abc_parse_settings.js:114-120`) — so under `L:1/8` a `C/16` is a 128th and warns
+       * while the `C/8` beside it is a 64th and does not.
+       *
+       * ⚠️ **BEFORE the broken-rhythm scaling and the tuplet ratio**, which is where abcjs
+       * asks: `el.duration` at this point is the WRITTEN length. And the position is the
+       * end of the element's own source, TRAILING SPACE INCLUDED, because abcjs's `i` has
+       * already walked past it — which is the same asymmetry that makes a note's span
+       * close over its whitespace where a bar's does not.
+       */
+      if (event.type !== 'rest' || event.kind !== 'spacer') {
+        const written = 'duration' in event ? event.duration : null
+        if (
+          written !== null &&
+          ratLt(written, rational(1, 1)) &&
+          written.numerator !== 0 &&
+          !REPRESENTABLE.some((d) => d.numerator === written.numerator && d.denominator === written.denominator)
+        ) {
+          // …**PAST THE TRAILING SPACE**, which abcjs's note read has already consumed —
+          // its `i` is one further than our range's end, and the reported text carries it.
+          let end = event.sourceRange?.end
+          while (end !== undefined && this.src[end] === ' ') end += 1
+          if (end !== undefined)
+            this.warn(
+              'duration-not-representable',
+              `duration not representable: ${this.src.slice(event.sourceRange?.start ?? end, end)}`,
+              sourceRange(end, end + 1),
+            )
+        }
+      }
       const broken = voice().pendingBroken
       voice().lastBroken = broken !== null
       const scaled = applyTuplet(broken ? scaleEvent(event, broken) : event)
@@ -5200,17 +5290,44 @@ class Parser {
             voice().replaceLast(scaleEvent(previous, lengthenFirst ? long : short))
             voice().pendingBroken = lengthenFirst ? short : long
           } else {
+            /**
+             * ⚠️ **A MARK WITH NO NOTE BEFORE IT IS AN UNKNOWN CHARACTER, AND IT CONSUMES
+             * ONE.** abcjs never reaches a broken-rhythm read without a note — `letter_to_note`
+             * is what parses one — so the `>` falls to `if (i === startI)` and warns
+             * "Unknown character ignored" for THAT CHARACTER, then `i++`
+             * (`abc_parse_music.js:579-583`). Measured on `"<l">r"E|`, where abcjs warns at
+             * the `>` and again at the `r`.
+             *
+             * Ours raised a `broken-rhythm-without-note` of its own — a code no formatter
+             * maps, so it was silent — and swallowed the whole RUN of marks.
+             */
             this.warn(
-              'broken-rhythm-without-note',
-              'broken rhythm mark has no preceding note',
-              sourceRange(token.start, token.start + token.length),
+              'unknown-character',
+              'unknown character ignored',
+              sourceRange(token.start, token.start + 1),
             )
+            i += 1
+            break
           }
           i += arrows
           break
         }
         case 'chordSymbol': {
           const range = sourceRange(token.start, token.start + token.length)
+          /**
+           * ⚠️ **AN UNCLOSED QUOTE WARNS, AT THE OPENING QUOTE.** `getBrackettedSubstring`
+           * reports whether it found the closer, and `letter_to_chord` warns
+           * "Missing the closing quote while parsing the chord symbol" at `i` — the `"`
+           * itself, not the end of the line (`abc_parse_music.js:598-604`). Our lexer stops
+           * such a token at the newline, so the tell is simply that it does not end in a
+           * quote.
+           */
+          if (this.src[token.start + token.length - 1] !== '"')
+            this.warn(
+              'chord-unterminated-quote',
+              'missing the closing quote on a chord symbol',
+              sourceRange(token.start, token.start + 1),
+            )
           // `\n` IS A LINE BREAK AND `\"` A QUOTE, inside a quoted chord or annotation and
           // nowhere else — `substInChord`, applied by `getBrackettedSubstring` the moment
           // the substring is read (`abc_tokenizer.js:784-807`). It is NOT `translateString`,
@@ -5734,12 +5851,19 @@ class Parser {
            * closed at 255,684 and nothing there stands on this path, so moving ownership
            * would be a change with no oracle asking for it.
            */
-          if (token.kind === 'octaveUp' || token.kind === 'octaveDown')
-            this.warn(
-              'unknown-character',
-              'unknown character ignored',
-              sourceRange(token.start, token.start + token.length),
-            )
+          /**
+           * ⚠️ **AND SO IS EVERY OTHER CHARACTER THE LOOP CONSUMED NOTHING FOR.** abcjs's
+           * arm is `if (i === startI) { if (line[i] !== ' ' && line[i] !== '`')
+           * warn("Unknown character ignored", line, i); i++ }`
+           * (`abc_parse_music.js:579-583`) — a COMPLEMENT, not a list, and it fires ONE
+           * WARNING PER CHARACTER rather than one per token. `"<l">r"E|` is two of them,
+           * on the `>` and the `r`; ours warned once.
+           */
+          for (let c = token.start; c < token.start + token.length; c += 1) {
+            const ch = this.src[c]
+            if (ch === ' ' || ch === '`') continue
+            this.warn('unknown-character', 'unknown character ignored', sourceRange(c, c + 1))
+          }
           i++
           break
       }

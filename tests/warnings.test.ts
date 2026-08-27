@@ -119,6 +119,11 @@ const PASSING: readonly string[] = [
   "repo/abcts-bars-graces-and-groups-tune0",
   "repo/abcts-bars-graces-and-groups-tune40",
   "repo/abcts-bars-graces-and-groups-tune6",
+  "repo/abcts-inline-fields-and-blocks-tune9",
+  "repo/abcts-rests-and-bars-tune15",
+  "repo/abcts-stafflines-and-modifiers-tune10",
+  "repo/abcts-stafflines-and-modifiers-tune11",
+  "repo/abcts-stafflines-and-modifiers-tune12",
   "repo/abcts-endings-tune0",
   "repo/abcts-endings-tune1",
   "repo/abcts-endings-tune2",
@@ -170,6 +175,20 @@ const PASSING: readonly string[] = [
   "sib/vree-sharps-tune0",
 ];
 
+/**
+ * **THE ONE ROW STILL OPEN, MEASURED AND WRITTEN DOWN RATHER THAN HALF-FIXED.**
+ *
+ * `abcts-endings-tune5` is `C2|[-1 D2|]`. The chord fails on the `-`, and abcjs warns
+ * "Expected ']' to end the chords" — which we match — and then **TWO MORE**, an
+ * "Unknown character ignored" on the `-` and another on the `1`, because its recovery
+ * re-reads from the failing token and neither character attaches to anything
+ * (`abc_parse_music.js:579-583`).
+ *
+ * Ours consumes them silently: the `-` reaches the TIE arm and the `1` the DIGIT arm, and
+ * neither warns. Making either arm warn unconditionally is a change with reach — our
+ * tokenizer consumes things abcjs's loop does not — so it wants a ladder of its own rather
+ * than a guess. The GEOMETRY of this tune has been byte-exact throughout.
+ */
 describe("tune.warnings — what a host shows", () => {
   const table = rows();
 

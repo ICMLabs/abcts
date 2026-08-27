@@ -35,6 +35,24 @@ const encode = (str: string): string =>
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;");
 
+/**
+ * **THE TEXT A DIRECTIVE'S OWN WARNING POINTS INTO IS THE LINE WITHOUT ITS `%%`.**
+ * `addDirective` is handed `str`, the line with the two percents already stripped, and
+ * every `warn(…, str, n)` inside it counts from there (`abc_parse_directive.js:1195-1198`)
+ * — which is the same fact that makes a directive's SOURCE RANGE `iChar + str.length`.
+ *
+ * `Unknown directive` is NOT one of these: the caller raises that against the full `%%…`
+ * line at column 2, which is why it needs no override.
+ */
+const directiveBody = (diagnostic: Diagnostic, abc: string): string => {
+  const at = diagnostic.range?.start ?? 0;
+  let start = 0;
+  for (let i = 0; i < at; i += 1) if (abc[i] === "\n") start = i + 1;
+  let end = abc.indexOf("\n", start);
+  if (end < 0) end = abc.length;
+  return abc.slice(start, end).replace(/^%%/, "");
+};
+
 const UNDERLINE =
   '<span style="text-decoration:underline;font-size:1.3em;font-weight:bold;">';
 
@@ -293,6 +311,54 @@ const AS_ABCJS: Record<
           column: at - start,
         };
   },
+  /**
+   * `interpretPercMap`'s two errors, both raised at COLUMN 8 — the caller passes a literal
+   * `warn(percmap.error, str, 8)` rather than a position in the string
+   * (`abc_parse_directive.js:1195-1198`), so neither travels with its token.
+   */
+  "percmap-parameters": (diagnostic, abc) => ({
+    message:
+      'Expected parameters "abc-note", "drum-sound", and optionally "note-head"',
+    column: 8,
+    text: directiveBody(diagnostic, abc),
+  }),
+  "percmap-drum-name": (diagnostic, abc) => {
+    const name = /percmap drum name: (.*)$/.exec(diagnostic.message)?.[1];
+    return name === undefined
+      ? null
+      : {
+          message: `Expected drum name, received "${name}"`,
+          column: 8,
+          text: directiveBody(diagnostic, abc),
+        };
+  },
+  /** `letter_to_chord`'s own, raised at the opening quote (`abc_parse_music.js:604`). */
+  "chord-unterminated-quote": (diagnostic, abc) => {
+    const at = diagnostic.range?.start ?? 0;
+    let start = 0;
+    for (let i = 0; i < at; i += 1) if (abc[i] === "\n") start = i + 1;
+    return {
+      message: "Missing the closing quote while parsing the chord symbol",
+      column: at - start,
+    };
+  },
+  /**
+   * `warn("Duration not representable: " + line.substring(startI, i), line, i)` — the text
+   * is the element's own source, trailing space included, and the column is where the parse
+   * stopped (`abc_parse_music.js:560-566`).
+   */
+  "duration-not-representable": (diagnostic, abc) => {
+    const at = diagnostic.range?.start ?? 0;
+    let start = 0;
+    for (let i = 0; i < at; i += 1) if (abc[i] === "\n") start = i + 1;
+    const text = /duration not representable: (.*)$/s.exec(diagnostic.message)?.[1];
+    return text === undefined
+      ? null
+      : {
+          message: `Duration not representable: ${text}`,
+          column: at - start,
+        };
+  },
   "unknown-directive": (diagnostic) => {
     const name = /%%\s*(\S+)/.exec(diagnostic.message)?.[1];
     return name === undefined
@@ -323,6 +389,17 @@ export function warningsOf(
    * is the `X:` line, which is a different place.
    */
   const headerEnd = fileHeaderEnd(abc);
+  /**
+   * How many lines of the file header each tune's own count follows — and it is the
+   * DIRECTIVE lines alone. A `%` comment is not one: `abcts-keywarn`'s five-line `%`
+   * preamble adds nothing (abcjs reports its third tune's fifth line as 5), where
+   * `abcts-rests-and-bars`'s nineteen `%%abcts` lines add all nineteen (its fifth is 24).
+   * See the note at `lineIndex`.
+   */
+  const headerLines = abc
+    .slice(0, headerEnd)
+    .split("\n")
+    .filter((l) => l.startsWith("%%")).length;
   const startOf = (i: number): number =>
     i === 0
       ? Math.min(headerEnd, scores[0]?.sourceStartOffset ?? 0)
@@ -339,7 +416,26 @@ export function warningsOf(
     if (!mine && !header) continue;
     const as = AS_ABCJS[diagnostic.code]?.(diagnostic, abc);
     if (as === null || as === undefined) continue;
-    const { index: lineIndex, start } = lineAt(abc, at, header ? 0 : from);
+    const { index: within, start } = lineAt(abc, at, header ? 0 : from);
+    /**
+     * ⚠️ **A TUNE'S LINE NUMBERS CONTINUE THE FILE HEADER'S, THEY DO NOT RESTART.**
+     * `parseTuneBook` hands each tune the file header PREPENDED to its own text, so the
+     * counter runs over the pair. MEASURED on two fixtures: `abcts-endings` has a 4-line
+     * header and reports its tune's fifth line as **9**; `abcts-rests-and-bars` has a
+     * 19-line header and reports its fifth as **24**.
+     *
+     * The note at `lineAt` is about where the counter STARTS — the first line that is
+     * neither a `%` line nor blank — and both facts hold at once: the header is counted,
+     * and every tune's own lines follow it.
+     */
+    /**
+     * ⚠️ **AND THE FIRST TUNE HAS ALREADY ABSORBED IT.** Its own count starts at
+     * `headerEnd` — the `T:t` that ENDED the file header is line 1 of the tune, which is
+     * the rule at `lineAt` — so adding the header's lines again double-counts.
+     * `abcjs-parse-book_parser-04-wed` is one line of header and reports its tune's
+     * `%%example` as **2**, not 3.
+     */
+    const lineIndex = header || index === 0 ? within : within + headerLines;
     // …and the TEXT a warning points into is the site's, not always the source line — see
     // the note at the top.
     out.push(
