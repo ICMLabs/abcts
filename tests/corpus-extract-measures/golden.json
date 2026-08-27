@@ -6807,6 +6807,152 @@
    "hasPickup": true
   }
  ],
+ "repo/abcts-void-notes-and-stray-ties": [
+  {
+   "header": "X:1\nT:The Row\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "C2|"
+    },
+    {
+     "abc": " D2|]"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "X:2\nT:Leading Tie\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "-CDEF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:3\nT:Leading Digit\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:4\nT:Bare Digit Between\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": " D2|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "X:5\nT:Tie After Bar\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    },
+    {
+     "abc": "-GABc|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:6\nT:Real Tie\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "C-C DE|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:7\nT:Digit After Note\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "C2 D2|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:8\nT:Bare Tie Then Digit\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": " D2|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "X:9\nT:Tie Then Space\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "C2 - D2|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:10\nT:Tie At Line End\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "C2-\nD2|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:11\nT:Tie Then Bar\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "C2 -|"
+    },
+    {
+     "abc": " D2|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "X:12\nT:Tie Then Note\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "C2 -D2|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:13\nT:Tie Then Rest\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "C2 -z D2|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "X:14\nT:Double Tie\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "C2 -- D2|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:15\nT:Tie Then Chord\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "C2 -[CE] D2|"
+    }
+   ],
+   "hasPickup": true
+  }
+ ],
  "repo/abcts-vskip": [
   {
    "header": "X:1\nT:vskip between lines\nL:1/4\nM:4/4\nK:C\n",

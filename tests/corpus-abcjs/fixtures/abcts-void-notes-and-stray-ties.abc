@@ -1,0 +1,90 @@
+X:1
+T:The Row
+L:1/4
+K:C
+C2|[-1 D2|]
+
+X:2
+T:Leading Tie
+L:1/4
+K:C
+-CDEF|
+
+X:3
+T:Leading Digit
+L:1/4
+K:C
+1CDEF|
+
+X:4
+T:Bare Digit Between
+L:1/4
+K:C
+C2 1 D2|
+
+X:5
+T:Tie After Bar
+L:1/4
+K:C
+CDEF|-GABc|
+
+X:6
+T:Real Tie
+L:1/4
+K:C
+C-C DE|
+
+X:7
+T:Digit After Note
+L:1/4
+K:C
+C2 D2|
+
+X:8
+T:Bare Tie Then Digit
+L:1/4
+K:C
+C2 -1 D2|
+
+X:9
+T:Tie Then Space
+L:1/4
+K:C
+C2 - D2|
+
+X:10
+T:Tie At Line End
+L:1/4
+K:C
+C2-
+D2|
+
+X:11
+T:Tie Then Bar
+L:1/4
+K:C
+C2 -| D2|
+
+X:12
+T:Tie Then Note
+L:1/4
+K:C
+C2 -D2|
+
+X:13
+T:Tie Then Rest
+L:1/4
+K:C
+C2 -z D2|
+
+X:14
+T:Double Tie
+L:1/4
+K:C
+C2 -- D2|
+
+X:15
+T:Tie Then Chord
+L:1/4
+K:C
+C2 -[CE] D2|

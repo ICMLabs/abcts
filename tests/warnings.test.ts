@@ -116,6 +116,16 @@ const PASSING: readonly string[] = [
    * built to say so and its message says so ("these agree — add them to PASSING"); it just
    * had to be read.
    */
+  /**
+   * `abcts-void-notes-and-stray-ties.abc` — the ladder that closed this gate's last row,
+   * and the two GEOMETRY defects it found on the way: a note whose length is followed by a
+   * digit is VOID, and a tie split across a system takes the 20px stub rather than the
+   * prefix.
+   */
+  "repo/abcts-void-notes-and-stray-ties-tune0",
+  "repo/abcts-void-notes-and-stray-ties-tune2",
+  "repo/abcts-void-notes-and-stray-ties-tune3",
+  "repo/abcts-void-notes-and-stray-ties-tune7",
   "repo/abcts-bars-graces-and-groups-tune0",
   "repo/abcts-bars-graces-and-groups-tune40",
   "repo/abcts-bars-graces-and-groups-tune6",
@@ -124,6 +134,14 @@ const PASSING: readonly string[] = [
   "repo/abcts-stafflines-and-modifiers-tune10",
   "repo/abcts-stafflines-and-modifiers-tune11",
   "repo/abcts-stafflines-and-modifiers-tune12",
+  /**
+   * `C2|[-1 D2|]` — the last row this gate ever held open. The chord fails on the `-`,
+   * abcjs warns "Expected ']' to end the chords", and then TWICE more: `getCoreNote`'s `-`
+   * arm ties back to the previous note and leaves the state at `startSlur`, so the DIGIT
+   * after it reaches an arm it has none for and returns null, and every character of the
+   * failed attempt warns in turn. The tie is KEPT — `addTieToLastNote` has already run.
+   */
+  "repo/abcts-endings-tune5",
   "repo/abcts-endings-tune0",
   "repo/abcts-endings-tune1",
   "repo/abcts-endings-tune2",
@@ -176,18 +194,12 @@ const PASSING: readonly string[] = [
 ];
 
 /**
- * **THE ONE ROW STILL OPEN, MEASURED AND WRITTEN DOWN RATHER THAN HALF-FIXED.**
+ * ✅ **THIS GATE IS AT ZERO — 0 of 688.** It opened at 68 abcjs warnings of a dozen kinds
+ * against ONE diagnostic code of ours, and the note below it still describes that day.
  *
- * `abcts-endings-tune5` is `C2|[-1 D2|]`. The chord fails on the `-`, and abcjs warns
- * "Expected ']' to end the chords" — which we match — and then **TWO MORE**, an
- * "Unknown character ignored" on the `-` and another on the `1`, because its recovery
- * re-reads from the failing token and neither character attaches to anything
- * (`abc_parse_music.js:579-583`).
- *
- * Ours consumes them silently: the `-` reaches the TIE arm and the `1` the DIGIT arm, and
- * neither warns. Making either arm warn unconditionally is a change with reach — our
- * tokenizer consumes things abcjs's loop does not — so it wants a ladder of its own rather
- * than a guess. The GEOMETRY of this tune has been byte-exact throughout.
+ * ⚠️ **SO IT CAN NAME NOTHING, AND THAT IS THE NORMAL CONDITION HERE.** What it caught last
+ * came from FIXTURES written for the byte gate: two byte-exact sweeps moved it the moment
+ * they were pages. Widen it by widening the corpus, not by staring at it.
  */
 describe("tune.warnings — what a host shows", () => {
   const table = rows();

@@ -5237,6 +5237,60 @@ class Parser {
             pendingMicrotone,
             accidentalStart,
           )
+          /**
+           * ⚠️ **A DIGIT AFTER A NOTE'S LENGTH AND ITS TRAILING SPACE VOIDS THE WHOLE NOTE.**
+           * `getCoreNote`'s digit case, reached in the `duration` state, consumes the
+           * fraction, eats the whitespace and ties after it, and leaves `state =
+           * 'broken_rhythm'` (`abc_parse_music.js:1194-1210`). The loop's next character is
+           * then a digit again — and the digit case's `else return null` is what answers it.
+           * The note is DISCARDED, and `parseMusic`'s `if (i === startI)` then warns
+           * "Unknown character ignored" for every character of the failed attempt, one at a
+           * time, retrying from each.
+           *
+           * MEASURED through abcjs on `C2 1 D2|`: ONE note group in the page — the `D` —
+           * and three warnings, on the `C`, the `2` and the `1`. Ours drew both notes.
+           * `C 1 D|` keeps its `C`, because with no length written the SPACE case returns
+           * the note before any of this; and `C2 x1 D2|` keeps it too, because the `x` is a
+           * rest letter and `isComplete('broken_rhythm')` is true.
+           *
+           * ⚠️ **THE RUN BETWEEN THEM TAKES TIES AS WELL AS SPACES** — the same while loop
+           * eats `-` — so `C2-1` and `C2 - 1` are void for the same reason.
+           */
+          const voided = ((): number | null => {
+            let hasLength = false
+            for (let t = i + 1; t < built.next; t += 1) {
+              const k = (tokens[t] as Token | undefined)?.kind
+              if (k === 'digit' || k === 'slash') hasLength = true
+            }
+            if (!hasLength) return null
+            let t = built.next
+            let ate = false
+            while (
+              (tokens[t] as Token | undefined)?.kind === 'whitespace' ||
+              (tokens[t] as Token | undefined)?.kind === 'tie'
+            ) {
+              ate = true
+              t += 1
+            }
+            if (!ate) return null
+            const k = (tokens[t] as Token | undefined)?.kind
+            return k === 'digit' || k === 'slash' ? t : null
+          })()
+          if (voided !== null) {
+            // Every character of the attempt, minus the spaces abcjs's own arm exempts.
+            const stop = (tokens[voided] as Token).start
+            for (let c = token.start; c < stop; c += 1) {
+              const ch = this.src[c]
+              if (ch === ' ' || ch === '\t' || ch === '`') continue
+              this.warn('unknown-character', 'unknown character ignored', sourceRange(c, c + 1))
+            }
+            // …and resume ON the digit, which abcjs's retry reaches next and rejects too.
+            i = voided
+            pendingAccidental = null
+            accidentalStart = null
+            pendingMicrotone = 0
+            break
+          }
           emit(built.note)
           i = built.next
           pendingAccidental = null
@@ -5581,9 +5635,47 @@ class Parser {
           dottedCurve = false
           i++
           if (reachesBack) {
+            /**
+             * ⚠️ **AND ONLY A DIGIT AFTER IT FAILS THE ATTEMPT.** `getCoreNote` STARTING on
+             * a `-` runs `addTieToLastNote`, leaves the state at `startSlur` and reads on —
+             * so `-CDEF|` and `CDEF|-GABc|` go straight into the note that follows and warn
+             * NOTHING. It is the digit case that has no `startSlur` arm and returns null
+             * (`abc_parse_music.js:1184-1210`, `:1222-1227`).
+             *
+             * The first cut warned on every reached-back `-` and took two rungs of its own
+             * ladder red — abcjs answers `null` for both. **The rule is the pair, not the
+             * character.**
+             */
+            const failed = (tokens[i] as Token | undefined)?.kind === 'digit'
             while ((tokens[i] as Token | undefined)?.kind === 'digit') i += 1
             const end = (tokens[i] as Token | undefined)?.start ?? from + 1
+            /**
+             * ⚠️ **AND A `-` WHOSE ATTEMPT SUCCEEDS IS PART OF THE NOTE, NOT UNREADABLE.**
+             * `getCoreNote` starting on a `-` ties back and reads straight on, so the
+             * character belongs to the element that follows: `extractMeasures` gives
+             * `-CDEF|` for abcjs's first measure where ours gave `CDEF|`. Only the FAILED
+             * attempt leaves its characters to nobody.
+             */
+            if (!failed) break
             builder.unreadable.push(sourceRange(from, end))
+            /**
+             * ⚠️ **AND EVERY ONE OF THOSE CHARACTERS WARNS.** `getCoreNote`'s `-` arm runs
+             * `addTieToLastNote` and leaves the state at `startSlur`, so the DIGIT after it
+             * reaches the digit case in a state it has no arm for and returns null
+             * (`abc_parse_music.js:1184-1210`, `:1222-1227`) — the attempt appends nothing
+             * and `parseMusic`'s `if (i === startI)` warns for each character in turn.
+             * The tie itself is kept, because `addTieToLastNote` has already run.
+             *
+             * MEASURED on `C2|[-1 D2|]`: abcjs's "Expected ']' to end the chords" — which
+             * we already match — and then TWO more, on the `-` and on the `1`. The span was
+             * already being marked `unreadable` for the character gate; only the diagnostic
+             * was missing, which is what this row of the warnings gate has read all along.
+             */
+            for (let c = from; c < end; c += 1) {
+              const ch = this.src[c]
+              if (ch === ' ' || ch === '\t' || ch === '`') continue
+              this.warn('unknown-character', 'unknown character ignored', sourceRange(c, c + 1))
+            }
           }
           break
         }
@@ -5863,6 +5955,13 @@ class Parser {
             const ch = this.src[c]
             if (ch === ' ' || ch === '`') continue
             this.warn('unknown-character', 'unknown character ignored', sourceRange(c, c + 1))
+            /**
+             * **AND A CHARACTER THAT WARNS IS OWNED BY NOTHING** — the same fact, from the
+             * other side: abcjs's iteration appends no element, so `extractMeasures` gives
+             * `CDEF|` for `1CDEF|`'s first measure where ours tiled the stray digit into it.
+             * `Score.unreadable` is the channel the `unknown` arm beside this already uses.
+             */
+            builder.unreadable.push(sourceRange(c, c + 1))
           }
           i++
           break

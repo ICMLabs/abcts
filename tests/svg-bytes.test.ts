@@ -580,6 +580,27 @@ const PASSING: readonly string[] = [
     (_, i) => `abcts-bars-graces-and-groups-tune${i}`,
   ),
   /**
+   * `abcts-void-notes-and-stray-ties.abc` — written to close the WARNINGS gate's last row
+   * and it named two GEOMETRY defects on the way, which is the argument for writing the
+   * ladder rather than the fix.
+   *
+   * ⚠️ **A DIGIT AFTER A NOTE'S LENGTH AND ITS TRAILING SPACE VOIDS THE WHOLE NOTE.**
+   * `getCoreNote` leaves `state = 'broken_rhythm'` after a fraction, and the digit case has
+   * no arm for it: `else return null` (`abc_parse_music.js:1194-1210`). `C2 1 D2|` is ONE
+   * note in abcjs — the `D` — and three warnings. Ours drew both.
+   *
+   * ⚠️ **AND A SPLIT TIE TAKES THE 20px STUB WHERE A SPLIT SLUR TAKES THE PREFIX.**
+   * `setStartX(this.startlimitelem)` is called only in the branch that opens a SLUR
+   * (`abstract-engraver.js:928-930`), so which arm `calcX` reaches is decided by how the
+   * curve was WRITTEN — a different question from `isTie`, which is recomputed at draw
+   * time from the two pitches. The two agree everywhere except a `-` between DIFFERENT
+   * pitches, which abcjs builds as a tie and draws as a slur.
+   */
+  ...Array.from(
+    { length: 15 },
+    (_, i) => `abcts-void-notes-and-stray-ties-tune${i}`,
+  ),
+  /**
    * `abcts-voice-style.abc` — `V:… style=`, the first of the three modifiers the V:
    * enumeration left as a FEATURE. All five shapes, one voice each.
    *

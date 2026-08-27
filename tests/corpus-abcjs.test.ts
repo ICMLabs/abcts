@@ -468,10 +468,11 @@ const WITHIN: Readonly<Record<string, number>> = {
   // …and `abcts-stafflines-and-modifiers.abc`, a 36-shape sweep over untouched territory
   // plus the three ladders that closed what it found.
   // …and `abcts-bars-graces-and-groups.abc`, a second 36-shape sweep.
-  "0.05": 224,
-  "1": 224,
-  "5": 224,
-  "25": 224,
+  // …and `abcts-void-notes-and-stray-ties.abc`, the ladder that closed the warnings gate.
+  "0.05": 225,
+  "1": 225,
+  "5": 225,
+  "25": 225,
 };
 
 const names = readdirSync(fixturesDir)
@@ -595,6 +596,9 @@ describe("abcjs test-suite corpus", () => {
     expect(mismatched.sort()).toEqual(Object.keys(CONTENT_GAPS).sort());
   });
 
+    // 15s, not vitest's 5s default: this renders the whole corpus and crossed the
+  // default under full-suite contention the run after the corpus grew. A timeout
+  // that does not track the corpus is a gate that fails for growing.
   it("geometry does not regress", () => {
     const scores = names
       .filter((n) => CONTENT_GAPS[n] === undefined)
@@ -609,5 +613,5 @@ describe("abcjs test-suite corpus", () => {
     // A ratchet: only up. An improvement must be RECORDED, or the number drifts away
     // from reality and stops meaning anything.
     expect(summary).toEqual(WITHIN);
-  });
+  }, 15_000);
 });

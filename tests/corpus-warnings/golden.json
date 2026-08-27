@@ -1085,6 +1085,36 @@
  "repo/abcts-voice-style-tune2": null,
  "repo/abcts-voice-style-tune3": null,
  "repo/abcts-voice-style-tune4": null,
+ "repo/abcts-void-notes-and-stray-ties-tune0": [
+  "Music Line:5:5: Expected ']' to end the chords:  C2|[<span style=\"text-decoration:underline;font-size:1.3em;font-weight:bold;\">-</span>1 D2|]",
+  "Music Line:5:5: Unknown character ignored:  C2|[<span style=\"text-decoration:underline;font-size:1.3em;font-weight:bold;\">-</span>1 D2|]",
+  "Music Line:5:6: Unknown character ignored:  C2|[-<span style=\"text-decoration:underline;font-size:1.3em;font-weight:bold;\">1</span> D2|]"
+ ],
+ "repo/abcts-void-notes-and-stray-ties-tune1": null,
+ "repo/abcts-void-notes-and-stray-ties-tune2": [
+  "Music Line:5:1: Unknown character ignored:  <span style=\"text-decoration:underline;font-size:1.3em;font-weight:bold;\">1</span>CDEF|"
+ ],
+ "repo/abcts-void-notes-and-stray-ties-tune3": [
+  "Music Line:5:1: Unknown character ignored:  <span style=\"text-decoration:underline;font-size:1.3em;font-weight:bold;\">C</span>2 1 D2|",
+  "Music Line:5:2: Unknown character ignored:  C<span style=\"text-decoration:underline;font-size:1.3em;font-weight:bold;\">2</span> 1 D2|",
+  "Music Line:5:4: Unknown character ignored:  C2 <span style=\"text-decoration:underline;font-size:1.3em;font-weight:bold;\">1</span> D2|"
+ ],
+ "repo/abcts-void-notes-and-stray-ties-tune4": null,
+ "repo/abcts-void-notes-and-stray-ties-tune5": null,
+ "repo/abcts-void-notes-and-stray-ties-tune6": null,
+ "repo/abcts-void-notes-and-stray-ties-tune7": [
+  "Music Line:5:1: Unknown character ignored:  <span style=\"text-decoration:underline;font-size:1.3em;font-weight:bold;\">C</span>2 -1 D2|",
+  "Music Line:5:2: Unknown character ignored:  C<span style=\"text-decoration:underline;font-size:1.3em;font-weight:bold;\">2</span> -1 D2|",
+  "Music Line:5:4: Unknown character ignored:  C2 <span style=\"text-decoration:underline;font-size:1.3em;font-weight:bold;\">-</span>1 D2|",
+  "Music Line:5:5: Unknown character ignored:  C2 -<span style=\"text-decoration:underline;font-size:1.3em;font-weight:bold;\">1</span> D2|"
+ ],
+ "repo/abcts-void-notes-and-stray-ties-tune8": null,
+ "repo/abcts-void-notes-and-stray-ties-tune9": null,
+ "repo/abcts-void-notes-and-stray-ties-tune10": null,
+ "repo/abcts-void-notes-and-stray-ties-tune11": null,
+ "repo/abcts-void-notes-and-stray-ties-tune12": null,
+ "repo/abcts-void-notes-and-stray-ties-tune13": null,
+ "repo/abcts-void-notes-and-stray-ties-tune14": null,
  "repo/abcts-vskip-tune0": null,
  "repo/abcts-vskip-tune1": null,
  "repo/abcts-vskip-tune2": null,

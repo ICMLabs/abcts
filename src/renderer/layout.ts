@@ -8760,7 +8760,21 @@ function layoutCurves(
   const emit = (
     from: NoteAnchor,
     to: NoteAnchor,
+    /** The DRAWN shape — abcjs's `isTie`, recomputed from the two anchors. */
     kind: 'tie' | 'slur',
+    /**
+     * **HOW IT WAS WRITTEN, WHICH IS A DIFFERENT QUESTION AND DECIDES ONE THING.**
+     * `setStartX(this.startlimitelem)` is called ONLY in the branch that opens a SLUR
+     * (`abstract-engraver.js:928-930`), so a curve built by the TIE branch never has a
+     * `startLimitX` and its incoming half always takes `anchor2.x - 20` — whatever shape
+     * `draw/tie.js` later decides to draw it in.
+     *
+     * The two agree on every ordinary curve and part company on a `-` between two DIFFERENT
+     * pitches, which abcjs draws as a slur and builds as a tie. `C2-` at a line end over
+     * `D2|` is that shape: its stub ran 45.05 where abcjs starts at 35.05, because `kind`
+     * answered "slur" and sent it down the prefix arm.
+     */
+    writtenAs: 'tie' | 'slur',
     internalHigh?: number,
     /** See `PlacedCurve.openSeq` — the `(` order, for two curves opening on one element. */
     openSeqOf?: number,
@@ -8885,7 +8899,7 @@ function layoutCurves(
      * side, the opening system's prefix) each named a plausible number and none was it.
      */
     const resume =
-      kind === 'slur' && end.prefixEnd !== undefined
+      writtenAs === 'slur' && end.prefixEnd !== undefined
         ? end.prefixEnd
         : to.left - ENGRAVE.curveContinuation
     curves[to.system]?.push({
@@ -9002,6 +9016,7 @@ function layoutCurves(
               graceTieOpen.at,
               to,
               graceTieOpen.at.pitchStep === to.pitchStep ? 'tie' : 'slur',
+              'tie',
               undefined,
               undefined,
               undefined,
@@ -9064,6 +9079,8 @@ function layoutCurves(
              * automatic grace slur was measured at.
              */
             from.pitchStep === graceStep ? 'tie' : 'slur',
+            // Written as a SLUR — this is the `(` inside a grace group, `{(aa)}`.
+            'slur',
             internalHighOf(rec?.i ?? 0, i, from),
             undefined,
             internalDownOf(rec?.i ?? 0, i),
@@ -9232,6 +9249,7 @@ function layoutCurves(
           from,
           target,
           drawnKind(from, target, 'slur', internal),
+          'slur',
           internalHighOf(start ?? 0, i, from),
           openSeq.get(depth),
           internalDownOf(start ?? 0, i),
@@ -9319,7 +9337,7 @@ function layoutCurves(
            * ties a C to a D across the barline — is the shape that separates them, and
            * abcjs gives it the slur's own 1.5-pitch lift and `data-name="slur"`.
            */
-          emit(a, b, a.pitchStep === b.pitchStep ? 'tie' : 'slur')
+          emit(a, b, a.pitchStep === b.pitchStep ? 'tie' : 'slur', 'tie')
     }
 
 
