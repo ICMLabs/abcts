@@ -6371,23 +6371,21 @@ function decorationGlyphs(
       // and `x * STEP / STEP` is not `x`.
       reservePitch: [closeY, closeY],
       /**
-       * ⚠️ **ITS DRAWN y IS ONE ULP OUT AND `drawPitch` IS NOT THE FIX — MEASURED AND
-       * REVERTED.** `printSymbol` draws at `calcY(offset + ycorr)`, one sum and one
-       * multiply (`draw/print-symbol.js:34`), where the emitter is given only a y and
-       * spends the correction on it as a LENGTH: `offset * STEP + ycorr * STEP`.
-       * `scripts.sforzato` carries a `getYCorr`, so a bare `!accent!CDEF|` draws at
-       * `87.72400000000002` against abcjs's `87.724`.
+       * ⚠️ **AND `getYCorr` JOINS THE PITCH, NOT THE FINISHED y.** `printSymbol` draws at
+       * `calcY(offset + ycorr)` — one sum, one multiply (`draw/print-symbol.js:34`) — where
+       * the emitter, given only a y, spends the correction on it as a LENGTH:
+       * `offset * STEP + ycorr * STEP`. `scripts.sforzato` carries a `getYCorr`, so a bare
+       * `!accent!CDEF|` drew at `87.72400000000002` against abcjs's `87.724`.
        *
-       * `PlacedGlyph.drawPitch` looks like the field for it — its own note says it is set
-       * "on the dynamic alone for exactly that reason". It is NOT: the emitter's branch is
-       * `-spacesOfPitch(drawPitch + ycorr)`, an ABSOLUTE pitch with no staff origin in it,
-       * which the DYNAMIC gets away with because its lane is shifted separately afterwards.
-       * Setting it here put the sforzato at 110.974 — 23px low, the staff's whole origin.
-       *
-       * So the row wants either a second field carrying the origin, or `drawPitch` to mean
-       * "a pitch in this staff's frame" at both sites. Both corpora agree either way; a
-       * control with nothing else on the staff is what separates them.
+       * ⚠️ **AND `drawPitch` IS AN ABCJS PITCH, NOT A STAFF STEP.** The emitter's branch is
+       * `-spacesOfPitch(drawPitch + ycorr)` while `stepToY` is
+       * `-(step + PITCH_ORIGIN) * spacePerStep`, so the field must carry `closeY` itself —
+       * which already IS the pitch — and not `toStep(closeY)`. Passing the step put the
+       * sforzato 23.25px low, and **23.25 is `PITCH_ORIGIN * spacePerStep` exactly**, which
+       * is what named the units after a note here had written the field off as the wrong
+       * one. **A number that is exactly one constant is a unit error, not a rebuttal.**
        */
+      drawPitch: closeY,
     })
   }
 

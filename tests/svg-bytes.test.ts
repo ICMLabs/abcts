@@ -652,10 +652,14 @@ const PASSING: readonly string[] = [
    * `staff`. MEASURED: abcjs's page is byte-identical with and without the directive.
    * **The consuming is the point** — left pending it goes to the STAFF instead.
    *
-   * **AND ONE MORE, ITS OWN FAMILY:** a close decoration's drawn y is one ULP out — tune 34
-   * — because `getYCorr` joins the PITCH in abcjs and the LENGTH here.
-   * `PlacedGlyph.drawPitch` looks like the field for it and is NOT; measured, tried and
-   * reverted at the `scripts.sforzato` push in `decorationGlyphs`.
+   * ✅ **AND THE CLOSE DECORATION'S ONE ULP IS CLOSED TOO** — `getYCorr` joins the PITCH in
+   * abcjs and the LENGTH here, and `PlacedGlyph.drawPitch` IS the field. A note here said
+   * it was not: the value passed had been `toStep(closeY)` where the emitter wants an abcjs
+   * PITCH, and the 23.25px that produced is `PITCH_ORIGIN * spacePerStep` exactly.
+   * **A number that is exactly one constant is a unit error, not a rebuttal.**
+   *
+   * ⚠️ **THE ROW STILL OPEN IS tune 34** — a `%%text` between two VOICES, one ULP of the
+   * root height (`251.822` against `251.82200000000003`). Its own family.
    *
    * ✅ **AND `[U:n=!accent!]` IS A MODE SPLIT NOW — tunes 43 and 44.** abcjs has no inline
    * `U:` at all: `letter_to_inline_header` switches on exactly eight, `[I: [M: [K: [P: [L:
