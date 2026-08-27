@@ -1,0 +1,16 @@
+X:1
+T:Both Rests
+%%staffnonote 0
+L:1/4
+K:C
+V:1
+zzzz|
+V:2
+zzzz|
+
+X:2
+T:Single Voice Rest
+%%staffnonote 0
+L:1/4
+K:C
+zzzz|

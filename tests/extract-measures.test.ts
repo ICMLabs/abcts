@@ -55,6 +55,29 @@ const IN_REPO = join(import.meta.dirname, "corpus-abcjs", "fixtures");
 /** The sibling repo edits these without regenerating goldens — see `lines.test.ts`. */
 const STALE = ["sib/S7-voices", "sib/multi-voice-rest-placement"];
 
+/**
+ * Files where abcjs's own `extractMeasures` CRASHES and ours returns. A ruled divergence,
+ * not a tolerance: each is written up in `Docs/ABCJS-DIFFERENCES.md` with its citation, and
+ * **an entry here without one is a tolerance wearing a disguise** — the same contract
+ * `svg-bytes`'s `DIVERGENT` list carries.
+ *
+ * ⚠️ Do NOT put these in `STALE`. That list means "the golden was not regenerated", which is
+ * a different claim and would hide a real regression the day the file changed.
+ */
+const DIVERGENT = [
+  /**
+   * **`%%staffnonote 0` OVER A TUNE OF PURE RESTS CRASHES `extractMeasures`.** `cleanUp`
+   * deletes every rest-only STAFF and leaves `line.staff` an EMPTY ARRAY — which is truthy —
+   * and `extractMeasures` then reads `line.staff[0].voices` under a loop whose bound is a
+   * hard-coded `k < 1` where `line.staff.length` is commented out
+   * (`api/abc_tunebook.js:212-218`): `Cannot read properties of undefined (reading 'voices')`.
+   *
+   * Ours returns the measures. **Reproducing a crash is not parity**, and the SVG for both
+   * tunes is byte-exact and ratcheted in `svg-bytes` — this surface alone diverges.
+   */
+  "repo/abcts-staffnonote-empty-staves",
+];
+
 interface Row {
   readonly slug: string;
   readonly agree: number;
@@ -65,7 +88,7 @@ interface Row {
 const rows = (): Row[] => {
   const out: Row[] = [];
   for (const [slug, want] of Object.entries(GOLDEN)) {
-    if (STALE.includes(slug)) continue;
+    if (STALE.includes(slug) || DIVERGENT.includes(slug)) continue;
     const corpus = slug.slice(0, slug.indexOf("/"));
     const file = slug.slice(slug.indexOf("/") + 1);
     const abc = readFileSync(

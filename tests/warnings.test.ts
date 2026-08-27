@@ -136,6 +136,24 @@ const PASSING: readonly string[] = [
   "repo/abcts-text-udef-parts-overlays-tune19",
   "repo/abcts-text-udef-parts-overlays-tune43",
   "repo/abcts-text-udef-parts-overlays-tune44",
+  /**
+   * `abcts-staffnonote-and-directives.abc` — abcjs's DIRECTIVE SWITCH enumerated against our
+   * parser. **Five of these rows were us warning `Unknown directive` where abcjs knows the
+   * directive and says nothing** (`%%papersize` and the four `%%-` info fields): "never
+   * mentioned in our parser" is not "not implemented by abcjs". And `%%staffnonote 2` echoes
+   * the value back in its message, which is why `directive-message` exists beside
+   * `directive-parameter` — the latter REWRITES its sentence and cannot produce both.
+   *
+   * ⚠️ **`%%beginps` IS NOT HERE AND IS A RULED DIVERGENCE.** abcjs warns `Postscript
+   * ignored` at the line AFTER the block, because `iChar` has advanced while the context
+   * string has not — a byproduct of the same loop that makes a NON-empty `%%beginps` spin
+   * forever. See `Docs/ABCJS-DIFFERENCES.md`; we decline to reproduce the hang, and this
+   * row is its shadow on the one shape that terminates.
+   */
+  "repo/abcts-staffnonote-and-directives-tune13",
+  "repo/abcts-staffnonote-and-directives-tune14",
+  "repo/abcts-staffnonote-and-directives-tune15",
+  "repo/abcts-staffnonote-and-directives-tune6",
   "repo/abcts-bars-graces-and-groups-tune0",
   "repo/abcts-bars-graces-and-groups-tune40",
   "repo/abcts-bars-graces-and-groups-tune6",

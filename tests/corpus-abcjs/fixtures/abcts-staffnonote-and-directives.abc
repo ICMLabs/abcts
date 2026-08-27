@@ -1,0 +1,145 @@
+X:1
+T:Rest Voice
+%%staffnonote 0
+L:1/4
+K:C
+V:1
+CDEF|
+V:2
+zzzz|
+
+X:2
+T:Default On
+L:1/4
+K:C
+V:1
+CDEF|
+V:2
+zzzz|
+
+X:3
+T:Explicit One
+%%staffnonote 1
+L:1/4
+K:C
+V:1
+CDEF|
+V:2
+zzzz|
+
+X:4
+T:Rest With Chord
+%%staffnonote 0
+L:1/4
+K:C
+V:1
+CDEF|
+V:2
+"C"zzzz|
+
+X:5
+T:Shared Staff
+%%staffnonote 0
+%%score (1 2)
+L:1/4
+K:C
+V:1
+CDEF|
+V:2
+zzzz|
+
+X:6
+T:Three Voices
+%%staffnonote 0
+L:1/4
+K:C
+V:1
+CDEF|
+V:2
+zzzz|
+V:3
+GABc|
+
+X:7
+T:Bad Param
+%%staffnonote 2
+L:1/4
+K:C
+V:1
+CDEF|
+V:2
+zzzz|
+
+X:8
+T:Staffnonote
+%%staffnonote 0
+L:1/4
+K:C
+V:1
+CDEF|
+V:2
+zzzz|
+
+X:9
+T:Papersize
+%%papersize A4
+L:1/4
+K:C
+CDEF|
+
+X:10
+T:Charset
+%%-charset utf-8
+L:1/4
+K:C
+CDEF|
+
+X:11
+T:Version
+%%-version 1.0
+L:1/4
+K:C
+CDEF|
+
+X:12
+T:Creator
+%%-creator me
+L:1/4
+K:C
+CDEF|
+
+X:13
+T:Edited By
+%%-edited-by me
+L:1/4
+K:C
+CDEF|
+
+X:14
+T:Tabgracefont
+%%tabgracefont Times 20
+L:1/4
+K:C
+CDEF|
+
+X:15
+T:Tablabelfont
+%%tablabelfont Times 20
+L:1/4
+K:C
+CDEF|
+
+X:16
+T:Tabnumberfont
+%%tabnumberfont Times 20
+L:1/4
+K:C
+CDEF|
+
+X:17
+T:Beginps Empty
+%%beginps
+%%endps
+L:1/4
+K:C
+CDEF|

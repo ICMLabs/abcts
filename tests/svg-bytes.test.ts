@@ -677,6 +677,36 @@ const PASSING: readonly string[] = [
     (_, i) => `abcts-text-udef-parts-overlays-tune${i}`,
   ),
   /**
+   * `abcts-staffnonote-and-directives.abc` — abcjs's DIRECTIVE SWITCH enumerated against our
+   * parser, which named **18 directives this parser never mentions**, plus the ladder the
+   * one live defect earned. Seventeen of the eighteen were already byte-exact
+   * (`%%measurebox`, `%%titlecaps`, `%%fontboxpadding`, `%%voicescale`, `%%deco`,
+   * `%%headerfont`, `%%footerfont`, `%%landscape`, `%%papersize`, the four `%%-` info
+   * fields and the three tab fonts) — **"never mentioned" is not "not implemented"**, and
+   * enumerating the reference is what tells the two apart.
+   *
+   * ✅ **`%%staffnonote 0` DROPS EVERY STAFF THAT HOLDS NOTHING BUT RESTS**, and the sense
+   * of the boolean is INVERTED — abcjs's own comment says so. See `Score.staffNoNote`.
+   * A rest carrying a CHORD SYMBOL keeps its staff; a bare rest does not; and a tune whose
+   * every voice is rests keeps no staff at all and falls to the "no note and no barline"
+   * line deletion, which is what gets its 37.56px page right.
+   *
+   * ⚠️ **TUNE 4 IS OPEN AND IS NOT THIS DIRECTIVE.** `%%score (1 2)` with one note-voice and
+   * one rest-voice reserves 29.185px more below than abcjs does — **every glyph is at an
+   * identical position in both engines**, so it is a RESERVE and nothing else. Measured with
+   * and without `%%staffnonote`, and with both voices noted and both rested: only this pair
+   * moves. `addRestToAbsElement` puts a multi-voice rest at pitch 3 or 11 and `createNoteHead`
+   * declares its box from that same pitch (`abstract-engraver.js:544-612`), so the drawn
+   * position agreeing while the extent does not says our extent measures the INK.
+   */
+  ...[0, 1, 2, 3, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16].map(
+    (i) => `abcts-staffnonote-and-directives-tune${i}`,
+  ),
+  // …and the two tunes whose `extractMeasures` CRASHES abcjs, split into their own file so
+  // that gate's `DIVERGENT` list can name them. Their SVG is exact — see there.
+  "abcts-staffnonote-empty-staves-tune0",
+  "abcts-staffnonote-empty-staves-tune1",
+  /**
    * `abcts-voice-style.abc` — `V:… style=`, the first of the three modifiers the V:
    * enumeration left as a FEATURE. All five shapes, one voice each.
    *

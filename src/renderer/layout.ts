@@ -12727,12 +12727,40 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
    * after packing and are indexed BY VOICE — so the merge needs to know, at that point,
    * which voices' curves belong to which staff.
    */
-  const voicesOfStaff: number[][] =
-    score.staves.length > 0
-      ? score.staves.map((group) =>
-          group.voiceIds.map((id) => voices.findIndex((v) => v?.id === id)).filter((i) => i >= 0),
-        )
-      : voices.map((_, i) => [i])
+  const voicesOfStaff: number[][] = (() => {
+    const built =
+      score.staves.length > 0
+        ? score.staves.map((group) =>
+            group.voiceIds.map((id) => voices.findIndex((v) => v?.id === id)).filter((i) => i >= 0),
+          )
+        : voices.map((_, i) => [i])
+    if (score.staffNoNote !== true) return built
+    /**
+     * **`%%staffnonote 0` DROPS EVERY STAFF THAT HOLDS NOTHING BUT RESTS.** `cleanUp` nulls
+     * any STAFF — not voice — none of whose voices satisfies `containsNotesStrict`, then
+     * filters the nulls out (`tune-builder.js:70-93`). See `Score.staffNoNote` for the
+     * inverted boolean.
+     *
+     * ⚠️ **AND A REST CARRYING A CHORD SYMBOL KEEPS ITS STAFF.** The test is
+     * `el_type === 'note' && (rest === undefined || chord !== undefined)`
+     * (`tune-builder.js:896-902`) — the `chord` clause is the whole difference between
+     * `zzzz|` and `"C"zzzz|`, and it is why this cannot be "does the voice have a note".
+     *
+     * Measured on a two-voice tune whose second voice is `zzzz|`: abcjs draws ONE staff and
+     * no rests at all where we drew two staves and four rests, 78.83px of page.
+     */
+    const sounds = (v: number): boolean =>
+      (voices[v]?.measures ?? []).some((m) =>
+        m.events.some(
+          (e) => e.type === 'note' || (e.type === 'rest' && e.chordSymbol !== null),
+        ),
+      )
+    // ⚠️ **AND IT REALLY DOES DELETE THEM ALL.** A tune whose every voice is rests keeps no
+    // staff at all, and the line then falls to the "no note and no barline" deletion above:
+    // abcjs's whole page for `%%staffnonote 0` over `zzzz|` is 417 bytes. A "never empty"
+    // guard here looked like prudence and was 78px of staff abcjs does not draw.
+    return built.filter((members) => members.some(sounds))
+  })()
 
   /**
    * A voice's index on its staff, or −1 when it has that staff to itself.
@@ -13640,13 +13668,27 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
    * a tune with no notes has none to pair; `dom-contract`'s cases all have music. It
    * showed on the byte table, as the root's `height`.
    */
+  /**
+   * ⚠️ **AND UNDER `%%staffnonote 0` A LINE OF PURE RESTS HAS NO STAFF LEFT TO KEEP IT.**
+   * `cleanUp` deletes the rest-only STAVES first and the line-level `containsNotes` test
+   * runs over what survives, so a tune whose every voice is rests keeps nothing: abcjs's
+   * whole page for `%%staffnonote 0` over `zzzz|` is 417 bytes and 37.56px — `padding.top +
+   * padding.bottom + spacing.music`, the same three terms a tune with a header and no music
+   * spends. Routing it through THIS filter is what gets those terms right; deleting the
+   * staves alone gave a bare 30. See `Score.staffNoNote` and `voicesOfStaff`.
+   */
+  const sounds = (m: Measure): boolean =>
+    m.events.some((e) => e.type === 'note' || (e.type === 'rest' && e.chordSymbol !== null))
   const spansWithInk = spans.filter(({ start: from, end: to }) =>
     plans.some((plan) =>
       plan.measures
         .slice(from, to)
-        .some(
-          (m) =>
-            m.events.length > 0 || m.openingBarline !== null || m.closingBarline !== null,
+        .some((m) =>
+          score.staffNoNote === true
+            ? sounds(m)
+            : m.events.length > 0 ||
+              m.openingBarline !== null ||
+              m.closingBarline !== null,
         ),
     ),
   )

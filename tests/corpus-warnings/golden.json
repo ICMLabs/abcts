@@ -1042,6 +1042,35 @@
  "repo/abcts-stafflines-and-modifiers-tune47": null,
  "repo/abcts-stafflines-and-modifiers-tune48": null,
  "repo/abcts-stafflines-and-modifiers-tune49": null,
+ "repo/abcts-staffnonote-and-directives-tune0": null,
+ "repo/abcts-staffnonote-and-directives-tune1": null,
+ "repo/abcts-staffnonote-and-directives-tune2": null,
+ "repo/abcts-staffnonote-and-directives-tune3": null,
+ "repo/abcts-staffnonote-and-directives-tune4": null,
+ "repo/abcts-staffnonote-and-directives-tune5": null,
+ "repo/abcts-staffnonote-and-directives-tune6": [
+  "Music Line:3:3: Directive staffnonote requires one parameter: 0 or 1 (received 2):  %%<span style=\"text-decoration:underline;font-size:1.3em;font-weight:bold;\">s</span>taffnonote 2"
+ ],
+ "repo/abcts-staffnonote-and-directives-tune7": null,
+ "repo/abcts-staffnonote-and-directives-tune8": null,
+ "repo/abcts-staffnonote-and-directives-tune9": null,
+ "repo/abcts-staffnonote-and-directives-tune10": null,
+ "repo/abcts-staffnonote-and-directives-tune11": null,
+ "repo/abcts-staffnonote-and-directives-tune12": null,
+ "repo/abcts-staffnonote-and-directives-tune13": [
+  "Music Line:3:3: Unknown directive: tabgracefont:  %%<span style=\"text-decoration:underline;font-size:1.3em;font-weight:bold;\">t</span>abgracefont Times 20"
+ ],
+ "repo/abcts-staffnonote-and-directives-tune14": [
+  "Music Line:3:3: Unknown directive: tablabelfont:  %%<span style=\"text-decoration:underline;font-size:1.3em;font-weight:bold;\">t</span>ablabelfont Times 20"
+ ],
+ "repo/abcts-staffnonote-and-directives-tune15": [
+  "Music Line:3:3: Unknown directive: tabnumberfont:  %%<span style=\"text-decoration:underline;font-size:1.3em;font-weight:bold;\">t</span>abnumberfont Times 20"
+ ],
+ "repo/abcts-staffnonote-and-directives-tune16": [
+  "Music Line:4:1: Postscript ignored:  <span style=\"text-decoration:underline;font-size:1.3em;font-weight:bold;\">b</span>eginps"
+ ],
+ "repo/abcts-staffnonote-empty-staves-tune0": null,
+ "repo/abcts-staffnonote-empty-staves-tune1": null,
  "repo/abcts-start-char-tune0": null,
  "repo/abcts-tempo-rung-tune0": [
   "Music Line:10:7: Unknown bar symbol:  [V:1]P<span style=\"text-decoration:underline;font-size:1.3em;font-weight:bold;\">:</span>A",

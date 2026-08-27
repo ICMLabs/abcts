@@ -2607,6 +2607,8 @@ interface Formatting {
   drumMap?: Record<string, number>
   midi?: Record<string, readonly (string | number)[]>
   stretchLast: number | null
+  /** `%%staffnonote 0` — INVERTED sense; see `Score.staffNoNote`. */
+  staffNoNote: boolean
   staffWidth: number | null
   scale: number | null
   maxStaves: number | null
@@ -2865,6 +2867,8 @@ class ScoreBuilder {
   /** `%%MIDI` written before the first note — the tune's own audio settings. */
   midi: Record<string, readonly (string | number)[]> = {}
   stretchLast: number | null = null
+  /** `%%staffnonote 0` — INVERTED sense; see `Score.staffNoNote`. */
+  staffNoNote = false
   staffWidth: number | null = null
   scale: number | null = null
   maxStaves: number | null = null
@@ -2891,6 +2895,7 @@ class ScoreBuilder {
       drumMap: this.drumMap,
       midi: this.midi,
       stretchLast: this.stretchLast,
+      staffNoNote: this.staffNoNote,
       staffWidth: this.staffWidth,
       scale: this.scale,
       maxStaves: this.maxStaves,
@@ -2923,6 +2928,7 @@ class ScoreBuilder {
     if (f.drumMap !== undefined) this.drumMap = f.drumMap
     if (f.midi !== undefined) this.midi = f.midi
     this.stretchLast = f.stretchLast
+    this.staffNoNote = f.staffNoNote
     // …**AND THE ORDER WITH THEM.** A `%%` directive above the first `X:` is the FILE
     // HEADER and applies to every tune (ABC 2.1 §4.1), so its `formatting` key must arrive
     // in the tune too — `%%stretchlast 1` written there was reaching `stretchLast` and not
@@ -3249,6 +3255,7 @@ class ScoreBuilder {
       midi: this.midi,
       formattingOrder: this.formattingOrder,
       stretchLast: this.stretchLast,
+      staffNoNote: this.staffNoNote,
       staffWidth: this.staffWidth,
       scale: this.scale,
       maxStaves: this.maxStaves,
@@ -3890,6 +3897,40 @@ class Parser {
       // The directive can stand in the HEADER, before any voice exists, and abcjs parks it
       // on the TUNE either way — so it goes on the score's shared box, not the voice's.
       if (this.builder) this.builder.pendingVskip.value = Math.round(px)
+      return
+    }
+    /**
+     * **DIRECTIVES abcjs KNOWS AND DOES NOTHING WITH — silent, not unknown.**
+     *
+     * Its switch has an arm for each of these, so it raises NO warning; ours fell through
+     * to `Unknown directive` and said so five times. **"Never mentioned in our parser" is
+     * not "not implemented by abcjs"** — enumerating abcjs's own switch against this file
+     * named eighteen such directives and SEVENTEEN were already byte-exact in the drawing.
+     *
+     * `papersize` sets `multilineVars.papersize` and nothing reads it; the four `%%-` info
+     * fields are `-charset`, `-version`, `-creator` and `-edited-by`, which abcjs accepts
+     * and drops (`abc_parse_directive.js`, the arms beside `landscape`).
+     */
+    if (/^(papersize|-charset|-version|-creator|-edited-by)\b/.test(body)) return
+    /**
+     * **`%%staffnonote` — AND THE SENSE OF THE BOOLEAN IS OPPOSITE.** abcjs's own comment
+     * says so: *"The sense of the boolean is opposite here. `0` means true"*
+     * (`abc_parse_directive.js:906-916`). `0` turns the DROP ON, `1` turns it off, and
+     * anything else is a warning and no change. See `Score.staffNoNote`.
+     */
+    const staffNoNote = /^staffnonote\s+(\S+)/.exec(body)
+    if (staffNoNote?.[1] !== undefined) {
+      const builder = this.ensureScore(start)
+      if (staffNoNote[1] === '0') builder.staffNoNote = true
+      else if (staffNoNote[1] === '1') builder.staffNoNote = false
+      // …and anything else is abcjs's own message, verbatim, with the value echoed back.
+      else
+        this.warn(
+          'directive-message',
+          `Directive staffnonote requires one parameter: 0 or 1 (received ${staffNoNote[1]})`,
+          sourceRange(start, end),
+        )
+      builder.noteFormatting('staffnonote')
       return
     }
     // `%%staffsep` / `%%sysstaffsep` — minimum staff separations, given in POINTS and

@@ -22,6 +22,8 @@ it("survives malformed, hostile and randomly mutated input", () => {
     .filter((f) => f.endsWith(".abc"))
     .map((f) => readFileSync(join(corpusDir, f), "utf-8"));
   const problems: string[] = [];
+  /** Every input's parse time, judged against this run's own median — see `check`. */
+  const timings: { label: string; ms: number; chars: number }[] = [];
   const check = (src: string, label: string) => {
     const t0 = Date.now();
     let r: ReturnType<typeof parse>;
@@ -31,13 +33,19 @@ it("survives malformed, hostile and randomly mutated input", () => {
       problems.push(`THREW ${label}: ${(e as Error).message}`);
       return;
     }
-    const ms = Date.now() - t0;
-    // A CATASTROPHIC-BACKTRACKING SMOKE TEST, not a performance gate. It was 1000ms and
-    // started tripping at 1149ms on a 50,008-char input once the byte gate grew to 334
-    // rows and the machine ran hot — the parse is unchanged and passes alone. A runaway
-    // regex is seconds to minutes, so the budget still catches what it exists for.
-    if (ms > 3000)
-      problems.push(`SLOW ${label}: ${ms}ms for ${src.length} chars`);
+    // **A CATASTROPHIC-BACKTRACKING SMOKE TEST, NOT A PERFORMANCE GATE** — and the timing
+    // is recorded here and JUDGED AT THE END, against this run's own median.
+    //
+    // ⚠️ **AN ABSOLUTE MILLISECOND BUDGET MEASURES THE MACHINE, NOT THE PARSER.** This was
+    // 1000ms, tripped at 1149 under load, was raised to 3000, and tripped again at 8319 in
+    // a full-suite run that took 168s of tests where the same run alone takes 20. Both
+    // times the parse was unchanged and passed on its own. **Raising the number is the same
+    // losing move as raising a per-test timeout one at a time** — see `vitest.config.ts`.
+    //
+    // A runaway regex is ORDERS OF MAGNITUDE, not a factor of two, so a RATIO catches
+    // exactly what this exists for and load cancels out of it: every input in the run slows
+    // together. The absolute floor stays as a backstop for a run where the median is ~0.
+    timings.push({ label, ms: Date.now() - t0, chars: src.length });
     if (!r.ok) return;
     for (const s of r.scores)
       for (const v of s.voices)
@@ -124,6 +132,18 @@ it("survives malformed, hostile and randomly mutated input", () => {
     const len = Math.floor(rnd() * 2000);
     check(Array.from({ length: len }, () => pick(CHARS)).join(""), `rand#${n}`);
   }
+  /**
+   * **THE SLOW TEST, RUN ONCE OVER THE WHOLE SAMPLE.** An input is slow if it beats BOTH a
+   * 3s floor and 200× this run's median — the floor so a fast machine cannot make a real
+   * runaway look proportionate, the ratio so a loaded one cannot make a normal parse look
+   * like a runaway. `parse` on these inputs is a millisecond or two, so 200× is still well
+   * inside "orders of magnitude".
+   */
+  const sorted = [...timings].map((t) => t.ms).sort((a, b) => a - b);
+  const median = sorted[Math.floor(sorted.length / 2)] ?? 0;
+  for (const t of timings)
+    if (t.ms > 3000 && t.ms > median * 200)
+      problems.push(`SLOW ${t.label}: ${t.ms}ms for ${t.chars} chars (median ${median}ms)`);
   const unique = [...new Set(problems)];
   writeFileSync(
     join(tmpdir(), "abcts-fuzz.txt"),

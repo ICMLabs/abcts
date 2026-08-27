@@ -471,10 +471,11 @@ const WITHIN: Readonly<Record<string, number>> = {
   // …and `abcts-void-notes-and-stray-ties.abc`, the ladder that closed the warnings gate,
   // and `abcts-text-udef-parts-overlays.abc`, the third sweep — which reached ZERO on every
   // axis the day the in-system trailing block closed.
-  "0.05": 226,
-  "1": 226,
-  "5": 226,
-  "25": 226,
+  // …and the two `abcts-staffnonote-*` fixtures, from enumerating abcjs's directive switch.
+  "0.05": 228,
+  "1": 228,
+  "5": 228,
+  "25": 228,
 };
 
 const names = readdirSync(fixturesDir)

@@ -1915,6 +1915,23 @@ export interface Score {
    * is itself (`abc_parse_directive.js:1294-1305`).
    */
   readonly stretchLast: number | null
+  /**
+   * **`%%staffnonote 0` — DROP EVERY STAFF THAT HOLDS NOTHING BUT RESTS.**
+   *
+   * ⚠️ **THE SENSE OF THE BOOLEAN IS INVERTED, AND abcjs'S OWN COMMENT SAYS SO** — *"The
+   * sense of the boolean is opposite here. `0` means true"*
+   * (`abc_parse_directive.js:906-916`). So this is TRUE for `%%staffnonote 0` and false for
+   * `1`, which is the default.
+   *
+   * `cleanUp` then nulls any STAFF — not voice — none of whose voices satisfies
+   * `containsNotesStrict`, and filters the nulls out (`tune-builder.js:70-93`). That test is
+   * `el_type === 'note' && (rest === undefined || chord !== undefined)`, so **a rest
+   * carrying a chord symbol keeps its staff alive** where a bare rest does not.
+   *
+   * Measured on a two-voice tune whose second voice is `zzzz|`: abcjs draws ONE staff and no
+   * rests at all where we drew two staves and four rests — 78.83px of page.
+   */
+  readonly staffNoNote: boolean
   /** `%%staffwidth` — the music area in PIXELS, or `null` for the engine default. */
   readonly staffWidth: number | null
   /**

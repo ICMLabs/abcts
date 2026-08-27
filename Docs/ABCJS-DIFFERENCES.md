@@ -176,6 +176,63 @@ are byte-exact in strict. The set of eight is confirmed against both corpora, wh
 them write `[V:` 201 times, `[K:` 78, `[Q:` 24, `[M:` 14, `[I:` 4, `[L:` 3, `[P:` 2 and
 `[r:` once — this set exactly and nothing else.*
 
+### `%%beginps` with a non-empty body never returns — INFINITE LOOP
+
+`beginps`'s reader advances the tokenizer but never reassigns the variable it tests:
+
+    case "beginps":
+        line = tokenizer.nextLine();
+        while (line && line.indexOf('%%endps') !== 0) {
+            tokenizer.nextLine();          // <- the result is DISCARDED
+        }
+
+(`abc_parse_directive.js:969-975`.) `line` keeps the value it was given before the loop, so
+unless the very first line after `%%beginps` IS `%%endps` the condition is true forever.
+The `begintext` arm ten lines above is the same shape and ends its body with
+`line = tokenizer.nextLine();` — the omission is one assignment.
+
+**Measured**, both directions:
+
+| input | abcjs |
+|---|---|
+| `%%beginps` then `%%endps` | renders normally |
+| `%%beginps` then any other line | **never returns** |
+
+abcts parses the block, warns `Unknown directive: beginps`, and returns in 5ms.
+
+**We decline to reproduce a hang.** There is no output to be byte-equal to, and a host
+handing user-supplied ABC to a parser that can be made to spin forever has a denial of
+service rather than a rendering difference.
+
+*Verified: `dump-svg.js` on both shapes at abcjs 6.7.0 — the empty block writes its SVG, the
+non-empty one is still running when the harness is killed. Source read afterwards, and the
+two arms compared side by side.*
+
+### `%%staffnonote 0` over a tune of pure rests crashes `extractMeasures`
+
+`cleanUp` nulls every staff none of whose voices holds a real note and then filters the
+nulls out (`tune-builder.js:70-93`), so a tune whose every voice is rests ends with
+`line.staff === []` — an EMPTY ARRAY, which is truthy. `extractMeasures` then does
+
+    if (line.staff) {
+        for (var k = 0; k < 1 /*line.staff.length*/; k++) {
+            var staff = line.staff[k];
+            for (var kk = 0; kk < 1 /*staff.voices.length*/; kk++) {
+
+(`api/abc_tunebook.js:212-218`) — the bound is a hard-coded `1` with the real length
+commented out — and reads `undefined.voices`:
+`TypeError: Cannot read properties of undefined (reading 'voices')`.
+
+abcts returns the measures. **Reproducing a crash is not parity**, and the SVG for the same
+tunes is byte-exact in both engines, so only this surface diverges. The slug is named in
+`tests/extract-measures.test.ts`'s `DIVERGENT` list, which carries the same
+entry-here-or-it-is-a-tolerance contract as `svg-bytes`'s.
+
+*Verified: `ABCJS.extractMeasures` on
+`tests/corpus-abcjs/fixtures/abcts-staffnonote-empty-staves.abc` at abcjs 6.7.0, stack
+captured; each tune renders through `dump-svg.js` individually without complaint, which is
+what says the crash belongs to this API and not to the parse.*
+
 ### `!staccato!` is dropped, while `.` works
 
 abcjs accepts a `!name!` decoration only if the name appears in one of its five decoration

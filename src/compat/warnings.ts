@@ -169,6 +169,17 @@ const AS_ABCJS: Record<
         };
   },
   /**
+   * **A DIRECTIVE MESSAGE PASSED THROUGH VERBATIM, at the same column 2.** `directive-parameter`
+   * above REWRITES its message into abcjs's `requires 0 or 1 as a parameter.` sentence, which
+   * is right for the arms that return exactly that and wrong for the ones that do not:
+   * `staffnonote` echoes the value back — `Directive staffnonote requires one parameter: 0 or
+   * 1 (received 2)` — and there is no rewriting rule that produces both.
+   */
+  "directive-message": (diagnostic) => ({
+    message: diagnostic.message,
+    column: 2,
+  }),
+  /**
    * `Expected one parameter in MIDI <cmd>`, pointing at column 0 of the REST OF THE STRING —
    * the command and its arguments with the `%%MIDI ` stripped
    * (`abc_parse_directive.js:546-554`).
