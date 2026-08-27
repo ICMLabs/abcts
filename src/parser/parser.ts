@@ -3703,13 +3703,18 @@ class Parser {
       this.ensureScore(start).voice.color = voiceColor[1]
       return
     }
-    const centred = /^center\s+(.*)$/.exec(body)
-    if (centred?.[1] !== undefined) {
+    // ⚠️ **`\s+` MADE A BARE `%%center` UNKNOWN.** abcjs's switch matches on the COMMAND
+    // alone and hands `restOfString` on whatever it is, so `%%center` with nothing after it
+    // is a centred EMPTY line and warns nothing at all. Ours fell through to
+    // `Unknown directive: center`, which is the only warning in either corpus that abcjs
+    // does not raise.
+    const centred = /^center(?:\s+(.*))?$/.exec(body)
+    if (centred !== null) {
       const builder = this.ensureScore(start)
       // Before any music it heads the tune; after it, it trails — and trailing text is
       // what stops the last music line being the last line, so abcjs justifies it.
       const target = builder.voice.isEmpty ? builder.textAbove : builder.textBelow
-      target.push({ lines: [decodeTextString(centred[1].trim())], align: 'center' })
+      target.push({ lines: [decodeTextString((centred[1] ?? '').trim())], align: 'center' })
       return
     }
     // `%%text <line>` — the same element left-aligned, one block per directive. Two
@@ -5475,6 +5480,30 @@ class Parser {
           // letters. `frere-jacques` relies on exactly that to swap `u` and `v`.
           const userSymbol = builder.userSymbols.get(token.aux)
           const shorthand = dotsAMark ? undefined : (userSymbol ?? DECORATION_SHORTHAND[token.aux])
+          /**
+           * ⚠️ **A `U:` THAT NAMES NO DECORATION abcjs KNOWS WARNS AND EXPANDS TO NOTHING.**
+           * `letter_to_accent` tests the expansion against `legalAccents`,
+           * `volumeDecorations` and `dynamicDecorations` and falls to
+           * `warn("Unknown macro: " + macro)` with `return [1, '']`
+           * (`abc_parse_music.js:766-782`) — at the MACRO CHARACTER, not at the `U:` line.
+           * `U:T=!nil!` is the idiom for defining a shorthand AWAY, and abcjs does not know
+           * `nil`: it warns and draws nothing, which is why both shapes were already
+           * byte-exact and only the diagnostic was missing.
+           */
+          if (
+            userSymbol !== undefined &&
+            !dotsAMark &&
+            !ABCJS_KNOWN_DECORATIONS.has(decorationLookupName(userSymbol))
+          ) {
+            this.warn(
+              'unknown-macro',
+              `unknown macro: ${userSymbol}`,
+              sourceRange(token.start, token.start + token.length),
+            )
+            // `return [1, '']` — the macro is consumed and expands to NOTHING.
+            i++
+            break
+          }
           if (shorthand) {
             pending.decorations.push(shorthand)
             pending.decorationSourceRanges.push(

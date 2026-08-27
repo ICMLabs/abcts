@@ -1,0 +1,332 @@
+X:1
+T:Text Plain
+L:1/4
+K:C
+%%text hello
+CDEF|
+
+X:2
+T:Center
+L:1/4
+K:C
+%%center middle
+CDEF|
+
+X:3
+T:Text Empty
+L:1/4
+K:C
+%%text
+CDEF|
+
+X:4
+T:Text Between Lines
+L:1/4
+K:C
+CDEF|
+%%text between
+GABc|
+
+X:5
+T:Center And Text
+L:1/4
+K:C
+%%center a
+%%text b
+CDEF|
+
+X:6
+T:Staffsep
+L:1/4
+%%staffsep 100
+K:C
+V:1
+CDEF|
+V:2
+GABc|
+
+X:7
+T:Sysstaffsep
+L:1/4
+%%sysstaffsep 90
+K:C
+V:1
+CDEF|
+V:2
+GABc|
+
+X:8
+T:Vskip Then Text
+L:1/4
+K:C
+%%vskip 20
+%%text after
+CDEF|
+
+X:9
+T:Text Then Vskip
+L:1/4
+K:C
+%%text before
+%%vskip 20
+CDEF|
+
+X:10
+T:Musicspace
+L:1/4
+%%musicspace 30
+K:C
+CDEF|
+
+X:11
+T:Topspace
+L:1/4
+%%topspace 40
+K:C
+CDEF|
+
+X:12
+T:Titlespace
+T:t
+L:1/4
+%%titlespace 30
+K:C
+CDEF|
+
+X:13
+T:Lyrics Two Voices
+L:1/4
+K:C
+V:1
+CDEF|
+w:a b c d
+V:2
+GABc|
+w:e f g h
+
+X:14
+T:Lyric On Second Only
+L:1/4
+K:C
+V:1
+CDEF|
+V:2
+GABc|
+w:e f g h
+
+X:15
+T:Lyric Shared Staff
+L:1/4
+%%score (1 2)
+K:C
+V:1
+CDEF|
+w:a b c d
+V:2
+GABc|
+
+X:16
+T:Lyric Second System
+L:1/4
+K:C
+CDEF|
+GABc|
+w:a b c d
+
+X:17
+T:Udef Simple
+L:1/4
+U:n=!trill!
+K:C
+nCDEF|
+
+X:18
+T:Udef Override
+L:1/4
+U:T=!fermata!
+K:C
+TCDEF|
+
+X:19
+T:Udef Nil
+L:1/4
+U:T=!nil!
+K:C
+TCDEF|
+
+X:20
+T:Udef Unknown
+L:1/4
+U:q=!bogus!
+K:C
+qCDEF|
+
+X:21
+T:Part Simple
+L:1/4
+P:AB
+K:C
+P:A
+CDEF|
+P:B
+GABc|
+
+X:22
+T:Part Repeat
+L:1/4
+P:A2B
+K:C
+P:A
+CDEF|
+P:B
+GABc|
+
+X:23
+T:Part Inline
+L:1/4
+K:C
+[P:A]CDEF|[P:B]GABc|
+
+X:24
+T:Part Parens
+L:1/4
+P:(AB)2
+K:C
+P:A
+CDEF|
+P:B
+GABc|
+
+X:25
+T:Overlay Plain
+L:1/4
+K:C
+CDEF|&GABc|
+
+X:26
+T:Overlay With Lyric
+L:1/4
+K:C
+CDEF|&GABc|
+w:a b c d
+
+X:27
+T:Overlay Two
+L:1/4
+K:C
+CDEF|&GABc|&cdef|
+
+X:28
+T:Overlay Uneven
+L:1/4
+K:C
+CDEF|&GA|
+
+X:29
+T:Overlay With Clef
+L:1/4
+K:C
+CD[K:C bass]EF|&GABc|
+
+X:30
+T:Overlay With Chord
+L:1/4
+K:C
+"C"CDEF|&GABc|
+
+X:31
+T:Grace In Overlay
+L:1/4
+K:C
+CDEF|&{g}GABc|
+
+X:32
+T:Tuplet In Overlay
+L:1/8
+K:C
+CDEFGABc|&(3GAB (3cde|
+
+X:33
+T:Part With Lyric
+L:1/4
+P:AB
+K:C
+P:A
+CDEF|
+w:a b c d
+P:B
+GABc|
+
+X:34
+T:Udef In Chord
+L:1/4
+U:n=!accent!
+K:C
+[nCE]DEF|
+
+X:35
+T:Text In Multivoice
+L:1/4
+K:C
+V:1
+CDEF|
+%%text mid
+V:2
+GABc|
+
+X:36
+T:Text Space
+L:1/4
+K:C
+%%text 
+CDEF|
+
+X:37
+T:Center Empty
+L:1/4
+K:C
+%%center
+CDEF|
+
+X:38
+T:Text Empty Twice
+L:1/4
+K:C
+%%text
+%%text
+CDEF|
+
+X:39
+T:Text Empty Then Full
+L:1/4
+K:C
+%%text
+%%text hi
+CDEF|
+
+X:40
+T:Text Empty Midtune
+L:1/4
+K:C
+CDEF|
+%%text
+GABc|
+
+X:41
+T:Udef Header
+L:1/4
+U:n=!accent!
+K:C
+nCDEF|
+
+X:42
+T:Plain Accent Chord
+L:1/4
+K:C
+[!accent!CE]DEF|
+
+X:43
+T:Plain Accent
+L:1/4
+K:C
+!accent!CDEF|

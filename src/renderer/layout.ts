@@ -6370,6 +6370,24 @@ function decorationGlyphs(
       // `relative-element.js:18-21`). Handing the extent only the y makes it divide back,
       // and `x * STEP / STEP` is not `x`.
       reservePitch: [closeY, closeY],
+      /**
+       * ⚠️ **ITS DRAWN y IS ONE ULP OUT AND `drawPitch` IS NOT THE FIX — MEASURED AND
+       * REVERTED.** `printSymbol` draws at `calcY(offset + ycorr)`, one sum and one
+       * multiply (`draw/print-symbol.js:34`), where the emitter is given only a y and
+       * spends the correction on it as a LENGTH: `offset * STEP + ycorr * STEP`.
+       * `scripts.sforzato` carries a `getYCorr`, so a bare `!accent!CDEF|` draws at
+       * `87.72400000000002` against abcjs's `87.724`.
+       *
+       * `PlacedGlyph.drawPitch` looks like the field for it — its own note says it is set
+       * "on the dynamic alone for exactly that reason". It is NOT: the emitter's branch is
+       * `-spacesOfPitch(drawPitch + ycorr)`, an ABSOLUTE pitch with no staff origin in it,
+       * which the DYNAMIC gets away with because its lane is shifted separately afterwards.
+       * Setting it here put the sforzato at 110.974 — 23px low, the staff's whole origin.
+       *
+       * So the row wants either a second field carrying the origin, or `drawPitch` to mean
+       * "a pitch in this staff's frame" at both sites. Both corpora agree either way; a
+       * control with nothing else on the staff is what separates them.
+       */
     })
   }
 
@@ -16915,6 +16933,33 @@ function appendFreeText(
       continue
     }
     const textSize = sizeOf('textfont')
+    /**
+     * ⚠️ **AN EMPTY `%%text` DRAWS NOTHING AND MOVES TWICE THE FONT SIZE — MEASURED,
+     * IMPLEMENTED AND REVERTED.** `FreeText`'s first arm is
+     * `if (text === "") this.rows.push({ move: hash.attr['font-size'] * 2 })` under its own
+     * comment — *"we do want to print out blank lines if they have been specified"* — with
+     * NO text row beside it (`free-text.js:8-10`). The `* 2` is the line PLUS the margin a
+     * non-empty row spends as `size / 2` and `size`, so a blank row is TALLER than a full
+     * one. Ours draws an empty `<text>` and moves 33.77 where abcjs moves 42.
+     *
+     * Measured on a six-rung ladder — a bare `%%text`, one with a trailing space, an empty
+     * `%%center`, two in a row, one before a full one, and one mid-tune. Page heights,
+     * abcjs against ours: 198.119/189.889, 240.119/223.659, 231.889/223.659. **8.23px per
+     * blank line.**
+     *
+     * ⚠️ **AND THE ONE-LINE FIX MAKES IT WORSE, WHICH IS WHY IT IS NOT HERE.** Spending
+     * `textSize * 2` and drawing nothing takes the page to 156.119 — 42px SHORT — because
+     * on a HEADINGLESS tune the block's rows never reach the page cursor at all: `Y lead`
+     * reads one advance of 68.89, which is `spacing.music + staffSeparation` and no block.
+     * What made the old number nearly right was the block's TEXT INK pushing the staff down
+     * through `musicOnlyTop`, a different mechanism that happens to agree while there is
+     * text to measure and vanishes when there is not.
+     *
+     * **So the row is the block-placement machinery, not this branch**: `walksTopBlock`
+     * needs `musicOnlyTop`, which an inkless block does not produce. Fixing it means giving
+     * a headingless tune the same row walk `topAdvances` already gives a titled one — the
+     * same shape as the `%%begintext` ULP, one case over.
+     */
     if (block.align === 'left') spend(textSize / 2)
     /**
      * **A `%%begintext` BLOCK IS ONE `<text>`, NOT ONE PER LINE.** `FreeText` pushes a

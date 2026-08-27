@@ -6514,6 +6514,419 @@
    "hasPickup": true
   }
  ],
+ "repo/abcts-text-udef-parts-overlays": [
+  {
+   "header": "X:1\nT:Text Plain\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:2\nT:Center\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:3\nT:Text Empty\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:4\nT:Text Between Lines\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    },
+    {
+     "abc": "GABc|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:5\nT:Center And Text\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:6\nT:Staffsep\nL:1/4\n%%staffsep 100\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:7\nT:Sysstaffsep\nL:1/4\n%%sysstaffsep 90\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:8\nT:Vskip Then Text\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:9\nT:Text Then Vskip\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:10\nT:Musicspace\nL:1/4\n%%musicspace 30\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:11\nT:Topspace\nL:1/4\n%%topspace 40\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:12\nT:Titlespace\nT:t\nL:1/4\n%%titlespace 30\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:13\nT:Lyrics Two Voices\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:14\nT:Lyric On Second Only\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:15\nT:Lyric Shared Staff\nL:1/4\n%%score (1 2)\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:16\nT:Lyric Second System\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    },
+    {
+     "abc": "GABc|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:17\nT:Udef Simple\nL:1/4\nU:n=!trill!\nK:C\n",
+   "measures": [
+    {
+     "abc": "nCDEF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:18\nT:Udef Override\nL:1/4\nU:T=!fermata!\nK:C\n",
+   "measures": [
+    {
+     "abc": "TCDEF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:19\nT:Udef Nil\nL:1/4\nU:T=!nil!\nK:C\n",
+   "measures": [
+    {
+     "abc": "TCDEF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:20\nT:Udef Unknown\nL:1/4\nU:q=!bogus!\nK:C\n",
+   "measures": [
+    {
+     "abc": "qCDEF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:21\nT:Part Simple\nL:1/4\nP:AB\nK:C\n",
+   "measures": [
+    {
+     "abc": "P:A\nCDEF|"
+    },
+    {
+     "abc": "P:B\nGABc|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:22\nT:Part Repeat\nL:1/4\nP:A2B\nK:C\n",
+   "measures": [
+    {
+     "abc": "P:A\nCDEF|"
+    },
+    {
+     "abc": "P:B\nGABc|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:23\nT:Part Inline\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "[P:A]CDEF|"
+    },
+    {
+     "abc": "[P:B]GABc|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:24\nT:Part Parens\nL:1/4\nP:(AB)2\nK:C\n",
+   "measures": [
+    {
+     "abc": "P:A\nCDEF|"
+    },
+    {
+     "abc": "P:B\nGABc|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:25\nT:Overlay Plain\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:26\nT:Overlay With Lyric\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:27\nT:Overlay Two\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:28\nT:Overlay Uneven\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:29\nT:Overlay With Clef\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "CD[K:C bass]EF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:30\nT:Overlay With Chord\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "\"C\"CDEF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:31\nT:Grace In Overlay\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:32\nT:Tuplet In Overlay\nL:1/8\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEFGABc|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:33\nT:Part With Lyric\nL:1/4\nP:AB\nK:C\n",
+   "measures": [
+    {
+     "abc": "P:A\nCDEF|"
+    },
+    {
+     "abc": "P:B\nGABc|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:34\nT:Udef In Chord\nL:1/4\nU:n=!accent!\nK:C\n",
+   "measures": [
+    {
+     "abc": "[nCE]DEF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:35\nT:Text In Multivoice\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:36\nT:Text Space\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:37\nT:Center Empty\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:38\nT:Text Empty Twice\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:39\nT:Text Empty Then Full\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:40\nT:Text Empty Midtune\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    },
+    {
+     "abc": "GABc|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:41\nT:Udef Header\nL:1/4\nU:n=!accent!\nK:C\n",
+   "measures": [
+    {
+     "abc": "nCDEF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:42\nT:Plain Accent Chord\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "[!accent!CE]DEF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:43\nT:Plain Accent\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "!accent!CDEF|"
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
  "repo/abcts-visualtranspose": [
   {
    "header": "X:1\nT:visualTranspose 0 — the control's control\nL:1/4\nM:4/4\n%%visualTranspose 0\nK:C\n",

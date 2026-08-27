@@ -359,6 +359,16 @@ const AS_ABCJS: Record<
           column: at - start,
         };
   },
+  /** `letter_to_accent`'s own, at the macro character (`abc_parse_music.js:780`). */
+  "unknown-macro": (diagnostic, abc) => {
+    const at = diagnostic.range?.start ?? 0;
+    let start = 0;
+    for (let i = 0; i < at; i += 1) if (abc[i] === "\n") start = i + 1;
+    const name = /unknown macro: (.*)$/.exec(diagnostic.message)?.[1];
+    return name === undefined
+      ? null
+      : { message: `Unknown macro: ${name}`, column: at - start };
+  },
   "unknown-directive": (diagnostic) => {
     const name = /%%\s*(\S+)/.exec(diagnostic.message)?.[1];
     return name === undefined

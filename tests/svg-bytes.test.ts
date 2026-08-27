@@ -601,6 +601,48 @@ const PASSING: readonly string[] = [
     (_, i) => `abcts-void-notes-and-stray-ties-tune${i}`,
   ),
   /**
+   * `abcts-text-udef-parts-overlays.abc` — a third 36-shape SWEEP over `%%text`/`%%center`
+   * variants, spacing directives, multi-voice lyric alignment, `U:` redefinitions, `P:`
+   * part sequencing and `&` overlay boundaries, plus the two ladders it opened.
+   *
+   * **31 of the 36 exact.** Every `P:` shape, every `&` overlay shape, every multi-voice
+   * lyric shape, `%%staffsep`, `%%sysstaffsep`, `%%musicspace`, `%%topspace` and
+   * `%%titlespace` were already right.
+   *
+   * ⚠️ **TEN ROWS ARE OPEN AND NAMED, IN TWO FAMILIES. Neither is a tolerance.**
+   *
+   * **(a) AN EMPTY `%%text` DRAWS NOTHING AND MOVES TWICE THE FONT SIZE** — tunes 2, 36-40.
+   * `FreeText`'s first arm is `if (text === "") rows.push({move: font-size * 2})` with no
+   * text row beside it (`free-text.js:8-10`), so a BLANK row is taller than a full one:
+   * 8.23px each. **The one-line fix makes it worse** — see the reverted note at
+   * `appendFreeText`: on a headingless tune the block's rows never reach the page cursor at
+   * all, and what made our number nearly right was the text INK pushing the staff down.
+   *
+   * **(b) A `%%vskip` BEFORE A `%%text` IS THAT BLOCK'S FIRST ROW** — tune 7.
+   * `pushLine` stamps a pending vskip onto whatever LINE comes next, text lines included,
+   * and `FreeText(info, vskip)` pushes `{move: vskip}` ahead of everything
+   * (`tune-builder.js:904-908`, `free-text.js:5-6`). Ours holds vskip on the SYSTEM, so it
+   * lands after the text: 20px. `%%text` then `%%vskip` is exact, which is what says the
+   * rule is the ORDER.
+   *
+   * **AND ONE MORE, ITS OWN FAMILY:** a close decoration's drawn y is one ULP out — tune 34
+   * — because `getYCorr` joins the PITCH in abcjs and the LENGTH here.
+   * `PlacedGlyph.drawPitch` looks like the field for it and is NOT; measured, tried and
+   * reverted at the `scripts.sforzato` push in `decorationGlyphs`.
+   *
+   * ⚠️ **AND TWO SHAPES ARE NOT IN THIS FIXTURE ON PURPOSE: `[U:n=!accent!]`.**
+   * **abcjs HAS NO INLINE `U:` AT ALL** — `letter_to_inline_header` switches on exactly
+   * eight, `[I: [M: [K: [P: [L: [Q: [V: [r:` (`abc_parse_header.js:347-410`) — so it reads
+   * the `[` as a CHORD, fails, and emits seven warnings, an invisible barline carrying the
+   * `!accent!` decoration, and four plain notes. We support it, which is ABC 2.1 and not
+   * abcjs. Closing it means the LEXER refusing the field, not the parser ignoring it, and
+   * it would take `[w:` and `[T:` with it — a mode question rather than a defect, and too
+   * big to land beside a sweep. See `Docs/CHECKPOINT-2026-08-26b.md`.
+   */
+  ...[
+    0, 1, 3, 4, 5, 6, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 40, 41, 42
+  ].map((i) => `abcts-text-udef-parts-overlays-tune${i}`),
+  /**
    * `abcts-voice-style.abc` — `V:… style=`, the first of the three modifiers the V:
    * enumeration left as a FEATURE. All five shapes, one voice each.
    *

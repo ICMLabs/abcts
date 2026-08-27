@@ -126,6 +126,14 @@ const PASSING: readonly string[] = [
   "repo/abcts-void-notes-and-stray-ties-tune2",
   "repo/abcts-void-notes-and-stray-ties-tune3",
   "repo/abcts-void-notes-and-stray-ties-tune7",
+  /**
+   * `abcts-text-udef-parts-overlays.abc` — the third sweep. Two of its rows were warnings
+   * and nothing else: a `U:` naming a decoration abcjs does not know warns "Unknown macro"
+   * and expands to NOTHING (`U:T=!nil!` is the idiom for defining a shorthand away), and a
+   * bare `%%center` is a centred EMPTY line rather than an unknown directive.
+   */
+  "repo/abcts-text-udef-parts-overlays-tune18",
+  "repo/abcts-text-udef-parts-overlays-tune19",
   "repo/abcts-bars-graces-and-groups-tune0",
   "repo/abcts-bars-graces-and-groups-tune40",
   "repo/abcts-bars-graces-and-groups-tune6",
