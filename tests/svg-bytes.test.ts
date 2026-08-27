@@ -626,10 +626,21 @@ const PASSING: readonly string[] = [
    * sat 20px high. **A SUM CANNOT SEE AN ORDER**, sixth time. `%%text` then `%%vskip` is
    * exact either way, which is what says the rule is the ORDER rather than the number.
    *
-   * ⚠️ **AND ONE RUNG OF ITS LADDER IS STILL OPEN — tune 49, `%%vskip` before a mid-tune
-   * `T:`.** It was open BEFORE this landed (checked by stashing the change and re-running,
-   * which is the only thing that separates a pre-existing row from a regression) and it is
-   * 44px, not 20 — so it is the SUBTITLE's own spacing, not the vskip.
+   * ✅ **AND THE RUNG IT LEFT OPEN IS CLOSED TOO, AS TWO MORE RULES.** A `%%vskip` before a
+   * mid-tune `T:` was 44px, not 20 — so it was never the vskip:
+   *
+   * **A `T:` AFTER `K:` BUT BEFORE ANY NOTE IS A TOP-BLOCK SUBTITLE.** `addSubtitle` is a
+   * bare `pushLine(tune, {subtitle})` (`tune-builder.js:298-300`), so a subtitle is placed
+   * by WHERE ITS LINE LANDS, and that one is line 0 — ahead of the staff. Ours tested
+   * `bodyStarted`, which the `K:` itself sets, and put it BELOW the music: abcjs draws it at
+   * y 80.34 against our 165.13. `musicStarted` is the narrower flag and already existed.
+   *
+   * **AND A `%%vskip` BEFORE A SUBTITLE IS CONSUMED AND THROWN AWAY.** `pushLine` stamps it
+   * on the line like any other, but the controller builds `new Subtitle(spacing.subtitle,
+   * …)` with **no vskip argument** (`engraver-controller.js:239`) where the FreeText arm one
+   * line below takes one, and `draw()`'s `if (abcLine.vskip)` fires only for a line with a
+   * `staff`. MEASURED: abcjs's page is byte-identical with and without the directive.
+   * **The consuming is the point** — left pending it goes to the STAFF instead.
    *
    * **AND ONE MORE, ITS OWN FAMILY:** a close decoration's drawn y is one ULP out — tune 34
    * — because `getYCorr` joins the PITCH in abcjs and the LENGTH here.
@@ -644,7 +655,7 @@ const PASSING: readonly string[] = [
    * ruling, 2026-08-27 — see `Docs/ABCJS-DIFFERENCES.md`.
    */
   ...[
-    0, 1, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 40, 41, 42, 43, 44, 45, 46, 47, 48
+    0, 1, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55
   ].map((i) => `abcts-text-udef-parts-overlays-tune${i}`),
   /**
    * `abcts-voice-style.abc` — `V:… style=`, the first of the three modifiers the V:

@@ -6994,6 +6994,63 @@
     }
    ],
    "hasPickup": false
+  },
+  {
+   "header": "X:51\nT:Vskip Subtitle Before Music\nT:t\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:52\nT:Vskip Subtitle After Music\nT:t\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:53\nT:Vskip Subtitle In Header\nT:t\nT:sub\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:54\nT:Vskip Subtitle Mid Tune\nT:t\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    },
+    {
+     "abc": "GABc|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:55\nT:Vskip Vskip Then Subtitle\nT:t\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:56\nT:Vskip No Main Title\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    }
+   ],
+   "hasPickup": false
   }
  ],
  "repo/abcts-visualtranspose": [

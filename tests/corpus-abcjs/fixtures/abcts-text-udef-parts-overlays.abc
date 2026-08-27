@@ -384,3 +384,52 @@ K:C
 %%vskip 20
 T:sub
 CDEF|
+
+X:51
+T:Vskip Subtitle Before Music
+T:t
+L:1/4
+K:C
+T:sub
+CDEF|
+
+X:52
+T:Vskip Subtitle After Music
+T:t
+L:1/4
+K:C
+CDEF|
+T:sub
+
+X:53
+T:Vskip Subtitle In Header
+T:t
+T:sub
+L:1/4
+K:C
+CDEF|
+
+X:54
+T:Vskip Subtitle Mid Tune
+T:t
+L:1/4
+K:C
+CDEF|
+T:sub
+GABc|
+
+X:55
+T:Vskip Vskip Then Subtitle
+T:t
+L:1/4
+K:C
+%%vskip 20
+T:sub
+CDEF|
+
+X:56
+T:Vskip No Main Title
+L:1/4
+K:C
+T:only
+CDEF|

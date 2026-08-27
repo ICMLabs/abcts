@@ -4313,6 +4313,25 @@ class Parser {
    * `%%begintext` or mid-tune `T:` is one (`tune-builder.js:904-908`); `FreeText` and
    * `Subtitle` then open their rows with it. See `FreeTextBlock.vskip`.
    */
+  /**
+   * ⚠️ **AND A `%%vskip` BEFORE A SUBTITLE IS CONSUMED AND THROWN AWAY.** `pushLine` stamps
+   * it onto the `{subtitle}` line like any other, but the controller builds
+   * `new Subtitle(spacing.subtitle, formatting, abcLine.subtitle, center, padding.left,
+   * getTextSize)` — **no vskip argument at all** (`engraver-controller.js:239`) — where the
+   * FreeText arm one line below DOES take one. And `draw()`'s `if (abcLine.vskip)` only
+   * fires for a line with a `staff`, so nothing else reads it either.
+   *
+   * MEASURED: abcjs's page for `T:t / K:C / %%vskip 20 / T:sub / CDEF|` is byte-identical
+   * to the same tune without the directive — 226.45900000000003 both ways, subtitle at
+   * 80.34, top staff line at 168.31. Ours spent it on the system and came out 20 taller.
+   *
+   * **The consuming is the point**: leaving it pending would hand it to the STAFF instead.
+   */
+  private dropVskipBeforeSubtitle(): void {
+    const pending = this.builder?.pendingVskip
+    if (pending !== undefined) pending.value = null
+  }
+
   private takeBlockVskip(): { vskip?: number } {
     const pending = this.builder?.pendingVskip
     if (pending?.value == null) return {}
@@ -4408,12 +4427,25 @@ class Parser {
         // subtitles. A tune whose only `T:` follows its notes therefore looks exactly like
         // a tune with a header title, and we drew it as a trailing subtitle: 13.51px, on a
         // control ladder run through abcjs 6.7.0.
-        if (builder.bodyStarted && builder.titles.length > 0) {
+        /**
+         * ⚠️ **AND THE TEST IS `musicStarted`, NOT `bodyStarted`.** `addSubtitle` is a bare
+         * `pushLine(tune, {subtitle})` (`tune-builder.js:298-300`), so a subtitle is
+         * positioned by WHERE ITS LINE LANDS — and a `T:` written after `K:` but before any
+         * note is line 0, ahead of the staff. `bodyStarted` is set by the `K:` itself, so it
+         * sent that shape BELOW the music: abcjs draws it at y 80.34 against our 165.13, and
+         * the page was 44px short. `musicStarted` is the narrower flag and already exists
+         * for exactly this distinction — see its own note.
+         *
+         * Measured on six rungs: only this one moves. A `T:` in the header, one after the
+         * music, one between two music lines and a tune whose ONLY `T:` follows its notes
+         * are all exact either way.
+         */
+        if (builder.musicStarted && builder.titles.length > 0) {
           // …**AND IT GOES THROUGH `parseFontChangeLine` LIKE THE TITLE DOES** — see
           // `FreeTextBlock.rich`. `setTitle` splits the fonts BEFORE it branches.
           const rich = parseFontChangeLine(theReverser(decodeTextString(value)), builder.setfont)
+          this.dropVskipBeforeSubtitle()
           builder.textBelow.push({
-            ...this.takeBlockVskip(),
             lines: [theReverser(decodeTextString(value))],
             align: 'center',
             role: 'subtitle',
@@ -4421,6 +4453,7 @@ class Parser {
             sourceRange: range,
           })
         } else {
+          this.dropVskipBeforeSubtitle()
           // `T: C: O: A: P:` all run through `parseFontChangeLine`
           // (`abc_parse_header.js:484-541`), so any of them may come back as phrases.
           builder.titles.push(
