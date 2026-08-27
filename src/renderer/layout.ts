@@ -14109,7 +14109,23 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
     // Trailing `%%center` text means the music is no longer the LAST LINE of the tune, so
     // abcjs justifies it unconditionally — its last-line guard tests the last LINE, not
     // the last STAFF line. `center-text` sat 219px out on exactly this.
-    const isLast = systemIndex === spans.length - 1 && score.textBelow.length === 0
+    /**
+     * ⚠️ **AND A BLOCK WRITTEN INSIDE THE SYSTEM COUNTS AS TRAILING TOO.** abcjs justifies
+     * every line but the LAST, and a nonMusic line after the music makes the staff line no
+     * longer last. `score.textBelow` catches a `%%text` written after every voice; one
+     * written BETWEEN two voice bodies lands in `blocksAfterLastSystem` instead and was
+     * invisible here, so the staff kept its natural width.
+     *
+     * MEASURED on `V:1 / CDEF| / %%text mid / V:2 / GABc|`: abcjs runs both staff lines to
+     * 685 where ours stopped at 219.76 — the same tune with the `%%text` AFTER both voices
+     * is 685 in both engines, and with no text at all is 219.76 in both. **Three rungs, and
+     * only the middle one moves.** The condition is the same one `trailingBlocks` is built
+     * from, one screen down.
+     */
+    const isLast =
+      systemIndex === spans.length - 1 &&
+      score.textBelow.length === 0 &&
+      !(spans.length === 1 && blocksAfterLastSystem.length > 0)
     /**
      * THE LAST SPACING abcjs COMPUTES IS THROWN AWAY, and reproducing that is the point.
      *
@@ -15889,6 +15905,19 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
     ...(spans.length > 1 ? [] : blocksAfterLastSystem),
     ...score.textBelow,
   ]
+  /**
+   * **AND THE TRAILING BLOCK'S ROWS ARE SPENT ONE AT A TIME, LIKE EVERY OTHER BLOCK'S.**
+   * `nonMusic` walks a block spending one `moveY` per row (`draw/non-music.js:10`), and
+   * `(a + b) + c` in two steps is not the same double as `a + (b + c)`. This call passed
+   * `[]` for the advances and used the SUM — the same hole `topTextBlock` had before the
+   * `%%begintext` ULP closed, one block over.
+   *
+   * MEASURED on `V:1 / CDEF| / %%text mid / V:2 / GABc|`, whose rows are 10.5 and 23.27
+   * off a staff group ending at 162.49200000000002: abcjs walks
+   * `((162.49200000000002 + 10.5) + 23.27) + 15` to `211.26200000000003` where summing the
+   * rows first gives a clean `211.262`. **A SUM CANNOT SEE AN ORDER**, seventh time.
+   */
+  const trailingAdvances: number[] = []
   const trailingHeight =
     trailingBlocks.length === 0
       ? 0
@@ -15900,7 +15929,7 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
           score.fonts,
           trailingRules,
           false,
-          [],
+          trailingAdvances,
           nonMusicRows,
         )
 
@@ -15968,7 +15997,10 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
           if (process.env.ABCTS_Y) console.log('Y sys', system.heightPitch * ENGRAVE.spacePerStep, '->', y)
         }
       }
-      y += trailingHeight
+      // …ROW BY ROW — see `trailingAdvances`.
+      for (const a of trailingAdvances) y += a
+      if (process.env.ABCTS_Y && trailingAdvances.length > 0)
+        console.log('Y trailing', trailingAdvances, '->', y)
       if (bottomBlock.texts.length > 0) {
         y += spaces(ABCJS_PX.bottomTextGap)
         // …ROW BY ROW, as `nonMusic` spends them — see `bottomTextBlock`.

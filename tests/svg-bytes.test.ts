@@ -609,7 +609,7 @@ const PASSING: readonly string[] = [
    * lyric shape, `%%staffsep`, `%%sysstaffsep`, `%%musicspace`, `%%topspace` and
    * `%%titlespace` were already right.
    *
-   * ⚠️ **ONE ROW IS OPEN AND NAMED — tune 34. It is not a tolerance.**
+   * ✅ **EVERY ROW OF THIS FIXTURE IS CLOSED, AND SO IS THE WHOLE BYTE GATE — 0 of 635.**
    *
    * ✅ **(a) AN EMPTY `%%text` DRAWS NOTHING AND MOVES TWICE THE FONT SIZE — CLOSED, AND IT
    * WAS THREE CHANGES.** `FreeText`'s first arm is `if (text === "")
@@ -658,8 +658,12 @@ const PASSING: readonly string[] = [
    * PITCH, and the 23.25px that produced is `PITCH_ORIGIN * spacePerStep` exactly.
    * **A number that is exactly one constant is a unit error, not a rebuttal.**
    *
-   * ⚠️ **THE ROW STILL OPEN IS tune 34** — a `%%text` between two VOICES, one ULP of the
-   * root height (`251.822` against `251.82200000000003`). Its own family.
+   * ✅ **AND TUNE 34 — a `%%text` between two VOICES — WAS TWO DEFECTS STACKED.** Its ULP
+   * of root height was the TRAILING BLOCK'S ROWS being summed instead of spent one at a
+   * time; and behind that, masked by it, the staff line ran to 219.76 where abcjs runs it
+   * to 685. **A BLOCK WRITTEN INSIDE THE SYSTEM COUNTS AS TRAILING**, so the line is not
+   * the LAST line and abcjs justifies it — `score.textBelow` never saw that one because it
+   * lands in `blocksAfterLastSystem`. Three rungs, and only the middle one moved.
    *
    * ✅ **AND `[U:n=!accent!]` IS A MODE SPLIT NOW — tunes 43 and 44.** abcjs has no inline
    * `U:` at all: `letter_to_inline_header` switches on exactly eight, `[I: [M: [K: [P: [L:
@@ -668,9 +672,10 @@ const PASSING: readonly string[] = [
    * notes. **Strict reproduces that; `abc2.1` and `extended` keep the feature.** Owner's
    * ruling, 2026-08-27 — see `Docs/ABCJS-DIFFERENCES.md`.
    */
-  ...[
-    0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55
-  ].map((i) => `abcts-text-udef-parts-overlays-tune${i}`),
+  ...Array.from(
+    { length: 56 },
+    (_, i) => `abcts-text-udef-parts-overlays-tune${i}`,
+  ),
   /**
    * `abcts-voice-style.abc` — `V:… style=`, the first of the three modifiers the V:
    * enumeration left as a FEATURE. All five shapes, one voice each.

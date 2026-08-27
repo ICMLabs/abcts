@@ -468,11 +468,13 @@ const WITHIN: Readonly<Record<string, number>> = {
   // …and `abcts-stafflines-and-modifiers.abc`, a 36-shape sweep over untouched territory
   // plus the three ladders that closed what it found.
   // …and `abcts-bars-graces-and-groups.abc`, a second 36-shape sweep.
-  // …and `abcts-void-notes-and-stray-ties.abc`, the ladder that closed the warnings gate.
-  "0.05": 225,
-  "1": 225,
-  "5": 225,
-  "25": 225,
+  // …and `abcts-void-notes-and-stray-ties.abc`, the ladder that closed the warnings gate,
+  // and `abcts-text-udef-parts-overlays.abc`, the third sweep — which reached ZERO on every
+  // axis the day the in-system trailing block closed.
+  "0.05": 226,
+  "1": 226,
+  "5": 226,
+  "25": 226,
 };
 
 const names = readdirSync(fixturesDir)
