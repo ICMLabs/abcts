@@ -154,6 +154,19 @@ const PASSING: readonly string[] = [
   "repo/abcts-staffnonote-and-directives-tune14",
   "repo/abcts-staffnonote-and-directives-tune15",
   "repo/abcts-staffnonote-and-directives-tune6",
+  /**
+   * `abcts-unknown-clef.abc` — `Expected clef name. Found x`, which the clef arm raises
+   * before falling through and assigning the clef anyway (`abc_parse_key_voice.js:500-517`).
+   * The six single-letter ALIASES are recognised and must not warn: `C`/`c`, `F`/`f`,
+   * `G`/`g` each have their own case. And tune 4's inline `[K:` puts the field's value one
+   * character later than a `K:` line's, which is what the context string is measured from.
+   *
+   * ⚠️ Tune 3 is `V:1 clef=x` and is NOT here — the `V:` field has no such walker yet.
+   */
+  "repo/abcts-unknown-clef-tune0",
+  "repo/abcts-unknown-clef-tune1",
+  "repo/abcts-unknown-clef-tune2",
+  "repo/abcts-unknown-clef-tune4",
   "repo/abcts-bars-graces-and-groups-tune0",
   "repo/abcts-bars-graces-and-groups-tune40",
   "repo/abcts-bars-graces-and-groups-tune6",

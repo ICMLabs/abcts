@@ -1,0 +1,31 @@
+X:1
+T:Unknown Clef X
+L:1/4
+K:C clef=x
+CDEF|
+
+X:2
+T:Unknown Clef Zzz
+L:1/4
+K:C clef=zzz
+CDEF|
+
+X:3
+T:Unknown Clef Q2
+L:1/4
+K:C clef=q2
+CDEF|
+
+X:4
+T:Unknown Clef Voice
+L:1/4
+K:C
+V:1 clef=x
+CDEF|
+
+X:5
+T:Unknown Clef Mid
+L:1/4
+K:C
+CDEF|
+[K:C clef=x]GABc|

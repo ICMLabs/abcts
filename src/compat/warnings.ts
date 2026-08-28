@@ -258,6 +258,25 @@ const AS_ABCJS: Record<
           text,
         };
   },
+  /**
+   * `Expected clef name. Found <token>` — the clef arm's own message, at the clef TOKEN's
+   * offset inside the field's value (`abc_parse_key_voice.js:501`). Its `break` leaves the
+   * INNER switch only, so the clef is still assigned; see `ClefShape`'s `unknown`.
+   */
+  "expected-clef-name": (diagnostic, abc) => {
+    const token = /: (.*)$/.exec(diagnostic.message)?.[1];
+    const text = abc.substring(
+      diagnostic.range?.start ?? 0,
+      diagnostic.range?.end ?? 0,
+    );
+    return token === undefined
+      ? null
+      : {
+          message: `Expected clef name. Found ${token}`,
+          column: diagnostic.column ?? Math.max(0, text.indexOf(token)),
+          text,
+        };
+  },
   /** `Can't nest triplets`, pointing at the inner `(` (`abc_parse_music.js:329-331`). */
   /**
    * `Expected ']' to end the chords`, pointing at the token that ended it —

@@ -473,10 +473,15 @@ const WITHIN: Readonly<Record<string, number>> = {
   // axis the day the in-system trailing block closed.
   // …the two `abcts-staffnonote-*` fixtures, from enumerating abcjs's directive switch, and
   // `abcts-shared-staff-rests`, the ladder that closed the moved-rest reserve.
+  //
+  // ⚠️ **AND `abcts-unknown-clef` IS A RULED DIVERGENCE, WHICH IS WHY IT SITS IN THE 5px
+  // BUCKET AND NOT THE 1px ONE.** abcjs prints a red `clef=x` debug string where the clef
+  // would be; we reproduce the room it takes and decline the string, so the page agrees and
+  // the marker does not. See `Docs/ABCJS-DIFFERENCES.md` and `svg-bytes`'s `DIVERGENT`.
   "0.05": 229,
   "1": 229,
-  "5": 229,
-  "25": 229,
+  "5": 230,
+  "25": 230,
 };
 
 const names = readdirSync(fixturesDir)

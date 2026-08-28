@@ -176,6 +176,41 @@ are byte-exact in strict. The set of eight is confirmed against both corpora, wh
 them write `[V:` 201 times, `[K:` 78, `[Q:` 24, `[M:` 14, `[I:` 4, `[L:` 3, `[P:` 2 and
 `[r:` once — this set exactly and nothing else.*
 
+### An unknown clef name prints a red `clef=x` into the page
+
+`parseKey`'s clef arm warns `Expected clef name. Found x`, BREAKS out of its inner switch,
+and then falls straight through to `multilineVars.clef = {type: clef.token, …}` with
+`foundClef = true` (`abc_parse_key_voice.js:500-517`) — so **the literal name becomes the
+clef's type**. `createClef` has no case for it and its `default:` arm adds
+
+    abselem.addFixed(new RelativeElement("clef=" + elem.type, 0, 0, undefined, {type: "debug"}))
+
+(`create-clef.js:29`), never assigning `clef`, so no glyph is added. The page gets
+
+    <text stroke="#ff0000" text-decoration="underline" …><tspan>clef=x</tspan></text>
+
+We draw no clef and no marker. **The ROOM the marker takes is reproduced**: the element
+reserves a POINT AT PITCH 15 — probed with `ZZAE`, constant across `clef=x`, `clef=zzz`,
+`clef=q2` and both the `K:` and `V:` spellings, and worth 4.943px of page.
+
+⚠️ **That is where this parts from the two `type: "debug"` markers below**, which decline
+the marker AND its room. Theirs is a CHORD lane on a tune with no chord — room borrowed
+from something else. This is the clef element's own box, and dropping it would collapse the
+staff by 19.4px on a malformed input rather than the 4.943 the marker is worth.
+
+⚠️ **AND ONLY AN EXPLICIT `clef=` REACHES THIS.** The outer switch's cases are `clef` and
+the six clef KEYWORDS; a bare unknown word hits `default: warn("Unknown parameter")` and
+never touches the clef. `K:Cbmin clef=x` is the shape; `K:C x` is not.
+
+*Verified: `dump-svg.js` at abcjs 6.7.0 on `K:C clef=x`, `clef=zzz`, `clef=q2`,
+`V:1 clef=x` and a mid-tune `[K:C clef=x]`, with `ZZAE` for the element's own box and a
+control at `K:C` for the 13.724387096774194 a treble clef reserves instead.*
+
+⚠️ **ONE ROW OF THIS IS STILL OPEN**: a MID-TUNE `[K:C clef=x]` leaves our page 14.432px
+short of abcjs's, where the single-clef shapes are exact. abcjs draws its debug string
+twice there — once at the change and once reprinted in the next system's prefix — so the
+residual is on the reprint path, not on the rule above.
+
 ### `%%beginps` with a non-empty body never returns — INFINITE LOOP
 
 `beginps`'s reader advances the tokenizer but never reassigns the variable it tests:

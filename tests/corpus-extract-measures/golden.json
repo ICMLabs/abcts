@@ -7240,6 +7240,56 @@
    "hasPickup": false
   }
  ],
+ "repo/abcts-unknown-clef": [
+  {
+   "header": "X:1\nT:Unknown Clef X\nL:1/4\nK:C clef=x\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:2\nT:Unknown Clef Zzz\nL:1/4\nK:C clef=zzz\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:3\nT:Unknown Clef Q2\nL:1/4\nK:C clef=q2\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:4\nT:Unknown Clef Voice\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:5\nT:Unknown Clef Mid\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    },
+    {
+     "abc": "[K:C clef=x]GABc|"
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
  "repo/abcts-visualtranspose": [
   {
    "header": "X:1\nT:visualTranspose 0 — the control's control\nL:1/4\nM:4/4\n%%visualTranspose 0\nK:C\n",

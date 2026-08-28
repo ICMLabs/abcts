@@ -2244,6 +2244,10 @@ const CLEF_REFERENCE: Readonly<Record<ClefShape, number>> = {
   G: 32,
   F: 24,
   C: 28,
+  // …**AND AN UNKNOWN NAME PITCHES LIKE TREBLE**, because `calcMiddle` falls through to
+  // its own default and only the GLYPH is missing (`abc_parse_key_voice.js:513`). Measured:
+  // `K:C clef=x`'s four notes sit at abcjs's treble positions to the byte.
+  unknown: 32,
   // UNPITCHED CLEFS STILL MAP LIKE TREBLE — only the glyph is absent.
   //
   // abcjs's table gives `perc` and `none` `mid: 0`, the same as treble
@@ -2545,6 +2549,9 @@ const CLEF_GLYPHS: Readonly<Record<ClefShape, GlyphName | null>> = {
   G: 'gClef',
   F: 'fClef',
   C: 'cClef',
+  // …and an UNKNOWN name draws none: `createClef`'s `default:` adds a `type: "debug"` child
+  // and never assigns `clef`, so no glyph is added (`create-clef.js:29`). See `ClefShape`.
+  unknown: null,
   // `clef=perc` DRAWS — `case 'perc': clef = "clefs.perc"` (`create-clef.js:26`) — and
   // its 21px is 26 of prefix once the clef's own `dx = 5` is on it. We drew nothing and
   // took no width: `visual-tablature-12` slid 36px left on that alone.
@@ -2568,6 +2575,51 @@ const OCTAVE_MARKER_SCALE = 2 / 3
 
 function layoutClef(x: number, clef: Clef, strict = true): LayoutElement | null {
   const name = CLEF_GLYPHS[clef.shape] ?? null
+  /**
+   * ⚠️ **AN UNKNOWN CLEF NAME IS AN ELEMENT WITH NO GLYPH AND A POINT AT PITCH 15.**
+   * `createClef`'s `default:` adds `new RelativeElement("clef=" + type, 0, 0, undefined,
+   * {type: "debug"})` and never assigns `clef`, so no glyph is added and the child's PITCH
+   * is `undefined` (`create-clef.js:29`). Its element reserves `top 15 bottom 15` — probed
+   * with `ZZAE`, and constant across `clef=x`, `clef=zzz`, `clef=q2` and both the `K:` and
+   * `V:` spellings, which is 4.943px of page.
+   *
+   * ⚠️ **THE RED DEBUG TEXT IS DECLINED AND ITS ROOM IS NOT**, which is where this parts
+   * from the two `type: "debug"` markers already in `Docs/ABCJS-DIFFERENCES.md`. Those
+   * decline the marker AND the lane it takes, because that lane is a CHORD lane on a tune
+   * with no chord — room borrowed from something else. This one is the clef element's own
+   * box, and dropping it collapses the staff by 19.4px on a malformed input rather than the
+   * 4.943 the marker itself is worth. So the room stays and only the string goes.
+   *
+   * `clef=none` is a DIFFERENT case and returns null below — abcjs's `case 'none': return
+   * null` really does emit no element at all.
+   */
+  if (clef.shape === 'unknown')
+    return {
+      type: 'clef',
+      x,
+      width: 0,
+      staffSteps: [],
+      glyphs: [],
+      lines: [],
+      texts: [
+        {
+          text: '',
+
+          x,
+          y: stepToY(ABCJS_PITCH.unknownClefDebug - PITCH_ORIGIN),
+          size: 0,
+          bold: false,
+          italic: false,
+          anchor: 'start',
+          reserve: [
+            stepToY(ABCJS_PITCH.unknownClefDebug - PITCH_ORIGIN),
+            stepToY(ABCJS_PITCH.unknownClefDebug - PITCH_ORIGIN),
+          ],
+          reserveTopPitch: ABCJS_PITCH.unknownClefDebug,
+          reserveBottomPitch: ABCJS_PITCH.unknownClefDebug,
+        },
+      ],
+    }
   if (name === null) return null
   // Every SMuFL clef's origin sits on the line it marks, so the glyph goes exactly where
   // the clef's line is — no per-clef offsets. Line n is (n - 3) * 2 steps from the middle.

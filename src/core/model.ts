@@ -207,7 +207,21 @@ export interface KeySignature {
  * The letter a clef is built from. `percussion` and `none` are ABC's `clef=perc` and
  * `clef=none`, which carry no pitch reference at all.
  */
-export type ClefShape = 'G' | 'F' | 'C' | 'percussion' | 'none'
+/**
+ * `unknown` is `clef=<anything else>` — a name abcjs's own switch does not recognise.
+ *
+ * ⚠️ **AN UNKNOWN NAME IS STILL A CLEF, NOT A FALLBACK TO TREBLE.** `parseKey`'s clef arm
+ * warns `Expected clef name. Found x`, BREAKS, and then falls straight through to
+ * `multilineVars.clef = {type: clef.token, …}` with `foundClef = true`
+ * (`abc_parse_key_voice.js:500-517`) — so the literal name becomes the clef's type.
+ * `createClef` then finds no case for it, adds NO glyph, and puts a `type: "debug"` child
+ * in its place (`create-clef.js:13-29`). Measured: abcjs draws no clef at all and the
+ * element reserves a POINT AT PITCH 15 — 1.2756 pitch, 4.943px of page, constant across
+ * `clef=x`, `clef=zzz`, `clef=q2` and both the `K:` and `V:` spellings.
+ *
+ * Ours fell back to the tune's clef and drew a TREBLE — a clef the user did not ask for.
+ */
+export type ClefShape = 'G' | 'F' | 'C' | 'percussion' | 'none' | 'unknown'
 
 /**
  * A clef as shape plus the staff line it sits on, rather than a closed enum of named

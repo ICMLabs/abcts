@@ -489,6 +489,13 @@ export const ABCJS_ARC = {
  * the reason they are grouped: `chordHeightAbove` is 4.78 PITCH, 2.39 spaces, 18.52px.
  */
 export const ABCJS_PITCH = {
+  /**
+   * **AN UNKNOWN CLEF NAME RESERVES A POINT HERE AND DRAWS NOTHING.** `createClef`'s
+   * `default:` adds a `type: "debug"` child with an UNDEFINED pitch (`create-clef.js:29`),
+   * and the element comes out `top 15 bottom 15` — probed with `ZZAE` and constant across
+   * every unrecognised name and both the `K:` and `V:` spellings. See `ClefShape`.
+   */
+  unknownClefDebug: 15,
   /** `Decoration.minTop` — the floor an ornament stack starts from (`decoration.js:13`). */
   decorationMinTop: 12,
   /**

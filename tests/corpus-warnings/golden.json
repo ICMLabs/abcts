@@ -1167,6 +1167,19 @@
  "repo/abcts-text-udef-parts-overlays-tune53": null,
  "repo/abcts-text-udef-parts-overlays-tune54": null,
  "repo/abcts-text-udef-parts-overlays-tune55": null,
+ "repo/abcts-unknown-clef-tune0": [
+  "Music Line:4:8: Expected clef name. Found x:  C clef=<span style=\"text-decoration:underline;font-size:1.3em;font-weight:bold;\">x</span>"
+ ],
+ "repo/abcts-unknown-clef-tune1": [
+  "Music Line:4:8: Expected clef name. Found zzz:  C clef=<span style=\"text-decoration:underline;font-size:1.3em;font-weight:bold;\">z</span>zz"
+ ],
+ "repo/abcts-unknown-clef-tune2": [
+  "Music Line:4:8: Expected clef name. Found q:  C clef=<span style=\"text-decoration:underline;font-size:1.3em;font-weight:bold;\">q</span>2"
+ ],
+ "repo/abcts-unknown-clef-tune3": null,
+ "repo/abcts-unknown-clef-tune4": [
+  "Music Line:6:8: Expected clef name. Found x:  C clef=<span style=\"text-decoration:underline;font-size:1.3em;font-weight:bold;\">x</span>"
+ ],
  "repo/abcts-visualtranspose-tune0": null,
  "repo/abcts-visualtranspose-tune1": null,
  "repo/abcts-visualtranspose-tune2": null,

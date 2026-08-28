@@ -477,9 +477,11 @@ const STYLE_TOKENS: ReadonlySet<string> = new Set([
 ])
 
 /** The tokens `parseKey`'s modifier switch reaches its `default` arm with, and where. */
-function unknownKeyParameters(str: string): Array<{ token: string; column: number }> {
+function unknownKeyParameters(
+  str: string,
+): Array<{ token: string; column: number; expectedClef?: boolean }> {
   const tokens = tokenizeKeyValue(str)
-  const out: Array<{ token: string; column: number }> = []
+  const out: Array<{ token: string; column: number; expectedClef?: boolean }> = []
 
   // The key itself (`abc_parse_key_voice.js:236-339`). `getKeyPitch`'s lowercase cases are
   // COMMENTED OUT, so only `A`..`G` is a key — see `parseKey` above.
@@ -542,6 +544,20 @@ function unknownKeyParameters(str: string): Array<{ token: string; column: numbe
       continue
     }
     // The clef arm: the name, then an optional line NUMBER, then an optional `±8`.
+    /**
+     * ⚠️ **AND A NAME THIS ARM DOES NOT RECOGNISE WARNS HERE, NOT AS AN UNKNOWN PARAMETER.**
+     * `warn("Expected clef name. Found " + clef.token, str, clef.start)` and then a `break`
+     * that falls out of the INNER switch only — the clef is still assigned and `foundClef`
+     * still set (`abc_parse_key_voice.js:500-517`). So the field is consumed exactly as a
+     * good clef would be, and only the message differs. See `ClefShape`'s `unknown`.
+     */
+    // …**AND THE SIX SINGLE-LETTER ALIASES ARE RECOGNISED**, each its own `case` mapping to
+    // alto, bass or treble: `C`/`c`, `F`/`f`, `G`/`g` (`abc_parse_key_voice.js:494-499`).
+    const clefName = tokens[0]
+    const knownClef = (t: string): boolean =>
+      CLEF_NAMES.some(([n]) => n === clefAlias(t).toLowerCase())
+    if (clefName !== undefined && !knownClef(clefName.token))
+      out.push({ token: clefName.token, column: clefName.start, expectedClef: true })
     tokens.shift()
     if (tokens[0]?.type === 'number') tokens.shift()
     if (
@@ -706,7 +722,32 @@ export function parseClef(spec: string): Clef | null {
   // V:-only: abcjs's K: switch has no such alias, and reading it on both is a divergence
   // only a `K:C cl=bass` could show. No corpus writes one.
   const explicit = /\bcl(?:ef)?=([a-z]+)(\d?)([-+^_]8)?/i.exec(spec)
-  if (explicit) return build(clefAlias(explicit[1] ?? ''), explicit[2] ?? '', explicit[3] ?? '')
+  if (explicit) {
+    const named = build(clefAlias(explicit[1] ?? ''), explicit[2] ?? '', explicit[3] ?? '')
+    /**
+     * ⚠️ **A NAME abcjs DOES NOT KNOW IS STILL A CLEF — but ONLY after an explicit `clef=`.**
+     * Its arm warns `Expected clef name. Found x`, BREAKS out of the inner switch, and falls
+     * straight through to `multilineVars.clef = {type: clef.token, …}` with
+     * `foundClef = true` (`abc_parse_key_voice.js:500-517`). `createClef` then has no case
+     * for it, adds NO glyph, and puts a `type: "debug"` child in its place
+     * (`create-clef.js:29`). Ours returned "this field names no clef", so the voice took the
+     * tune's and we drew a TREBLE abcjs does not draw. See `ClefShape`'s `unknown`.
+     *
+     * ⚠️ **AND A BARE UNKNOWN WORD IS NOT THIS.** The outer switch's own cases are `clef`
+     * and the six clef KEYWORDS; anything else reaches `default: warn("Unknown parameter")`
+     * and never touches the clef. Applying it to the bare form too — where this function
+     * tries EVERY word and leans on a null to skip the non-clefs — made the first word of
+     * every `K:` an unknown clef and took nine gates red in one run.
+     */
+    return named ?? {
+      shape: 'unknown',
+      line: 2,
+      octaveShift: 0,
+      middleOverride,
+      staffLines,
+      ...(written ? { staffLinesWritten: true as const } : {}),
+    }
+  }
 
   // Bare form, as in `K:C bass`. EVERY word is tried, not just the first: the first word
   // of a K: field is the key itself, so returning on the first non-clef match would never
@@ -4810,11 +4851,16 @@ class Parser {
          * characters in, past the `K:`. The COLUMN travels with the diagnostic because two
          * of them can stand on adjacent characters and neither is findable by its text.
          */
-        const valueAt = start + 2
+        // …**AND AN INLINE FIELD'S VALUE BEGINS ONE CHARACTER LATER** — `[K:` against `K:`.
+        // The mid-tune `[K:C clef=x]` reported its context as `:C clef=` for abcjs's
+        // `C clef=x`, which is the whole span shifted by one.
+        const valueAt = start + (inline ? 3 : 2)
         for (const bad of unknownKeyParameters(content))
           this.warn(
-            'unknown-parameter',
-            `unknown parameter: ${bad.token}`,
+            bad.expectedClef === true ? 'expected-clef-name' : 'unknown-parameter',
+            bad.expectedClef === true
+              ? `expected clef name: ${bad.token}`
+              : `unknown parameter: ${bad.token}`,
             sourceRange(valueAt, valueAt + content.length),
             bad.column,
           )

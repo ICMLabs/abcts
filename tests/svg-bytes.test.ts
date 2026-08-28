@@ -109,6 +109,24 @@ const DIVERGENT: readonly string[] = [
    * See `Docs/ABCJS-DIFFERENCES.md`.
    */
   "abcts-rests-and-bars-tune14",
+  /**
+   * **AN UNKNOWN CLEF NAME PRINTS A RED `clef=x` INTO THE PAGE.** `parseKey`'s clef arm
+   * warns, BREAKS, and falls through to `multilineVars.clef = {type: clef.token}` with
+   * `foundClef = true` (`abc_parse_key_voice.js:500-517`), so the literal name becomes the
+   * clef's TYPE — and `createClef`'s `default:` adds a `type: "debug"` child in place of a
+   * glyph (`create-clef.js:29`), drawn as
+   * `<text stroke="#ff0000" text-decoration="underline">clef=x</text>`.
+   *
+   * We draw no clef and no marker, and **we DO reproduce the room** — the element's point
+   * at pitch 15, 4.943px — which is where this parts from the breve above. See
+   * `Docs/ABCJS-DIFFERENCES.md`; tune 4 (a MID-TUNE `[K:C clef=x]`) is additionally 14.432px
+   * short and is named there as its own open row.
+   */
+  "abcts-unknown-clef-tune0",
+  "abcts-unknown-clef-tune1",
+  "abcts-unknown-clef-tune2",
+  "abcts-unknown-clef-tune3",
+  "abcts-unknown-clef-tune4",
 ];
 
 /**
