@@ -2576,50 +2576,26 @@ const OCTAVE_MARKER_SCALE = 2 / 3
 function layoutClef(x: number, clef: Clef, strict = true): LayoutElement | null {
   const name = CLEF_GLYPHS[clef.shape] ?? null
   /**
-   * ⚠️ **AN UNKNOWN CLEF NAME IS AN ELEMENT WITH NO GLYPH AND A POINT AT PITCH 15.**
-   * `createClef`'s `default:` adds `new RelativeElement("clef=" + type, 0, 0, undefined,
-   * {type: "debug"})` and never assigns `clef`, so no glyph is added and the child's PITCH
-   * is `undefined` (`create-clef.js:29`). Its element reserves `top 15 bottom 15` — probed
-   * with `ZZAE`, and constant across `clef=x`, `clef=zzz`, `clef=q2` and both the `K:` and
-   * `V:` spellings, which is 4.943px of page.
+   * ⚠️ **AN UNKNOWN CLEF NAME DRAWS NOTHING AND TAKES A CHORD LANE.** `createClef`'s
+   * `default:` adds `new RelativeElement("clef=" + type, 0, 0, undefined, {type: "debug"})`
+   * and never assigns `clef`, so no glyph is added (`create-clef.js:29`) — and a `debug`
+   * child declares `chordHeightAbove = this.height`, defaulting to 4
+   * (`relative-element.js:38,55-57`), so the element takes a CHORD LANE stacked on the
+   * running top.
    *
-   * ⚠️ **THE RED DEBUG TEXT IS DECLINED AND ITS ROOM IS NOT**, which is where this parts
-   * from the two `type: "debug"` markers already in `Docs/ABCJS-DIFFERENCES.md`. Those
-   * decline the marker AND the lane it takes, because that lane is a CHORD lane on a tune
-   * with no chord — room borrowed from something else. This one is the clef element's own
-   * box, and dropping it collapses the staff by 19.4px on a malformed input rather than the
-   * 4.943 the marker itself is worth. So the room stays and only the string goes.
+   * ⚠️ **THE LANE IS NOT A FIXED PITCH, WHICH IS WHAT A FIRST READING GOT WRONG.** Probed
+   * with `ZZAE` it reads 15 on a bare `K:C clef=x`, **18.724387096774194** on a mid-tune
+   * change and **17** on that tune's reprint in the next system's prefix — each the running
+   * top plus five. Three shapes agreeing on 15 looked like a constant and were three tunes
+   * whose running top happened to be 10.
    *
-   * `clef=none` is a DIFFERENT case and returns null below — abcjs's `case 'none': return
-   * null` really does emit no element at all.
+   * **SO IT IS DECLINED, LANE AND ALL — the same ruling as the note longer than a breve**,
+   * which reserves a 4-pitch chord lane for its own `type: "debug"` marker on a tune with
+   * no chord symbol. Same mechanism, same answer: `Docs/ABCJS-DIFFERENCES.md` carries both.
+   *
+   * `clef=none` reaches the same `return null` by a different route — abcjs's
+   * `case 'none': return null` emits no element at all, where this one emits a marker.
    */
-  if (clef.shape === 'unknown')
-    return {
-      type: 'clef',
-      x,
-      width: 0,
-      staffSteps: [],
-      glyphs: [],
-      lines: [],
-      texts: [
-        {
-          text: '',
-
-          x,
-          y: stepToY(ABCJS_PITCH.unknownClefDebug - PITCH_ORIGIN),
-          size: 0,
-          bold: false,
-          italic: false,
-          anchor: 'start',
-          reserve: [
-            stepToY(ABCJS_PITCH.unknownClefDebug - PITCH_ORIGIN),
-            stepToY(ABCJS_PITCH.unknownClefDebug - PITCH_ORIGIN),
-          ],
-          reserveTopPitch: ABCJS_PITCH.unknownClefDebug,
-          reserveBottomPitch: ABCJS_PITCH.unknownClefDebug,
-        },
-      ],
-    }
   if (name === null) return null
   // Every SMuFL clef's origin sits on the line it marks, so the glyph goes exactly where
   // the clef's line is — no per-clef offsets. Line n is (n - 3) * 2 steps from the middle.

@@ -189,27 +189,34 @@ clef's type**. `createClef` has no case for it and its `default:` arm adds
 
     <text stroke="#ff0000" text-decoration="underline" …><tspan>clef=x</tspan></text>
 
-We draw no clef and no marker. **The ROOM the marker takes is reproduced**: the element
-reserves a POINT AT PITCH 15 — probed with `ZZAE`, constant across `clef=x`, `clef=zzz`,
-`clef=q2` and both the `K:` and `V:` spellings, and worth 4.943px of page.
+and, because a `debug` child declares `chordHeightAbove = this.height` with `height`
+defaulting to 4 (`relative-element.js:38,55-57`), the element also takes a **4-pitch CHORD
+LANE** on a tune that has no chord symbol — 19.4px of page.
 
-⚠️ **That is where this parts from the two `type: "debug"` markers below**, which decline
-the marker AND its room. Theirs is a CHORD lane on a tune with no chord — room borrowed
-from something else. This is the clef element's own box, and dropping it would collapse the
-staff by 19.4px on a malformed input rather than the 4.943 the marker is worth.
+**We draw no clef, no marker, and take no lane** — the same ruling the note longer than a
+breve already has below, for the same `type: "debug"` mechanism.
+
+⚠️ **THE LANE IS NOT A FIXED PITCH.** Probed with `ZZAE` it reads 15 on a bare
+`K:C clef=x`, **18.724387096774194** on a mid-tune change and **17** on that tune's reprint
+in the next system's prefix — each the running top plus five. An earlier revision of this
+entry called it a constant 15 and reproduced it as a point; three shapes had agreed on 15
+because all three had a running top of 10. **Three agreeing measurements of a derived value
+look exactly like a constant.**
 
 ⚠️ **AND ONLY AN EXPLICIT `clef=` REACHES THIS.** The outer switch's cases are `clef` and
 the six clef KEYWORDS; a bare unknown word hits `default: warn("Unknown parameter")` and
-never touches the clef. `K:Cbmin clef=x` is the shape; `K:C x` is not.
+never touches the clef. `K:Cbmin clef=x` is the shape; `K:C x` is not. The six single-letter
+ALIASES are recognised and warn nothing: `C`/`c`, `F`/`f`, `G`/`g` each have their own case.
+
+**What we DO reproduce**: the clef is not drawn (ours used to fall back to the tune's and
+draw a TREBLE abcjs never draws), the notes keep their treble positions, and the
+`Expected clef name. Found x` warning is raised at the clef token's own column.
 
 *Verified: `dump-svg.js` at abcjs 6.7.0 on `K:C clef=x`, `clef=zzz`, `clef=q2`,
-`V:1 clef=x` and a mid-tune `[K:C clef=x]`, with `ZZAE` for the element's own box and a
-control at `K:C` for the 13.724387096774194 a treble clef reserves instead.*
-
-⚠️ **ONE ROW OF THIS IS STILL OPEN**: a MID-TUNE `[K:C clef=x]` leaves our page 14.432px
-short of abcjs's, where the single-clef shapes are exact. abcjs draws its debug string
-twice there — once at the change and once reprinted in the next system's prefix — so the
-residual is on the reprint path, not on the rule above.
+`V:1 clef=x` and a mid-tune `[K:C clef=x]`, with `ZZAE` for the element's box on all three
+positions and a control at `K:C` for the 13.724387096774194 a treble clef reserves instead.
+Fixture `tests/corpus-abcjs/fixtures/abcts-unknown-clef.abc`, all five slugs in
+`svg-bytes`'s `DIVERGENT`.*
 
 ### `%%beginps` with a non-empty body never returns — INFINITE LOOP
 

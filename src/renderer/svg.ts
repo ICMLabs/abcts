@@ -3193,14 +3193,6 @@ export function toSVG(
             readonly s: string;
           }[] = [];
           for (const t of el.texts) {
-            /**
-             * **A RESERVE-ONLY TEXT WRITES NO MARKUP.** An UNKNOWN CLEF NAME reserves the
-             * point abcjs's `type: "debug"` child takes and declines the red string it
-             * draws (see `layoutClef`), so it rides this channel for its room alone. abcjs
-             * writes no empty `<text>` anywhere, and an empty SYLLABLE is not this — that
-             * one carries `&nbsp;` and a real size.
-             */
-            if (t.text === "" && t.size === 0) continue;
             const style =
               (t.bold ? ' font-weight="bold"' : "") +
               (t.italic ? ' font-style="italic"' : "");

@@ -474,13 +474,14 @@ const WITHIN: Readonly<Record<string, number>> = {
   // …the two `abcts-staffnonote-*` fixtures, from enumerating abcjs's directive switch, and
   // `abcts-shared-staff-rests`, the ladder that closed the moved-rest reserve.
   //
-  // ⚠️ **AND `abcts-unknown-clef` IS A RULED DIVERGENCE, WHICH IS WHY IT SITS IN THE 5px
-  // BUCKET AND NOT THE 1px ONE.** abcjs prints a red `clef=x` debug string where the clef
-  // would be; we reproduce the room it takes and decline the string, so the page agrees and
-  // the marker does not. See `Docs/ABCJS-DIFFERENCES.md` and `svg-bytes`'s `DIVERGENT`.
+  // ⚠️ **AND `abcts-unknown-clef` IS A RULED DIVERGENCE, WHICH IS WHY IT SITS IN THE 25px
+  // BUCKET ALONE.** abcjs prints a red `clef=x` debug string where the clef would be, and
+  // that `type: "debug"` child takes a 4-pitch CHORD LANE — 19.4px. We decline the marker
+  // AND the lane, which is the same ruling the note longer than a breve already has. See
+  // `Docs/ABCJS-DIFFERENCES.md` and `svg-bytes`'s `DIVERGENT`.
   "0.05": 229,
   "1": 229,
-  "5": 230,
+  "5": 229,
   "25": 230,
 };
 

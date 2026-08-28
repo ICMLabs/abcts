@@ -117,10 +117,15 @@ const DIVERGENT: readonly string[] = [
    * glyph (`create-clef.js:29`), drawn as
    * `<text stroke="#ff0000" text-decoration="underline">clef=x</text>`.
    *
-   * We draw no clef and no marker, and **we DO reproduce the room** — the element's point
-   * at pitch 15, 4.943px — which is where this parts from the breve above. See
-   * `Docs/ABCJS-DIFFERENCES.md`; tune 4 (a MID-TUNE `[K:C clef=x]`) is additionally 14.432px
-   * short and is named there as its own open row.
+   * A `debug` child declares `chordHeightAbove = height` (default 4), so the element also
+   * takes a **4-pitch CHORD LANE** on a tune with no chord — 19.4px. **We draw no clef, no
+   * marker, and take no lane**, which is the ruling the breve above already has for the same
+   * mechanism.
+   *
+   * ⚠️ **THE LANE IS NOT A FIXED PITCH** — 15 on a bare `K:C clef=x`, 18.724387096774194 on
+   * a mid-tune change, 17 on its reprint: the running top plus five. An earlier cut here
+   * reproduced it as a constant point, because three shapes agreed on 15 and all three
+   * happened to have a running top of 10.
    */
   "abcts-unknown-clef-tune0",
   "abcts-unknown-clef-tune1",
