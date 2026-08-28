@@ -5896,6 +5896,35 @@
    "hasPickup": true
   }
  ],
+ "repo/abcts-shared-staff-rests": [
+  {
+   "header": "X:1\nT:Shared Staff Shared No Directive\n%%score (1 2)\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:2\nT:Shared Staff Shared Both Notes\n%%score (1 2)\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:3\nT:Shared Staff Shared Rests Only\n%%score (1 2)\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "zzzz|"
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
  "repo/abcts-slur-shapes": [
   {
    "header": "X:1\nT:slur two notes\nL:1/4\nM:4/4\nK:C\n",

@@ -707,6 +707,21 @@ const PASSING: readonly string[] = [
   "abcts-staffnonote-empty-staves-tune0",
   "abcts-staffnonote-empty-staves-tune1",
   /**
+   * `abcts-shared-staff-rests.abc` — `%%score (1 2)` with one note-voice and one rest-voice,
+   * against the two controls that pin it: both voices noted, and both rested.
+   *
+   * ⚠️ **A REST MOVED OUT OF THE OTHER VOICE'S WAY CHANGES NO EXTENT.**
+   * `fixVoiceCollisions` mutates the absolute element's `top`/`bottom` and its child's, and
+   * it runs AFTER `setUpperAndLowerElements` with abcjs's own re-run commented out
+   * (`layout/layout.js:49-50`) — so the box moves and nothing reads it again. Ours carried
+   * the move into the reserve: the staff came out 7.5316 pitch low, 29.185px of page,
+   * **with every glyph in the file already at abcjs's own coordinate**. Only a reserve
+   * defect looks like that.
+   */
+  "abcts-shared-staff-rests-tune0",
+  "abcts-shared-staff-rests-tune1",
+  "abcts-shared-staff-rests-tune2",
+  /**
    * `abcts-voice-style.abc` — `V:… style=`, the first of the three modifiers the V:
    * enumeration left as a FEATURE. All five shapes, one voice each.
    *

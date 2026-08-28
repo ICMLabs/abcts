@@ -18831,9 +18831,21 @@ function anchorBelowStaff<
  *
  * `layout/layout.js:140-188`, run from `:49` over the whole tune AFTER `layoutVoice` and
  * `setUpperAndLowerElements`, and deliberately not followed by a second lane pass (abcjs's
- * own `//setUpperAndLowerElements(…)` on the next line is commented out). So the moved rest
- * changes the staff's extent and therefore the staff-to-staff spacing, and does NOT move
- * the lanes that were already stacked. This runs in the same place for the same reason.
+ * own `//setUpperAndLowerElements(…)` on the next line is commented out). This runs in the
+ * same place for the same reason.
+ *
+ * ⚠️ **AND THAT MEANS THE MOVED REST CHANGES NO EXTENT AT ALL.** This paragraph used to say
+ * it "changes the staff's extent and therefore the staff-to-staff spacing" — an inference
+ * from which object abcjs ASSIGNS to (`slot[i].top/.bottom` and its child's) rather than
+ * from what READS it. `staff.top`/`bottom` were computed by the pass before, and the re-run
+ * that would pick the move up is the commented-out line. So the box moves and nothing looks
+ * at it again.
+ *
+ * MEASURED on `%%score (1 2)` with `CDEF|` over `zzzz|`: abcjs's staff bottom is
+ * `-1.0443870967741935` — the first NOTE's box — though the rest is moved 8.81 pitch down
+ * and drawn there in both engines. Carrying that move into our reserve put the staff 7.5316
+ * pitch low, **29.185px of page with every glyph in the file already at abcjs's own
+ * coordinate**. See `shift`.
  *
  *     if (isRealRest && !slot[lastIndex].abcelem.rest) {          // rest in the FIRST voice
  *       var distance1 = restTop.bottom - closeTop(slot[lastIndex])
@@ -18972,17 +18984,40 @@ function fixRestCollisions(
           ...head,
           y: movedPitch === undefined ? head.y + dy : stepToY(movedPitch - PITCH_ORIGIN),
           ...(movedPitch === undefined ? {} : { anchorPitch: movedPitch }),
-          ...(head.reserve === undefined
-            ? {}
-            : { reserve: [head.reserve[0] + dy, head.reserve[1] + dy] as [number, number] }),
-          ...(head.reservePitch === undefined || dPitch === undefined
-            ? {}
-            : {
-                reservePitch: [head.reservePitch[0] - dPitch, head.reservePitch[1] - dPitch] as [
-                  number,
-                  number,
-                ],
-              }),
+          /**
+           * ⚠️ **AND THE MOVED REST DOES NOT MOVE THE STAFF'S EXTENT.** `fixVoiceCollisions`
+           * mutates the ABSOLUTE ELEMENT's `top`/`bottom` and its child's, and it runs AFTER
+           * `setUpperAndLowerElements` has already computed `staff.top`/`bottom` — with
+           * abcjs's own re-run commented out on the very next line (`layout/layout.js:49-50`).
+           * So nothing reads the moved box back into the staff.
+           *
+           * The note above this function said the opposite — "the moved rest changes the
+           * staff's extent and therefore the staff-to-staff spacing" — and that was an
+           * inference from which object abcjs assigns to, not from what reads it.
+           *
+           * MEASURED on `%%score (1 2)` with `CDEF|` over `zzzz|`: abcjs's staff bottom is
+           * `-1.0443870967741935`, which is the first NOTE's box and not the rest's, though
+           * that rest is moved 8.81 pitch down and drawn there in both engines. Ours carried
+           * the move into the reserve and came out 7.5316 pitch low — 29.185px of page **with
+           * every glyph in the file already at abcjs's own coordinate**, which is the
+           * signature of a reserve defect and nothing else.
+           */
+          /**
+           * ⚠️ **AND THE RESERVE MOVES BY WHICHEVER TERM ACTUALLY MOVED THE GLYPH.** The
+           * drawn edge has two branches — `anchorPitch - dPitch` when both sides of the
+           * comparison offered a pitch, and `head.y + dy` when either did not — and the
+           * reserve took `- dPitch` in BOTH. The two conventions run in opposite directions
+           * (a `dy` UP is negative where the pitch it stands for is positive), so on the
+           * fallback the drawing rose while the reserve sank.
+           *
+           * MEASURED on `%%score (1 2)` with `CDEF|` over `zzzz|`: the four rests reserve
+           * `[-0.044, -5.576]` … `[-3.044, -8.576]`, DESCENDING one pitch each, where they
+           * draw one pitch HIGHER each — byte-identically to abcjs. The staff bottom came
+           * out 7.5316 pitch low, which is 29.185px of page, **with every glyph in the file
+           * at abcjs's own coordinate**. That is the signature of a reserve defect and
+           * nothing else.
+           */
+
         },
         ...el.glyphs.slice(1),
       ],

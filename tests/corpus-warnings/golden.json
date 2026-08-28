@@ -960,6 +960,9 @@
   "Music Line:24:6: Duration not representable: C/16 :  C/16 <span style=\"text-decoration:underline;font-size:1.3em;font-weight:bold;\">D</span>/16 C/8 D/8|",
   "Music Line:24:11: Duration not representable: D/16 :  C/16 D/16 <span style=\"text-decoration:underline;font-size:1.3em;font-weight:bold;\">C</span>/8 D/8|"
  ],
+ "repo/abcts-shared-staff-rests-tune0": null,
+ "repo/abcts-shared-staff-rests-tune1": null,
+ "repo/abcts-shared-staff-rests-tune2": null,
  "repo/abcts-slur-shapes-tune0": null,
  "repo/abcts-slur-shapes-tune1": null,
  "repo/abcts-slur-shapes-tune2": null,
