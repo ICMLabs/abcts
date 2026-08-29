@@ -167,6 +167,8 @@ const PASSING: readonly string[] = [
   "repo/abcts-unknown-clef-tune1",
   "repo/abcts-unknown-clef-tune2",
   "repo/abcts-unknown-clef-tune4",
+  /** `abcts-grace-order-and-lanes` — a `!p!` on a note that also carries a hairpin. */
+  "repo/abcts-grace-order-and-lanes-tune25",
   "repo/abcts-bars-graces-and-groups-tune0",
   "repo/abcts-bars-graces-and-groups-tune40",
   "repo/abcts-bars-graces-and-groups-tune6",

@@ -1,0 +1,181 @@
+X:1
+T:Grace Then Deco
+L:1/4
+K:C
+{ge}!trill!CDEF|
+
+X:2
+T:Deco Then Grace
+L:1/4
+K:C
+!trill!{ge}CDEF|
+
+X:3
+T:One Grace Deco
+L:1/4
+K:C
+{g}!trill!CDEF|
+
+X:4
+T:Grace Chord
+L:1/4
+K:C
+"C"{ge}CDEF|
+
+X:5
+T:One Grace Chord
+L:1/4
+K:C
+"C"{g}CDEF|
+
+X:6
+T:Grace Chord Deco
+L:1/4
+K:C
+"C"{ge}!trill!CDEF|
+
+X:7
+T:Chord And Annot
+L:1/4
+K:C
+"C""^top"CDEF|
+
+X:8
+T:Chord Annot Deco
+L:1/4
+K:C
+"C""^top"!trill!CDEF|
+
+X:9
+T:Annot Below Lyric
+L:1/4
+K:C
+"_low"CDEF|
+w:a b c d
+
+X:10
+T:Dyn And Lyric
+L:1/4
+K:C
+!p!CDEF|
+w:a b c d
+
+X:11
+T:Dyn Lyric Hairpin
+L:1/4
+K:C
+!<(!C!<)!DEF|
+w:a b c d
+
+X:12
+T:Part And Chord
+L:1/4
+P:A
+K:C
+P:A
+"C"CDEF|
+
+X:13
+T:Tempo And Chord
+L:1/4
+Q:1/4=90
+K:C
+"C"CDEF|
+
+X:14
+T:Tempo Part Chord
+L:1/4
+Q:1/4=90
+P:A
+K:C
+P:A
+"C"!trill!CDEF|
+
+X:15
+T:Ending And Chord
+L:1/4
+K:C
+"C"CDEF|1 GABc:|2 cdef|]
+
+X:16
+T:Volta Tempo
+L:1/4
+K:C
+CDEF|1[Q:1/4=90] GABc:|2 cdef|]
+
+X:17
+T:Two Voice Lanes
+L:1/4
+%%score (1 2)
+K:C
+V:1
+"C"!trill!CDEF|
+V:2
+!p!GABc|
+
+X:18
+T:Lyric Two Verses
+L:1/4
+K:C
+CDEF|
+w:a b c d
+w:e f g h
+
+X:19
+T:Slur Over Chord
+L:1/4
+K:C
+("C"CD"G"EF)|
+
+X:20
+T:Grace Deco Slur
+L:1/4
+K:C
+({ge}!trill!CD)EF|
+
+X:21
+T:Ledger And Lyric
+L:1/4
+K:C
+C,,D,,ef|
+w:a b c d
+
+X:22
+T:Ledger And Chord
+L:1/4
+K:C
+"C"C,,D,,ef|
+
+X:23
+T:Annot 4 Stack
+L:1/4
+K:C
+"^a""^b""^c""^d"CDEF|
+
+X:24
+T:Annot Below Stack
+L:1/4
+K:C
+"_a""_b""_c"CDEF|
+
+X:25
+T:Deco Stack 3
+L:1/4
+K:C
+!trill!!fermata!!coda!CDEF|
+
+X:26
+T:Deco Below Stack
+L:1/4
+K:C
+!staccato!!tenuto!!accent!CDEF|
+
+X:27
+T:All At Once
+L:1/4
+Q:1/4=90
+P:A
+K:C
+P:A
+"C""^ann"!trill!!p!({ge}CD)EF|
+w:a b c d

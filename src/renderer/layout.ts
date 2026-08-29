@@ -5412,6 +5412,19 @@ function layoutNoteheads(
       return (loP - drop === 0 ? loP : loP - drop) - PITCH_ORIGIN
     }),
   )
+  /**
+   * ⚠️ **THE GRACES COME BEFORE THE DECORATIONS, NOT AT THE END.** `createNote`'s run of
+   * adders IS the element's child order — `_addChild` is a plain push — and it reads
+   * `heads+stem → lyric → graces → decorations → barNumber → LEDGER → chord`
+   * (`abstract-engraver.js:829-855`). Ours appended them last, under a note calling that
+   * "abcjs's document order", and the two agree on every tune that has a grace OR a
+   * decoration and part on any that has BOTH.
+   *
+   * MEASURED on `{g}!trill!CDEF|`: abcjs writes `C, stem, g, scripts.trill, ledger` where
+   * ours wrote `C, stem, scripts.trill, g, ledger`. Nothing in either corpus puts a
+   * decoration on a graced note, which is why 662 byte-exact fixtures never said so.
+   */
+  glyphs.push(...placedGraceGlyphs)
   if (event !== null && event.decorations.length > 0) {
     const decorated = decorationGlyphs(
       event.decorations,
@@ -5578,8 +5591,8 @@ function layoutNoteheads(
       graceLeft,
     ),
     staffSteps: steps,
-    // The graces go on the END — abcjs's document order, see the grace block above.
-    glyphs: [...glyphs, ...placedGraceGlyphs],
+    // …the graces are already in, ahead of the decorations — see the push above.
+    glyphs,
     lines: [...lines, ...graceLines],
     texts,
   }
@@ -6493,6 +6506,22 @@ function decorationGlyphs(
         reserve: [y - half, y + half],
         reservePitch: [abovePitch + halfPitch, abovePitch - halfPitch],
         ornamentPitch: abovePitch,
+        /**
+         * ⚠️ **AND `drawPitch` IS *NOT* THE ANSWER HERE, THOUGH IT IS ONE PUSH AWAY —
+         * MEASURED AND REVERTED.** The CLOSE decoration's push carries it, because
+         * `printSymbol` draws at `calcY(offset + ycorr)`, one sum and one multiply
+         * (`draw/print-symbol.js:34`), where spending the correction on a finished y is
+         * `offset * STEP + ycorr * STEP`. A STACKED ornament is one ULP out for what looks
+         * like the same reason — `{g}!trill!CDEF|` draws at `22.535000000000007` for
+         * abcjs's `22.535`.
+         *
+         * Adding `drawPitch: abovePitch` here fixes that shape and takes FOUR byte-exact
+         * fixtures red — `ragtime-nightingale` in all three flavours and
+         * `abcjs-visual-decorations-01-score-s-a-b`. So `abovePitch` is not the `offset`
+         * abcjs passes for a stacked ornament, where `closeY` IS for a close one, and the
+         * difference is what has to be found before this lands. The corpus is the evidence
+         * against the obvious reading; do not try it a second time without it.
+         */
       })
       above += height
     } else if (spec.place === 'stem') {

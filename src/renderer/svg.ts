@@ -3778,24 +3778,6 @@ export function toSVG(
                 ),
               );
           }
-          /**
-           * **AND A BEAMED GRACE GROUP'S STEMS COME AFTER THE ELEMENT'S LEDGERS**, because
-           * they are not built when the element is. `addGraceNotes` runs inside `createNote`,
-           * before `ledgerLines`, but a BEAMED group's stems come from `createStems` in the
-           * LAYOUT phase — `stem.setX(parent.x); parent.addRight(stem)`
-           * (`layout/beam.js:135-140`) — which appends them to a child list `createNote`
-           * finished with long ago. An UNBEAMED grace's stem is built in the loop and stays
-           * with its own head.
-           */
-          for (const line of graceStems)
-            parts.push(
-              lineToRect(
-                TL(line),
-                attrs(el.type, line.role),
-                abcjs,
-                fg(voiceOf(elIndex)),
-              ),
-            );
           // Prose is a real <text> in a generic family, unlike musical glyphs, which are
           // paths so the SVG stays self-contained. A missing serif face falls back to
           // another serif; a missing Bravura falls back to nothing legible. See layout.ts.
@@ -3806,6 +3788,29 @@ export function toSVG(
                 .map((t) => t.s),
             );
           }
+          /**
+           * **AND A BEAMED GRACE GROUP'S STEMS COME AFTER THE CHORD SYMBOL**, because they
+           * are not built when the element is. `addGraceNotes` runs inside `createNote`,
+           * before `ledgerLines` and before `addChord` — but a BEAMED group's stems come
+           * from `createStems` in the LAYOUT phase, `stem.setX(parent.x);
+           * parent.addRight(stem)` (`layout/beam.js:135-140`), appended to a child list
+           * `createNote` finished with. An UNBEAMED grace's stem is built in the loop and
+           * stays with its own head.
+           *
+           * ⚠️ **THEY USED TO GO BEFORE IT**, under a note that stopped at "after the
+           * element's LEDGERS" — true, and one adder short: the chord is `createNote`'s
+           * LAST. `"C"{ge}CDEF|` is the shape that separates them, and `"C"{g}CDEF|` is
+           * not, because one grace is unbeamed.
+           */
+          for (const line of graceStems)
+            parts.push(
+              lineToRect(
+                TL(line),
+                attrs(el.type, line.role),
+                abcjs,
+                fg(voiceOf(elIndex)),
+              ),
+            );
           if (abcjs) {
             for (const line of own.filter(
               (l) => l.role === "stem" && l.beamed === true,

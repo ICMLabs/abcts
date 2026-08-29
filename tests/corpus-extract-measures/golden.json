@@ -3977,6 +3977,271 @@
    "hasPickup": true
   }
  ],
+ "repo/abcts-grace-order-and-lanes": [
+  {
+   "header": "X:1\nT:Grace Then Deco\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "{ge}!trill!CDEF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:2\nT:Deco Then Grace\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "!trill!{ge}CDEF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:3\nT:One Grace Deco\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "{g}!trill!CDEF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:4\nT:Grace Chord\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "\"C\"{ge}CDEF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:5\nT:One Grace Chord\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "\"C\"{g}CDEF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:6\nT:Grace Chord Deco\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "\"C\"{ge}!trill!CDEF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:7\nT:Chord And Annot\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "\"C\"\"^top\"CDEF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:8\nT:Chord Annot Deco\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "\"C\"\"^top\"!trill!CDEF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:9\nT:Annot Below Lyric\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "\"_low\"CDEF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:10\nT:Dyn And Lyric\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "!p!CDEF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:11\nT:Dyn Lyric Hairpin\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "!<(!C!<)!DEF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:12\nT:Part And Chord\nL:1/4\nP:A\nK:C\n",
+   "measures": [
+    {
+     "abc": "P:A\n\"C\"CDEF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:13\nT:Tempo And Chord\nL:1/4\nQ:1/4=90\nK:C\n",
+   "measures": [
+    {
+     "abc": "\"C\"CDEF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:14\nT:Tempo Part Chord\nL:1/4\nQ:1/4=90\nP:A\nK:C\n",
+   "measures": [
+    {
+     "abc": "P:A\n\"C\"!trill!CDEF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:15\nT:Ending And Chord\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "\"C\"CDEF|1",
+     "startEnding": "1"
+    },
+    {
+     "abc": " GABc:|2",
+     "startEnding": "2",
+     "endEnding": true
+    },
+    {
+     "abc": " cdef|]",
+     "endEnding": true
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:16\nT:Volta Tempo\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEF|1",
+     "startEnding": "1"
+    },
+    {
+     "abc": "[Q:1/4=90] GABc:|2",
+     "startEnding": "2",
+     "endEnding": true
+    },
+    {
+     "abc": " cdef|]",
+     "endEnding": true
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:17\nT:Two Voice Lanes\nL:1/4\n%%score (1 2)\nK:C\n",
+   "measures": [
+    {
+     "abc": "\"C\"!trill!CDEF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:18\nT:Lyric Two Verses\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:19\nT:Slur Over Chord\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "\"C\"CD\"G\"EF)|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:20\nT:Grace Deco Slur\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "{ge}!trill!CD)EF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:21\nT:Ledger And Lyric\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "C,,D,,ef|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:22\nT:Ledger And Chord\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "\"C\"C,,D,,ef|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:23\nT:Annot 4 Stack\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "\"^a\"\"^b\"\"^c\"\"^d\"CDEF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:24\nT:Annot Below Stack\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "\"_a\"\"_b\"\"_c\"CDEF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:25\nT:Deco Stack 3\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "!trill!!fermata!!coda!CDEF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:26\nT:Deco Below Stack\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "!staccato!!tenuto!!accent!CDEF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:27\nT:All At Once\nL:1/4\nQ:1/4=90\nP:A\nK:C\n",
+   "measures": [
+    {
+     "abc": "P:A\n\"C\"\"^ann\"!trill!!p!({ge}CD)EF|"
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
  "repo/abcts-grace-tie": [
   {
    "header": "%%abcts a `-` INSIDE a grace group. `var inTie` is declared outside the group's own loop,\n%%abcts `getCoreNote` puts `startTie` on the grace whose `-` it read, and the NEXT\n%%abcts iteration takes `endTie` from it (`abc_parse_music.js:685-712`).\nX:1\nT:two graces tied\nL:1/8\nK:C\n",

@@ -745,6 +745,38 @@ const PASSING: readonly string[] = [
   "abcts-shared-staff-rests-tune1",
   "abcts-shared-staff-rests-tune2",
   /**
+   * `abcts-grace-order-and-lanes.abc` — 24 shapes at the BOUNDARY between two features that
+   * each take a lane (chord symbol, annotation, decoration, dynamic, part, tempo, ending,
+   * tuplet, lyric, ledger) plus the grace ladder they opened. **21 of the 24 were exact on
+   * the first run**; every hit involved a GRACE, and both were ORDER inside the note group.
+   *
+   * ✅ **THE GRACES COME BEFORE THE DECORATIONS.** `createNote`'s adders ARE the child order
+   * — `heads+stem → lyric → graces → decorations → barNumber → LEDGER → chord`
+   * (`abstract-engraver.js:829-855`) — and ours appended them LAST under a note calling that
+   * "abcjs's document order". The two agree on a tune with a grace OR a decoration and part
+   * on any with BOTH, which nothing in either corpus writes.
+   *
+   * ✅ **AND A BEAMED GRACE'S STEMS COME AFTER THE CHORD SYMBOL.** They are built in the
+   * LAYOUT phase (`layout/beam.js:135-140`) and appended to a child list `createNote`
+   * finished with — and the chord is `createNote`'s LAST adder. Our note stopped at "after
+   * the element's LEDGERS", true and one adder short. `"C"{ge}CDEF|` separates them;
+   * `"C"{g}CDEF|` does not, because one grace is unbeamed.
+   *
+   * ⚠️ **TWO ROWS OPEN, BOTH NAMED.** Tune 2 is the stacked ornament's ULP — `drawPitch`
+   * fixes that shape and takes FOUR byte-exact fixtures red, measured and written up at the
+   * push in `decorationGlyphs`. Tune 26 stacks everything at once and orders a DYNAMIC
+   * against a CURVE differently from abcjs.
+   *
+   * ⚠️ **AND ONE SHAPE IS HELD OUT** — a tuplet whose first note carries a chord symbol, a decoration or a grace.
+   * abcjs's element span RESETS to the prefix and leaves the `(3` outside it, where a bare
+   * `(3CDE` keeps it; ours tiles the opening back over the `(3` either way. Five rungs of
+   * abcjs's own `extractMeasures` answers, and why it is not fixed here, are at the walk in
+   * `src/compat/lines.ts` — the tile gates 328,548 characters and wants its own ladder.
+   */
+  ...[
+    0, 1, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25,
+  ].map((i) => `abcts-grace-order-and-lanes-tune${i}`),
+  /**
    * `abcts-voice-style.abc` — `V:… style=`, the first of the three modifiers the V:
    * enumeration left as a FEATURE. All five shapes, one voice each.
    *

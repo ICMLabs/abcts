@@ -485,6 +485,27 @@ function decoratedRange(abc: string, event: MusicEvent): SourceRange | null {
    * the element's span, so `!tenuto!E !staccato!F` is two elements at 184 and 194 rather
    * than at 184 and 204.
    */
+  /**
+   * ponytail: **AND A TUPLET MARK IS NOT WALKED BACK OVER, BUT THE TILE SWALLOWS IT** —
+   * measured, not built. abcjs's own answers, through `extractMeasures` at 6.7.0:
+   *
+   *     (3CDE (3FGA|      ->  "(3CDE (3FGA|"     the `(3` IS in the span
+   *     (3"C"CDE (3FGA|   ->  "\"C\"CDE (3FGA|"   the `(3` is NOT
+   *     (3!trill!CDE FG|  ->  "!trill!CDE FG|"
+   *     (3{g}CDE FG|      ->  "{g}CDE FG|"
+   *     "C"(3CDE FG|      ->  "\"C\"(3CDE FG|"
+   *
+   * So a chord symbol, decoration or grace group RESETS the element's start and the tuplet
+   * mark stays outside it; with no such prefix the element opens where the previous one
+   * closed and the `(3` comes with it. The walk below already produces abcjs's answer — it
+   * is the TILING afterwards that widens the opening back over the `(3`.
+   *
+   * Not fixed here because the tile is load-bearing: `tune.lines` gates 328,548 characters
+   * on it. The change is "do not tile an opening back past a computed prefix start", and it
+   * wants its own ladder against that gate rather than a guess. Nothing in either corpus
+   * writes a tuplet whose first note carries a prefix; `abcts-grace-order-and-lanes` would
+   * have, and its two such tunes are held out until this closes.
+   */
   for (;;) {
     let i = start;
     while (i > 0 && (abc[i - 1] === " " || abc[i - 1] === "\t")) i -= 1;

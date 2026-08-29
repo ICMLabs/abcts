@@ -479,10 +479,11 @@ const WITHIN: Readonly<Record<string, number>> = {
   // that `type: "debug"` child takes a 4-pitch CHORD LANE — 19.4px. We decline the marker
   // AND the lane, which is the same ruling the note longer than a breve already has. See
   // `Docs/ABCJS-DIFFERENCES.md` and `svg-bytes`'s `DIVERGENT`.
-  "0.05": 229,
-  "1": 229,
-  "5": 229,
-  "25": 230,
+  // …and `abcts-grace-order-and-lanes`, 24 lane-boundary shapes plus the grace ladder.
+  "0.05": 230,
+  "1": 230,
+  "5": 230,
+  "25": 231,
 };
 
 const names = readdirSync(fixturesDir)
