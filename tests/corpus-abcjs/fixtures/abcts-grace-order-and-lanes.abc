@@ -179,3 +179,15 @@ K:C
 P:A
 "C""^ann"!trill!!p!({ge}CD)EF|
 w:a b c d
+
+X:28
+T:Tuplet And Chord
+L:1/8
+K:C
+(3"C"CDE (3FGA|
+
+X:29
+T:Tuplet Slur Deco
+L:1/8
+K:C
+(3(!trill!CDE) (3FGA|

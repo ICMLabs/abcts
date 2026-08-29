@@ -400,6 +400,8 @@
   "Music Line:5:1: Unknown decoration: staccato:  <span style=\"text-decoration:underline;font-size:1.3em;font-weight:bold;\">!</span>staccato!!tenuto!!accent!CDEF|"
  ],
  "repo/abcts-grace-order-and-lanes-tune26": null,
+ "repo/abcts-grace-order-and-lanes-tune27": null,
+ "repo/abcts-grace-order-and-lanes-tune28": null,
  "repo/abcts-grace-tie-tune0": [
   "Music Line:1:3: Unknown directive: abcts:  %%<span style=\"text-decoration:underline;font-size:1.3em;font-weight:bold;\">a</span>bcts a `-` INSIDE a grace group. `var inTie` is declared outside",
   "Music Line:2:3: Unknown directive: abcts:  %%<span style=\"text-decoration:underline;font-size:1.3em;font-weight:bold;\">a</span>bcts `getCoreNote` puts `startTie` on the grace whose `-` it rea",

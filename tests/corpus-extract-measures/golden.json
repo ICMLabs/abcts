@@ -4240,6 +4240,24 @@
     }
    ],
    "hasPickup": false
+  },
+  {
+   "header": "X:28\nT:Tuplet And Chord\nL:1/8\nK:C\n",
+   "measures": [
+    {
+     "abc": "\"C\"CDE (3FGA|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "X:29\nT:Tuplet Slur Deco\nL:1/8\nK:C\n",
+   "measures": [
+    {
+     "abc": "!trill!CDE) (3FGA|"
+    }
+   ],
+   "hasPickup": true
   }
  ],
  "repo/abcts-grace-tie": [

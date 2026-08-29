@@ -767,14 +767,14 @@ const PASSING: readonly string[] = [
    * push in `decorationGlyphs`. Tune 26 stacks everything at once and orders a DYNAMIC
    * against a CURVE differently from abcjs.
    *
-   * ⚠️ **AND ONE SHAPE IS HELD OUT** — a tuplet whose first note carries a chord symbol, a decoration or a grace.
-   * abcjs's element span RESETS to the prefix and leaves the `(3` outside it, where a bare
-   * `(3CDE` keeps it; ours tiles the opening back over the `(3` either way. Five rungs of
-   * abcjs's own `extractMeasures` answers, and why it is not fixed here, are at the walk in
-   * `src/compat/lines.ts` — the tile gates 328,548 characters and wants its own ladder.
+   * ✅ **AND THE TUPLET SPAN IS CLOSED — tunes 27 and 28.** A `(3` keeps its opening only
+   * when a NOTE follows the digits; a chord symbol, decoration or grace group after them
+   * ends the iteration having appended nothing, exactly as after a bare `(`. A note at the
+   * run in `src/compat/lines.ts` had called `(3` "the exception and not this rule at all",
+   * and it is precisely this rule.
    */
   ...[
-    0, 1, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25,
+    0, 1, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 27, 28,
   ].map((i) => `abcts-grace-order-and-lanes-tune${i}`),
   /**
    * `abcts-voice-style.abc` — `V:… style=`, the first of the three modifiers the V:

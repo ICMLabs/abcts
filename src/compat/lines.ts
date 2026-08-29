@@ -384,6 +384,7 @@ function tile(
      * A `(3` is the exception and is not this rule at all: the triplet arm consumes the
      * digit and a note follows directly, so `(3B2` keeps its opening.
      */
+    const NOTE_START = /[A-Ga-gzxZ[\^_=]/;
     let j = at;
     let sawSlur = false;
     let triplet = false;
@@ -410,18 +411,43 @@ function tile(
     ) {
       const next = abc[j + 1] ?? "";
       if (abc[j] === "(" && next >= "2" && next <= "9") {
-        // …**AND A TRIPLET INSIDE THE RUN KEEPS THE WHOLE RUN**, slurs and all: the
-        // digit is consumed, a note follows directly and the element is appended in the
-        // same iteration. `S8-layout` tune 8 writes `((3e` and abcjs answers `note` for
-        // BOTH parentheses — the first cut dropped the slur's and took a ratcheted tune
-        // red for eight characters.
-        triplet = true;
-        break;
+        /**
+         * …**AND A TRIPLET INSIDE THE RUN KEEPS THE WHOLE RUN**, slurs and all: the digit
+         * is consumed, a note follows directly and the element is appended in the same
+         * iteration. `S8-layout` tune 8 writes `((3e` and abcjs answers `note` for BOTH
+         * parentheses — the first cut dropped the slur's and took a ratcheted tune red for
+         * eight characters.
+         *
+         * ⚠️ **BUT ONLY WHEN A NOTE REALLY DOES FOLLOW, WHICH IS THE SAME TEST THE REST OF
+         * THIS RUN MAKES.** A note here read "a `(3` is the exception and is not this rule
+         * at all"; it is exactly this rule. abcjs's own `extractMeasures`, five rungs:
+         *
+         *     (3CDE (3FGA|      ->  "(3CDE (3FGA|"      the `(3` IS in the span
+         *     (3"C"CDE (3FGA|   ->  "\"C\"CDE (3FGA|"    the `(3` is NOT
+         *     (3!trill!CDE FG|  ->  "!trill!CDE FG|"
+         *     (3{g}CDE FG|      ->  "{g}CDE FG|"
+         *     "C"(3CDE FG|      ->  "\"C\"(3CDE FG|"
+         *
+         * A chord symbol, decoration or grace group after the digits ends the iteration
+         * having appended nothing, exactly as it does after a bare `(`.
+         */
+        let k = j + 1;
+        const digit = (c: string | undefined): boolean =>
+          c !== undefined && c >= "0" && c <= "9";
+        while (digit(abc[k])) k += 1;
+        // `(p:q:r` — the general form, whose separators and counts are consumed with it.
+        while (abc[k] === ":" || digit(abc[k]) || abc[k] === "-") k += 1;
+        if (NOTE_START.test(abc[k] ?? "")) {
+          triplet = true;
+          break;
+        }
+        sawSlur = true;
+        j = k;
+        continue;
       }
       if (abc[j] === "(") sawSlur = true;
       j += 1;
     }
-    const NOTE_START = /[A-Ga-gzxZ[\^_=]/;
     let start = sawSlur && !triplet && j <= own && !NOTE_START.test(abc[j] ?? "") ? j : at;
     /**
      * **AND A PARSE FAILURE OWNS NO CHARACTERS.** `startI` is taken at the TOP of each
@@ -484,27 +510,6 @@ function decoratedRange(abc: string, event: MusicEvent): SourceRange | null {
    * only the names in `ABCJS_LEGAL_ACCENTS` — and abcjs still counts its characters into
    * the element's span, so `!tenuto!E !staccato!F` is two elements at 184 and 194 rather
    * than at 184 and 204.
-   */
-  /**
-   * ponytail: **AND A TUPLET MARK IS NOT WALKED BACK OVER, BUT THE TILE SWALLOWS IT** —
-   * measured, not built. abcjs's own answers, through `extractMeasures` at 6.7.0:
-   *
-   *     (3CDE (3FGA|      ->  "(3CDE (3FGA|"     the `(3` IS in the span
-   *     (3"C"CDE (3FGA|   ->  "\"C\"CDE (3FGA|"   the `(3` is NOT
-   *     (3!trill!CDE FG|  ->  "!trill!CDE FG|"
-   *     (3{g}CDE FG|      ->  "{g}CDE FG|"
-   *     "C"(3CDE FG|      ->  "\"C\"(3CDE FG|"
-   *
-   * So a chord symbol, decoration or grace group RESETS the element's start and the tuplet
-   * mark stays outside it; with no such prefix the element opens where the previous one
-   * closed and the `(3` comes with it. The walk below already produces abcjs's answer — it
-   * is the TILING afterwards that widens the opening back over the `(3`.
-   *
-   * Not fixed here because the tile is load-bearing: `tune.lines` gates 328,548 characters
-   * on it. The change is "do not tile an opening back past a computed prefix start", and it
-   * wants its own ladder against that gate rather than a guess. Nothing in either corpus
-   * writes a tuplet whose first note carries a prefix; `abcts-grace-order-and-lanes` would
-   * have, and its two such tunes are held out until this closes.
    */
   for (;;) {
     let i = start;
