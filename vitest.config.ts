@@ -16,8 +16,14 @@ export default defineConfig({
      *
      * Raising them one at a time does not hold: the NEXT table someone adds inherits the
      * default again. This is the one place the number belongs.
+     *
+     * ⚠️ **AND IT HAS TO TRACK THE CORPUS.** 20s was set at 424 byte-gate rows and the gate
+     * is at 691; `svg-bytes`'s ranked table renders every one of them through both engines
+     * and went intermittently red again under a full-suite run. **A timeout is not a
+     * performance budget** — nothing here asserts speed — so set it where a healthy run
+     * cannot reach even on a loaded machine, and raise it whenever the corpus grows.
      */
-    testTimeout: 20_000,
+    testTimeout: 40_000,
     env: {
       ABCTS_CORPUS_PATH: config.corpus,
       ABCTS_GOLDENS_PATH: config.goldens,

@@ -44,7 +44,10 @@ it("survives malformed, hostile and randomly mutated input", () => {
     //
     // A runaway regex is ORDERS OF MAGNITUDE, not a factor of two, so a RATIO catches
     // exactly what this exists for and load cancels out of it: every input in the run slows
-    // together. The absolute floor stays as a backstop for a run where the median is ~0.
+    // together.
+    //
+    // ⚠️ **A RATIO AGAINST THE RUN'S MEDIAN WAS TRIED TWICE AND IS WRONG BOTH WAYS** — see
+    // the judgement at the end, which is one absolute floor and says why.
     timings.push({ label, ms: Date.now() - t0, chars: src.length });
     if (!r.ok) return;
     for (const s of r.scores)
@@ -139,11 +142,26 @@ it("survives malformed, hostile and randomly mutated input", () => {
    * like a runaway. `parse` on these inputs is a millisecond or two, so 200× is still well
    * inside "orders of magnitude".
    */
-  const sorted = [...timings].map((t) => t.ms).sort((a, b) => a - b);
-  const median = sorted[Math.floor(sorted.length / 2)] ?? 0;
+  /**
+   * ⚠️ **ONE ABSOLUTE FLOOR, AT 30s — AND THE RATIO WAS TRIED TWICE AND IS WRONG BOTH
+   * WAYS.** Comparing each input against the run's own median looked load-proof and is not:
+   *
+   *   • `median * 200` with a 3s floor — the median here is **0ms**, because almost every
+   *     input parses in under a millisecond, so the product is 0 and the floor decided
+   *     every row again. `edge#19` tripped at 10,994ms with `median 0ms` beside it.
+   *   • `median * 500` OR'd with a 30s floor — the median came out 1ms and the ratio fired
+   *     on `edge#19` at 3,774ms and on a 9,247-char mutation at 783ms. **A RATIO OF TIMES
+   *     IGNORES THE SIZE OF THE INPUT**: a 50,008-char tune legitimately costs thousands of
+   *     times a 100-char one, and that is linear behaviour, not a blow-up.
+   *
+   * So the threshold is absolute and the VALUE has a reason rather than a history: a
+   * catastrophic backtrack on inputs this size is **tens of seconds to minutes**, where the
+   * slowest honest input under full-suite contention is ten. 1000ms and 3000ms were both
+   * "what passed on the day", and both tripped later on a busy machine.
+   */
   for (const t of timings)
-    if (t.ms > 3000 && t.ms > median * 200)
-      problems.push(`SLOW ${t.label}: ${t.ms}ms for ${t.chars} chars (median ${median}ms)`);
+    if (t.ms > 30_000)
+      problems.push(`SLOW ${t.label}: ${t.ms}ms for ${t.chars} chars`);
   const unique = [...new Set(problems)];
   writeFileSync(
     join(tmpdir(), "abcts-fuzz.txt"),
