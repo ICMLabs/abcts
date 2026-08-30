@@ -2341,6 +2341,13 @@ export function toSVG(
               flushDynamic();
               others.push({
                 x: g.x,
+                // …**AND A ONE-LETTER DYNAMIC IS ORDERED BY THE SAME RULE AS A KERNED ONE.**
+                // `volumeDecoration` is `createDecoration`'s first call, so a dynamic comes
+                // after its element's curves (`decoration.js:379-385`) — the `k: 2`
+                // `flushDynamic` carries. Without it here `!p!` defaulted to 0, tied with the
+                // curves on the same anchor x and won on build order: `({ge}CD)` with a `!p!`
+                // wrote the dynamic ahead of both arcs where abcjs writes it after.
+                k: 2,
                 s: glyphMarkup(
                   g.name,
                   g.x,

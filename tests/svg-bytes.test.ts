@@ -762,10 +762,19 @@ const PASSING: readonly string[] = [
    * the element's LEDGERS", true and one adder short. `"C"{ge}CDEF|` separates them;
    * `"C"{g}CDEF|` does not, because one grace is unbeamed.
    *
-   * ⚠️ **TWO ROWS OPEN, BOTH NAMED.** Tune 2 is the stacked ornament's ULP — `drawPitch`
-   * fixes that shape and takes FOUR byte-exact fixtures red, measured and written up at the
-   * push in `decorationGlyphs`. Tune 26 stacks everything at once and orders a DYNAMIC
-   * against a CURVE differently from abcjs.
+   * ✅ **AND THE LAST TWO ROWS CLOSED — BOTH BY THE NOTE BESIDE THEM BEING WRONG.**
+   *
+   * Tune 2's stacked-ornament ULP: `drawPitch` WAS the answer. The four byte-exact fixtures
+   * it took red were not evidence against it — they were a SECOND defect it exposed. The
+   * beam-clearance pass moves an ornament clear of its beam and updates `y` and
+   * `ornamentPitch` but not `drawPitch`, so a moved ornament drew from where it used to be:
+   * `visual-decorations-01`'s one beamed `!fermata!ef`, 22.417px out — the same 22.42px that
+   * pass's own comment already names. It computes the moved pitch; it just never carried it.
+   *
+   * Tune 26's DYNAMIC against a CURVE: `flushDynamic` pushes a kerned dynamic with `k: 2`
+   * ("a dynamic comes after its element's curves", `decoration.js:379-385`) and the
+   * single-glyph push beside it carried no `k` at all — so a one-letter `!p!` defaulted to
+   * 0, tied with both curves on the same anchor x, and won on build order.
    *
    * ✅ **AND THE TUPLET SPAN IS CLOSED — tunes 27 and 28.** A `(3` keeps its opening only
    * when a NOTE follows the digits; a chord symbol, decoration or grace group after them
@@ -773,9 +782,7 @@ const PASSING: readonly string[] = [
    * run in `src/compat/lines.ts` had called `(3` "the exception and not this rule at all",
    * and it is precisely this rule.
    */
-  ...[
-    0, 1, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 27, 28,
-  ].map((i) => `abcts-grace-order-and-lanes-tune${i}`),
+  ...Array.from({ length: 29 }, (_, i) => `abcts-grace-order-and-lanes-tune${i}`),
   /**
    * `abcts-voice-style.abc` — `V:… style=`, the first of the three modifiers the V:
    * enumeration left as a FEATURE. All five shapes, one voice each.

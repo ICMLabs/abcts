@@ -6506,21 +6506,21 @@ function decorationGlyphs(
         reserve: [y - half, y + half],
         reservePitch: [abovePitch + halfPitch, abovePitch - halfPitch],
         ornamentPitch: abovePitch,
+        drawPitch: abovePitch,
         /**
-         * ⚠️ **AND `drawPitch` IS *NOT* THE ANSWER HERE, THOUGH IT IS ONE PUSH AWAY —
-         * MEASURED AND REVERTED.** The CLOSE decoration's push carries it, because
-         * `printSymbol` draws at `calcY(offset + ycorr)`, one sum and one multiply
-         * (`draw/print-symbol.js:34`), where spending the correction on a finished y is
-         * `offset * STEP + ycorr * STEP`. A STACKED ornament is one ULP out for what looks
-         * like the same reason — `{g}!trill!CDEF|` draws at `22.535000000000007` for
-         * abcjs's `22.535`.
+         * **AND THE STACKED ORNAMENT DRAWS FROM ITS PITCH, LIKE THE CLOSE ONE.**
+         * `printSymbol` draws at `calcY(offset + ycorr)` — one sum and one multiply
+         * (`draw/print-symbol.js:34`) — where spending the correction on a finished y is
+         * `offset * STEP + ycorr * STEP`, and the two part by one ULP the moment the pitch
+         * has a tail: `{g}!trill!CDEF|` drew `22.535000000000007` for abcjs's `22.535`.
          *
-         * Adding `drawPitch: abovePitch` here fixes that shape and takes FOUR byte-exact
-         * fixtures red — `ragtime-nightingale` in all three flavours and
-         * `abcjs-visual-decorations-01-score-s-a-b`. So `abovePitch` is not the `offset`
-         * abcjs passes for a stacked ornament, where `closeY` IS for a close one, and the
-         * difference is what has to be found before this lands. The corpus is the evidence
-         * against the obvious reading; do not try it a second time without it.
+         * ⚠️ **THIS STOOD REVERTED FOR A DAY BEHIND FOUR RED FIXTURES THAT WERE A SECOND
+         * DEFECT, NOT A REBUTTAL.** `ragtime-nightingale` (three flavours) and
+         * `abcjs-visual-decorations-01-score-s-a-b` went red because the BEAM-CLEARANCE pass
+         * moves an ornament and updated `y` and `ornamentPitch` while leaving `drawPitch`
+         * where it was — so a moved ornament drew at its pre-move pitch, 22.417px out on the
+         * one beamed `!fermata!ef`. Carrying the pitch through that move (search
+         * `drawPitch: pitch`) closes all four and this row together.
          */
       })
       above += height
@@ -10792,6 +10792,11 @@ function layoutBeam(
         ...g,
         y: stepToY(pitch - PITCH_ORIGIN),
         ornamentPitch: pitch,
+        // …AND THE DRAW PITCH MOVES WITH IT. abcjs's `el.pitch += distance` IS the offset
+        // `printSymbol` then draws from, so a moved ornament that kept its pre-move pitch
+        // draws where it used to be — 22.42px low on `visual-decorations-01`'s one beamed
+        // `!fermata!ef`, the whole of what made `drawPitch` look wrong at the push.
+        drawPitch: pitch,
         ...(g.reserve === undefined
           ? {}
           : {
