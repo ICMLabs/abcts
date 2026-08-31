@@ -17,6 +17,7 @@
 import {
   ABC_FONT_DEFAULT_PT,
   type AbcFontType,
+  type LyricFont,
   Accidental,
   type Barline,
   type Clef,
@@ -6759,10 +6760,35 @@ const fontFor = (size: number, face: Face): TextFont => ({
  * this does too; `Mg` survives only as the fallback where a caller has no string, which is
  * a lane's own reserve rather than a drawn row. **THREE STRINGS AGREEING IS NOT A RULE.**
  */
-const textHeight = (size: number, text = 'Mg', face: Face = 'serif'): number => {
+const textHeight = (size: number, text = 'Mg', font: Face | TextFont = 'serif'): number => {
   const live = getTextMeasurer()
-  if (live !== null) return live(text, fontFor(size, face)).height / UNIT_PX
-  return goldenTextHeight(size)
+  if (live === null) return goldenTextHeight(size)
+  return live(text, typeof font === 'string' ? fontFor(size, font) : font).height / UNIT_PX
+}
+
+/**
+ * A `%%<type>font`'s ACTUAL font, for measuring with.
+ *
+ * ⚠️ **`Face` CANNOT EXPRESS A DIRECTIVE.** It is the three-way distinction the golden
+ * WIDTH TABLES were built around — serif, serif-bold, sans — and it was enough while every
+ * measurement came from a table keyed by size. A live measurer asks a browser, and a
+ * browser answers for the family it is given: `%%titlefont cursive 23` measures nothing
+ * like Times at 23. abcjs passes the whole attr set it is about to draw with
+ * (`get-text-size.js:27-43`), so this does too.
+ */
+const fontOfType = (
+  fonts: Partial<Record<AbcFontType, LyricFont>>,
+  type: AbcFontType,
+  size: number,
+): TextFont => {
+  const f = fonts[type]
+  const face = f?.face
+  return {
+    size: size * UNIT_PX,
+    family: face === undefined || face === '' ? (ABCJS_FONT_FACE[type] ?? 'Times New Roman') : face,
+    ...(f?.bold === true ? { weight: 'bold' } : {}),
+    ...(f?.italic === true ? { style: 'italic' } : {}),
+  }
 }
 
 /**
@@ -16384,9 +16410,11 @@ function topTextBlock(
     rows.push({ move: px })
     y += px
   }
-  const advance = (size: number, extra = 0, text = 'Mg'): void => {
+  const advance = (size: number, extra = 0, text = 'Mg', type?: AbcFontType): void => {
+    const font = type === undefined ? 'serif' : fontOfType(fonts, type, size)
     const step =
-      Math.round((textHeight(size, text) + extra) * ENGRAVE.lineSkipFactor * UNIT_PX) / UNIT_PX
+      Math.round((textHeight(size, text, font) + extra) * ENGRAVE.lineSkipFactor * UNIT_PX) /
+      UNIT_PX
     advances.push(step)
     rows.push({ move: step })
     y += step
@@ -16410,20 +16438,43 @@ function topTextBlock(
    * (`get-text-size.js:24-43`). So `%%setfont-1 … 40` measures 40px where `%%titlefont 40`
    * would measure 53. Probed on `%%setfont-1 cursive 40 bold`, whose row is 42 = 40 + 2.
    */
-  const advanceRich = (value: RichText, defaultSize: number): void => {
-    let largest = textHeight(defaultSize)
-    for (const phrase of typeof value === 'string' ? [] : value) {
+  const advanceRich = (value: RichText, defaultSize: number, type?: AbcFontType): void => {
+    // ⚠️ **A PHRASE CARRIES ITS OWN FACE AS WELL AS ITS OWN SIZE.** `%%setfont-1` names a
+    // family, and a live measurer answers for the family it is given — `$1` in a cursive
+    // face is not Times at the same size. The RAW size stands (see the block above): a
+    // font handed to `getTextSize` as an OBJECT skips the pt->px 4/3.
+    const phrases = typeof value === 'string' ? [] : value
+    const plain = phrases.map((ph) => ph.text).join('')
+    let largest = textHeight(
+      defaultSize,
+      plain === '' ? 'Mg' : plain,
+      type === undefined ? 'serif' : fontOfType(fonts, type, defaultSize),
+    )
+    for (const phrase of phrases) {
       if (phrase.font === null) continue
-      largest = Math.max(largest, textHeight(phrase.font.size / UNIT_PX))
+      largest = Math.max(
+        largest,
+        textHeight(phrase.font.size / UNIT_PX, phrase.text, {
+          size: phrase.font.size,
+          family: phrase.font.face,
+          ...(phrase.font.bold ? { weight: 'bold' } : {}),
+          ...(phrase.font.italic ? { style: 'italic' } : {}),
+        }),
+      )
     }
     advances.push(largest)
     rows.push({ move: largest })
     y += largest
   }
   /** A row advances one way or the other — never both. */
-  const advanceText = (value: RichText, size: number, extra = 0): void => {
-    if (typeof value === 'string') advance(size, extra, value)
-    else advanceRich(value, size)
+  const advanceText = (
+    value: RichText,
+    size: number,
+    extra = 0,
+    type?: AbcFontType,
+  ): void => {
+    if (typeof value === 'string') advance(size, extra, value, type)
+    else advanceRich(value, size, type)
   }
   /**
    * `texts.push` and the row list in ONE place, so they cannot drift — and the FONT TYPE
@@ -16639,7 +16690,7 @@ function topTextBlock(
       anchor: titleAnchor,
       ...selectableIn('title', metadata.titleRanges[0], plainText(title)),
     }, 'titlefont', titleX)
-    advanceText(title, titleSize, boxOf('titlefont'))
+    advanceText(title, titleSize, boxOf('titlefont'), 'titlefont')
   }
 
   // Second and later `T:` fields are subtitles — abcm2ps's convention, and abcjs's.
@@ -16666,7 +16717,7 @@ function topTextBlock(
       // (`top-text.js:26-31`), where every other row takes `metaTextInfo.<field>`.
       ...selectableIn('subtitle', metadata.titleRanges[i + 1], plainText(subtitle)),
     }, 'subtitlefont', titleX)
-    advanceText(subtitle, sizeOf('subtitlefont'), boxOf('subtitlefont'))
+    advanceText(subtitle, sizeOf('subtitlefont'), boxOf('subtitlefont'), 'subtitlefont')
   }
 
   // ONE row carrying up to three fields: rhythm left, composer and origin right. They
@@ -16758,7 +16809,7 @@ function topTextBlock(
     const rowFont: AbcFontType = composer !== '' || origin !== '' ? 'composerfont' : 'infofont'
     // …and the field that MOVES the row is the one whose rich-vs-plain rule applies.
     const mover = rowFont === 'composerfont' ? rightRich : rhythmRich
-    advanceText(mover, sizeOf(rowFont), boxOf(rowFont))
+    advanceText(mover, sizeOf(rowFont), boxOf(rowFont), rowFont)
   }
 
   // `A:` — the author of the words. Its own row, right-aligned in `composerfont`, with NO
@@ -16781,7 +16832,7 @@ function topTextBlock(
       ...richIn(authorRich, 'composerfont', false, true),
       ...selectableIn('author', metadata.fieldRanges.author, author),
     }, 'composerfont', PAGE_PADDING.left + width)
-    advanceText(authorRich, sizeOf('composerfont'), boxOf('composerfont'))
+    advanceText(authorRich, sizeOf('composerfont'), boxOf('composerfont'), 'composerfont')
   }
 
   // A HEADER `P:` — the part ORDER, left-aligned in `partsfont`, closing the block. 24px.
@@ -16823,7 +16874,7 @@ function topTextBlock(
           }
         : {}),
     }, 'partsfont', PAGE_PADDING.left)
-    advanceText(partOrderRich, sizeOf('partsfont'), boxOf('partsfont'))
+    advanceText(partOrderRich, sizeOf('partsfont'), boxOf('partsfont'), 'partsfont')
   }
 
   // `%%center` lines standing before the music close the block. Centred like the title,
