@@ -114,7 +114,39 @@ export const createDomTextMeasurer = (doc: ProbeDocument, host: ProbeHost): Text
       const span = doc.createElementNS(NS, 'tspan')
       span.setAttribute('x', '0')
       if (i !== 0) span.setAttribute('dy', '1.2em')
-      span.textContent = lines[i] as string
+      const line = lines[i] as string
+      /**
+       * ⚠️ **`\x03` SPLITS A CHORD INTO NESTED tspans, AND THEY ARE WHAT MAKES IT TALLER.**
+       * `%%jazzchords` rewrites `Cmaj7` into base + superscript + subscript separated by
+       * `\x03`, and the builder emits up to THREE children: `parts[0]` as the line's own
+       * text, `parts[1]` raised `dy="-0.3em"`, `parts[2]` lowered by `0.4em` when there was
+       * a superscript and `0.1em` when there was not — both at `font-size:0.7em`
+       * (`write/svg.js`, the `text` builder). A flat string measures the ink of one line
+       * and misses the raised and lowered boxes entirely, which is `visual-misc-03` by
+       * 38.4px of page.
+       */
+      const parts = line.split('\x03')
+      if (parts.length > 1) {
+        span.textContent = parts[0] as string
+        const sup = parts[1] ?? ''
+        if (sup !== '') {
+          const ts2 = doc.createElementNS(NS, 'tspan')
+          ts2.setAttribute('dy', '-0.3em')
+          ts2.setAttribute('style', 'font-size:0.7em')
+          ts2.textContent = sup
+          span.appendChild(ts2)
+        }
+        const sub = parts[2] ?? ''
+        if (sub !== '') {
+          const ts3 = doc.createElementNS(NS, 'tspan')
+          ts3.setAttribute('dy', sup !== '' ? '0.4em' : '0.1em')
+          ts3.setAttribute('style', 'font-size:0.7em')
+          ts3.textContent = sub
+          span.appendChild(ts3)
+        }
+      } else {
+        span.textContent = line
+      }
       el.appendChild(span)
     }
     host.appendChild(el)

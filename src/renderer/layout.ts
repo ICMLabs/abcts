@@ -6907,6 +6907,7 @@ let LINE_WEIGHTS = lineWeightsFor(true)
 const markWidth = (text: string, size: number, boxed: boolean): number =>
   textWidth(text, size, 'sans') + (boxed ? size * ENGRAVE.fontBoxPadding * 4 : 0)
 
+
 /**
  * Every `%%<type>font` the tune set, for the current render — the same one-place switch.
  *
@@ -7214,8 +7215,21 @@ function noteText(
       // are exact, which is why only the digit one showed.
       const parts = chordParts(raw)
       const line = parts.join('')
+      /**
+       * ⚠️ **UNDER `%%jazzchords` THE THREE PARTS ARE SEPARATED, NOT CONCATENATED.**
+       * `translateChord` returns them joined by `\x03` and abcjs's builder turns each
+       * separator into a nested tspan at `font-size:0.7em` — so the drawn chord is
+       * NARROWER than the same characters at full size, and measuring the flat join ran
+       * `visual-misc-03`'s staff to 210.52 against abcjs's 208.95.
+       *
+       * ⚠️ **LIVE ONLY** — `goldenTextWidth` sums a per-character table with a flat 8 for
+       * anything unlisted, so a `\x03` reaching it would score 8px of nothing and take the
+       * 691 headless goldens with it. Headless keeps the flat form, which is what the
+       * generator's own stub measures.
+       */
+      const measured = JAZZ_CHORDS && getTextMeasurer() !== null ? parts.join('\x03') : line
       const boxed = event.chordFont?.box === true
-      const lineWidth = markWidth(line, size, boxed)
+      const lineWidth = markWidth(measured, size, boxed)
       if (spans !== null) {
         spans.left = Math.max(spans.left, lineWidth / 2)
         spans.right = Math.max(spans.right, headWidth / 2 + lineWidth / 2)
@@ -17902,17 +17916,32 @@ const jazzTspans = (t: PlacedText): number =>
  *   • `padding * 4` for a BOXED font, `padding = size * fontboxpadding`
  *     (`get-text-size.js:46-48`) — `visual-tablature-17` boxes five of them.
  */
-const chordHeightOf = (t: PlacedText): number =>
+const chordHeightOf = (t: PlacedText): number => {
   // ⚠️ **THE CHORD'S OWN STRING, IN THE CHORD'S OWN FACE.** abcjs measures the text it is
   // about to draw — `var dim = getTextSize.calc(chord, font, klass)`, then
   // `chordHeight = dim.height / spacing.STEP` (`creation/add-chord.js:47-49`) — where this
   // asked for a FONT's height and got a probe string in Times. Under a live measurer that
   // was 0.28125px of lane on every tune carrying a chord symbol, which is the whole staff
   // and the whole page moving: `"G"GAB cde|` had its staff at 86.44 against abcjs's 86.73.
-  // `gchordfont` and `annotationfont` are both Helvetica (`ABCJS_FONT_FAMILY`).
-  textHeight(t.size, t.text, 'sans') +
-  (jazzTspans(t) - 1) * t.size * ENGRAVE.textLineStep +
-  (t.box === true ? t.size * ENGRAVE.fontBoxPadding * 4 : 0)
+  // `gchordfont` and `annotationfont` are both Helvetica (`ABCJS_FONT_FACE`).
+  const box = t.box === true ? t.size * ENGRAVE.fontBoxPadding * 4 : 0
+  /**
+   * ⚠️ **AND THE JAZZ TERM IS THE STUB'S, SO A LIVE MEASURER MUST NOT ADD IT.**
+   * `(tspans - 1) * size * lineStep` is `dump-svg.js:120-124` counting a whole LINE per
+   * nested tspan, which is what the patched `getBBox` does because jsdom cannot lay one
+   * out. A browser lays them out for real — raised `0.7em` at `dy="-0.3em"`, lowered at
+   * `0.4em` — and returns a box that already contains them, so adding the stub's line on
+   * top double-counts. Our model holds the split as a TUPLE where abcjs holds one string
+   * with `\x03` separators, so it is rejoined for measuring exactly as abcjs's builder
+   * splits it.
+   */
+  const live = getTextMeasurer()
+  if (live !== null) {
+    const text = t.jazz === undefined ? t.text : t.jazz.join('\x03')
+    return textHeight(t.size, text, 'sans') + box
+  }
+  return textHeight(t.size, t.text, 'sans') + (jazzTspans(t) - 1) * t.size * ENGRAVE.textLineStep + box
+}
 
 /**
  * Stack the above-staff furniture on the staff's music, once its voices are known.
