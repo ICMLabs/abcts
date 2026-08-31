@@ -134,6 +134,7 @@ const PITCH_STEP_PX = STAFF_SPACE_PX / 2;
 const PAGE_MARGIN_PX = 15;
 import { layout, type MetaTextRow, type PlacedText } from "../renderer/layout.js";
 import { type DrawnElement, type SelectableRecord, toSVG } from "../renderer/svg.js";
+import { createDomTextMeasurer, setTextMeasurer } from "../renderer/text-measure.js";
 import {
   type HighlightPaper,
   rangeHighlighter,
@@ -1503,11 +1504,77 @@ function renderInto(
     };
   };
 
-  return walkSlots(slots, from, result.scores, (element, score) => {
-    const tune = render(score, element);
-    if (element !== null) element.innerHTML = tune.svg;
-    return tune;
-  });
+  return withLiveTextMetrics(() =>
+    walkSlots(slots, from, result.scores, (element, score) => {
+      const tune = render(score, element);
+      if (element !== null) element.innerHTML = tune.svg;
+      return tune;
+    }),
+  );
+}
+
+/**
+ * **RUN A RENDER WITH THE BROWSER'S OWN TEXT METRICS, WHEN THERE IS A BROWSER.**
+ *
+ * abcjs measures every run of text with `getBBox` on an element it puts in the live SVG
+ * (`write/svg.js:308-341`). Ours measures with `dump-svg.js`'s tables, which is the right
+ * answer for a headless render and the wrong one in a browser — measured, `d4b7022`: abcjs
+ * renders differently in WebKit and Blink, so the tables cannot be right in both and the
+ * only transferable thing is the MECHANISM. `text-measure.ts` has the argument in full.
+ *
+ * ⚠️ **THE PROBE MUST BE IN THE DOCUMENT.** A `<text>` outside the tree has no layout and
+ * `getBBox` answers zero, which would silently take every width to nothing — so the host
+ * SVG is appended to `body`, and the measurer is torn down in a `finally` so a throw
+ * cannot leave a stale one installed for the next render.
+ *
+ * ⚠️ **AND jsdom IS EXCLUDED ON PURPOSE.** It defines `document` and `createElementNS` and
+ * has NO layout engine, so `getBBox` is either absent or zero there; the probe below asks
+ * for a real number and keeps the tables when it does not get one. Without that check the
+ * 691 goldens — harvested under jsdom — would all go red.
+ */
+function withLiveTextMetrics<T>(run: () => T): T {
+  const doc = (globalThis as { document?: LiveDocument }).document;
+  const body = doc?.body;
+  if (doc === undefined || body === undefined || body === null) return run();
+  const NS = "http://www.w3.org/2000/svg";
+  let host: LiveElement | undefined;
+  try {
+    host = doc.createElementNS(NS, "svg");
+    host.setAttribute("width", "0");
+    host.setAttribute("height", "0");
+    host.setAttribute("style", "position:absolute;visibility:hidden");
+    body.appendChild(host);
+    const measure = createDomTextMeasurer(doc, host);
+    // A real layout engine answers a positive width for a real string. jsdom does not.
+    if (measure("M", { size: 27, family: "Times New Roman" }).width <= 0) {
+      body.removeChild(host);
+      return run();
+    }
+    setTextMeasurer(measure);
+    return run();
+  } finally {
+    setTextMeasurer(null);
+    if (host !== undefined && body.removeChild !== undefined) {
+      try {
+        body.removeChild(host);
+      } catch {
+        // already gone; nothing to undo
+      }
+    }
+  }
+}
+
+/** The two DOM shapes this file touches — `tsconfig` has no `dom` lib, deliberately. */
+interface LiveElement {
+  setAttribute(name: string, value: string): void;
+  appendChild(child: LiveElement): void;
+  removeChild(child: LiveElement): void;
+  textContent: string | null;
+  getBBox?(): { readonly width: number; readonly height: number };
+}
+interface LiveDocument {
+  createElementNS(ns: string, tag: string): LiveElement;
+  body?: LiveElement | null;
 }
 
 /**

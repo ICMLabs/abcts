@@ -77,6 +77,7 @@ import {
   steps,
   ENV,
 } from './abcjs-constants.js'
+import { getTextMeasurer, type TextFont } from './text-measure.js'
 import { glyphsFor, lineWeightsFor } from './glyph-table.js'
 import { SMUFL_TO_ABCJS } from './glyph-map.js'
 import { GLYPHS, type GlyphName } from './glyphs.js'
@@ -3587,7 +3588,7 @@ const layoutPart = (
             // `getBBox()`, which the rect is measured from — see `PlacedText.boxSize`.
             boxSize: {
               width: textWidth(label, fontSizeOf('partsfont')),
-              height: goldenTextHeight(fontSizeOf('partsfont')),
+              height: textHeight(fontSizeOf('partsfont')),
             },
           }
         : {}),
@@ -5710,7 +5711,7 @@ function barNumberText(
           // The rect is measured from `getBBox()`, which is the UNPADDED text.
           boxSize: {
             width: rawWidth,
-            height: goldenTextHeight(fontSizeOf('measurefont')),
+            height: textHeight(fontSizeOf('measurefont')),
           },
         }),
     // **A BAR NUMBER ON A CLEF DOES NOT PUSH THE TOP.** `_addChild` opens with an explicit
@@ -6726,8 +6727,43 @@ type Face = 'serif' | 'serifBold' | 'sans'
  * — but no longer a systematic one: the tables are real advances from the fonts abcjs
  * names, checked against widths probed out of its own `extraw`.
  */
-const textWidth = (text: string, size: number, face: Face = 'serif'): number =>
-  STRICT_TEXT_METRICS ? goldenTextWidth(text, size, face) : realTextWidth(text, size, face)
+const textWidth = (text: string, size: number, face: Face = 'serif'): number => {
+  // **A LIVE MEASURER WINS OVER BOTH TABLES**, because when there is a DOM the target is
+  // not a table at all — it is whatever the browser says, which is what abcjs asks it.
+  // Node keeps the tables and the 691 goldens keep their meaning. See `text-measure.ts`.
+  const live = getTextMeasurer()
+  if (live !== null) return live(text, fontFor(size, face)).width / UNIT_PX
+  return STRICT_TEXT_METRICS ? goldenTextWidth(text, size, face) : realTextWidth(text, size, face)
+}
+
+/**
+ * Our coarse `Face` back to the font attributes abcjs sets on the element it measures.
+ * abcjs names a font per ROLE (`ABCJS_FONT_FAMILY`); `Face` is the three-way distinction
+ * the width tables were built around, and it carries the family and weight that actually
+ * move a measurement.
+ */
+const fontFor = (size: number, face: Face): TextFont => ({
+  size: size * UNIT_PX,
+  family: face === 'sans' ? 'Helvetica' : 'Times New Roman',
+  ...(face === 'serifBold' ? { weight: 'bold' } : {}),
+})
+
+/**
+ * A single line's height, live where there is a DOM and the generator's table otherwise.
+ *
+ * ⚠️ **THE HEIGHT DEPENDS ON THE STRING, and a first pass here said it does not.** The
+ * evidence was WebKit answering 29.9063 for "All At Once", "M" and "i" alike at 27px —
+ * three strings that happen to share an INK EXTENT, none of them carrying a descender. A
+ * probe of `Mg` does carry one, and measuring every row with it left a flat 0.28125px per
+ * text row on 156 fixtures. abcjs measures the ACTUAL text (`getTextSize` takes it), so
+ * this does too; `Mg` survives only as the fallback where a caller has no string, which is
+ * a lane's own reserve rather than a drawn row. **THREE STRINGS AGREEING IS NOT A RULE.**
+ */
+const textHeight = (size: number, text = 'Mg', face: Face = 'serif'): number => {
+  const live = getTextMeasurer()
+  if (live !== null) return live(text, fontFor(size, face)).height / UNIT_PX
+  return goldenTextHeight(size)
+}
 
 /**
  * Which of the two the current render measures with — set once per render from the mode.
@@ -6883,7 +6919,7 @@ const faceOf = (type: AbcFontType): { face?: string } => {
 const fontHeightOf = (type: AbcFontType): number => {
   const size = fontSizeOf(type)
   return (
-    goldenTextHeight(size) +
+    textHeight(size) +
     (SCORE_FONTS[type]?.box === true ? size * ENGRAVE.fontBoxPadding * 4 : 0)
   )
 }
@@ -7202,7 +7238,7 @@ function noteText(
               // `getBBox()`'s two figures, which the box is laid out from — see
               // `PlacedText.boxSize`. Measured HERE because the metrics live here; the
               // emitter turns them into abcjs's four rules once the lanes have moved the y.
-              boxSize: { width: markWidth(line, size, false), height: goldenTextHeight(size) },
+              boxSize: { width: markWidth(line, size, false), height: textHeight(size, line) },
             }
           : {}),
       })
@@ -7282,7 +7318,7 @@ function noteText(
         ? {
             box: true,
             // `getBBox()`'s two figures, as the chord symbol's box already carries.
-            boxSize: { width: markWidth(a.text, size, false), height: goldenTextHeight(size) },
+            boxSize: { width: markWidth(a.text, size, false), height: textHeight(size, a.text) },
           }
         : {}),
       // AN ANNOTATION SHARES THE CHORD LANE. `RelativeElement` gives a `type: "text"`
@@ -7325,7 +7361,7 @@ function noteText(
       ...(SCORE_FONTS.annotationfont?.box === true
         ? {
             box: true,
-            boxSize: { width: markWidth(a.text, size, false), height: goldenTextHeight(size) },
+            boxSize: { width: markWidth(a.text, size, false), height: textHeight(size, a.text) },
           }
         : {}),
     })
@@ -13669,7 +13705,7 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
           byStaff.set(open, {
             text: startName,
             size,
-            baselineToCentre: goldenTextHeight(size) * 0.5 + (1 - 0 - 2) * size,
+            baselineToCentre: textHeight(size) * 0.5 + (1 - 0 - 2) * size,
           })
           takenFrom.add(startVoice)
         }
@@ -14559,7 +14595,7 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
             ? {}
             : {
                 box: true,
-                boxSize: { width: textWidth(labelText, size, 'serif'), height: goldenTextHeight(size) },
+                boxSize: { width: textWidth(labelText, size, 'serif'), height: textHeight(size, labelText) },
                 // `drawVoice` passes `alreadyInGroup = true` (`draw/voice.js:19`), so the
                 // rect is the text's SIBLING and no `<g>` opens.
                 inGroup: true,
@@ -16348,9 +16384,9 @@ function topTextBlock(
     rows.push({ move: px })
     y += px
   }
-  const advance = (size: number, extra = 0): void => {
+  const advance = (size: number, extra = 0, text = 'Mg'): void => {
     const step =
-      Math.round((goldenTextHeight(size) + extra) * ENGRAVE.lineSkipFactor * UNIT_PX) / UNIT_PX
+      Math.round((textHeight(size, text) + extra) * ENGRAVE.lineSkipFactor * UNIT_PX) / UNIT_PX
     advances.push(step)
     rows.push({ move: step })
     y += step
@@ -16375,10 +16411,10 @@ function topTextBlock(
    * would measure 53. Probed on `%%setfont-1 cursive 40 bold`, whose row is 42 = 40 + 2.
    */
   const advanceRich = (value: RichText, defaultSize: number): void => {
-    let largest = goldenTextHeight(defaultSize)
+    let largest = textHeight(defaultSize)
     for (const phrase of typeof value === 'string' ? [] : value) {
       if (phrase.font === null) continue
-      largest = Math.max(largest, goldenTextHeight(phrase.font.size / UNIT_PX))
+      largest = Math.max(largest, textHeight(phrase.font.size / UNIT_PX))
     }
     advances.push(largest)
     rows.push({ move: largest })
@@ -16386,7 +16422,7 @@ function topTextBlock(
   }
   /** A row advances one way or the other — never both. */
   const advanceText = (value: RichText, size: number, extra = 0): void => {
-    if (typeof value === 'string') advance(size, extra)
+    if (typeof value === 'string') advance(size, extra, value)
     else advanceRich(value, size)
   }
   /**
@@ -16447,9 +16483,9 @@ function topTextBlock(
      * staff line. Its span is `[cursor, cursor + largestY]`, which is what `nonMusic`
      * spends.
      */
-    let largest = goldenTextHeight(base.size)
+    let largest = textHeight(base.size)
     for (const p of value) {
-      if (p.font !== null) largest = Math.max(largest, goldenTextHeight(p.font.size / UNIT_PX))
+      if (p.font !== null) largest = Math.max(largest, textHeight(p.font.size / UNIT_PX))
     }
     return {
       rowSpan: largest,
@@ -16508,7 +16544,7 @@ function topTextBlock(
       boxRect: {
         x: Math.round(x - delta),
         width: Math.round(width + pad * 2),
-        height: Math.round(goldenTextHeight(size) + pad * 2),
+        height: Math.round(textHeight(size) + pad * 2),
       },
     }
   }
@@ -16782,7 +16818,7 @@ function topTextBlock(
             boxRect: {
               x: Math.round(PAGE_PADDING.left),
               width: Math.round(textWidth(partOrder, partsSize, 'serif') + pad * 2),
-              height: Math.round(goldenTextHeight(partsSize) + pad * 2),
+              height: Math.round(textHeight(partsSize) + pad * 2),
             },
           }
         : {}),
@@ -17079,7 +17115,7 @@ function appendFreeText(
             'subtitlefont',
             centre + PAGE_PADDING.left,
             textWidth(line, size, 'serif'),
-            goldenTextHeight(size),
+            textHeight(size),
             'middle',
           ),
           // `Subtitle`'s row carries `startChar: info.startChar` off the LINE object
@@ -17088,7 +17124,7 @@ function appendFreeText(
         })
         recordRow('subtitlefont', centre + PAGE_PADDING.left)
       }
-      spend(goldenTextHeight(size) + boxOf('subtitlefont'))
+      spend(textHeight(size) + boxOf('subtitlefont'))
       continue
     }
     const textSize = sizeOf('textfont')
@@ -17180,7 +17216,7 @@ function appendFreeText(
               'textfont',
               block.align === 'center' ? centre : PAGE_PADDING.left,
               Math.max(...block.lines.map((l) => textWidth(l, textSize, 'serif'))),
-              goldenTextHeight(textSize) + (block.lines.length - 1) * ENGRAVE.freeTextLineStep,
+              textHeight(textSize) + (block.lines.length - 1) * ENGRAVE.freeTextLineStep,
               block.align === 'center' ? 'middle' : 'start',
             )
           : {}),
@@ -17196,7 +17232,7 @@ function appendFreeText(
       recordRow('textfont', block.align === 'center' ? centre : PAGE_PADDING.left)
     })
     spend(
-      goldenTextHeight(textSize) +
+      textHeight(textSize) +
         boxOf('textfont') +
         (block.lines.length - 1) * ENGRAVE.freeTextLineStep,
     )
@@ -17340,9 +17376,9 @@ function bottomTextBlock(
           : ((fonts[fontType]?.face ?? '') === ''
               ? (ABCJS_FONT_FACE[fontType] ?? '')
               : (fonts[fontType]?.face ?? ''))
-      let largest = goldenTextHeight(size)
+      let largest = textHeight(size)
       for (const phrase of value) {
-        if (phrase.font !== null) largest = Math.max(largest, goldenTextHeight(phrase.font.size / UNIT_PX))
+        if (phrase.font !== null) largest = Math.max(largest, textHeight(phrase.font.size / UNIT_PX))
       }
       texts.push({
         text,
@@ -17386,7 +17422,7 @@ function bottomTextBlock(
      * abcjs's own 49.27 between the two verse lines of `visual-selection-01`.
      */
     if (text === '' && extra.length === 0) {
-      move(goldenTextHeight(size) + box)
+      move(textHeight(size) + box)
       return
     }
     // A BOXED ROW MOVES IN BY ONE PADDING ON BOTH AXES AND OWNS FOUR RULES — the same
@@ -17414,7 +17450,7 @@ function bottomTextBlock(
                   pad * 2,
               ),
               height: Math.round(
-                goldenTextHeight(size) +
+                textHeight(size) +
                   Math.max(0, [text, ...extra].filter((l) => l !== '').length - 1) *
                     size *
                     ABCJS_RATIO.textLineStep +
@@ -17438,7 +17474,7 @@ function bottomTextBlock(
     recordRow(fontType)
     move(
       Math.round(
-        (goldenTextHeight(size) + box) *
+        (textHeight(size) + box) *
           ENGRAVE.lineSkipFactor *
           (1 + extra.length) *
           UNIT_PX,
@@ -17527,8 +17563,8 @@ function bottomTextBlock(
       addText(line, [], words, 'unalignedWords', false, 0, 'unalignedWords', 'wordsfont', undefined, 'abcjs-extra-text abcjs-unaligned-words')
     closeGroup('unalignedWords', 'unalignedWords', 'unalignedWords')
     // TWO raw heights, and abcjs spends them as two separate rows.
-    move(goldenTextHeight(words))
-    move(goldenTextHeight(words))
+    move(textHeight(words))
+    move(textHeight(words))
   }
 
   /** `addSingleLine` — the preface joins the phrases as one more of them when rich. */
@@ -17567,7 +17603,7 @@ function bottomTextBlock(
       emptyRow()
       addText(preface, [], history, 'description', true, historyBox, 'description', 'historyfont', groupId, klass,
         { elType: 'extraText', startChar: -2, endChar: -2, text: preface })
-      move((goldenTextHeight(history) * 3) / 4)
+      move((textHeight(history) * 3) / 4)
       value.forEach((entry, j) => {
         if (plainText(entry) !== '') {
           addText(entry, [], history, 'description', false, historyBox, 'description', 'historyfont', groupId, klass)
@@ -17576,11 +17612,11 @@ function bottomTextBlock(
         // same amount of space without this" (`bottom-text.js:58-59`).
         const next = value[j + 1]
         if (j < value.length - 1 && typeof entry === 'string' && next !== undefined && typeof next !== 'string') {
-          move((goldenTextHeight(history) * 3) / 4)
+          move((textHeight(history) * 3) / 4)
         }
       })
       closeGroup('extraText', 'description', groupId)
-      move(goldenTextHeight(history))
+      move(textHeight(history))
       return
     }
     /**
@@ -17769,7 +17805,7 @@ function anchorLyrics<
      * `abcts-directives` tune 6 is 40px lower and every other coordinate identical.
      */
     const shift =
-      inkBottom + size + voiceIndex * goldenTextHeight(size) - written + (SPACING.vocalspace ?? 0)
+      inkBottom + size + voiceIndex * textHeight(size) - written + (SPACING.vocalspace ?? 0)
     return {
       ...part,
       elements: part.elements.map((el) =>
@@ -17816,7 +17852,7 @@ const jazzTspans = (t: PlacedText): number =>
  *     (`get-text-size.js:46-48`) — `visual-tablature-17` boxes five of them.
  */
 const chordHeightOf = (t: PlacedText): number =>
-  goldenTextHeight(t.size) +
+  textHeight(t.size) +
   (jazzTspans(t) - 1) * t.size * ENGRAVE.textLineStep +
   (t.box === true ? t.size * ENGRAVE.fontBoxPadding * 4 : 0)
 
@@ -18228,7 +18264,7 @@ function aboveLadder<
   const boxPad = partsBox ? partSize * ENGRAVE.fontBoxPadding : 0
   // …and the box's own PADDING is `renderText`'s, not the lane's: it adds it to the
   // baseline at draw time (`draw/text.js:57`), so adding it here too counted it twice.
-  const partY = partLabels ? reserve(goldenTextHeight(partSize) + boxPad * 4) + partSize : null
+  const partY = partLabels ? reserve(textHeight(partSize) + boxPad * 4) + partSize : null
   const tempoY = tempos
     ? reserve(ENGRAVE.tempoHeightAbove) + ENGRAVE.tempoTextSize + ENGRAVE.tempoDescenderBump
     : null
@@ -19646,7 +19682,7 @@ function verticalExtent(
     // measuring its own whole `lyricStr` — see `versesHere`.
     if (versesHere > 0) {
       const h =
-        goldenTextHeight(versesSize) + (versesHere - 1) * versesSize * ABCJS_RATIO.textLineStep
+        textHeight(versesSize) + (versesHere - 1) * versesSize * ABCJS_RATIO.textLineStep
       // …**AND `%%vocalspace` IS ADDED TO THE LANE IN PITCH** —
       // `lyricHeightBelow += renderer.spacing.vocal / spacing.STEP`
       // (`set-upper-and-lower-elements.js:52`), where the DEFAULT is zero.
@@ -19671,7 +19707,7 @@ function verticalExtent(
     if (versesAbove > 0)
       lyricLaneAbovePitch = Math.max(
         lyricLaneAbovePitch,
-        (goldenTextHeight(versesAboveSize) +
+        (textHeight(versesAboveSize) +
           (versesAbove - 1) * versesAboveSize * ABCJS_RATIO.textLineStep) /
           ENGRAVE.spacePerStep,
       )
