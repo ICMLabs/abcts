@@ -19796,6 +19796,7 @@ function verticalExtent(
      * abcjs's `margin = 1`.
      */
     let versesHere = 0
+    let versesText = ''
     let versesSize = 0
     let versesVoice = 0
     /** …and the same three for a lyric that sings ABOVE — see `PlacedText.lyricAbove`. */
@@ -19832,6 +19833,13 @@ function verticalExtent(
         // (`abstract-engraver.js:774`). The trailing empty line is abcjs's too and is part
         // of what it measures; see `PlacedText.extraLines` at the lyric's own site.
         if (t.text !== '') versesHere += t.extraLines?.length ?? 1
+        // …AND THE STRING ITSELF, for a live measurer: abcjs hands `getTextSize.calc` the
+        // whole `lyricStr` and lets the browser lay the tspans out. Kept beside the count
+        // rather than replacing it — the count is what the headless stub needs.
+        if (t.text !== '') {
+          const joined = [t.text, ...(t.extraLines ?? [])].join('\n')
+          if (joined.length > versesText.length) versesText = joined
+        }
         versesVoice = Math.max(versesVoice, t.voice ?? 0)
         versesSize = Math.max(versesSize, t.size)
         lyricBottom = Math.max(lyricBottom, t.y)
@@ -19872,8 +19880,24 @@ function verticalExtent(
     // `staff.specialY.lyricHeightBelow` is a MAX over the staff's children, each child
     // measuring its own whole `lyricStr` — see `versesHere`.
     if (versesHere > 0) {
+      /**
+       * ⚠️ **`h + (n - 1) * size * 1.2` IS THE STUB'S `getBBox`, NOT A RULE.**
+       * `dump-svg.js:106-124` computes exactly that because jsdom cannot lay a tspan out;
+       * abcjs itself calls `getTextSize.calc(lyricStr, 'vocalfont')` ONCE
+       * (`abstract-engraver.js:769-777`) and a browser answers with the REAL box of a
+       * `<text>` whose extra lines step by `dy="1.2em"`. The two agree to about a
+       * hundredth of a pixel and not exactly: `visual-tablature-23` — two `w:` verses and
+       * otherwise byte-identical — came out 141.61075 against abcjs's 141.601375, which is
+       * 0.009375 of page and nothing else in the file.
+       *
+       * So the LIVE path measures the joined string and the headless path keeps the
+       * stub's arithmetic, which is what its goldens were made with.
+       */
+      const live = getTextMeasurer()
       const h =
-        textHeight(versesSize) + (versesHere - 1) * versesSize * ABCJS_RATIO.textLineStep
+        live !== null && versesText !== ''
+          ? textHeight(versesSize, versesText)
+          : textHeight(versesSize) + (versesHere - 1) * versesSize * ABCJS_RATIO.textLineStep
       // …**AND `%%vocalspace` IS ADDED TO THE LANE IN PITCH** —
       // `lyricHeightBelow += renderer.spacing.vocal / spacing.STEP`
       // (`set-upper-and-lower-elements.js:52`), where the DEFAULT is zero.
