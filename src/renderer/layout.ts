@@ -17852,7 +17852,14 @@ const jazzTspans = (t: PlacedText): number =>
  *     (`get-text-size.js:46-48`) — `visual-tablature-17` boxes five of them.
  */
 const chordHeightOf = (t: PlacedText): number =>
-  textHeight(t.size) +
+  // ⚠️ **THE CHORD'S OWN STRING, IN THE CHORD'S OWN FACE.** abcjs measures the text it is
+  // about to draw — `var dim = getTextSize.calc(chord, font, klass)`, then
+  // `chordHeight = dim.height / spacing.STEP` (`creation/add-chord.js:47-49`) — where this
+  // asked for a FONT's height and got a probe string in Times. Under a live measurer that
+  // was 0.28125px of lane on every tune carrying a chord symbol, which is the whole staff
+  // and the whole page moving: `"G"GAB cde|` had its staff at 86.44 against abcjs's 86.73.
+  // `gchordfont` and `annotationfont` are both Helvetica (`ABCJS_FONT_FAMILY`).
+  textHeight(t.size, t.text, 'sans') +
   (jazzTspans(t) - 1) * t.size * ENGRAVE.textLineStep +
   (t.box === true ? t.size * ENGRAVE.fontBoxPadding * 4 : 0)
 
