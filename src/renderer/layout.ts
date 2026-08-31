@@ -16647,14 +16647,23 @@ function topTextBlock(
     if (fonts[type]?.box !== true) return {}
     const size = sizeOf(type)
     const pad = size * ENGRAVE.fontBoxPadding
-    const width = textWidth(text, size, 'serif')
+    /**
+     * ⚠️ **THE ROW'S OWN FONT AND THE ROW'S OWN TEXT.** abcjs draws this rect from
+     * `elem.getBBox()` on the text it just drew (`draw/text.js:69-81`), so the box is the
+     * INK of that string in that family. This measured a hard-coded `'serif'` and a
+     * text-free height — fine while both sides came from a table keyed by size, wrong the
+     * moment a browser answers. `%%titlefont cursive 23 box` boxed 169x41 against abcjs's
+     * 184x55, and `visual-options-01-fonts` sets a DIFFERENT family on all eighteen types.
+     */
+    const font = fontOfType(fonts, type, size)
+    const width = textWidth(text, size, font)
     const delta = anchor === 'middle' ? width / 2 + pad : anchor === 'end' ? width + pad * 2 : 0
     return {
       x: x + (anchor === 'start' ? pad : anchor === 'end' ? -pad : 0),
       boxRect: {
         x: Math.round(x - delta),
         width: Math.round(width + pad * 2),
-        height: Math.round(textHeight(size) + pad * 2),
+        height: Math.round(textHeight(size, text, font) + pad * 2),
       },
     }
   }
@@ -16927,8 +16936,18 @@ function topTextBlock(
         ? {
             boxRect: {
               x: Math.round(PAGE_PADDING.left),
-              width: Math.round(textWidth(partOrder, partsSize, 'serif') + pad * 2),
-              height: Math.round(textHeight(partsSize) + pad * 2),
+              // The row's own font and text — abcjs boxes the ink of the string it drew.
+              // `%%partsfont sans-serif 29 box` boxed 171x51 against abcjs's 190x53 while
+              // this said `'serif'`. THIRD site with the same defect in one fixture; the
+              // other two are the top and bottom blocks' `boxIn`.
+              width: Math.round(
+                textWidth(partOrder, partsSize, fontOfType(fonts, 'partsfont', partsSize)) +
+                  pad * 2,
+              ),
+              height: Math.round(
+                textHeight(partsSize, partOrder, fontOfType(fonts, 'partsfont', partsSize)) +
+                  pad * 2,
+              ),
             },
           }
         : {}),
@@ -17221,11 +17240,13 @@ function appendFreeText(
           italic: false,
           anchor: 'middle',
           ...fontIn('subtitlefont'),
+          // The row's own font and text, as `boxIn`'s twin in the top block already does —
+          // abcjs boxes the INK of the string it drew (`draw/text.js:69`).
           ...boxIn(
             'subtitlefont',
             centre + PAGE_PADDING.left,
-            textWidth(line, size, 'serif'),
-            textHeight(size),
+            textWidth(line, size, fontOfType(fonts, 'subtitlefont', size)),
+            textHeight(size, line, fontOfType(fonts, 'subtitlefont', size)),
             'middle',
           ),
           // `Subtitle`'s row carries `startChar: info.startChar` off the LINE object
@@ -17325,8 +17346,13 @@ function appendFreeText(
           ? boxIn(
               'textfont',
               block.align === 'center' ? centre : PAGE_PADDING.left,
-              Math.max(...block.lines.map((l) => textWidth(l, textSize, 'serif'))),
-              textHeight(textSize) + (block.lines.length - 1) * ENGRAVE.freeTextLineStep,
+              Math.max(
+                ...block.lines.map((l) =>
+                  textWidth(l, textSize, fontOfType(fonts, 'textfont', textSize)),
+                ),
+              ),
+              textHeight(textSize, block.lines[0] ?? 'Mg', fontOfType(fonts, 'textfont', textSize)) +
+                (block.lines.length - 1) * ENGRAVE.freeTextLineStep,
               block.align === 'center' ? 'middle' : 'start',
             )
           : {}),
