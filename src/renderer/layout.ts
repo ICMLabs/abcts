@@ -6939,6 +6939,14 @@ let LINE_WEIGHTS = lineWeightsFor(true)
 const markWidth = (text: string, size: number, boxed: boolean): number =>
   textWidth(text, size, 'sans') + (boxed ? size * ENGRAVE.fontBoxPadding * 4 : 0)
 
+/** The font a chord symbol or annotation is DRAWN in — see `chordHeightOf`'s ladder. */
+const markFontOf = (t: PlacedText): TextFont => ({
+  size: t.size * UNIT_PX,
+  family: t.face === undefined || t.face === '' ? 'Helvetica' : t.face,
+  ...(t.bold === true ? { weight: 'bold' } : {}),
+  ...(t.italic === true ? { style: 'italic' } : {}),
+})
+
 
 /**
  * Every `%%<type>font` the tune set, for the current render — the same one-place switch.
@@ -18007,42 +18015,33 @@ const chordHeightOf = (t: PlacedText): number => {
    * splits it.
    */
   /**
-   * ⚠️ **MEASURED, TRIED TWICE, REVERTED — DO NOT HONOUR `t.face` HERE WITHOUT READING
-   * THIS.** `'sans'` is Helvetica and a directive may name something else:
-   * `%%gchordfont Arial 25` draws `font-family="Arial"` in BOTH engines, so measuring the
-   * lane in Helvetica looks like the obvious defect, and `PlacedText.face` is right there.
+   * **THE MARK'S OWN FAMILY, AND A LADDER IS WHAT PROVED IT.**
    *
-   * It is not an improvement. On `visual-options-01-fonts` the staff sits 0.71px above
-   * abcjs's; measuring the height in the mark's own face takes it to **1.85px** — worse,
-   * and worse by more than the error it was aimed at. Doing the WIDTH at the same time
-   * (`markWidth` at the two sites holding a `PlacedText`) changes nothing at all: those
-   * two are inert, which is now the SECOND time they have been measured so — the jazz
-   * chord's width came from `chordParts`' join in the builder, not from them.
+   * `'sans'` is Helvetica; `%%gchordfont Arial N` draws Arial in both engines. Nine
+   * control tunes, one gchord size each and nothing else varying, WebKit, our top staff
+   * line against abcjs's — the increments identify the two fonts exactly:
    *
-   * So something else compensates for the Helvetica reading, and it has not been found.
-   * The candidates not yet ruled out: the builder's own `markWidth` sites (7311, 7393,
-   * 7436), which DO feed placement, and the lane packing that consumes both. Rule one out
-   * before writing here again — a change that moves a number the wrong way is evidence,
-   * not noise.
+   *   px      11    13    16    21    27    33     53     107     173
+   *   abcjs  2.23  3.33  5.60  6.71  6.69  22.34  60.34  73.73    <- Arial getBBox
+   *   ours   2     3     6     7     7     23     62     76       <- Helvetica getBBox
    *
-   * ⚠️ **AND THE SIGN FLIPS WITH FONT SIZE, WHICH RULES THE FAMILY OUT FURTHER.** The same
-   * lane, measured on two fixtures whose only chord font is Arial and boxed:
+   * Helvetica is taller than Arial at every size, so our lane was too TALL at every rung
+   * and the error grew with the font. The box term is NOT involved: the same ladder run
+   * without `box` gives byte-identical deltas.
    *
-   *   visual-options-01-fonts   `%%gchordfont Arial 25 box`   staff 481.54 vs 482.25
-   *                                                           -> our lane 0.71px too SHORT
-   *   visual-tablature-17       `%%gchordfont Arial 10 box`   staff  68.48 vs  68.01
-   *                                                           -> our lane 0.47px too TALL
-   *
-   * A wrong FAMILY is a roughly constant ratio and cannot change sign; a term that is too
-   * small at 25px and too large at 10px is size-dependent — the `size + 2` fallback, the
-   * box padding, or a rounding that only bites one of them. Start there, not at the face.
-   * (`tablature-17` sets five sizes — 10, 20, 40, 80, 130 — so it can rank the error
-   * against size on its own, which is the cheapest next probe available.)
+   * ⚠️ **TWO EARLIER CONCLUSIONS HERE WERE WRONG, AND BOTH CAME FROM DIRTY FIXTURES.**
+   * A first attempt at this was reverted because it made `visual-options-01-fonts` worse
+   * (0.71px to 1.85px) — but that fixture has several open causes at once, so a real
+   * improvement in one term can move the net either way. And the note reasoned that "a
+   * wrong family cannot change sign" from two such fixtures disagreeing in direction; on
+   * a CONTROL every rung is positive and there is no sign change to explain. **A LADDER
+   * OF CONTROLS IS THE PROOF; A FIXTURE WITH MORE THAN ONE OPEN CAUSE CANNOT RULE
+   * ANYTHING OUT.**
    */
   const live = getTextMeasurer()
   if (live !== null) {
     const text = t.jazz === undefined ? t.text : t.jazz.join('\x03')
-    return textHeight(t.size, text, 'sans') + box
+    return textHeight(t.size, text, markFontOf(t)) + box
   }
   return textHeight(t.size, t.text, 'sans') + (jazzTspans(t) - 1) * t.size * ENGRAVE.textLineStep + box
 }
