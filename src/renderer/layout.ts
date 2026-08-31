@@ -18024,6 +18024,20 @@ const chordHeightOf = (t: PlacedText): number => {
    * 7436), which DO feed placement, and the lane packing that consumes both. Rule one out
    * before writing here again — a change that moves a number the wrong way is evidence,
    * not noise.
+   *
+   * ⚠️ **AND THE SIGN FLIPS WITH FONT SIZE, WHICH RULES THE FAMILY OUT FURTHER.** The same
+   * lane, measured on two fixtures whose only chord font is Arial and boxed:
+   *
+   *   visual-options-01-fonts   `%%gchordfont Arial 25 box`   staff 481.54 vs 482.25
+   *                                                           -> our lane 0.71px too SHORT
+   *   visual-tablature-17       `%%gchordfont Arial 10 box`   staff  68.48 vs  68.01
+   *                                                           -> our lane 0.47px too TALL
+   *
+   * A wrong FAMILY is a roughly constant ratio and cannot change sign; a term that is too
+   * small at 25px and too large at 10px is size-dependent — the `size + 2` fallback, the
+   * box padding, or a rounding that only bites one of them. Start there, not at the face.
+   * (`tablature-17` sets five sizes — 10, 20, 40, 80, 130 — so it can rank the error
+   * against size on its own, which is the cheapest next probe available.)
    */
   const live = getTextMeasurer()
   if (live !== null) {
