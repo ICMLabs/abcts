@@ -18006,6 +18006,25 @@ const chordHeightOf = (t: PlacedText): number => {
    * with `\x03` separators, so it is rejoined for measuring exactly as abcjs's builder
    * splits it.
    */
+  /**
+   * ⚠️ **MEASURED, TRIED TWICE, REVERTED — DO NOT HONOUR `t.face` HERE WITHOUT READING
+   * THIS.** `'sans'` is Helvetica and a directive may name something else:
+   * `%%gchordfont Arial 25` draws `font-family="Arial"` in BOTH engines, so measuring the
+   * lane in Helvetica looks like the obvious defect, and `PlacedText.face` is right there.
+   *
+   * It is not an improvement. On `visual-options-01-fonts` the staff sits 0.71px above
+   * abcjs's; measuring the height in the mark's own face takes it to **1.85px** — worse,
+   * and worse by more than the error it was aimed at. Doing the WIDTH at the same time
+   * (`markWidth` at the two sites holding a `PlacedText`) changes nothing at all: those
+   * two are inert, which is now the SECOND time they have been measured so — the jazz
+   * chord's width came from `chordParts`' join in the builder, not from them.
+   *
+   * So something else compensates for the Helvetica reading, and it has not been found.
+   * The candidates not yet ruled out: the builder's own `markWidth` sites (7311, 7393,
+   * 7436), which DO feed placement, and the lane packing that consumes both. Rule one out
+   * before writing here again — a change that moves a number the wrong way is evidence,
+   * not noise.
+   */
   const live = getTextMeasurer()
   if (live !== null) {
     const text = t.jazz === undefined ? t.text : t.jazz.join('\x03')
