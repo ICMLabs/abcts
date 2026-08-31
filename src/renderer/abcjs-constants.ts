@@ -941,3 +941,19 @@ export const ABCJS_FONT_FACE: Readonly<Record<string, string>> = {
   footerfont: 'Times New Roman',
   headerfont: 'Times New Roman',
 }
+
+/**
+ * **THE DEBUG PROBES' ENVIRONMENT, AND THE ONLY PLACE `process` IS TOUCHED OUTSIDE THE CLI.**
+ *
+ * ⚠️ **`process` DOES NOT EXIST IN A BROWSER, AND READING IT AT MODULE SCOPE KILLS THE
+ * WHOLE BUNDLE.** `const PROBE = process.env.ABCTS_PROBE` sat at `layout.ts`'s top level;
+ * in the iife build that throws while the IIFE is still evaluating, so `var ABCTS` hoists,
+ * its assignment never runs, and the page sees `undefined` with one
+ * "Can't find variable: process" behind it. Measured the first time this engine was loaded
+ * into WebKit. The other 22 probe sites are inside functions and would not have thrown at
+ * load — each would have waited to kill a render instead, which is worse to diagnose.
+ *
+ * Node keeps its env; a browser gets an empty bag and every probe reads false.
+ */
+export const ENV: Record<string, string | undefined> =
+  typeof process === 'undefined' ? {} : (process.env ?? {})

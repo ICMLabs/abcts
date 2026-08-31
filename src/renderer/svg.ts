@@ -27,6 +27,7 @@ import {
   spacesOfPitch,
   STAFF_SPACE_PX,
   UNIT_PX,
+  ENV,
 } from "./abcjs-constants.js";
 import { SMUFL_TO_ABCJS } from "./glyph-map.js";
 import { glyphsFor } from "./glyph-table.js";
@@ -2929,7 +2930,7 @@ export function toSVG(
             (p1, p2) =>
               p1.x - p2.x || (p1.k ?? 0) - (p2.k ?? 0) || (p1.h ?? 0) - (p2.h ?? 0),
           );
-          if (process.env.ABCTS_OTHER)
+          if (ENV.ABCTS_OTHER)
             for (const o of ordered)
               console.log(
                 "OTHER x=",
@@ -3084,10 +3085,10 @@ export function toSVG(
             gcls = classes.generate(klass);
             counters.set(elIndex, classes.current());
             if (
-              (process.env.ABCTS_CT &&
-                gcls.includes(`abcjs-v${process.env.ABCTS_CT} `)) ||
-              (process.env.ABCTS_CT &&
-                gcls.endsWith(`abcjs-v${process.env.ABCTS_CT}`))
+              (ENV.ABCTS_CT &&
+                gcls.includes(`abcjs-v${ENV.ABCTS_CT} `)) ||
+              (ENV.ABCTS_CT &&
+                gcls.endsWith(`abcjs-v${ENV.ABCTS_CT}`))
             )
               console.log(
                 "CT",

@@ -75,6 +75,7 @@ import {
   spaces,
   spacesOfPitch,
   steps,
+  ENV,
 } from './abcjs-constants.js'
 import { glyphsFor, lineWeightsFor } from './glyph-table.js'
 import { SMUFL_TO_ABCJS } from './glyph-map.js'
@@ -9624,7 +9625,7 @@ function curveReserves(
   for (const a of anchors) {
     a.beamPos = beamPos(a)
     a.slurFixed = fixedOf(a)
-    if (process.env.ABCTS_SLUR)
+    if (ENV.ABCTS_SLUR)
       console.error('ANCHOR pitchY', a.pitchY, 'pitch', -a.pitchY / ENGRAVE.spacePerStep,
         'beamPos', a.beamPos, 'fixed.top(pitch)', a.slurFixed === undefined ? undefined : -a.slurFixed.top / ENGRAVE.spacePerStep,
         'fixed.bottom(pitch)', a.slurFixed === undefined ? undefined : -a.slurFixed.bottom / ENGRAVE.spacePerStep)
@@ -9682,7 +9683,7 @@ function curveReserves(
     const above = curveIsAbove(from, to, voicePos, kind)
     // abcjs's `Math.min` over PITCHES is our `Math.max` over y — the lower end on screen.
     const y = Math.max(endAt(from, above, true), endAt(to, above, false))
-    if (process.env.ABCTS_CURVE) {
+    if (ENV.ABCTS_CURVE) {
       const p = (v: number) => (6 - 2 * v).toFixed(4)
       const dump = (a: NoteAnchor) =>
         `${a.left.toFixed(2)}@${p(centre(a))} pos=${beamPos(a)} el=${a.element}` +
@@ -10645,7 +10646,7 @@ function layoutBeam(
   // 545.9215; every stem `getBarYAt` delivers along that line inherits it, and it was the
   // last token between `visual-decorations-01` and byte parity.
   const beamStartX = up ? first.headX + (first.headWidth - inset) : first.headX
-  if (process.env.ZZBX)
+  if (ENV.ZZBX)
     console.error('ZZBX headX', first.headX.toPrecision(20), 'w', first.headWidth, 'up', up,
       'startX', beamStartX.toPrecision(20))
   const beamEndX = up ? last.headX + last.headWidth : last.headX + inset
@@ -10723,7 +10724,7 @@ function layoutBeam(
      */
     const beamPitch = pitchAt(sampleX) + stemEndPitch
     /** Both engines' beam for one stem, side by side — see `ABCJS_BEAMY`'s `BEAMX`. */
-    if (process.env.ABCTS_BG && Math.abs(sampleX - Number(process.env.ABCTS_BG)) < 0.05)
+    if (ENV.ABCTS_BG && Math.abs(sampleX - Number(ENV.ABCTS_BG)) < 0.05)
       console.log(
         'BG sampleX', sampleX, 'beamPitch', beamPitch, 'up', up,
         'startPitch', startPitch, 'endPitch', endPitch,
@@ -12441,7 +12442,7 @@ const placeElement = (el: LayoutElement, at: number): LayoutElement => ({
   ...el,
   x: at,
   glyphs: el.glyphs.map((g) => {
-    if (process.env.ABCTS_PL !== undefined && Math.abs(at + (g.dx ?? g.x - el.x) - Number(process.env.ABCTS_PL)) < 0.005)
+    if (ENV.ABCTS_PL !== undefined && Math.abs(at + (g.dx ?? g.x - el.x) - Number(ENV.ABCTS_PL)) < 0.005)
       console.log('PL', g.name, 'at', at, 'elx', el.x, 'gx', g.x, 'dx', g.dx, 'off', g.dx ?? g.x - el.x, '=>', at + (g.dx ?? g.x - el.x))
     return { ...g, x: at + (g.dx ?? g.x - el.x) }
   }),
@@ -14149,7 +14150,7 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
             }
           }
           at[v]?.push(x)
-          if (process.env.ABCTS_XX) console.log('XX v', v, 'i', k, 'kind', item.kind, 'x', x, 'minx', minx[v], 'nextx', nextx[v], 'dur', item.duration, 'rod', item.rod, 'wid', item.width, 'gap', item.gap)
+          if (ENV.ABCTS_XX) console.log('XX v', v, 'i', k, 'kind', item.kind, 'x', x, 'minx', minx[v], 'nextx', nextx[v], 'dur', item.duration, 'rod', item.rod, 'wid', item.width, 'gap', item.gap)
           if (PROBE && probeFinalPass) {
             const px = (n: number) => (n * 7.75).toFixed(3)
             console.log(
@@ -14290,12 +14291,12 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
         // `relSpace = spacingUnits * spacing; constSpace = lineWidth - relSpace;`
         // `spacing = (targetWidth - constSpace) / spacingUnits` — abcjs's own three lines
         // and its own groupings (`layout/layout.js:110-116`).
-        if (process.env.ABCTS_SP) console.log('SP it', pass, 'space', spacing, 'w', width, 'units', units)
+        if (ENV.ABCTS_SP) console.log('SP it', pass, 'space', spacing, 'w', width, 'units', units)
         const relSpace = units * spacing
         const constSpace = width - relSpace
         spacing = (target - constSpace) / units
       }
-      if (process.env.ABCTS_SP) console.log('SP final', spacing)
+      if (ENV.ABCTS_SP) console.log('SP final', spacing)
       return spacing
     })()
     probeFinalPass = true
@@ -14346,7 +14347,7 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
     })()
     // `ABCTS_W` — the width solve's own numbers, which is how `staffGroup.w` was settled:
     // `solved.width` IS abcjs's, and `musicWidth` is it plus the left margin.
-    if (process.env['ABCTS_W'])
+    if (ENV['ABCTS_W'])
       console.error(
         `WIDTHS system=${systemIndex} target=${target} pageWidth=${pageWidth} leftEdge=${leftEdge} solved=${solved.width} isLast=${isLast}`,
       )
@@ -15569,7 +15570,7 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
           : (musicOnlyTopPitch ?? -(extent.top + blockSpan) / ENGRAVE.spacePerStep) + marginPitch
       heightPitch += topTerm
       heightPitch += -extent.bottomPitch
-      if (process.env.ABCTS_H)
+      if (ENV.ABCTS_H)
         console.log('H top', topTerm, 'bottom', -extent.bottomPitch, '->', heightPitch)
       if (staffIndexInSystem === 0) leadTerms = [...originAdvances]
       staffIndexInSystem += 1
@@ -15873,7 +15874,7 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
         const walked =
           staff.originAdvances.slice(lead.length).reduce((y, a) => y + a, systemAbsoluteY) +
           staff.originPitch * ENGRAVE.spacePerStep
-        if (process.env.ABCTS_ABSY)
+        if (ENV.ABCTS_ABSY)
           console.log(
             'ABSY',
             walked,
@@ -15894,7 +15895,7 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
          * The system-relative `originY` still counts the LEAD, which `systemAbsoluteY` has
          * already spent — so it comes off here rather than being carried twice.
          */
-        if (process.env.ABCTS_CHECK !== undefined) {
+        if (ENV.ABCTS_CHECK !== undefined) {
           const flat = systemAbsoluteY - system.leading + staff.originY
           if (Math.abs(walked - flat) > 1e-9)
             console.error(
@@ -16076,7 +16077,7 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
          */
         for (const a of first?.leadAdvances ?? topAdvances) {
           y += a
-          if (process.env.ABCTS_Y) console.log('Y lead', a, '->', y)
+          if (ENV.ABCTS_Y) console.log('Y lead', a, '->', y)
         }
         // …**AND THE FIRST SYSTEM TAKES ITS `%%vskip` TOO** — `if (abcLine.vskip)` is not
         // guarded on `staffgroups.length`, so a directive in the HEADER moves line 0
@@ -16090,20 +16091,20 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
             // row; spending it as a SUM, or after the padding, lost the last bits.
             for (const a of system.leadAdvances) {
               y += a
-              if (process.env.ABCTS_Y) console.log('Y sysLead', a, '->', y)
+              if (ENV.ABCTS_Y) console.log('Y sysLead', a, '->', y)
             }
             // `%%vskip`, spent before the padding — see `LayoutSystem.vskip`.
             y += system.vskip ?? 0
             y += system.gap ?? 0
-            if (process.env.ABCTS_Y) console.log('Y gap', system.gap ?? 0, '->', y)
+            if (ENV.ABCTS_Y) console.log('Y gap', system.gap ?? 0, '->', y)
           }
           y += system.heightPitch * ENGRAVE.spacePerStep
-          if (process.env.ABCTS_Y) console.log('Y sys', system.heightPitch * ENGRAVE.spacePerStep, '->', y)
+          if (ENV.ABCTS_Y) console.log('Y sys', system.heightPitch * ENGRAVE.spacePerStep, '->', y)
         }
       }
       // …ROW BY ROW — see `trailingAdvances`.
       for (const a of trailingAdvances) y += a
-      if (process.env.ABCTS_Y && trailingAdvances.length > 0)
+      if (ENV.ABCTS_Y && trailingAdvances.length > 0)
         console.log('Y trailing', trailingAdvances, '->', y)
       if (bottomBlock.texts.length > 0) {
         y += spaces(ABCJS_PX.bottomTextGap)
@@ -19236,7 +19237,7 @@ interface StaffFurniture {
  * the top-text block, and mixing the two scrambles the staff order.
  */
 
-const PROBE = process.env.ABCTS_PROBE !== undefined
+const PROBE = ENV.ABCTS_PROBE !== undefined
 /** Item probes fire only on the SOLVED pass — the solve runs `lineAt` up to eight times. */
 let probeFinalPass = false
 let probeTop = ''
