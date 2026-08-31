@@ -6728,12 +6728,18 @@ type Face = 'serif' | 'serifBold' | 'sans'
  * — but no longer a systematic one: the tables are real advances from the fonts abcjs
  * names, checked against widths probed out of its own `extraw`.
  */
-const textWidth = (text: string, size: number, face: Face = 'serif'): number => {
+const textWidth = (text: string, size: number, font: Face | TextFont = 'serif'): number => {
   // **A LIVE MEASURER WINS OVER BOTH TABLES**, because when there is a DOM the target is
   // not a table at all — it is whatever the browser says, which is what abcjs asks it.
   // Node keeps the tables and the 691 goldens keep their meaning. See `text-measure.ts`.
   const live = getTextMeasurer()
-  if (live !== null) return live(text, fontFor(size, face)).width / UNIT_PX
+  if (live !== null) {
+    return live(text, typeof font === 'string' ? fontFor(size, font) : font).width / UNIT_PX
+  }
+  // The tables are keyed by our three-way `Face`; an explicit font falls back to the face
+  // its weight implies, which is all the tables can express anyway.
+  const face: Face =
+    typeof font === 'string' ? font : font.weight === 'bold' ? 'serifBold' : 'serif'
   return STRICT_TEXT_METRICS ? goldenTextWidth(text, size, face) : realTextWidth(text, size, face)
 }
 
@@ -6776,6 +6782,32 @@ const textHeight = (size: number, text = 'Mg', font: Face | TextFont = 'serif'):
  * like Times at 23. abcjs passes the whole attr set it is about to draw with
  * (`get-text-size.js:27-43`), so this does too.
  */
+/**
+ * `%%voicefont`'s font, with the one default that is not `fontOfType`'s.
+ *
+ * ⚠️ **A VOICE NAME IS BOLD WHEN NO DIRECTIVE SET IT** — `voicefont === undefined ||
+ * voicefont.bold` — where every other type defaults to regular, so this cannot go through
+ * `fontOfType` unchanged.
+ *
+ * ⚠️ **AND WE ALREADY DREW IT RIGHT WHILE MEASURING IT WRONG.** `%%voicefont
+ * Helvetica-Bold 10.0` emits `font-family="Helvetica" font-weight="bold"` at 13px —
+ * byte-identical to abcjs's — and the WIDTH was taken with a hard-coded `serifBold`, i.e.
+ * Times. Under a live measurer that is 0.72px of staff left edge on
+ * `visual-selection-01`, which moves every staff line and the page width with it. The
+ * half-realized shape this file has hit before: the drawing knew the face, the measure
+ * did not.
+ */
+const voiceFontOf = (size: number, fonts: Partial<Record<AbcFontType, LyricFont>>): TextFont => {
+  const f = fonts.voicefont
+  const face = f?.face
+  return {
+    size: size * UNIT_PX,
+    family: face === undefined || face === '' ? (ABCJS_FONT_FACE.voicefont ?? 'Times New Roman') : face,
+    ...(f === undefined || f.bold ? { weight: 'bold' } : {}),
+    ...(f?.italic === true ? { style: 'italic' } : {}),
+  }
+}
+
 const fontOfType = (
   fonts: Partial<Record<AbcFontType, LyricFont>>,
   type: AbcFontType,
@@ -13657,9 +13689,8 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
    */
   const voiceNameWidth = (text: string): number => {
     const size = fontSizeOf('voicefont')
-    const bold = score.fonts.voicefont === undefined || score.fonts.voicefont.bold
     return (
-      textWidth(text, size, bold ? 'serifBold' : 'serif') +
+      textWidth(text, size, voiceFontOf(size, score.fonts)) +
       (score.fonts.voicefont?.box === true ? size * ENGRAVE.fontBoxPadding * 4 : 0)
     )
   }
@@ -14621,7 +14652,21 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
         // `height + padding * 4` (`helpers/get-text-size.js:46-49`). `%%voicefont Verdana
         // 17 box` therefore centres 4.6px higher than the same font unboxed.
         const centre = stepToY(
-          (fontHeightOf('voicefont') * 0.5 + (members.length - pos - 2) * size) /
+          // ⚠️ **THE LABEL'S OWN TEXT, IN THE LABEL'S OWN FONT.** abcjs's
+          // `baselineToCenter(header, "voicefont", …)` is `calc(TEXT, type).height * 0.5 +
+          // (total - index - 2) * fontSize` (`get-text-size.js:53-59`) — the height of the
+          // STRING, not of the font. `fontHeightOf` asked for the font and, before that,
+          // in Times: 0.30px of baseline on `visual-selection-01` once the width was right.
+          // ⚠️ **AND A BOXED FONT IS MEASURED FOUR PADDINGS TALLER** — `getTextSize` returns
+          // `height + padding * 4` for one (`get-text-size.js:46-48`). Replacing
+          // `fontHeightOf` here dropped that term and took `visual-options-01-fonts`
+          // (`%%voicefont Verdana 17 box`) RED on the headless byte gate at byte 3941,
+          // which is the gate doing its job: the browser fix and the table path share this
+          // expression, so a term removed for one is removed for both.
+          ((textHeight(size, labelText, voiceFontOf(size, score.fonts)) +
+            (score.fonts.voicefont?.box === true ? size * ENGRAVE.fontBoxPadding * 4 : 0)) *
+            0.5 +
+            (members.length - pos - 2) * size) /
             ENGRAVE.spacePerStep,
         )
         /**
