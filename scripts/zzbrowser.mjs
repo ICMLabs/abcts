@@ -43,7 +43,13 @@ for (const c of cases) {
   try {
     const n = ABCJS.numberOfTunes(c.abc);
     const slots = [];
-    for (let i = 0; i < n; i++) { const d = document.createElement('div'); d.style.display='none'; document.body.appendChild(d); slots.push(d); }
+      // ⚠️ **`visibility:hidden`, NEVER `display:none`.** A `display:none` subtree has no
+      // layout, so `getBBox()` answers 0 inside it — and abcjs measures AT DRAW TIME for a
+      // boxed font (`draw/text.js:69`, `var size = elem.getBBox()`), so hiding the slots
+      // that way made abcjs draw a degenerate box of pure padding (5x5 for `%%barlabelfont
+      // … box`) while ours drew the real one. Two fixtures read as engine defects for a
+      // whole session because of it. `visibility:hidden` still lays out.
+    for (let i = 0; i < n; i++) { const d = document.createElement('div'); d.style.position='absolute';d.style.visibility='hidden'; document.body.appendChild(d); slots.push(d); }
     ABCJS.renderAbc(slots, c.abc, { staffwidth: 670 });
     const svg = slots[c.tune] ? slots[c.tune].querySelector('svg') : null;
     out[c.slug] = svg ? svg.outerHTML : 'NO SVG';
