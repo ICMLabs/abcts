@@ -18397,11 +18397,23 @@ function aboveLadder<
   // an arithmetic error, and the same shape as the lyric baseline in finding 84.
   const chordSize =
     chordTexts.length === 0 ? ENGRAVE.chordTextSize : Math.max(...chordTexts.map((t) => t.size))
-  const chordBlock =
-    (chordTexts.length === 0
-      ? ENGRAVE.chordHeightAbove
-      : Math.max(...chordTexts.map(chordHeightOf))) * chordLanes
-  const chordY = chords ? reserve(chordBlock) + chordSize : null
+  /**
+   * ⚠️ **abcjs DIVIDES BY `STEP` FIRST AND MULTIPLIES BY THE LANE COUNT SECOND.**
+   *
+   *     var height = staff.specialY[item];      // already `dim.height / spacing.STEP`
+   *     if (count) height *= count;             // pitch x count
+   *     staff.top += height + margin;
+   *
+   * (`set-upper-and-lower-elements.js`, `incTop`, over `add-chord.js:49`.) This built the
+   * whole block as a LENGTH and divided once at `reserve`, which is `(h * n) / STEP`
+   * against abcjs's `(h / STEP) * n` — the same number for ONE lane and not the same
+   * float for more.
+   */
+  const chordUnit =
+    chordTexts.length === 0
+      ? toPitch(ENGRAVE.chordHeightAbove)
+      : toPitch(Math.max(...chordTexts.map(chordHeightOf)))
+  const chordY = chords ? reservePitch(chordUnit * chordLanes) + chordSize : null
   /** …and the rung it landed on — its own y, and the PITCH abcjs holds it in. */
   const chordTopY = chordY === null ? null : chordY - chordSize
   const chordPitch = chords ? topPitch : null
