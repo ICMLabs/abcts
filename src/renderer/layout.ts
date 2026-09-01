@@ -7243,7 +7243,7 @@ function noteText(
    */
   const lyricAbove = positioning !== undefined && positioning.vocalPosition !== 'below'
   /** A text CENTRED on the note, `dx` from its x. Annotations do not call this. */
-  const centred = (text: string, size: number, dx: number, face: Face): void => {
+  const centred = (text: string, size: number, dx: number, face: Face | TextFont): void => {
     if (spans === null) return
     const half = textWidth(text, size, face) / 2
     spans.left = Math.max(spans.left, half)
@@ -7625,6 +7625,23 @@ function noteText(
   const lyricBold = event.lyricFont !== null ? event.lyricFont.bold : true
   const lyricItalic = event.lyricFont !== null ? event.lyricFont.italic : false
   /**
+   * ⚠️ **THE VERSE'S OWN FONT, FOR THE WIDTH AS WELL AS THE DRAWING.** A lyric's width is
+   * half its note's ROD on each side, so measuring the wrong face moves the LINE SOLVE and
+   * with it the staff's right edge: `[I:vocalfont Times-Roman 20]` measured as
+   * `serifBold` ran `abcts-model-gaps` tunes 6 and 7 to 252.06 and 230.26 against abcjs's
+   * 251.30 and 229.51 — bold is wider, and the directive says regular. The DEFAULT stays
+   * bold (`lyricBold` above), which is what `vocalfont` resolves to when nothing sets it.
+   */
+  const lyricFont: TextFont = {
+    size: lyricSize * UNIT_PX,
+    family:
+      event.lyricFont === null || event.lyricFont.face === ''
+        ? 'Times New Roman'
+        : event.lyricFont.face,
+    ...(lyricBold ? { weight: 'bold' } : {}),
+    ...(lyricItalic ? { style: 'italic' } : {}),
+  }
+  /**
    * **abcjs BUILDS ONE STRING FOR EVERY VERSE OF A NOTE, AND ONE `<text>` FOR IT.**
    *
    *     elem.lyric.forEach(function (ly) {
@@ -7671,7 +7688,7 @@ function noteText(
     if (index !== sungAt) {
       // A `<tspan>` of the first verse's `<text>`, but it still claims its own width —
       // `addCentered` measures the whole `lyricStr`, whose width is the widest line.
-      centred(raw, size, 0, 'serifBold')
+      centred(raw, size, 0, index === 0 ? lyricFont : 'serifBold')
       return
     }
     // THE MELISMA `_` IS PART OF THE SYLLABLE, SO IT IS PART OF THE MEASUREMENT.
@@ -7701,7 +7718,7 @@ function noteText(
       .replace(/\n\n/g, '\n \n')
       .replace(/^\n/, '\u00A0\n')
       .split('\n')
-    centred(verse, size, 0, 'serifBold')
+    centred(verse, size, 0, index === 0 ? lyricFont : 'serifBold')
     texts.push({
       text: lyricLines[0] ?? '',
       /**
