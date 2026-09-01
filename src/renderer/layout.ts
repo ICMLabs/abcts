@@ -14688,7 +14688,11 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
             ? {}
             : {
                 box: true,
-                boxSize: { width: textWidth(labelText, size, 'serif'), height: textHeight(size, labelText) },
+                // The label's own font, as its width and baseline already use — `voiceFontOf`.
+                boxSize: {
+                  width: textWidth(labelText, size, voiceFontOf(size, score.fonts)),
+                  height: textHeight(size, labelText, voiceFontOf(size, score.fonts)),
+                },
                 // `drawVoice` passes `alreadyInGroup = true` (`draw/voice.js:19`), so the
                 // rect is the text's SIBLING and no `<g>` opens.
                 inGroup: true,
@@ -19808,6 +19812,7 @@ function verticalExtent(
      */
     let versesHere = 0
     let versesText = ''
+    let versesFont: TextFont | undefined
     let versesSize = 0
     let versesVoice = 0
     /** …and the same three for a lyric that sings ABOVE — see `PlacedText.lyricAbove`. */
@@ -19849,7 +19854,19 @@ function verticalExtent(
         // rather than replacing it — the count is what the headless stub needs.
         if (t.text !== '') {
           const joined = [t.text, ...(t.extraLines ?? [])].join('\n')
-          if (joined.length > versesText.length) versesText = joined
+          if (joined.length > versesText.length) {
+            versesText = joined
+            // ⚠️ **AND THE VERSE'S OWN FONT WITH IT.** `%%vocalfont sans-serif 11` measured
+            // as Times put this lane 0.39px out — the same defect the chord lane's ladder
+            // named, one lane over. abcjs measures `getTextSize.calc(lyricStr, 'vocalfont')`,
+            // so the family is the directive's, not a default.
+            versesFont = {
+              size: t.size * UNIT_PX,
+              family: t.face === undefined || t.face === '' ? 'Times New Roman' : t.face,
+              ...(t.bold === true ? { weight: 'bold' } : {}),
+              ...(t.italic === true ? { style: 'italic' } : {}),
+            }
+          }
         }
         versesVoice = Math.max(versesVoice, t.voice ?? 0)
         versesSize = Math.max(versesSize, t.size)
@@ -19907,7 +19924,7 @@ function verticalExtent(
       const live = getTextMeasurer()
       const h =
         live !== null && versesText !== ''
-          ? textHeight(versesSize, versesText)
+          ? textHeight(versesSize, versesText, versesFont ?? 'serif')
           : textHeight(versesSize) + (versesHere - 1) * versesSize * ABCJS_RATIO.textLineStep
       // …**AND `%%vocalspace` IS ADDED TO THE LANE IN PITCH** —
       // `lyricHeightBelow += renderer.spacing.vocal / spacing.STEP`

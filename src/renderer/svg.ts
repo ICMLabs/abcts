@@ -1030,6 +1030,23 @@ export function toSVG(
     baseline: number,
     size: number,
   ): string => {
+    /**
+     * ⚠️ **MEASURED AND NOT YET PORTED: abcjs TAKES THIS OFF THE MEASURED HEIGHT.**
+     *
+     *     var deltaY = 0;
+     *     if (params.centerVertically) deltaY = size.height - hash.font.padding;
+     *     renderer.paper.rect({..., y: Math.round(y - deltaY), ...})
+     *
+     * (`draw/text.js:77-81`, over `var size = elem.getBBox()`.) This is a SIZE-based
+     * approximation of that. It agrees on every box in the corpus except a
+     * `centerVertically` one — the VOICE NAME: `%%voicefont Verdana 17 box` puts our rect
+     * at y 296 against abcjs's 293, with the box's WIDTH and HEIGHT now exact (38 x 33
+     * both sides), so only this offset is left. The measured height is recoverable here
+     * as `r.height - 2 * padding`; what is not yet established is what the NON-centred
+     * branch should be, since abcjs's `deltaY` is then 0 and this formula is evidently
+     * reproducing something else that the rest of the corpus agrees with. Establish that
+     * before changing it — every other box passes.
+     */
     const y1 = Math.round(baseline - size * (1 + ABCJS_RATIO.fontBoxPadding));
     const [x1, x2, y2] = [r.x, r.x + r.width, y1 + r.height];
     const h = (yy: number): string =>
