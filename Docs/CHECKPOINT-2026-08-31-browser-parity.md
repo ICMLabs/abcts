@@ -1,6 +1,7 @@
 ---
-title: Browser parity — what is left, in three families
-status: live gate 11 of 685 in WebKit; Node suite 2,453 and svg-bytes 685/685 unmoved throughout
+title: Browser parity — what is left, and it is decisions rather than effort
+status: live gate 8 of 685 in WebKit; Node suite 2,453 and svg-bytes 685/685 green throughout
+updated: 2026-09-01 — was 11 of 685 in three families; five more closed since
 ---
 
 # Browser parity, 2026-08-31
@@ -39,7 +40,56 @@ their increments — ours Helvetica, abcjs Arial — and closed it to 0.000000 o
 every rung. Seventeen control tunes varying ONE directive each took the font types
 from 15 of 17 exact to 16.
 
-## WHAT IS LEFT — 11, and they are THREE families, not one
+## ⚠️ UPDATE 2026-09-01 — 11 → 8, AND THE TAXONOMY BELOW IS PARTLY SPENT
+
+Closed since this was written: the staff's right edge (family 2, a lyric measured in
+`serifBold` where `[I:vocalfont Times-Roman]` says regular — it moves the LINE SOLVE,
+because a lyric's width is half its note's rod), the `%%begintext` block's height, and a
+`%%annotationfont` FACE that no fixture could reach. Family 1's mechanism is now MEASURED
+though not fixed — see below.
+
+**THE `h + (n-1) * lineStep` PATTERN IS THE STUB'S ARITHMETIC AND IT HAS APPEARED FOUR
+TIMES** — the lyric lane, the jazz chord's nested tspans, the `%%begintext` block, and
+`dump-svg.js` itself. Whenever a multi-line thing's height is COMPUTED from a single line,
+abcjs measured the whole string once and a browser will disagree in the last bits.
+
+**AND THREE DIFFERENT INSTRUMENTS EACH CAUGHT SOMETHING THE OTHERS COULD NOT:**
+
+- a LADDER OF CONTROLS overturned two conclusions written into this repo from a confounded
+  fixture (`visual-options-01-fonts`, eighteen directives at once);
+- the CORPUS caught an over-broad lyric-font fallback that made its control byte-perfect
+  and took FOUR gates red;
+- the AGGREGATE live gate caught a `%%begintext` fix that closed its own target, kept the
+  Node suite green, and put two OTHER fixtures 23.27px out. A per-fixture check cannot see
+  a regression in a fixture it does not render.
+
+## WHAT IS LEFT — 8, mostly DECISIONS
+
+**1 · THE TEMPO'S SUB-PIXEL X — 3 fixtures, mechanism measured (`549d728`).** A FRACTIONAL
+x measures one sub-pixel wider: `"left"` bold Times 20px is 27.765625 at x = 0/100/166 and
+27.78125 at x = 0.7/166.7, exactly 1/64. abcjs measures the element it JUST DREW, at the
+SOLVED x; we measure a probe at 0, and the prefix builder's cursor is provisional.
+**The fix is to advance the tempo at DRAW time, an ORDERING change** — passing an x at the
+existing site is measured to do nothing. Reproduction: `G4|[Q:"left" 1/4=170 "right"]A4|`.
+
+**2 · CSSOM SERIALISATION — 1 fixture, and it is the OWNER'S CALL.** Unchanged from below:
+abcjs sets style through the DOM and the browser serialises, and abcjs disagrees with
+ITSELF across browsers. The mechanism-level answer is to set styles through the DOM, which
+is architectural — we emit SVG text, abcjs builds nodes.
+
+**3 · A HELD SYLLABLE TAKES THE DEFAULT FONT — measured, fixed, REVERTED (`85356b9`).**
+`%%vocalfont Times-Roman 20` draws the held `&nbsp;` at 17 BOLD where abcjs draws 27
+normal. Inheriting the directive closes it and breaks four gates, one of them named
+*"does NOT realize %%vocalfont — abcjs parses it and never draws it"*. Scope to the
+held/empty syllable alone and prove against THOSE gates.
+
+**4 · TWO LARGE FONT FIXTURES** — `misc-06-title-1bold` (10.3px, rich text with `$1`/`$0`)
+and `options-01-fonts` (3.1px, down from 27.4). Several causes each; use a control.
+
+**5 · TWO SELECTION/TABLATURE FIXTURES** with byte-identical page heights, differing deep
+in the file. Not page geometry; unexamined.
+
+## THE ORIGINAL TAXONOMY, kept for its reasoning — 11, and they were THREE families, not one
 
 **1 · A NOTEHEAD X, CONSTANT AT 0.0171875** — `visual-selection-02`,
 `mouse-click-01`, `tablature-15`. Identical delta in all three, ours LOW:
