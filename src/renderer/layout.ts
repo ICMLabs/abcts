@@ -3291,6 +3291,11 @@ function layoutTempo(
   const step = ENGRAVE.tempoStep
   let cursor = x
   /**
+   * The x an advance is MEASURED at, rounded the way the emitter writes it — see the
+   * measurement note on `preWidth`.
+   */
+  const drawAt = (v: number): number => Math.round(v * 100) / 100
+  /**
    * **`%%tempofont` IS REALIZED, AND ITS LANE IS NOT.** `drawTempo`'s three parts are
    * `renderText`'s elements in `tempofont` (`draw/tempo.js:18-38`), so the directive reaches
    * the drawn text and every width it advances by — `%%tempofont serif 19 box` draws at
@@ -3354,29 +3359,33 @@ function layoutTempo(
     // Ours added a flat 1 staff space, which is a length nobody chose and which the unit
     // knob is what exposed.
     /**
-     * ⚠️ **MEASURED, TRIED, AND INERT — THE X THIS COULD PASS IS THE WRONG X.**
+     * ⚠️ **AND IT IS MEASURED AT THE X IT WILL BE DRAWN AT, BECAUSE A FRACTIONAL ONE
+     * MEASURES WIDER.**
      *
      * abcjs measures the element it JUST DREW (`draw/tempo.js:20` hands `getTextSize.calc`
-     * the node as its fourth argument), so its measurement happens at the SOLVED x. In
-     * WebKit a fractional x measures one sub-pixel wider than an integer one —
-     * `"left"` in bold Times 20px is 27.765625 at x = 0, 100 or 166 and **27.78125** at
-     * x = 0.7 or 166.7, exactly 1/64 — and the tempo advances `preWidth + preWidth/length`,
-     * 1.25x, so 1/64 of width lands as 0.02px on the mark's note, its `= 170`, and every
-     * element the solve places after them. `visual-selection-02`, `mouse-click-01` and
-     * `tablature-15` are all this.
+     * the node as its fourth argument), so its measurement happens at the real x. In WebKit
+     * a fractional x measures one sub-pixel wider than an integer one — `"left"` in bold
+     * Times 20px is 27.765625 at x = 0, 100 or 166 and **27.78125** at x = 0.7 or 166.7,
+     * exactly 1/64 — and the tempo advances `preWidth + preWidth/length`, so on a 4-letter
+     * word that 1/64 lands as 0.02px on the mark's note, its `= 170`, its `post` and
+     * everything hanging off them. `visual-selection-02`, `mouse-click-01` and
+     * `tablature-15` were all this, on BOTH their marks.
      *
-     * `TextFont.x` EXISTS for it and passing `cursor` here changes NOTHING, measured: this
-     * runs in the PREFIX builder, whose cursor is provisional, where abcjs measures after
-     * the line solve. The repo already knew the pair existed — `CHECKPOINT-2026-08-15b`
-     * records "the prefix builder's provisional x and the line solve's are two
-     * accumulations of the same widths and disagree in the last bit" — and this is that
-     * same split reaching the WIDTH rather than only the position.
+     * `drawAt` is that x rounded the way the emitter rounds it, because `roundNumber(x)` is
+     * the attribute the browser actually lays the element out from (`draw/text.js:63`).
      *
-     * **So the fix is to advance the tempo at DRAW time from the solved x**, which is what
-     * abcjs does and what the `-print` flavour already needed. That is an ordering change,
-     * not a measurement one. Do not pass a provisional x here and call it done.
+     * ⚠️ **AND `cursor` IS THE SOLVED X ONLY BECAUSE THE HEADER MARK IS REBUILT HERE.**
+     * A prefix tempo is re-laid-out from the line solve's x — see the `el.type === 'tempo'`
+     * branch at the prefix placement — where every other prefix element is merely
+     * translated. A MID-TUNE `[Q:]` is translated like the rest, so its cursor is the
+     * measure pass's, which agrees with the solve's to within a rounding of the emitted
+     * attribute. Rebuild that one too if a fixture ever shows the two rounding apart.
+     *
+     * ponytail: the x is in LAYOUT units and the emitter scales by `OUT` — 1 for every
+     * default host, and the whole effect is one sub-pixel, so a non-default `%%scale`
+     * measures at an x off by that factor. Thread `OUT` in if one ever matters.
      */
-    const preWidth = textWidth(tempo.text, tempoSize, 'serifBold')
+    const preWidth = textWidth(tempo.text, tempoSize, 'serifBold', drawAt(cursor))
     cursor += preWidth + preWidth / Math.max(1, tempo.text.length)
   }
 
@@ -3526,7 +3535,7 @@ function layoutTempo(
     })
     // …and the RATE advances the same way the pre-string does: its own width plus one
     // average character (`draw/tempo.js:33-35`).
-    const postWidth = textWidth(`= ${tempo.bpm}`, tempoSize, 'serifBold')
+    const postWidth = textWidth(`= ${tempo.bpm}`, tempoSize, 'serifBold', drawAt(cursor))
     cursor += postWidth + postWidth / Math.max(1, `= ${tempo.bpm}`.length)
   }
 
@@ -6751,13 +6760,25 @@ type Face = 'serif' | 'serifBold' | 'sans'
  * — but no longer a systematic one: the tables are real advances from the fonts abcjs
  * names, checked against widths probed out of its own `extraw`.
  */
-const textWidth = (text: string, size: number, font: Face | TextFont = 'serif'): number => {
+const textWidth = (
+  text: string,
+  size: number,
+  font: Face | TextFont = 'serif',
+  /**
+   * The x the run will be DRAWN at, when the caller knows it — see `TextFont.x`. Only a
+   * live measurer can use it; the tables have no sub-pixel to give. Pass the SAME number
+   * the emitter will write, which is `roundNumber(x)` (`draw/text.js:63`), because that is
+   * the attribute the browser lays the element out from.
+   */
+  x?: number,
+): number => {
   // **A LIVE MEASURER WINS OVER BOTH TABLES**, because when there is a DOM the target is
   // not a table at all — it is whatever the browser says, which is what abcjs asks it.
   // Node keeps the tables and the 691 goldens keep their meaning. See `text-measure.ts`.
   const live = getTextMeasurer()
   if (live !== null) {
-    return live(text, typeof font === 'string' ? fontFor(size, font) : font).width / UNIT_PX
+    const f = typeof font === 'string' ? fontFor(size, font) : font
+    return live(text, x === undefined ? f : { ...f, x }).width / UNIT_PX
   }
   // The tables are keyed by our three-way `Face`; an explicit font falls back to the face
   // its weight implies, which is all the tables can express anyway.
@@ -14850,6 +14871,15 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
           blockX.set(slot.block, row)
         }
       })
+      /**
+       * A tempo mark REBUILT at the solved x, or `null` for anything else — see the note
+       * at the two call sites and on `layoutTempo`'s `preWidth`. It carries the model it
+       * was built from, so this needs nothing the element does not already hold.
+       */
+      const rebuiltTempo = (el: LayoutElement, at: number): LayoutElement | null =>
+        el.type === 'tempo' && el.sourceTempo !== undefined
+          ? layoutTempo(at, el.sourceTempo, strict, el.sourceRange)
+          : null
       const elements: LayoutElement[] = [
         ...heading,
         ...nameElements,
@@ -14870,12 +14900,7 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
            * `-print` row. Rebuilding is what makes the mark's internal cursor start where
            * abcjs's does.
            */
-          if (el.type === 'tempo' && score.tempo !== null)
-            return (
-              layoutTempo(at, score.tempo, strict, score.tempoSourceRange) ??
-              placeElement(el, at)
-            )
-          return placeElement(el, at)
+          return rebuiltTempo(el, at) ?? placeElement(el, at)
         }),
       ]
       const beamGroups = new Map<number, StemInfo[]>()
@@ -15106,7 +15131,12 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
           }
           const nudge = lastBarNudge[voiceIndex]
           block.elements.forEach((el, index) => {
-            const placed = placeElement(el, placedAt[index] ?? el.x)
+            const at = placedAt[index] ?? el.x
+            // …**AND A MID-TUNE `[Q:]` IS REBUILT HERE FOR THE SAME REASON THE HEADER ONE
+            // IS** — see the prefix branch above. Its measure-pass cursor is BLOCK-LOCAL,
+            // so measuring its texts there is a measurement at the wrong x entirely, not
+            // merely at one that disagrees in the last bit.
+            const placed = rebuiltTempo(el, at) ?? placeElement(el, at)
             // …**AND ONLY THE RULE MOVES** — see `lastBarNudge`. `checkLastBarX` assigns
             // `maxChild.children[0].x`, so the ELEMENT keeps the x every host reads back
             // through `makeVoicesArray` and only its first drawn child follows the wider

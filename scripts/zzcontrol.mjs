@@ -15,6 +15,7 @@
  *
  *   PW=/tmp/gp/pw/node_modules/playwright-core/index.js node scripts/zzcontrol.mjs size
  *   PW=… node scripts/zzcontrol.mjs dirs
+ *   PW=… node scripts/zzcontrol.mjs tempo
  *   PW=… node scripts/zzcontrol.mjs abc 'X:1\nK:C\nCDEF|'      # one ad-hoc tune
  *
  * `size` varies ONE gchord font size per rung and prints the top staff line's y in both
@@ -80,28 +81,85 @@ const rungs = (() => {
       '%%wordsfont Georgia 13 box',
     ].map((d) => ({ label: d || '(no directive)', abc: `X:1\n${d ? `${d}\n` : ''}${BODY}` }))
   }
+  /**
+   * **THE TEMPO LADDER — one variable per rung, and the variable is the SUB-PIXEL x.**
+   *
+   * A tempo's texts are measured at the x they are DRAWN at (`draw/tempo.js:20` hands
+   * `getTextSize.calc` the node), and in WebKit a fractional x measures 1/64 wider than an
+   * integer one. The advance is `preWidth + preWidth/length`, so the error is BIGGER on a
+   * SHORT word — which is why the length rungs come first and why a single fixture cannot
+   * tell this apart from a font difference.
+   *
+   * Rungs 1-5 vary the WORD alone at a fixed position; 6-10 vary the POSITION alone with a
+   * fixed word, by pushing the `[Q:]` further into the bar so it lands on a different
+   * fraction; 11-13 vary WHERE the mark is written — header, mid-tune, both — because the
+   * header mark is REBUILT from the solved x and a mid-tune one was merely translated.
+   */
+  if (mode === 'tempo') {
+    const head = 'X:1\nM:4/4\nL:1/4\n'
+    const mid = (word, before) =>
+      `${head}K:C\n${'G4|'.repeat(before)}[Q:"${word}" 1/4=170"right"] A4 |\n`
+    return [
+      ...['l', 'le', 'left', 'lefthand', 'lefthandsidemark'].map((w) => ({
+        label: `word "${w}" (len ${w.length})`,
+        abc: mid(w, 1),
+      })),
+      ...[0, 1, 2, 3, 4].map((n) => ({
+        label: `"left" after ${n} bar(s)`,
+        abc: mid('left', n),
+      })),
+      { label: 'header Q: only', abc: `${head}Q: "Easy Swing" 1/4=140\nK:C\nG4|A4|\n` },
+      { label: 'mid-tune [Q:] only', abc: mid('left', 1) },
+      {
+        label: 'header + mid-tune',
+        abc: `${head}Q: "Easy Swing" 1/4=140\nK:C\nG4| [Q:"left" 1/4=170"right"] A4 |\n`,
+      },
+    ]
+  }
   if (mode === 'abc') {
     const raw = process.argv[3]
     if (raw === undefined) throw new Error("abc mode needs a tune: zzcontrol.mjs abc 'X:1\\n…'")
     return [{ label: 'ad-hoc', abc: raw.replace(/\\n/g, '\n') }]
   }
-  throw new Error(`unknown mode ${mode} — size | dirs | abc`)
+  throw new Error(`unknown mode ${mode} — size | dirs | tempo | abc`)
 })()
 
 const browser = await engine.launcher.launch(engine.opts)
 const page = await browser.newPage()
-await page.setContent('<!doctype html><meta charset="utf-8"><body></body>')
-await page.addScriptTag({ content: readFileSync(ABCJS, 'utf-8') })
-await page.addScriptTag({ content: readFileSync(OURS, 'utf-8') })
-const ready = await page.evaluate(() => ({
-  abcjs: typeof window.ABCJS?.renderAbc,
-  abcts: typeof window.ABCTS?.renderAbc,
-}))
-if (ready.abcjs !== 'function' || ready.abcts !== 'function')
-  throw new Error(`engines did not load: ${JSON.stringify(ready)}`)
+const abcjsSrc = readFileSync(ABCJS, 'utf-8')
+const oursSrc = readFileSync(OURS, 'utf-8')
+/**
+ * ⚠️ **A FRESH DOCUMENT PER RUNG, BECAUSE abcjs's TEXT CACHE IS MODULE-GLOBAL AND
+ * OUTLIVES A RENDER.** `var sizeCache = {}` sits at `write/svg.js`'s module scope and its
+ * key is `text + JSON.stringify(attr)` (`:306`, `:316`) — the FONT attrs, with no x — so
+ * the first width abcjs measures for a short string is the width every later render in
+ * that page gets, whatever x the text is drawn at next.
+ *
+ * Sharing one document across rungs therefore makes rung k's answer depend on rungs 1..k-1,
+ * which is the exact property a ladder exists to remove: nine of thirteen rungs of the
+ * `tempo` ladder "differed" on a build whose every rung is byte-identical measured alone.
+ * A new document is a new JS realm and so a new `sizeCache`.
+ *
+ * `SHARE=1` keeps one document across every rung — which is what a long-lived HOST page
+ * looks like, and the only way to exercise that caching from here.
+ */
+const reset = async () => {
+  await page.setContent('<!doctype html><meta charset="utf-8"><body></body>')
+  await page.addScriptTag({ content: abcjsSrc })
+  await page.addScriptTag({ content: oursSrc })
+  const ready = await page.evaluate(() => ({
+    abcjs: typeof window.ABCJS?.renderAbc,
+    abcts: typeof window.ABCTS?.renderAbc,
+  }))
+  if (ready.abcjs !== 'function' || ready.abcts !== 'function')
+    throw new Error(`engines did not load: ${JSON.stringify(ready)}`)
+}
+const share = process.env.SHARE === '1'
+await reset()
 
 const rows = []
 for (const rung of rungs) {
+  if (!share) await reset()
   const r = await page.evaluate((abc) => {
     const go = (API) => {
       try {
