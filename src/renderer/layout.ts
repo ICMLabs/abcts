@@ -17482,10 +17482,37 @@ function appendFreeText(
       })
       recordRow('textfont', block.align === 'center' ? centre : PAGE_PADDING.left)
     })
+    /**
+     * ⚠️ **`h + (n-1) * lineStep` IS THE STUB'S ARITHMETIC — the same finding as the lyric
+     * lane (`5bf5012`), one block over.** A `%%begintext` block is ONE `<text>` with a
+     * tspan per line, so abcjs measures the WHOLE thing once (`getTextSize.calc` over the
+     * joined string) and a browser answers with the real box of those tspans. The computed
+     * form agrees to a hundredth and not exactly: `abcts-inline-fields-and-blocks` tune 13
+     * — three `%%` lines and otherwise byte-identical — came out 280.844625 against
+     * abcjs's 280.850875, 0.00625 of page.
+     *
+     * Live measures the join; headless keeps the computed form, which is what its goldens
+     * were made with.
+     */
+    const live = getTextMeasurer()
+    const blockFont = fontOfType(fonts, 'textfont', textSize)
+    /**
+     * ⚠️ **AN EMPTY LINE MEASURES ZERO AND STILL TAKES A ROW.** `getTextSize` returns
+     * `{0, 0}` for a whitespace-only string (`svg.js:311-312`, reproduced in the
+     * measurer), so `%%begintext / %% / %%endtext` — one BLANK line — measured the join as
+     * nothing and reserved nothing: `visual-misc-09` and `-10` went 23.27px SHORT of
+     * abcjs's page the first time this landed. abcjs's own rule is already recorded in
+     * `CLAUDE.md`: an empty line is a row of its own that advances by the RAW height. So
+     * the live path is for a block whose lines all carry ink; anything else keeps the
+     * computed form, which handles the blank rows correctly today.
+     */
+    const everyLineInked = block.lines.length > 0 && block.lines.every((l) => l.trim() !== '')
     spend(
-      textHeight(textSize) +
-        boxOf('textfont') +
-        (block.lines.length - 1) * ENGRAVE.freeTextLineStep,
+      live !== null && everyLineInked
+        ? textHeight(textSize, block.lines.join('\n'), blockFont) + boxOf('textfont')
+        : textHeight(textSize) +
+            boxOf('textfont') +
+            (block.lines.length - 1) * ENGRAVE.freeTextLineStep,
     )
   }
   return y
