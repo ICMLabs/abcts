@@ -7634,6 +7634,30 @@ function noteText(
   // itself already rounded cannot reproduce a rounding.
   const lyricSize =
     event.lyricFont !== null ? spaces(fontPixels(event.lyricFont.size)) : ENGRAVE.lyricTextSize
+  /**
+   * ⚠️ **MEASURED DEFECT, FIX TRIED AND REVERTED — A HELD SYLLABLE TAKES THE DEFAULT FONT.**
+   *
+   * `lyricFont` is stamped per ELEMENT, and the `&nbsp;` that a `_` draws on the note it
+   * carries over never gets one, so it falls to the constants above and beside. Control,
+   * `%%vocalfont Times-Roman 20` over `C4 D4` with `w:laa_ la`, WebKit:
+   *
+   *     syllable `laa_`   size 27, weight normal   BOTH engines
+   *     the held note     ours size 17 BOLD        abcjs size 27 normal
+   *
+   * So abcjs resolves the held note's font from the DIRECTIVE and we resolve it from a
+   * hard-coded default.
+   *
+   * ⚠️ **AND `fontSizeOf('vocalfont')` / `SCORE_FONTS.vocalfont` AS THE FALLBACK IS TOO
+   * BROAD — measured.** It closes the control exactly and takes FOUR gates red: the
+   * headless byte gate on `abcts-model-gaps` tunes 5 and 7, `geometry does not regress`,
+   * and a test whose NAME is the warning — *"does NOT realize %%vocalfont — abcjs parses
+   * it and never draws it"*. abcjs's own resolution is context-dependent (verse 1 against
+   * later verses, and the per-LINE granularity `CLAUDE.md` records), so "inherit the
+   * directive" is right for a HELD note and wrong for whatever those four defend.
+   *
+   * The next attempt should scope it to the held/empty syllable alone and prove it against
+   * those four gates, not against the control. Do not widen the fallback again.
+   */
   const lyricBold = event.lyricFont !== null ? event.lyricFont.bold : true
   const lyricItalic = event.lyricFont !== null ? event.lyricFont.italic : false
   /**
