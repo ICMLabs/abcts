@@ -30,6 +30,24 @@ export interface TextFont {
   readonly family: string
   readonly weight?: string
   readonly style?: string
+  /**
+   * ⚠️ **THE X THE TEXT WILL BE DRAWN AT, BECAUSE A FRACTIONAL ONE MEASURES WIDER.**
+   *
+   * abcjs measures the element it JUST DREW — `getTextSize.calc(str, type, klass, el)`
+   * takes the node as its fourth argument and `getTextSize` skips building a probe when
+   * it has one (`write/svg.js:322-325`) — so the measurement happens at that element's
+   * real x. A probe at x=0 is not the same measurement. MEASURED in WebKit, "left" in
+   * bold Times 20px:
+   *
+   *     x = 0, 100, 166      27.765625
+   *     x = 0.7, 166.7       27.781250     <- exactly 1/64 px wider
+   *
+   * One sub-pixel quantum, and it depends only on the FRACTIONAL PART. It reaches the
+   * page because a tempo advances `preWidth + preWidth / length` — 1.25x — so 1/64 of
+   * width became 0.02px of every element after the mark. Omit it and the measurement is
+   * the x=0 one, which is right for anything actually drawn at an integer x.
+   */
+  readonly x?: number
 }
 
 /** `getBBox()`'s two figures, in PIXELS. */
@@ -104,6 +122,9 @@ export const createDomTextMeasurer = (doc: ProbeDocument, host: ProbeHost): Text
 
     const el = doc.createElementNS(NS, 'text')
     el.setAttribute('stroke', 'none')
+    // The x matters to the WIDTH — see `TextFont.x`. Set on the element and on every
+    // tspan, which is where abcjs's own builder puts it.
+    if (font.x !== undefined) el.setAttribute('x', `${font.x}`)
     el.setAttribute('font-size', `${font.size}`)
     el.setAttribute('font-family', font.family)
     if (font.weight !== undefined) el.setAttribute('font-weight', font.weight)
@@ -112,7 +133,7 @@ export const createDomTextMeasurer = (doc: ProbeDocument, host: ProbeHost): Text
     const lines = str.split('\n')
     for (let i = 0; i < lines.length; i++) {
       const span = doc.createElementNS(NS, 'tspan')
-      span.setAttribute('x', '0')
+      span.setAttribute('x', `${font.x ?? 0}`)
       if (i !== 0) span.setAttribute('dy', '1.2em')
       const line = lines[i] as string
       /**

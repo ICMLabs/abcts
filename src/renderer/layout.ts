@@ -3353,6 +3353,29 @@ function layoutTempo(
     // ("Just get some average number to increase the spacing", `draw/tempo.js:22-23`).
     // Ours added a flat 1 staff space, which is a length nobody chose and which the unit
     // knob is what exposed.
+    /**
+     * ⚠️ **MEASURED, TRIED, AND INERT — THE X THIS COULD PASS IS THE WRONG X.**
+     *
+     * abcjs measures the element it JUST DREW (`draw/tempo.js:20` hands `getTextSize.calc`
+     * the node as its fourth argument), so its measurement happens at the SOLVED x. In
+     * WebKit a fractional x measures one sub-pixel wider than an integer one —
+     * `"left"` in bold Times 20px is 27.765625 at x = 0, 100 or 166 and **27.78125** at
+     * x = 0.7 or 166.7, exactly 1/64 — and the tempo advances `preWidth + preWidth/length`,
+     * 1.25x, so 1/64 of width lands as 0.02px on the mark's note, its `= 170`, and every
+     * element the solve places after them. `visual-selection-02`, `mouse-click-01` and
+     * `tablature-15` are all this.
+     *
+     * `TextFont.x` EXISTS for it and passing `cursor` here changes NOTHING, measured: this
+     * runs in the PREFIX builder, whose cursor is provisional, where abcjs measures after
+     * the line solve. The repo already knew the pair existed — `CHECKPOINT-2026-08-15b`
+     * records "the prefix builder's provisional x and the line solve's are two
+     * accumulations of the same widths and disagree in the last bit" — and this is that
+     * same split reaching the WIDTH rather than only the position.
+     *
+     * **So the fix is to advance the tempo at DRAW time from the solved x**, which is what
+     * abcjs does and what the `-print` flavour already needed. That is an ordering change,
+     * not a measurement one. Do not pass a provisional x here and call it done.
+     */
     const preWidth = textWidth(tempo.text, tempoSize, 'serifBold')
     cursor += preWidth + preWidth / Math.max(1, tempo.text.length)
   }
