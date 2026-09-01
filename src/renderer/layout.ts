@@ -7538,6 +7538,11 @@ function noteText(
         // in the right place and in the wrong element, which only a byte gate could say.
         font: 'annotationfont',
         dataName: 'annotation',
+        // **`%%annotationfont`'s FACE, which the LEFT/RIGHT arm never carried.** The
+        // above/below arms take it and these two did not, so `%%annotationfont Times-Roman
+        // 20` DREW in Helvetica — the emitter's default for the type — while abcjs draws
+        // Times. Its SIZE was already right, which is why nothing looked obviously wrong.
+        ...faceOf('annotationfont'),
         reserve: pointReserve(stepToY(averageStep)),
       })
     } else {
@@ -7558,6 +7563,11 @@ function noteText(
         // in the right place and in the wrong element, which only a byte gate could say.
         font: 'annotationfont',
         dataName: 'annotation',
+        // **`%%annotationfont`'s FACE, which the LEFT/RIGHT arm never carried.** The
+        // above/below arms take it and these two did not, so `%%annotationfont Times-Roman
+        // 20` DREW in Helvetica — the emitter's default for the type — while abcjs draws
+        // Times. Its SIZE was already right, which is why nothing looked obviously wrong.
+        ...faceOf('annotationfont'),
         reserve: pointReserve(stepToY(averageStep)),
       })
     }
