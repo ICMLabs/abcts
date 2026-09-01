@@ -1,107 +1,94 @@
-# NEXT AGENT PROMPT — abcts, 2026-08-29
+# NEXT AGENT PROMPT — abcts, 2026-09-01
 
 Paste the block below.
 
 ---
 
 ```
-start here: abcts/Docs/HANDOFF-2026-08-29.md
+start here: abcts/Docs/HANDOFF-2026-09-01.md
 
 Work in /Users/lrettberg/ICMLabs/Code/abcts. Run every command from there — `cd` does
-not persist between tool calls and the workspace ROOT collects every sibling repo's
-tests.
+not persist between tool calls and the workspace ROOT collects every sibling repo's tests.
 
-TWO ROWS ARE OPEN AND BOTH ARE NAMED, in `abcts-grace-order-and-lanes.abc`:
+A NEW AXIS IS OPEN AND IT IS THE ONE A DROP-IN IS JUDGED ON. Every headless gate compares
+against goldens harvested from abcjs UNDER JSDOM, where `dump-svg.js` PATCHES `getBBox`
+with calibrated tables. `scripts/zzlive.mjs` puts abcts and abcjs 6.7.0 in ONE WebKit page
+and diffs them live:
 
-  (a) TUNE 2 — a STACKED ORNAMENT is one ULP out (`22.535000000000007` for abcjs's
-      `22.535`). ⚠️ `drawPitch` looks EXACTLY like the answer — it is the field that
-      fixed the CLOSE decoration's identical-looking `getYCorr` case — and adding it
-      here takes FOUR byte-exact fixtures RED: ragtime-nightingale in all three
-      flavours and abcjs-visual-decorations-01-score-s-a-b. The corpus is the evidence
-      against the obvious reading. READ THE NOTE AT THE PUSH BEFORE TRYING IT.
+    live gate: 8 of 685      (231 when the axis opened)
+    Node suite 2,453, svg-bytes 685 of 685 — both green, keep them that way
 
-  (b) TUNE 26 — a DYNAMIC and a CURVE are ordered differently on a note carrying
-      everything at once. Ours emits `data-name="dynamics"` where abcjs emits the curve.
+⚠️ NO STORED GOLDEN CAN REPLACE IT. abcjs does not render byte-identically in WebKit and
+Blink — 230 of 691 differ between them — so browser parity has NO SINGLE TARGET and the
+only coherent oracle is abcjs in the SAME browser. Re-harvesting from a browser is ruled
+out, measured, in `d4b7022`.
 
-EVERY OTHER GATE READS ZERO: SVG bytes 2 of 691 (those two, 6 ruled divergent) and
-0 of 356 sibling; `tune.lines` 607,177 of 607,177 characters; extractMeasures 0 of 274
-files and 3,366 of 3,366 rows; warnings 1 of 815 (a ruled divergence's shadow); the
-harvested corpus 0 of 230 within 1px. Suite 2,451, no reds.
+TO RUN IT (the driver is NOT a devDep here and /tmp gets cleaned):
 
-⚠️ THAT IS THE NORMAL CONDITION HERE, NOT A FINISH LINE.
+    mkdir -p /tmp/gp/pw && cd /tmp/gp/pw && npm init -y && npm i playwright-core@1.61
+    npx playwright-core install webkit        # only if the cache is gone
+    cd <repo> && npm run build                # the gates load dist/, not src/
+    PW=/tmp/gp/pw/node_modules/playwright-core/index.js node scripts/zzlive.mjs
 
-⚠️ AND READ THIS BEFORE YOU READ ANY OTHER NOTE. THREE OF THIS SESSION'S SIX DEFECTS
-HAD A NOTE OF OURS STANDING BETWEEN THE ROW AND ITS ANSWER, AND ALL THREE SAID THE SAME
-KIND OF THING — THAT SOME CASE WAS SPECIAL:
+PIN 1.61 — it names webkit-2311, the cached build. 1.55 and 1.62 each start a 90MB fetch.
 
-  • "the moved rest changes the staff's extent"  — reasoned from which object abcjs
-    ASSIGNS to, never from what READS it.
-  • "`drawPitch` looks like the field for it and is NOT" — written after a 23.25px
-    miss, and 23.25 is `PITCH_ORIGIN * spacePerStep` EXACTLY. A unit error that stood
-    as a rebuttal for a day.
-  • "a `(3` is the exception and is not this rule at all" — it is precisely that rule.
+⭐ THE METHOD, IN THE ORDER THAT PAID — and it is the whole handoff in one line:
 
-  A NUMBER THAT IS EXACTLY ONE CONSTANT IS A UNIT ERROR, NOT A REBUTTAL.
-  A NOTE THAT SAYS "THIS CASE IS SPECIAL" IS THE FIRST THING TO RE-MEASURE.
-  The gates were right throughout; the prose was the blocker.
+  A LADDER OF CONTROLS IS THE PROOF; A FIXTURE WITH MORE THAN ONE OPEN CAUSE CANNOT RULE
+  ANYTHING OUT. `scripts/zzcontrol.mjs` runs one variable per rung (`size`, `dirs`, `abc`);
+  `scripts/zzpair.mjs` diffs one fixture element by element. TWO conclusions were committed
+  to this repo and both were WRONG, both reasoned from `visual-options-01-fonts`, which
+  sets EIGHTEEN font directives at once. Nine control tunes refuted them in one run.
 
-THE METHOD, IN THE ORDER THAT PAID:
+  AND THREE INSTRUMENTS EACH CAUGHT WHAT THE OTHERS COULD NOT: the ladder overturned those
+  two notes; the NODE CORPUS caught an over-broad fallback whose own control was
+  byte-perfect; and the AGGREGATE live gate caught a fix that closed its target, kept Node
+  green, and put two OTHER fixtures 23.27px out. Run all three.
 
-  ⭐ FIXTURE FIRST. A ladder renders one shape; a fixture renders a whole PAGE and joins
-     every other gate. Close a row, make it a fixture tune the same hour, re-harvest the
-     goldens AND the warnings AND the extractMeasures oracles, and re-ratchet.
-  ⭐ THEN READ THE GATE YOU WERE NOT AIMING AT. `extractMeasures` and the warnings gate
-     each named defects the byte gate structurally cannot see — on fixtures written FOR
-     the byte gate. Run the WHOLE suite after every landing and read the ranked tables.
-  ⭐ THEN THE SWEEP. `npx tsx scripts/zzsweep.ts <dir>` over a directory of `.abc`.
-     Its territory is not exhausted — §2 of WHAT IS LEFT names what is untouched — but
-     the lane sweep hit 3 of 24 and every hit was a GRACE, so aim at feature PAIRS.
+THE RULE BEHIND ALMOST EVERY FIX: abcjs MEASURES THE THING IT IS ABOUT TO DRAW and we
+measured a STAND-IN — a probe string, a generic font, the wrong family, one line's height
+where the whole block's was wanted. And `h + (n-1) * size * 1.2` IS THE STUB'S `getBBox`,
+NOT A RULE — it has appeared FOUR times.
 
-  ⚠️ AND ENUMERATE THE REFERENCE, NOT YOUR NOTES. abcjs's own directive switch named 18
-     directives this parser never mentions; SEVENTEEN were already byte-exact and five
-     of those seventeen were still warning defects. "Never mentioned here" is not "not
-     implemented there".
+WHAT IS LEFT — 8, and most of it is DECISIONS rather than effort:
 
-RULES THAT COST SOMETHING:
-  ⚠️ A ROW NAMED IN A FIXTURE CAN REPORT ITS OWN CLOSURE; ONE LEFT OUT CANNOT. The byte
-     gate sits off zero on purpose when a row is measured and open. Never drop a shape
-     to make a number look better.
-  ⚠️ A GATE'S EXCLUSION LIST MEANS WHAT IT SAYS. `DIVERGENT` is "abcjs does something we
-     decline to reproduce, written up in Docs/ABCJS-DIFFERENCES.md"; `STALE` is "the
-     golden was not regenerated". Using the second for the first hides a regression.
-  ⚠️ A SUITE'S EXIT CODE CANNOT BE READ THROUGH `tail` — a red run committed that way.
-     `npx vitest run > /tmp/suite.txt 2>&1; echo $?`.
-  ⚠️ `git stash` ON A CLEAN TREE STASHES NOTHING, so the pop after it takes somebody
-     else's entry. Put a control that MUST differ in the sweep instead: `C32|` is a
-     ruled divergence and reads DIFFERS forever.
-  ⚠️ printf '%b', NEVER '%s' — a sweep once reported 36 of 36 EXACT with every \n
-     literal, and the runner cannot check that for you.
+  1. THE TEMPO'S SUB-PIXEL X (3 fixtures). A FRACTIONAL x measures 1/64 wider; abcjs
+     measures the element it just DREW, at the SOLVED x. Passing an x at the existing site
+     is MEASURED to do nothing — it is the prefix builder and its cursor is provisional.
+     The fix is to advance the tempo at DRAW time: an ORDERING change.
+     Reproduce: G4|[Q:"left" 1/4=170 "right"]A4|
+  2. CSSOM SERIALISATION (1). THE OWNER'S CALL — abcjs sets style through the DOM and the
+     browser serialises; abcjs disagrees with ITSELF across browsers. Matching it means
+     setting styles through the DOM, which is architectural.
+  3. A HELD SYLLABLE TAKES THE DEFAULT FONT. Measured, fixed, REVERTED — inheriting the
+     directive closes the control and takes FOUR gates red. Scope to the held/empty
+     syllable alone and prove against those four, not the control.
+  4. Two large font fixtures (several causes each — use a control).
+  5. Two selection/tablature fixtures, page heights already exact, unexamined.
 
-Before any abcjs instrumentation, check /tmp/gp/abcjs still exists — it is cleaned
-periodically, and it carries ZZAE/ZZCH/ZZMOVEY/ZZCB/ZZNOTE/ZZCORE, each on its own env
-var. ZZAE prints a per-element box, ZZCH a staff's extent, ZZMOVEY the page walk.
-⚠️ ABCJS_VERSION=6.7.0 IS NOT OPTIONAL — dump-svg.js defaults to 6.6.3.
+TRAPS, all measured this session:
+  ⚠️ `display:none` ZEROES `getBBox` and abcjs measures at DRAW time for a boxed font, so
+     hiding harness slots that way INVENTS defects and MASKS others. Use visibility:hidden.
+  ⚠️ `npx tsc --noEmit | head -3; echo $?` reports HEAD's status. Two changes that did not
+     compile passed it and WebKit caught them. Write `npx tsc --noEmit && echo OK`.
+  ⚠️ An EMPTY line measures zero and still takes a row.
+  ⚠️ A narrow probe can miss the effect it was built to find.
 
-Run npx tsc --noEmit before every commit, diff every regenerated golden against HEAD
-asserting only new keys appeared, re-ratchet every gate's PASSING list in the same
-commit, and commit and push after every landing. Never --force.
-
-DO NOT START the `abselem` decision — it is the OWNER's, and it means retaining the
-`Layout` that measurably killed this suite's workers once.
+Run `npx tsc --noEmit && echo OK` before every commit, keep BOTH gates green, and commit
+and push after every landing. Never --force. Omit Co-Authored-By trailers here.
 ```
 
 ---
 
-## Why this is the order
+## Why this order
 
-**The two named rows first**, because they are measured, cited and gated — and because (a)
-has a recorded WRONG answer beside it, which is worth more than the row.
+**The live gate first**, because it is the only thing that can name a browser defect and it
+did not exist three days ago.
 
-**Then the notes, before the code.** Three of six defects this session were unblocked by
-re-measuring a claim someone had written down, not by finding new code. That is now the
-first thing the prompt says.
+**Then the method**, because the two wrong conclusions this session had to retract were both
+produced by reasoning from a fixture instead of a control — and each cost more than the fix
+that eventually landed.
 
-**Then a fixture, then the gate you were not aiming at, then the sweep.** Measured yield
-order, unchanged from the last handoff and confirmed again.
-
-**`abselem` is still not the next agent's.**
+**Then what is left, labelled by what it NEEDS.** Three of the five are decisions. An agent
+that treats them as effort will either half-land the tempo ordering change or re-try the
+held-syllable fallback that four gates already refused.

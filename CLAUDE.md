@@ -950,7 +950,16 @@ checkpoint and hand off as you go so no context is lost.
 > `Docs/CHECKPOINT-2026-08-14.md` — §4 is the work list as it stood, §5 the harness. Then the
 > files below.
 
-**READ `Docs/HANDOFF-2026-08-22.md` FIRST** — the current state. Suite **1,938 passing, NO
+**READ `Docs/HANDOFF-2026-09-01.md` FIRST** — the current state, and it opened an axis none
+of the gates below can express: **`scripts/zzlive.mjs` runs abcts and abcjs 6.7.0 in ONE
+WebKit page and diffs them live, at 8 of 685 from 231.** Every gate named further down
+compares against goldens harvested from abcjs UNDER JSDOM, where `dump-svg.js` PATCHES
+`getBBox` — so they assert "abcts matches abcjs GIVEN SYNTHETIC TEXT METRICS", which is the
+right target headless and the wrong one in a browser. ⚠️ **And no stored golden can replace
+it: abcjs does not render byte-identically in WebKit and Blink** (230 of 691), so browser
+parity has no single target. `Docs/CHECKPOINT-2026-08-31-browser-parity.md` is the detail.
+
+**AND `Docs/HANDOFF-2026-08-22.md` IS THE ONE BEFORE IT** — the state as it stood then. Suite **1,938 passing, NO
 reds and no expected-fails**; the SVG byte gate is **1 of 251** in-repo (one row, whose cause
 is named and is NOT the directive it sits on) and 0 of 356 sibling; `tune.lines` is 328,548
 of 328,548 characters over 367 tunes; parse-values and render-values are 0 of 11,495.
