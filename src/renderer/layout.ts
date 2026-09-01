@@ -6936,8 +6936,12 @@ let LINE_WEIGHTS = lineWeightsFor(true)
  * its right edge is. `visual-tablature-17` boxes five `%%gchordfont` sizes and was 33.9px
  * of dx out on this alone.
  */
-const markWidth = (text: string, size: number, boxed: boolean): number =>
-  textWidth(text, size, 'sans') + (boxed ? size * ENGRAVE.fontBoxPadding * 4 : 0)
+const markWidth = (
+  text: string,
+  size: number,
+  boxed: boolean,
+  font: Face | TextFont = 'sans',
+): number => textWidth(text, size, font) + (boxed ? size * ENGRAVE.fontBoxPadding * 4 : 0)
 
 /** The font a chord symbol or annotation is DRAWN in — see `chordHeightOf`'s ladder. */
 const markFontOf = (t: PlacedText): TextFont => ({
@@ -7318,7 +7322,13 @@ function noteText(
               // `getBBox()`'s two figures, which the box is laid out from — see
               // `PlacedText.boxSize`. Measured HERE because the metrics live here; the
               // emitter turns them into abcjs's four rules once the lanes have moved the y.
-              boxSize: { width: markWidth(line, size, false), height: textHeight(size, line) },
+              // The mark's own family — `%%gchordfont Arial` is not Helvetica, and
+              // `%%annotationfont Times-Roman` is not sans at all. Same defect the chord
+              // ladder named; these are the sites that feed PLACEMENT.
+              boxSize: {
+                width: markWidth(line, size, false, fontOfType(SCORE_FONTS, 'gchordfont', size)),
+                height: textHeight(size, line, fontOfType(SCORE_FONTS, 'gchordfont', size)),
+              },
             }
           : {}),
       })
@@ -7398,7 +7408,10 @@ function noteText(
         ? {
             box: true,
             // `getBBox()`'s two figures, as the chord symbol's box already carries.
-            boxSize: { width: markWidth(a.text, size, false), height: textHeight(size, a.text) },
+            boxSize: {
+              width: markWidth(a.text, size, false, fontOfType(SCORE_FONTS, 'annotationfont', size)),
+              height: textHeight(size, a.text, fontOfType(SCORE_FONTS, 'annotationfont', size)),
+            },
           }
         : {}),
       // AN ANNOTATION SHARES THE CHORD LANE. `RelativeElement` gives a `type: "text"`
@@ -7441,7 +7454,10 @@ function noteText(
       ...(SCORE_FONTS.annotationfont?.box === true
         ? {
             box: true,
-            boxSize: { width: markWidth(a.text, size, false), height: textHeight(size, a.text) },
+            boxSize: {
+              width: markWidth(a.text, size, false, fontOfType(SCORE_FONTS, 'annotationfont', size)),
+              height: textHeight(size, a.text, fontOfType(SCORE_FONTS, 'annotationfont', size)),
+            },
           }
         : {}),
     })
