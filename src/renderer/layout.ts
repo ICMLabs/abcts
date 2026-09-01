@@ -7518,7 +7518,9 @@ function noteText(
   for (const a of annotations) {
     if (a.where !== 'left' && a.where !== 'right') continue
     const size = fontSizeOf('annotationfont')
-    const width = textWidth(a.text, size, 'sans')
+    // The annotation's own family — `%%annotationfont Times-Roman` is a SERIF, and this
+    // feeds `roomTaken`, so it PLACES the note. Same defect the above/below boxes had.
+    const width = textWidth(a.text, size, fontOfType(SCORE_FONTS, 'annotationfont', size))
     if (a.where === 'left') {
       roomTaken += width + ENGRAVE.leftAnnotationGap
       if (spans !== null) spans.left = Math.max(spans.left, roomTaken)
@@ -8315,8 +8317,19 @@ function layoutMelismas(
 
     // The lyric's `x` is its CENTRE now — it is `anchor: "middle"` — so the extender
     // starts half a width to the right of it, not a whole one.
-    const from =
-      lyric.x + textWidth(lyric.text, lyric.size, 'serifBold') / 2 + ENGRAVE.melismaGap
+    /**
+     * The verse's own font, as its ROD already uses — a melisma that starts half a width
+     * from the syllable has to agree with the syllable's own measurement or the extender
+     * begins inside the text. `%%vocalfont`'s default is BOLD, which is why that is the
+     * fallback here and not the plain serif every other row takes.
+     */
+    const lyricFont: TextFont = {
+      size: lyric.size * UNIT_PX,
+      family: lyric.face === undefined || lyric.face === '' ? 'Times New Roman' : lyric.face,
+      ...(lyric.bold !== false ? { weight: 'bold' } : {}),
+      ...(lyric.italic === true ? { style: 'italic' } : {}),
+    }
+    const from = lyric.x + textWidth(lyric.text, lyric.size, lyricFont) / 2 + ENGRAVE.melismaGap
     const to = last.right + ENGRAVE.melismaGap
     // A run so tight that the line would be a speck reads as a smudge; drop it instead.
     if (to - from < ENGRAVE.melismaMinLength) return
