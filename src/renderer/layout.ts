@@ -18836,6 +18836,18 @@ function anchorChordsBelow<
   }
 
   const marks = parts.flatMap((p) => p.elements.flatMap((el) => el.texts.filter(isBelow)))
+  /**
+   * ⚠️ **DIVIDE BY `STEP` FIRST, MULTIPLY BY THE LANE COUNT SECOND** — the mirror of the
+   * ABOVE lane's order, which landed in `805a9a1`. abcjs holds `chordHeightBelow` as a
+   * PITCH from `dim.height / spacing.STEP` (`add-chord.js:49`) and `incBottom` spends
+   * `height * count + margin` in that unit, where this built the whole block as a LENGTH
+   * and divided once at `reserveBottomPitch`. `(h * n + m) / STEP` is not
+   * `(h / STEP) * n + m / STEP`: `"_a""_b""_c"CDEF|` — three stacked below-annotations —
+   * came out 193.270875 against abcjs's 193.27087500000002, one ULP, with OUR number the
+   * clean one and abcjs's carrying the tail.
+   */
+  const markPitch = Math.max(...marks.map(chordHeightOf)) / ENGRAVE.spacePerStep
+  const blockPitch = markPitch * lanes + ENGRAVE.aboveStackMargin / ENGRAVE.spacePerStep
   const block = Math.max(...marks.map(chordHeightOf)) * lanes + ENGRAVE.aboveStackMargin
   /**
    * ⚠️ **THE RESERVE IS OFF THE INK AND THE BASELINE IS OFF THE LANE.** abcjs spends the
@@ -18845,7 +18857,7 @@ function anchorChordsBelow<
    */
   const reserve: readonly [number, number] = [extent.inkBottom, extent.inkBottom + block]
   /** …and the same lower edge in PITCH — see `PlacedText.reserveBottomPitch`. */
-  const reserveBottomPitch = extent.inkBottomPitch - block / ENGRAVE.spacePerStep
+  const reserveBottomPitch = extent.inkBottomPitch - blockPitch
   return parts.map((part) => ({
     ...part,
     elements: part.elements.map((el) =>
