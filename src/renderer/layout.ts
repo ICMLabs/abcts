@@ -16458,6 +16458,8 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
           ...bottomBlock.texts,
         ]
 
+  /** Each bottom-block row's own page cursor — filled by the walk below, by identity. */
+  const bottomPageY = new Map<PlacedText, number>()
   /**
    * **THE PAGE CURSOR WHERE THIS TUNE ENDS**, before `padding.bottom`. It is the walk
    * below, hoisted out of `height` so a STACKED book can seed the NEXT tune with it —
@@ -16513,17 +16515,40 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
         console.log('Y trailing', trailingAdvances, '->', y)
       if (bottomBlock.texts.length > 0) {
         y += spaces(ABCJS_PX.bottomTextGap)
-        // …ROW BY ROW, as `nonMusic` spends them — see `bottomTextBlock`.
-        for (const a of bottomBlock.advances) y += a
+        // …ROW BY ROW, as `nonMusic` spends them — and this is where each row's PAGE y is
+        // stamped. See `bottomPageY`.
+        for (const row of bottomBlock.rows) {
+          if ('move' in row) y += row.move
+          else if ('text' in row) bottomPageY.set(row.text, y + (row.text.rowExtra ?? 0))
+        }
       }
       return y
   })()
+
 
   return {
     systems: shown,
     engraved: placed,
     ...(stafflessBlock === undefined ? {} : { topText: stafflessBlock.texts }),
-    ...(bottomText === undefined ? {} : { bottomText }),
+    /**
+     * …**EACH CARRYING THE PAGE CURSOR IT WAS SPENT AT** — see `bottomPageY`. The emitter's
+     * alternative is `t.y + oy`, a block-local walk plus a base, which is the `local + base`
+     * hazard `bottomTextBlock`'s own doc block warns about and takes `from` to avoid: taking
+     * `from` fixed the walk WITHIN the block and the `+ oy` at the emitter put the grouping
+     * back. `misc-06-title-1bold`'s first `W:` row is `445.779 + 15` = 460.779 that way and
+     * `460.77900000000005` walked, which is abcjs's own number. The TOP block has been built
+     * at the page's cursor and carried `pageY` since the `%%begintext` ULP; this is the same
+     * fix one block over, reached through the row list because these rows already exist by
+     * the time the page walk runs.
+     */
+    ...(bottomText === undefined
+      ? {}
+      : {
+          bottomText: bottomText.map((t) => {
+            const at = bottomPageY.get(t)
+            return at === undefined ? t : { ...t, pageY: at }
+          }),
+        }),
     // …and the two ROW LISTS, whichever path built the top block — see `Layout.topTextRows`.
     topTextRows: stafflessBlock === undefined ? topRows : stafflessBlock.rows,
     nonMusicRows,
@@ -17853,6 +17878,9 @@ function bottomTextBlock(
         dataName,
         x: PAGE_PADDING.left,
         y,
+        // …**AND WHAT THIS ROW ADDS TO THE CURSOR IS NOTHING** — `richTextLine` draws at
+        // `params.y` (`draw/text.js:8-9`). Carried so the page walk can stamp `pageY`.
+        rowExtra: 0,
         size,
         bold: fontType === undefined ? false : (fonts[fontType]?.bold ?? false),
         italic: fontType === undefined ? false : (fonts[fontType]?.italic ?? false),
@@ -17934,6 +17962,8 @@ function bottomTextBlock(
           }),
       x: PAGE_PADDING.left + pad,
       y: y + size + pad,
+      // `renderText`'s two adds onto the row's cursor — see `PlacedText.advanceAt`.
+      rowExtra: size + pad,
       size,
       bold: fontType === undefined ? false : (fonts[fontType]?.bold ?? false),
       italic: fontType === undefined ? false : (fonts[fontType]?.italic ?? false),

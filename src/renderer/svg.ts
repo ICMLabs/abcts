@@ -4039,7 +4039,8 @@ export function toSVG(
             return richTextLine(
               t.phrases,
               raw(t.x * PX),
-              raw(t.y * PX + oy),
+              // **THE PAGE'S OWN y WHERE THERE IS ONE** — see `PlacedText.pageY`.
+              raw(t.pageY === undefined ? t.y * PX + oy : t.pageY * PX),
               t.anchor ?? "start",
               options.addClasses === true && t.dataName !== undefined
                 ? (t.groupClass ??
@@ -4049,7 +4050,7 @@ export function toSVG(
                 : undefined,
             );
           }
-          const base = round2(t.y * PX + oy);
+          const base = round2(t.pageY === undefined ? t.y * PX + oy : t.pageY * PX);
           const markup = abcjsText(
             round2(t.x * PX),
             base,
@@ -4085,7 +4086,11 @@ export function toSVG(
           return t.boxRect === undefined
             ? markup
             : `<g fill="currentColor" data-name="${t.dataName ?? ""}">` +
-                `${markup}${boxRulesPath(t.boxRect, t.y * PX + oy, t.size * PX)}</g>`;
+                `${markup}${boxRulesPath(
+                  t.boxRect,
+                  t.pageY === undefined ? t.y * PX + oy : t.pageY * PX,
+                  t.size * PX,
+                )}</g>`;
         })
         .map((markup, i) => {
           const row = (doc.bottomText ?? [])[i];
