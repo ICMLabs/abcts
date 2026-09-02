@@ -1507,10 +1507,60 @@ function renderInto(
   return withLiveTextMetrics(() =>
     walkSlots(slots, from, result.scores, (element, score) => {
       const tune = render(score, element);
-      if (element !== null) element.innerHTML = tune.svg;
+      if (element !== null) {
+        element.innerHTML = tune.svg;
+        restyleScale(element);
+      }
       return tune;
     }),
   );
+}
+
+/**
+ * **A `%%scale` IS SET THROUGH THE DOM AND THE BROWSER SERIALISES IT — SO WE SET IT TOO.**
+ *
+ * `setScale` assigns EIGHT properties on the root `<svg>`'s `style`
+ * (`write/svg.js:71-83`): `transform`, `-ms-transform`, `-webkit-transform`,
+ * `transform-origin` and the `-ms-`/`-webkit-` `transform-origin-x`/`-y` four. What lands
+ * in the attribute is then whatever that browser's CSSOM serialises — **and the browsers
+ * disagree**: WebKit collapses `-webkit-transform` onto `transform`, prints
+ * `scale(0.8, 0.8)` with a space and `0px 0px`, and drops the six it does not know;
+ * Chrome KEEPS `-webkit-transform-origin-x/y`. jsdom, which harvested the goldens,
+ * serialises three.
+ *
+ * So there is no one string to emit, which is why the emitter's own `style` attribute —
+ * jsdom's three, the form the 691 goldens carry — cannot be right in a browser and this
+ * exists. Re-running abcjs's eight assignments over the inserted element replaces that
+ * attribute with the browser's OWN serialisation of the same declarations, which is
+ * abcjs's by construction in every browser rather than in one.
+ *
+ * Headless is untouched: no `document`, no `querySelector`, and the emitted string stands.
+ * The scale is read back off the element rather than threaded down, because the emitter has
+ * already resolved `%%scale`, `{scale}` and print into one number and re-deriving it here
+ * would be a second place for that rule to live.
+ */
+function restyleScale(element: { innerHTML: string }): void {
+  const root = (element as { querySelector?(s: string): StyledElement | null }).querySelector?.(
+    "svg",
+  );
+  const style = root?.style;
+  if (style === undefined || style === null) return;
+  const scale = /scale\(\s*([0-9.]+)/.exec(style.transform ?? "")?.[1];
+  if (scale === undefined) return;
+  const s = `scale(${scale},${scale})`;
+  style.transform = s;
+  style["-ms-transform"] = s;
+  style["-webkit-transform"] = s;
+  style["transform-origin"] = "0 0";
+  style["-ms-transform-origin-x"] = "0";
+  style["-ms-transform-origin-y"] = "0";
+  style["-webkit-transform-origin-x"] = "0";
+  style["-webkit-transform-origin-y"] = "0";
+}
+
+/** The one DOM surface `restyleScale` touches — structurally typed, like `LiveElement`. */
+interface StyledElement {
+  readonly style?: { transform?: string } & Record<string, string | undefined>;
 }
 
 /**
