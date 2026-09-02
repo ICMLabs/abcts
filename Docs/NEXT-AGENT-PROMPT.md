@@ -59,13 +59,18 @@ WHAT IS LEFT — 4, and TWO OF THEM ARE NOT DEFECTS OF THE RENDERER:
      `svg-per-line-01` pass zzpair exactly and fail zzlive; the whole difference is the
      cache below. ⚠️ CONFIRM WITH zzpair BEFORE CHASING ANY RED — zzlive shares one page
      across 691 cases and abcjs's text cache is module-global.
-  2. `misc-06-title-1bold` — ONE ULP, and only in the FULL fixture. Page height exact; one
-     bottom-block row reads 460.779 against 460.77900000000005 and every row after it
-     agrees, because the next add absorbs it. Leave-one-out says removing ANY of four lines
-     closes it, so it is an ACCUMULATION — "A TOTAL IS NOT A WALK", the fifth time.
-     Two hypotheses are DEAD and measured: a per-phrase `richHeight` (abcjs's actual rule,
-     ported, moved NOTHING, reverted) and every `%%setfont` control rung. INSTRUMENT THE
-     PAGE CURSOR; do not reason about which term it is.
+  2. `misc-06-title-1bold` — ONE ULP, and it is the VISIBLE EDGE OF A 0.765625 THAT
+     CANCELS. Page height exact; one bottom-block row reads 460.779 against
+     460.77900000000005. INSTRUMENTED: the emitter builds that y as `t.y + oy` — a
+     block-local walk plus a base, the hazard `bottomTextBlock`'s own doc warns about —
+     while `pageEnd`'s WALK reaches 461.54462500000005 for the same row: abcjs's last bits,
+     and 0.765625 HIGH. Two frames, two errors cancelling by the page end, eighth time.
+     Stamping `pageY` from the walk is the right shape (the TOP block already does it) and
+     lands a 0.77px error TODAY — written, measured, reverted. ⭐ SO THE WORK IS THE
+     0.765625: `bottom = last.originY + systemHeight(last)` and `pageEnd`'s per-system walk
+     are two derivations of one cursor; find where they part. Also dead and measured:
+     per-phrase `richHeight`, left-associating `(originY + leading) + h*STEP`, every
+     `%%setfont` control rung.
   3. CSSOM SERIALISATION (1). THE OWNER'S CALL — abcjs sets style through the DOM and the
      browser serialises; abcjs disagrees with ITSELF across browsers. Matching it means
      setting styles through the DOM, which is architectural.
