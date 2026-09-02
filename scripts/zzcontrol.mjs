@@ -16,6 +16,7 @@
  *   PW=/tmp/gp/pw/node_modules/playwright-core/index.js node scripts/zzcontrol.mjs size
  *   PW=… node scripts/zzcontrol.mjs dirs
  *   PW=… node scripts/zzcontrol.mjs tempo
+ *   PW=… node scripts/zzcontrol.mjs lyricfont
  *   PW=… node scripts/zzcontrol.mjs abc 'X:1\nK:C\nCDEF|'      # one ad-hoc tune
  *
  * `size` varies ONE gchord font size per rung and prints the top staff line's y in both
@@ -116,12 +117,33 @@ const rungs = (() => {
       },
     ]
   }
+  /**
+   * **THE LYRIC-FONT LADDER — one variable per rung, and the variable is WHICH syllable.**
+   *
+   * `%%vocalfont` is stamped per ELEMENT, so the `&nbsp;` a `_` carries onto the next note
+   * and the one a `*` draws reach the emitter with no font at all. Rungs 1-2 vary the SIZE
+   * either side of the default (the sign of the error flips there), 3 swaps `_` for `*`,
+   * 4 lengthens the melisma, 5 adds a second verse, 6 is the no-directive control that must
+   * not move, and 7 is the inline `[I:vocalfont]` form.
+   */
+  if (mode === 'lyricfont') {
+    const head = 'X:1\nM:4/4\nL:1/4\nK:C\n'
+    return [
+      { label: 'held _ Times-Roman 20', abc: `X:1\n%%vocalfont Times-Roman 20\n${head.slice(4)}C4 D4\nw:laa_ la\n` },
+      { label: 'held _ Helvetica 10', abc: `X:1\n%%vocalfont Helvetica 10.0\n${head.slice(4)}C4 D4\nw:laa_ la\n` },
+      { label: 'star *', abc: `X:1\n%%vocalfont Times-Roman 20\n${head.slice(4)}C4 D4\nw:* la\n` },
+      { label: 'long melisma', abc: `X:1\n%%vocalfont cursive 18\n${head.slice(4)}C4 D4 E4 F4\nw:laa___ la\n` },
+      { label: 'two verses + held', abc: `X:1\n%%vocalfont Verdana 16\n${head.slice(4)}C4 D4\nw:laa_ la\nw:one two\n` },
+      { label: 'no directive', abc: `${head}C4 D4\nw:laa_ la\n` },
+      { label: 'inline [I:vocalfont]', abc: `${head}[I:vocalfont Times-Roman 20]C4 D4\nw:laa_ la\n` },
+    ]
+  }
   if (mode === 'abc') {
     const raw = process.argv[3]
     if (raw === undefined) throw new Error("abc mode needs a tune: zzcontrol.mjs abc 'X:1\\n…'")
     return [{ label: 'ad-hoc', abc: raw.replace(/\\n/g, '\n') }]
   }
-  throw new Error(`unknown mode ${mode} — size | dirs | tempo | abc`)
+  throw new Error(`unknown mode ${mode} — size | dirs | tempo | lyricfont | abc`)
 })()
 
 const browser = await engine.launcher.launch(engine.opts)

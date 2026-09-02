@@ -7855,6 +7855,31 @@ function noteText(
     // -17.242, and the gap is exactly half the 8.5 the golden's vocalfont table gives
     // `_`. One number computed in two places whose inputs had drifted — the third time on
     // this branch, after the lyric reserve and `curveReserves`.
+    /**
+     * ⚠️ **AN EMPTY SYLLABLE TAKES THE DIRECTIVE'S FONT, AND ONLY AN EMPTY ONE.**
+     *
+     * `lyricFont` is stamped per ELEMENT, so the `&nbsp;` a `_` carries onto the next note
+     * — and a `*` — reaches this with none and used to fall through to the hard-coded
+     * default. Control, `%%vocalfont Times-Roman 20` over `C4 D4` with `w:laa_ la`:
+     *
+     *     syllable `laa_`   size 27, weight normal   BOTH engines
+     *     the held note     ours 17 BOLD             abcjs 27 normal
+     *
+     * ⚠️ **AND THE FALLBACK MUST NOT BE WIDENED PAST THIS.** Resolving EVERY null
+     * `lyricFont` from the directive closes the same control exactly and takes FOUR gates
+     * red — the headless byte gate on `abcts-model-gaps` tunes 5 and 7, `geometry does not
+     * regress`, and a test whose NAME is the warning, *"does NOT realize %%vocalfont —
+     * abcjs parses it and never draws it"*. abcjs's resolution is context-dependent, so
+     * "inherit the directive" is right for an EMPTY syllable and wrong for whatever those
+     * four defend. Keyed on `raw === ''`, which is exactly the `*`/`_` case and reaches
+     * nothing that carries a syllable.
+     *
+     * The WIDTH is untouched on purpose: `addCentered` measures the UNREWRITTEN string,
+     * which is empty and therefore zero wide whatever font it is asked about, so this is a
+     * drawing change and cannot move the line solve.
+     */
+    const held = raw === '' && event.lyricFont === null
+    const heldSize = fontSizeOf('vocalfont')
     const verse = strict && index === 0 && event.lyricMelismaStart ? `${raw}_` : raw
     /**
      * **THE TSPANS ARE `renderText`'S TWO REWRITES OVER THE JOINED VERSES.**
@@ -7932,13 +7957,13 @@ function noteText(
        * not what abcjs does.
        */
       y: stepToY(ENGRAVE.lyricStep),
-      size,
+      size: held ? heldSize : size,
       // BOLD BY DEFAULT — abcjs's `vocalfont` is Times New Roman 13pt **bold**
       // (`parse/abc_parse_directive.js:30`) and its goldens draw every syllable with
       // `font-weight="bold"`. `%%vocalfont` can still turn it off in the modes that read
       // the directive at all.
-      bold: index === 0 ? lyricBold : true,
-      italic: index === 0 ? lyricItalic : false,
+      bold: held ? SCORE_FONTS.vocalfont?.bold !== false : index === 0 ? lyricBold : true,
+      italic: held ? SCORE_FONTS.vocalfont?.italic === true : index === 0 ? lyricItalic : false,
     })
   })
 
