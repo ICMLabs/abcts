@@ -1,4 +1,4 @@
-# NEXT AGENT PROMPT — abcts, 2026-09-01 (rev d)
+# NEXT AGENT PROMPT — abcts, 2026-09-01 (rev e)
 
 Paste the block below.
 
@@ -39,7 +39,8 @@ PIN 1.61 — it names webkit-2311, the cached build. 1.55 and 1.62 each start a 
   `tempo`, `lyricfont`, `abc`) in a FRESH DOCUMENT each — abcjs's `sizeCache` is MODULE-global, so sharing one page made nine
   of thirteen rungs "differ" on a build every rung of which is byte-identical alone. AND
   VERIFY A LADDER CAN SEE ITS DEFECT: stash the fix and count the reds.
-  `scripts/zzpair.mjs` diffs one fixture element by element. TWO conclusions were committed
+  `scripts/zzpair.mjs` diffs one fixture element by element, and `zzwarm.mjs` does the
+  same with the page PRE-WARMED, which is the only way to see a shared-page defect. TWO conclusions were committed
   to this repo and both were WRONG, both reasoned from `visual-options-01-fonts`, which
   sets EIGHTEEN font directives at once. Nine control tunes refuted them in one run.
 
@@ -53,70 +54,33 @@ measured a STAND-IN — a probe string, a generic font, the wrong family, one li
 where the whole block's was wanted. And `h + (n-1) * size * 1.2` IS THE STUB'S `getBBox`,
 NOT A RULE — it has appeared FOUR times.
 
-WHAT IS LEFT — 2, and ONE OF THEM IS NOT A RENDERER DEFECT AT ALL:
+WHAT IS LEFT — ONE ROW, and it is an ARC rather than a fix:
 
-  1. TWO FIXTURES THAT ARE BYTE-IDENTICAL RENDERED ALONE. `visual-selection-01` and
-     `svg-per-line-01` pass zzpair exactly and fail zzlive; the whole difference is the
-     cache below. ⚠️ CONFIRM WITH zzpair BEFORE CHASING ANY RED — zzlive shares one page
-     across 691 cases and abcjs's text cache is module-global.
-  2. `misc-06-title-1bold` — ONE ULP, and it is the VISIBLE EDGE OF A 0.765625 THAT
-     CANCELS. Page height exact; one bottom-block row reads 460.779 against
-     460.77900000000005. INSTRUMENTED: the emitter builds that y as `t.y + oy` — a
-     block-local walk plus a base, the hazard `bottomTextBlock`'s own doc warns about —
-     while `pageEnd`'s WALK reaches 461.54462500000005 for the same row: abcjs's last bits,
-     and 0.765625 HIGH. Two frames, two errors cancelling by the page end, eighth time.
-     Stamping `pageY` from the walk is the right shape (the TOP block already does it) and
-     lands a 0.77px error TODAY — written, measured, reverted. ⭐ SO THE WORK IS THE
-     0.765625, WHICH IS TWO FRAMES AND IS NOW LOCATED: `bottom` is built from `originY`
-     and the emitter adds `OY = -doc.top` (14.234375) where `pageEnd` walks from
-     `padding.top` (15) — and `absoluteY - originY` is itself 15.000000000000057, which is
-     the ULP. NEXT PROBE: `doc.top`'s derivation against `padding.top`, and whether the
-     page height actually comes from `pageEnd`. Also dead and measured: per-phrase
-     `richHeight`, left-associating `(originY + leading) + h*STEP`, stamping `pageY` on the
-     bottom rows from the walk (right shape, lands 0.77px TODAY), every `%%setfont` rung.
+  `visual-selection-01` and `svg-per-line-01` are BYTE-IDENTICAL RENDERED ALONE. They fail
+  only in zzlive's shared page, and the mechanism is measured end to end.
+  `scripts/zzwarm.mjs` renders every case zzlive renders before the target and then diffs
+  it: the beat-unit notehead at 520.8810519588641 against 520.9005832088641 — the tempo's
+  own 1.25 x 1/64. In a warmed page abcjs serves "Easy Swing" from its GLOBAL cache, frozen
+  at an earlier fixture's x, while we measure fresh at the true one.
 
-  ⛔ AND DO NOT RE-TRY THE NAIVE CACHE PORT. abcjs's `sizeCache` is MODULE-scoped and keyed
-  WITHOUT x (`write/svg.js:306,316`) — but WITH the class. Porting it (module-scoped, x
-  dropped) takes the live gate from 4 to SEVEN: it re-breaks all three tempo fixtures,
-  because each engine's cache freezes at ITS OWN first x and the two only track once every
-  x already agrees. Measured both ways, reverted. A faithful port needs the CLASS in the
-  key, which `TextFont` cannot express today.
+  ⛔ THE FAITHFUL PORT NEEDS BOTH HALVES, AND ONLY ONE IS CHEAP. abcjs's `sizeCache` is
+  module-scoped and keyed WITHOUT x (`svg.js:306,316`) AND it always measures the element it
+  just DREW. Port only the cache and the first sighting freezes at whatever x the first
+  CALLER used — ours is x = 0 almost everywhere: 2 of 53 `textWidth`/`textHeight` sites pass
+  a drawn x, both the tempo's. MEASURED with the x-free global cache applied: selection-01
+  still differs AND selection-02 and mouse-click-01 break. So matching abcjs in a
+  LONG-LIVED page is "measure at the drawn x at every site, then freeze the first sighting"
+  — 51 call sites and an ordering question. It costs NOTHING today: every gate renders
+  fresh and a host's FIRST tune is already byte-identical. Whether a SECOND tune in the same
+  page is worth that arc is the owner's call.
 
-  ✅ CLOSED SINCE (`6c8d920`): THE ZERO-HEIGHT LYRIC — `zzcontrol lyricfont` is 0 of 7.
-  `this.height = opt.height ? opt.height : 4` (`relative-element.js:36`) over
-  `height: lyricDim.height / STEP`: a held syllable's `lyricStr` is `"\n"`, PURE WHITESPACE,
-  so `getTextSize` early-outs to zero, `opt.height` is FALSY, and the element takes abcjs's
-  FOUR-PITCH DEFAULT. `lyricHeightBelow` maxes over children, so it binds under 15.5px.
-  ⭐ A SIZE LADDER NAMED IT BECAUSE THE DEFECT HAS A THRESHOLD — abcjs pinned at 114.1655
-  for every size ≤10pt in both faces while ours kept shrinking, turning exactly at
-  4 × 3.875. ⚠️ AND THE OBVIOUS FIX WAS WRONG, MEASURED: "max the measurement, not the
-  string" is a NO-OP (one verse, one text). The defect was never WHICH string is measured;
-  it is what a measurement of ZERO means.
-
-  ✅ CLOSED SINCE (`20edbfe`): THE HELD SYLLABLE. The `&nbsp;` a `_` carries onto the next
-  note went from 17 BOLD to abcjs's 27 normal. ⭐ THE SCOPE WAS THE WHOLE FINDING: resolving
-  EVERY null `lyricFont` from the directive closes the same control and takes FOUR gates
-  red; keying on `raw === ''` closes it with all 2,453 green. `zzcontrol lyricfont` is the
-  ladder — 6 of 7 rungs differ with the fix stashed, 1 of 7 with it, and that one is item 3.
-
-  ✅ CLOSED SINCE (`0e7abc4`): CSSOM SERIALISATION, 4 → 3 — and it was filed as THE OWNER'S
-  CALL because the question was put about the wrong thing. "Matching one browser breaks the
-  other" is TRUE of a string we EMIT and FALSE of declarations we SET: re-running abcjs's
-  eight `setScale` assignments over the INSERTED element makes `ledger-gaps-tune5`
-  byte-identical in WebKit AND Chrome. The note called that "architectural"; it is one
-  function over ONE element. ⭐ "ARCHITECTURAL" IS A CLAIM ABOUT SCOPE AND CAN BE MEASURED.
-
-  ✅ CLOSED SINCE (`5092802`): EVERY `%%<type>font` LANE, 5 → 4. Ten sites, one defect, and
-  it is the arc's own rule — each asked for a DEFAULT PROBE IN A DEFAULT SERIF where abcjs
-  hands `getTextSize.calc` the directive's whole font object. `options-01-fonts` is
-  byte-identical. AND THE PROBE STRING IS ABCJS'S: `addTextIf` measures "A", `richText`'s
-  empty arm "i" — never the row's text — while `Subtitle` measures its own string. `'Mg'`
-  carries a descender the probes do not, so the SIGN of the error moved with the face.
-
-  ⭐ AND LEAVE-ONE-OUT IS THE LADDER'S COMPLEMENT. Delete one LINE of the fixture at a time
-  and print the page delta: it ENUMERATES the causes of a fixture with many, where a ladder
-  ISOLATES one. On an eighteen-directive fixture it named four contributors summing to the
-  observed 3.06px exactly, and a control per contributor then proved each fix.
+  ✅ CLOSED SINCE (`6c42a08`): THE BOTTOM BLOCK'S PAGE CURSOR, 3 -> 2. `misc-06` is
+  byte-identical. The emitter built each row's y as `t.y + oy` — a block-local walk plus a
+  base — where `445.779 + 15` is 460.779 and the WALK is 460.77900000000005, abcjs's own.
+  The top block has carried `pageY` since the `%%begintext` ULP; same fix one block over.
+  ⚠️ AND THE "0.765625 BETWEEN TWO FRAMES" THIS PROMPT CARRIED DOES NOT EXIST — it was a
+  probe reading the WRONG TUNE of a two-tune fixture. A PROBE ON A MULTI-TUNE FIXTURE MUST
+  KEY BY TUNE.
 
 TRAPS, all measured this session:
   ⚠️ `display:none` ZEROES `getBBox` and abcjs measures at DRAW time for a boxed font, so
@@ -125,6 +89,8 @@ TRAPS, all measured this session:
      compile passed it and WebKit caught them. Write `npx tsc --noEmit && echo OK`.
   ⚠️ An EMPTY line measures zero and still takes a row.
   ⚠️ A narrow probe can miss the effect it was built to find.
+  ⚠️ A PROBE ON A MULTI-TUNE FIXTURE MUST KEY BY TUNE — a global overwritten per tune had
+     tune 1 read against tune 0's SVG and invented a discrepancy that cost a session.
   ⚠️ A LADDER SHARING ONE DOCUMENT IS NOT A LADDER — abcjs's `sizeCache` is MODULE-scoped
      and keyed without x, so rung k inherits every rung before it. The same fact makes two
      of zzlive's four reds page HISTORY rather than layout.
@@ -144,8 +110,7 @@ did not exist three days ago.
 produced by reasoning from a fixture instead of a control — and each cost more than the fix
 that eventually landed.
 
-**Then what is left, and it is TWO ROWS.** One is not a renderer defect at all — two
-fixtures byte-identical rendered alone — so there is exactly ONE piece of engineering in the
-list: the 0.765625 between two derivations of the page cursor. An agent that treats the
-other as effort will chase a fixture that is already byte-identical, or re-land the cache
-port measured at 4 → 7.
+**Then what is left, and it is ONE ROW that is an ARC.** Two fixtures byte-identical
+rendered alone, failing only in a shared page — so there is no fix in the list at all, only
+a decision about 51 call sites. An agent that treats it as effort will re-land the cache
+port, which is measured to make things worse on its own.
