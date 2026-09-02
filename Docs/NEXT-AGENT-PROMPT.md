@@ -1,4 +1,4 @@
-# NEXT AGENT PROMPT — abcts, 2026-09-01 (rev c)
+# NEXT AGENT PROMPT — abcts, 2026-09-01 (rev d)
 
 Paste the block below.
 
@@ -53,7 +53,7 @@ measured a STAND-IN — a probe string, a generic font, the wrong family, one li
 where the whole block's was wanted. And `h + (n-1) * size * 1.2` IS THE STUB'S `getBBox`,
 NOT A RULE — it has appeared FOUR times.
 
-WHAT IS LEFT — 3, and TWO OF THEM ARE NOT DEFECTS OF THE RENDERER:
+WHAT IS LEFT — 2, and ONE OF THEM IS NOT A RENDERER DEFECT AT ALL:
 
   1. TWO FIXTURES THAT ARE BYTE-IDENTICAL RENDERED ALONE. `visual-selection-01` and
      `svg-per-line-01` pass zzpair exactly and fail zzlive; the whole difference is the
@@ -74,14 +74,6 @@ WHAT IS LEFT — 3, and TWO OF THEM ARE NOT DEFECTS OF THE RENDERER:
      page height actually comes from `pageEnd`. Also dead and measured: per-phrase
      `richHeight`, left-associating `(originY + leading) + h*STEP`, stamping `pageY` on the
      bottom rows from the walk (right shape, lands 0.77px TODAY), every `%%setfont` rung.
-  3. THE LYRIC LANE UNDER A SMALLER-THAN-DEFAULT `%%vocalfont`. `Helvetica 10.0` over
-     `w:laa_ la` leaves the page 0.484375 short — the one red rung of
-     `zzcontrol lyricfont`, and the only rung BELOW the 13pt default. The lane's own
-     comment states the rule it breaks: `lyricHeightBelow` is a MAX over the staff's
-     children, EACH measuring its own whole `lyricStr`, where we pick the LONGEST joined
-     string and measure that once. A `&nbsp;` line and a `laa_` line are not the same
-     height even at the same size. Max the MEASUREMENT, not the string — and keep the
-     headless stub arm, which is what the 691 goldens were made with.
 
   ⛔ AND DO NOT RE-TRY THE NAIVE CACHE PORT. abcjs's `sizeCache` is MODULE-scoped and keyed
   WITHOUT x (`write/svg.js:306,316`) — but WITH the class. Porting it (module-scoped, x
@@ -89,6 +81,17 @@ WHAT IS LEFT — 3, and TWO OF THEM ARE NOT DEFECTS OF THE RENDERER:
   because each engine's cache freezes at ITS OWN first x and the two only track once every
   x already agrees. Measured both ways, reverted. A faithful port needs the CLASS in the
   key, which `TextFont` cannot express today.
+
+  ✅ CLOSED SINCE (`6c8d920`): THE ZERO-HEIGHT LYRIC — `zzcontrol lyricfont` is 0 of 7.
+  `this.height = opt.height ? opt.height : 4` (`relative-element.js:36`) over
+  `height: lyricDim.height / STEP`: a held syllable's `lyricStr` is `"\n"`, PURE WHITESPACE,
+  so `getTextSize` early-outs to zero, `opt.height` is FALSY, and the element takes abcjs's
+  FOUR-PITCH DEFAULT. `lyricHeightBelow` maxes over children, so it binds under 15.5px.
+  ⭐ A SIZE LADDER NAMED IT BECAUSE THE DEFECT HAS A THRESHOLD — abcjs pinned at 114.1655
+  for every size ≤10pt in both faces while ours kept shrinking, turning exactly at
+  4 × 3.875. ⚠️ AND THE OBVIOUS FIX WAS WRONG, MEASURED: "max the measurement, not the
+  string" is a NO-OP (one verse, one text). The defect was never WHICH string is measured;
+  it is what a measurement of ZERO means.
 
   ✅ CLOSED SINCE (`20edbfe`): THE HELD SYLLABLE. The `&nbsp;` a `_` carries onto the next
   note went from 17 BOLD to abcjs's 27 normal. ⭐ THE SCOPE WAS THE WHOLE FINDING: resolving
@@ -141,7 +144,8 @@ did not exist three days ago.
 produced by reasoning from a fixture instead of a control — and each cost more than the fix
 that eventually landed.
 
-**Then what is left, labelled by what it NEEDS.** Two of the three are not renderer defects
-at all, so there are exactly TWO pieces of engineering in the list — the 0.765625 and the
-held syllable. An agent that treats the rest as effort will chase a fixture that is already
-byte-identical or re-land the cache port measured at 4 → 7.
+**Then what is left, and it is TWO ROWS.** One is not a renderer defect at all — two
+fixtures byte-identical rendered alone — so there is exactly ONE piece of engineering in the
+list: the 0.765625 between two derivations of the page cursor. An agent that treats the
+other as effort will chase a fixture that is already byte-identical, or re-land the cache
+port measured at 4 → 7.
