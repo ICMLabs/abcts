@@ -53,7 +53,7 @@ measured a STAND-IN — a probe string, a generic font, the wrong family, one li
 where the whole block's was wanted. And `h + (n-1) * size * 1.2` IS THE STUB'S `getBBox`,
 NOT A RULE — it has appeared FOUR times.
 
-WHAT IS LEFT — 4, and TWO OF THEM ARE NOT DEFECTS OF THE RENDERER:
+WHAT IS LEFT — 3, and TWO OF THEM ARE NOT DEFECTS OF THE RENDERER:
 
   1. TWO FIXTURES THAT ARE BYTE-IDENTICAL RENDERED ALONE. `visual-selection-01` and
      `svg-per-line-01` pass zzpair exactly and fail zzlive; the whole difference is the
@@ -71,10 +71,7 @@ WHAT IS LEFT — 4, and TWO OF THEM ARE NOT DEFECTS OF THE RENDERER:
      are two derivations of one cursor; find where they part. Also dead and measured:
      per-phrase `richHeight`, left-associating `(originY + leading) + h*STEP`, every
      `%%setfont` control rung.
-  3. CSSOM SERIALISATION (1). THE OWNER'S CALL — abcjs sets style through the DOM and the
-     browser serialises; abcjs disagrees with ITSELF across browsers. Matching it means
-     setting styles through the DOM, which is architectural.
-  4. A HELD SYLLABLE TAKES THE DEFAULT FONT. Measured, fixed, REVERTED — inheriting the
+  3. A HELD SYLLABLE TAKES THE DEFAULT FONT. Measured, fixed, REVERTED — inheriting the
      directive closes the control and takes FOUR gates red. Scope to the held/empty
      syllable alone and prove against those four, not the control.
 
@@ -84,6 +81,13 @@ WHAT IS LEFT — 4, and TWO OF THEM ARE NOT DEFECTS OF THE RENDERER:
   because each engine's cache freezes at ITS OWN first x and the two only track once every
   x already agrees. Measured both ways, reverted. A faithful port needs the CLASS in the
   key, which `TextFont` cannot express today.
+
+  ✅ CLOSED SINCE (`0e7abc4`): CSSOM SERIALISATION, 4 → 3 — and it was filed as THE OWNER'S
+  CALL because the question was put about the wrong thing. "Matching one browser breaks the
+  other" is TRUE of a string we EMIT and FALSE of declarations we SET: re-running abcjs's
+  eight `setScale` assignments over the INSERTED element makes `ledger-gaps-tune5`
+  byte-identical in WebKit AND Chrome. The note called that "architectural"; it is one
+  function over ONE element. ⭐ "ARCHITECTURAL" IS A CLAIM ABOUT SCOPE AND CAN BE MEASURED.
 
   ✅ CLOSED SINCE (`5092802`): EVERY `%%<type>font` LANE, 5 → 4. Ten sites, one defect, and
   it is the arc's own rule — each asked for a DEFAULT PROBE IN A DEFAULT SERIF where abcjs
@@ -123,7 +127,7 @@ did not exist three days ago.
 produced by reasoning from a fixture instead of a control — and each cost more than the fix
 that eventually landed.
 
-**Then what is left, labelled by what it NEEDS.** Two of the four are not renderer defects
-at all and one is a decision, so there is exactly ONE piece of engineering in the list. An
-agent that treats them as effort will chase a fixture that is already byte-identical, re-try
-the held-syllable fallback four gates refused, or re-land the cache port measured at 4 → 7.
+**Then what is left, labelled by what it NEEDS.** Two of the three are not renderer defects
+at all, so there are exactly TWO pieces of engineering in the list — the 0.765625 and the
+held syllable. An agent that treats the rest as effort will chase a fixture that is already
+byte-identical or re-land the cache port measured at 4 → 7.
