@@ -542,6 +542,15 @@ export const ABCJS_PITCH = {
   /** `margin = 1` — one pitch between every lane (`set-upper-and-lower-elements.js:102`). */
   laneMargin: 1,
   /**
+   * **A `RelativeElement` WITH NO MEASURED HEIGHT IS FOUR PITCH** —
+   * `this.height = opt.height ? opt.height : 4` (`relative-element.js:36`), whose own
+   * comment is "the +1 is to give a little bit of padding". It reaches the page through
+   * a LYRIC: `addLyric` passes `lyricDim.height / STEP`, and a held syllable's
+   * `lyricStr` is `"\n"` — whitespace, which `getTextSize` answers 0 for — so the
+   * default binds wherever the sung syllable measures under 4 pitch.
+   */
+  lyricEmptyLane: 4,
+  /**
    * The five-line staff's outer lines, in abcjs's pitch — `renderer.calcY(10)` for the top
    * and `calcY(linePitch)` for the bottom, `linePitch` being 2 on a five-line staff
    * (`draw/staff-group.js:86-96`). Read by the rule that closes a multi-staff group.

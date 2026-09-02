@@ -653,6 +653,8 @@ export const ENGRAVE = {
   rightAnnotationGap: spaces(ABCJS_PX.rightAnnotationGap),
   /** abcjs's `margin` in `set-upper-and-lower-elements.js:102` — one pitch on every lane. */
   laneMargin: ABCJS_PITCH.laneMargin,
+  /** A lyric whose measured height is zero — see `ABCJS_PITCH.lyricEmptyLane`. */
+  lyricEmptyLanePitch: ABCJS_PITCH.lyricEmptyLane,
   /**
    * How far below the ending lane's top the bracket is DRAWN — `positionY - 2`
    * (`set-upper-and-lower-elements.js:201`). The one lane in that file whose reserve point
@@ -20311,9 +20313,41 @@ function verticalExtent(
       // …**AND `%%vocalspace` IS ADDED TO THE LANE IN PITCH** —
       // `lyricHeightBelow += renderer.spacing.vocal / spacing.STEP`
       // (`set-upper-and-lower-elements.js:52`), where the DEFAULT is zero.
+      /**
+       * ⚠️ **A LYRIC THAT MEASURES ZERO RESERVES FOUR PITCH, NOT NONE** —
+       * `this.height = opt.height ? opt.height : 4` (`relative-element.js:36`), and
+       * `addLyric` hands it `lyricDim.height / spacing.STEP`
+       * (`abstract-engraver.js:769-778`). The `&nbsp;` a `_` carries onto the next note is
+       * `lyricStr === "\n"`, PURE WHITESPACE, so `getTextSize` early-outs to
+       * `{width: 0, height: 0}` (`svg.js:311-312`) — `opt.height` is FALSY and the element
+       * takes abcjs's DEFAULT.
+       *
+       * `lyricHeightBelow` is a max over the staff's children, so that default BINDS
+       * wherever the sung syllable measures under four pitch — 15.5px. Measured on
+       * `zzcontrol lyricfont`'s size ladder over `w:laa_ la`, where abcjs's page is pinned
+       * at 114.1655 for every size at or below 10pt in BOTH faces and ours kept shrinking:
+       *
+       *     Helvetica  8   9   10  |  11      12      13      16      20
+       *     abcjs lane 4.0 4.0 4.0 |  4.391   4.649   5.165   6.197   8.004
+       *     measured   …           |  17.01px … and the measurement wins from here up
+       *
+       * ⚠️ **AND THE OBVIOUS FIX IS THE WRONG ONE, MEASURED.** The lane's own comment says
+       * abcjs maxes over children each measuring its OWN string where we measure the
+       * longest once — true, and porting it moves NOTHING here, because this loop runs per
+       * ELEMENT and a one-verse note has one lyric text. The defect was never WHICH string
+       * is measured; it is what a measurement of ZERO means.
+       *
+       * ponytail: live only. Headless never reaches zero — it does not reproduce
+       * `getTextSize`'s whitespace early-out at all, since `goldenTextHeight` answers from
+       * the table whatever the string — so the 691 goldens are untouched and the rule is
+       * unproven on that path. Reproduce the early-out there too if a golden ever varies a
+       * `%%vocalfont` under 11pt over a held syllable; none does today.
+       */
+      const lanePitch =
+        h === 0 ? ENGRAVE.lyricEmptyLanePitch : h / ENGRAVE.spacePerStep
       lyricLanePitch = Math.max(
         lyricLanePitch,
-        h / ENGRAVE.spacePerStep + (SPACING.vocalspace ?? 0) / ENGRAVE.spacePerStep,
+        lanePitch + (SPACING.vocalspace ?? 0) / ENGRAVE.spacePerStep,
       )
       /**
        * **AND EVERY VOICE AFTER THE FIRST DROPS ITS WHOLE BLOCK AGAIN** —
