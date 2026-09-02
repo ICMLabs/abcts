@@ -36,7 +36,7 @@ PIN 1.61 — it names webkit-2311, the cached build. 1.55 and 1.62 each start a 
 
   A LADDER OF CONTROLS IS THE PROOF; A FIXTURE WITH MORE THAN ONE OPEN CAUSE CANNOT RULE
   ANYTHING OUT. `scripts/zzcontrol.mjs` runs one variable per rung (`size`, `dirs`,
-  `tempo`, `abc`) in a FRESH DOCUMENT each — abcjs's `sizeCache` is MODULE-global, so sharing one page made nine
+  `tempo`, `lyricfont`, `abc`) in a FRESH DOCUMENT each — abcjs's `sizeCache` is MODULE-global, so sharing one page made nine
   of thirteen rungs "differ" on a build every rung of which is byte-identical alone. AND
   VERIFY A LADDER CAN SEE ITS DEFECT: stash the fix and count the reds.
   `scripts/zzpair.mjs` diffs one fixture element by element. TWO conclusions were committed
@@ -67,13 +67,21 @@ WHAT IS LEFT — 3, and TWO OF THEM ARE NOT DEFECTS OF THE RENDERER:
      and 0.765625 HIGH. Two frames, two errors cancelling by the page end, eighth time.
      Stamping `pageY` from the walk is the right shape (the TOP block already does it) and
      lands a 0.77px error TODAY — written, measured, reverted. ⭐ SO THE WORK IS THE
-     0.765625: `bottom = last.originY + systemHeight(last)` and `pageEnd`'s per-system walk
-     are two derivations of one cursor; find where they part. Also dead and measured:
-     per-phrase `richHeight`, left-associating `(originY + leading) + h*STEP`, every
-     `%%setfont` control rung.
-  3. A HELD SYLLABLE TAKES THE DEFAULT FONT. Measured, fixed, REVERTED — inheriting the
-     directive closes the control and takes FOUR gates red. Scope to the held/empty
-     syllable alone and prove against those four, not the control.
+     0.765625, WHICH IS TWO FRAMES AND IS NOW LOCATED: `bottom` is built from `originY`
+     and the emitter adds `OY = -doc.top` (14.234375) where `pageEnd` walks from
+     `padding.top` (15) — and `absoluteY - originY` is itself 15.000000000000057, which is
+     the ULP. NEXT PROBE: `doc.top`'s derivation against `padding.top`, and whether the
+     page height actually comes from `pageEnd`. Also dead and measured: per-phrase
+     `richHeight`, left-associating `(originY + leading) + h*STEP`, stamping `pageY` on the
+     bottom rows from the walk (right shape, lands 0.77px TODAY), every `%%setfont` rung.
+  3. THE LYRIC LANE UNDER A SMALLER-THAN-DEFAULT `%%vocalfont`. `Helvetica 10.0` over
+     `w:laa_ la` leaves the page 0.484375 short — the one red rung of
+     `zzcontrol lyricfont`, and the only rung BELOW the 13pt default. The lane's own
+     comment states the rule it breaks: `lyricHeightBelow` is a MAX over the staff's
+     children, EACH measuring its own whole `lyricStr`, where we pick the LONGEST joined
+     string and measure that once. A `&nbsp;` line and a `laa_` line are not the same
+     height even at the same size. Max the MEASUREMENT, not the string — and keep the
+     headless stub arm, which is what the 691 goldens were made with.
 
   ⛔ AND DO NOT RE-TRY THE NAIVE CACHE PORT. abcjs's `sizeCache` is MODULE-scoped and keyed
   WITHOUT x (`write/svg.js:306,316`) — but WITH the class. Porting it (module-scoped, x
@@ -81,6 +89,12 @@ WHAT IS LEFT — 3, and TWO OF THEM ARE NOT DEFECTS OF THE RENDERER:
   because each engine's cache freezes at ITS OWN first x and the two only track once every
   x already agrees. Measured both ways, reverted. A faithful port needs the CLASS in the
   key, which `TextFont` cannot express today.
+
+  ✅ CLOSED SINCE (`20edbfe`): THE HELD SYLLABLE. The `&nbsp;` a `_` carries onto the next
+  note went from 17 BOLD to abcjs's 27 normal. ⭐ THE SCOPE WAS THE WHOLE FINDING: resolving
+  EVERY null `lyricFont` from the directive closes the same control and takes FOUR gates
+  red; keying on `raw === ''` closes it with all 2,453 green. `zzcontrol lyricfont` is the
+  ladder — 6 of 7 rungs differ with the fix stashed, 1 of 7 with it, and that one is item 3.
 
   ✅ CLOSED SINCE (`0e7abc4`): CSSOM SERIALISATION, 4 → 3 — and it was filed as THE OWNER'S
   CALL because the question was put about the wrong thing. "Matching one browser breaks the
