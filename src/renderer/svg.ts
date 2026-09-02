@@ -3389,7 +3389,18 @@ export function toSVG(
               const part = textParts[textParts.length - 1];
               if (part !== undefined) {
                 const bx = Math.round((t.x - boxDelta) * PX);
-                const by = Math.round((t.y - t.size) * PX + oy);
+                /**
+                 * **AND A CENTRED ROW'S RECT IS MEASURED, NOT DERIVED** —
+                 * `deltaY = size.height - padding` and `y: Math.round(y - deltaY)`
+                 * (`draw/text.js:77-81`), over `getBBox()`. Our `t.y` is abcjs's `params.y`
+                 * PLUS the font size on the ordinary branch and `params.y` itself on the
+                 * centred one, since that branch takes no `+= hash.font.size` — so the
+                 * ordinary rect is `t.y - size` and the centred one `t.y - inkHeight + pad`.
+                 * See `PlacedText.centered`.
+                 */
+                const by = Math.round(
+                  (t.centered === true ? t.y - bs.height + pad : t.y - t.size) * PX + oy,
+                );
                 const bw = Math.round((bs.width + pad * 2) * PX);
                 const bh = Math.round((bs.height + pad * 2) * PX);
                 const h = (yy: number): string =>

@@ -678,7 +678,11 @@ export const ENGRAVE = {
    * constant is not always an improvement.
    */
   voltaHook: spaces(ABCJS_PX.voltaHook),
-  /** `repeatfont`, 13pt -> `round(13 x 4/3)` = 17px, and the golden says so outright. */
+  /**
+   * `repeatfont`'s DEFAULT, 13pt -> `round(13 x 4/3)` = 17px, and the golden says so
+   * outright. The drawn number reads `fontSizeOf('repeatfont')`, which resolves to exactly
+   * this when the tune sets no `%%repeatfont`.
+   */
   voltaTextSize: spaces(fontPixels(ABC_FONT_DEFAULT_PT.repeatfont)),
   /**
    * The label's baseline below the bracket: `calcY(pitch - 0.5)` — half a PITCH, a quarter
@@ -1262,6 +1266,24 @@ export interface PlacedText {
    * row's y, which is why the size travels rather than the rect.
    */
   readonly boxSize?: { readonly width: number; readonly height: number }
+  /**
+   * `renderText`'s `centerVertically` (`draw/text.js:29-30`, `:77-79`), and it decides TWO
+   * things rather than one.
+   *
+   * The half every site here already models is the BASELINE: a centred row does NOT take
+   * `hash.attr.y += hash.font.size`, so its y goes in as handed. The half nobody carried is
+   * the BOX's own top — `deltaY = size.height - padding`, `y: Math.round(y - deltaY)` —
+   * which is measured off `getBBox()` where the ordinary branch is `Math.round(y)` and
+   * needs no measurement at all. The two disagree by the whole ink height, so `%%voicefont
+   * Verdana 17 box` put our rect at 34 against abcjs's 31 with its WIDTH and HEIGHT already
+   * exact on both sides.
+   *
+   * Set it only where a row is BOTH centred and boxable: `fontTypeCanHaveBox`
+   * (`abc_parse_directive.js:60`) admits `voicefont` and `annotationfont` and refuses
+   * `tripletfont`, so a `%%tripletfont … box` draws no rect and the tuplet number — centred
+   * — never reaches this at all.
+   */
+  readonly centered?: boolean
   /**
    * `renderText`'s `alreadyInGroup` (`draw/text.js:3`, `:50`, `:80`). A BOXED text opens
    * its own `<g fill data-name>` round the text and the rect — but only when the caller is
@@ -3332,6 +3354,21 @@ function layoutTempo(
   const tempoFont = SCORE_FONTS.tempofont
   const tempoBold = tempoFont === undefined ? true : tempoFont.bold === true
   const tempoItalic = tempoFont?.italic === true
+  /**
+   * …**AND EVERY WIDTH THIS MARK ADVANCES BY IS MEASURED IN THAT SAME FONT.** `drawTempo`
+   * hands `getTextSize.calc` the element it drew, whose attrs are `tempofont`'s own
+   * (`draw/tempo.js:18-38`), so the FACE reaches the advance and not only the ink. Both
+   * widths below asked for a hard-coded bold serif, which is right for the DEFAULT
+   * `tempofont` — `{face: "Times New Roman", weight: "bold"}` — and for nothing else:
+   * `%%tempofont Verdana 19` put the beat-unit note 3.21px out with the page height exact.
+   *
+   * The weight is layered back on because `fontOfType` can only read what the directive
+   * SET, and a tune that sets none keeps `tempofont`'s bold default.
+   */
+  const tempoTextFont: TextFont = {
+    ...fontOfType(SCORE_FONTS, 'tempofont', tempoSize),
+    ...(tempoBold ? { weight: 'bold' } : {}),
+  }
 
   if (tempo.text !== null && tempo.text !== '') {
     texts.push({
@@ -3385,7 +3422,7 @@ function layoutTempo(
      * default host, and the whole effect is one sub-pixel, so a non-default `%%scale`
      * measures at an x off by that factor. Thread `OUT` in if one ever matters.
      */
-    const preWidth = textWidth(tempo.text, tempoSize, 'serifBold', drawAt(cursor))
+    const preWidth = textWidth(tempo.text, tempoSize, tempoTextFont, drawAt(cursor))
     cursor += preWidth + preWidth / Math.max(1, tempo.text.length)
   }
 
@@ -3535,7 +3572,7 @@ function layoutTempo(
     })
     // …and the RATE advances the same way the pre-string does: its own width plus one
     // average character (`draw/tempo.js:33-35`).
-    const postWidth = textWidth(`= ${tempo.bpm}`, tempoSize, 'serifBold', drawAt(cursor))
+    const postWidth = textWidth(`= ${tempo.bpm}`, tempoSize, tempoTextFont, drawAt(cursor))
     cursor += postWidth + postWidth / Math.max(1, `= ${tempo.bpm}`.length)
   }
 
@@ -3619,9 +3656,11 @@ const layoutPart = (
         ? {
             box: true,
             // `getBBox()`, which the rect is measured from — see `PlacedText.boxSize`.
+            // In `partsfont`'s OWN font and over the LABEL, because that is the element
+            // abcjs measures — the same stand-in the part LANE was reserving with.
             boxSize: {
-              width: textWidth(label, fontSizeOf('partsfont')),
-              height: textHeight(fontSizeOf('partsfont')),
+              width: textWidth(label, fontSizeOf('partsfont'), fontOfType(SCORE_FONTS, 'partsfont', fontSizeOf('partsfont'))),
+              height: textHeight(fontSizeOf('partsfont'), label, fontOfType(SCORE_FONTS, 'partsfont', fontSizeOf('partsfont'))),
             },
           }
         : {}),
@@ -5685,7 +5724,11 @@ function barNumberText(
     SCORE_FONTS.measurefont?.box === true
       ? fontSizeOf('measurefont') * ABCJS_RATIO.fontBoxPadding * 4
       : 0
-  const rawWidth = textWidth(text, fontSizeOf('measurefont'), 'serif')
+  const rawWidth = textWidth(
+    text,
+    fontSizeOf('measurefont'),
+    fontOfType(SCORE_FONTS, 'measurefont', fontSizeOf('measurefont')),
+  )
   const width = rawWidth + boxPad
   const pitch =
     onClef?.treble === true && width * UNIT_PX > ENGRAVE.barNumberClefWide
@@ -5695,7 +5738,7 @@ function barNumberText(
   // by `spacePerStep`. Written `* 2` it was the same number only while a staff space was
   // the unit, and the comment above already said so in words.
   const y = stepToY(
-    pitch + fontHeightOf('measurefont') / ENGRAVE.spacePerStep - PITCH_ORIGIN,
+    pitch + fontHeightOf('measurefont', text) / ENGRAVE.spacePerStep - PITCH_ORIGIN,
   )
   // THE POINT IS THE RESERVE; THE BASELINE IS ONE FONT SIZE BELOW IT. `renderText` ends
   // `if (!params.centerVertically) hash.attr.y += hash.font.size` (`draw/text.js:29-30`),
@@ -5741,10 +5784,15 @@ function barNumberText(
       : {
           box: true,
           inGroup: true,
-          // The rect is measured from `getBBox()`, which is the UNPADDED text.
+          // The rect is measured from `getBBox()`, which is the UNPADDED text — the
+          // NUMBER, in `measurefont`'s own font, as the lane above already measures.
           boxSize: {
             width: rawWidth,
-            height: textHeight(fontSizeOf('measurefont')),
+            height: textHeight(
+              fontSizeOf('measurefont'),
+              text,
+              fontOfType(SCORE_FONTS, 'measurefont', fontSizeOf('measurefont')),
+            ),
           },
         }),
     // **A BAR NUMBER ON A CLEF DOES NOT PUSH THE TOP.** `_addChild` opens with an explicit
@@ -6868,6 +6916,47 @@ const fontOfType = (
 }
 
 /**
+ * `richText`'s `largestY` — the TALLEST PHRASE, each measured in its OWN font
+ * (`rich-text.js:38-46`), which is how a row carrying a `$N` advances. BOTH text blocks
+ * move by it: the top one directly, the bottom one through `addText`'s rich arm — and they
+ * were two copies of the rule, the bottom one asking for neither a string nor a face, so a
+ * `$1` row advanced by a Times `Mg` whatever `%%setfont-N` named.
+ *
+ * ⚠️ **A PHRASE CARRIES ITS OWN FACE AS WELL AS ITS OWN SIZE.** `%%setfont-1` names a
+ * family, and a live measurer answers for the family it is given — `$1` in a cursive face
+ * is not Times at the same size. The RAW size stands: a font handed to `getTextSize` as an
+ * OBJECT skips the pt->px 4/3 (`get-text-size.js:24-43`), so `%%setfont-1 … 40` measures 40
+ * where `%%titlefont 40` would measure 53.
+ */
+const richHeight = (
+  fonts: Partial<Record<AbcFontType, LyricFont>>,
+  value: RichText,
+  defaultSize: number,
+  type?: AbcFontType,
+): number => {
+  const phrases = typeof value === 'string' ? [] : value
+  const plain = phrases.map((ph) => ph.text).join('')
+  let largest = textHeight(
+    defaultSize,
+    plain === '' ? 'Mg' : plain,
+    type === undefined ? 'serif' : fontOfType(fonts, type, defaultSize),
+  )
+  for (const phrase of phrases) {
+    if (phrase.font === null) continue
+    largest = Math.max(
+      largest,
+      textHeight(phrase.font.size / UNIT_PX, phrase.text, {
+        size: phrase.font.size,
+        family: phrase.font.face,
+        ...(phrase.font.bold ? { weight: 'bold' } : {}),
+        ...(phrase.font.italic ? { style: 'italic' } : {}),
+      }),
+    )
+  }
+  return largest
+}
+
+/**
  * Which of the two the current render measures with — set once per render from the mode.
  *
  * ponytail: a module-level switch rather than a `strict` argument threaded through
@@ -7031,10 +7120,17 @@ const faceOf = (type: AbcFontType): { face?: string } => {
  * The generator's size table with `size + 2` for anything unlisted, plus `padding * 4`
  * when the font is BOXED (`helpers/get-text-size.js:46-48`).
  */
-const fontHeightOf = (type: AbcFontType): number => {
+/**
+ * A `%%<type>font` row's MEASURED height, box included — `getTextSize.calc(text, type,
+ * klass)` (`helpers/get-text-size.js`), which is the string it will draw in the font the
+ * directive named. Both were stand-ins here: a default probe in the default face, so
+ * `%%measurefont cursive 7 box` reserved the same lane as `%%measurefont Helvetica 7 box`
+ * and the page came out 4.27px short.
+ */
+const fontHeightOf = (type: AbcFontType, text?: string): number => {
   const size = fontSizeOf(type)
   return (
-    textHeight(size) +
+    textHeight(size, text, fontOfType(SCORE_FONTS, type, size)) +
     (SCORE_FONTS[type]?.box === true ? size * ENGRAVE.fontBoxPadding * 4 : 0)
   )
 }
@@ -11649,13 +11745,18 @@ const barWidthOf = (kind: Barline, el: LayoutElement, strict: boolean): number =
  * It applies to whichever bar the ending opens on — the measure's own opening barline, or
  * the PREVIOUS measure's closing one when the number follows a `:|`.
  */
-const endingRoom = (label: string | null): number =>
-  label === null || label === ''
-    ? 0
-    : // MEASURED IN `repeatfont`, 13pt -> 17px — NOT in `voltaTextSize`, which is the size
-      // the bracket's number is DRAWN at. abcjs measures the reserve and the ink with two
-      // different fonts and only the first is this.
-      textWidth(label, 17 / UNIT_PX) + 10 / UNIT_PX
+const endingRoom = (label: string | null): number => {
+  if (label === null || label === '') return 0
+  /**
+   * MEASURED IN `repeatfont` — `this.getTextSize.calc(elem.startEnding, "repeatfont", '')`
+   * (`abstract-engraver.js:1038`), the WHOLE font object and not a fixed 17px serif. The
+   * default resolves to exactly the 13pt → 17px this replaces; `%%repeatfont Helvetica 13`
+   * did not, and put every element after a `|1` bar 0.97px left with the page height
+   * already exact.
+   */
+  const size = fontSizeOf('repeatfont')
+  return textWidth(label, size, fontOfType(SCORE_FONTS, 'repeatfont', size)) + 10 / UNIT_PX
+}
 
 /**
  * Lay out one measure at x = 0. Position within a system comes later, by translation,
@@ -14817,6 +14918,10 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
                   width: textWidth(labelText, size, voiceFontOf(size, score.fonts)),
                   height: textHeight(size, labelText, voiceFontOf(size, score.fonts)),
                 },
+                // `drawVoice` passes `centerVertically: true` (`draw/voice.js:19`) — see
+                // `PlacedText.centered`. It is why this baseline takes no font size, and
+                // also why the rect above it is measured rather than derived.
+                centered: true,
                 // `drawVoice` passes `alreadyInGroup = true` (`draw/voice.js:19`), so the
                 // rect is the text's SIBLING and no `<g>` opens.
                 inGroup: true,
@@ -15003,8 +15108,15 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
           ...faceOf('repeatfont'),
           noClass: true,
           x: openVolta.startX + ENGRAVE.voltaTextIndent,
-          y: y + ENGRAVE.voltaTextDrop + ENGRAVE.voltaTextSize,
-          size: ENGRAVE.voltaTextSize,
+          // …**AND THE SIZE IS THE DIRECTIVE'S, IN BOTH PLACES IT APPEARS.** `renderText`
+          // draws in `repeatfont` and adds `hash.font.size` to the y it is handed
+          // (`draw/ending.js:40-48`, `draw/text.js:29-30`), so a `%%repeatfont Helvetica
+          // 22` number is 29px and sits 29px below its rung. This was `voltaTextSize`, the
+          // 13pt DEFAULT — which is what that constant now documents — so the attribute
+          // read 17 against abcjs's 29 while the face beside it was already the
+          // directive's.
+          y: y + ENGRAVE.voltaTextDrop + fontSizeOf('repeatfont'),
+          size: fontSizeOf('repeatfont'),
           bold: false,
           italic: false,
         })
@@ -16643,29 +16755,7 @@ function topTextBlock(
    * would measure 53. Probed on `%%setfont-1 cursive 40 bold`, whose row is 42 = 40 + 2.
    */
   const advanceRich = (value: RichText, defaultSize: number, type?: AbcFontType): void => {
-    // ⚠️ **A PHRASE CARRIES ITS OWN FACE AS WELL AS ITS OWN SIZE.** `%%setfont-1` names a
-    // family, and a live measurer answers for the family it is given — `$1` in a cursive
-    // face is not Times at the same size. The RAW size stands (see the block above): a
-    // font handed to `getTextSize` as an OBJECT skips the pt->px 4/3.
-    const phrases = typeof value === 'string' ? [] : value
-    const plain = phrases.map((ph) => ph.text).join('')
-    let largest = textHeight(
-      defaultSize,
-      plain === '' ? 'Mg' : plain,
-      type === undefined ? 'serif' : fontOfType(fonts, type, defaultSize),
-    )
-    for (const phrase of phrases) {
-      if (phrase.font === null) continue
-      largest = Math.max(
-        largest,
-        textHeight(phrase.font.size / UNIT_PX, phrase.text, {
-          size: phrase.font.size,
-          family: phrase.font.face,
-          ...(phrase.font.bold ? { weight: 'bold' } : {}),
-          ...(phrase.font.italic ? { style: 'italic' } : {}),
-        }),
-      )
-    }
+    const largest = richHeight(fonts, value, defaultSize, type)
     advances.push(largest)
     rows.push({ move: largest })
     y += largest
@@ -17400,7 +17490,18 @@ function appendFreeText(
         })
         recordRow('subtitlefont', centre + PAGE_PADDING.left)
       }
-      spend(textHeight(size) + boxOf('subtitlefont'))
+      // **AND `Subtitle` MOVES BY ITS OWN TEXT'S HEIGHT**, raw —
+      // `getTextSize.calc(info.text, 'subtitlefont', 'text subtitle')` then
+      // `{move: size.height}` (`subtitle.js:8-9`), with no `* 1.1` and no rounding. This
+      // is the one row whose advance is the STRING rather than `addTextIf`'s `"A"` probe.
+      //
+      // ponytail: one spend for the block, where abcjs builds one `Subtitle` per line. A
+      // mid-tune `T:` block is one line — the header's subtitles take `advanceText` — so
+      // the two agree; spend per line if a block ever carries two.
+      spend(
+        textHeight(size, block.lines[0], fontOfType(fonts, 'subtitlefont', size)) +
+          boxOf('subtitlefont'),
+      )
       continue
     }
     const textSize = sizeOf('textfont')
@@ -17646,6 +17747,36 @@ function bottomTextBlock(
     return face === undefined || face === '' ? {} : { face }
   }
   /** `addTextIf`: one row, then `round(height * 1.1 * lines)` — one rounding for all. */
+  /**
+   * The height abcjs advances a text row by: **its own probe string, in the ROW's font.**
+   * `addTextIf` measures `"A"` and `richText`'s empty arm measures `"i"`
+   * (`add-text-if.js:21`, `rich-text.js:4`) — never the row's own text — but both pass
+   * `defFont`, so the FACE, weight and style are the directive's.
+   */
+  const rowProbe = (size: number, type: AbcFontType | undefined, probe = 'A'): number =>
+    textHeight(size, probe, type === undefined ? 'serif' : fontOfType(fonts, type, size))
+  /**
+   * A boxed row's rect, `renderText`'s `getBBox()` plus a padding either side — measured
+   * off the JOINED lines where there is a DOM and off the generator's stub where there is
+   * not. See the note at the call site.
+   */
+  const boxInk = (
+    lines: readonly string[],
+    size: number,
+    type: AbcFontType | undefined,
+    pad: number,
+  ): { width: number; height: number } => {
+    const font = type === undefined ? 'serif' : fontOfType(fonts, type, size)
+    const live = getTextMeasurer()
+    const width = live
+      ? textWidth(lines.join('\n'), size, font)
+      : Math.max(0, ...lines.map((l) => textWidth(l, size, font)))
+    const height = live
+      ? textHeight(size, lines.join('\n'), font)
+      : textHeight(size, undefined, font) +
+        Math.max(0, lines.length - 1) * size * ABCJS_RATIO.textLineStep
+    return { width: Math.round(width + pad * 2), height: Math.round(height + pad * 2) }
+  }
   const addText = (
     value: RichText,
     extra: readonly string[],
@@ -17684,10 +17815,11 @@ function bottomTextBlock(
           : ((fonts[fontType]?.face ?? '') === ''
               ? (ABCJS_FONT_FACE[fontType] ?? '')
               : (fonts[fontType]?.face ?? ''))
-      let largest = textHeight(size)
-      for (const phrase of value) {
-        if (phrase.font !== null) largest = Math.max(largest, textHeight(phrase.font.size / UNIT_PX))
-      }
+      // The SAME `largestY` the top block advances by — see `richHeight`. This asked for a
+      // default probe in the default face on both arms, so a `$1`-carrying `H:`/`N:`/`W:`
+      // row advanced by a Times 'Mg' whatever `%%setfont-N` named: 10.3px of page on
+      // `misc-06-title-1bold`, accumulating down the block.
+      const largest = richHeight(fonts, value, size, fontType)
       texts.push({
         text,
         role: 'title',
@@ -17730,7 +17862,9 @@ function bottomTextBlock(
      * abcjs's own 49.27 between the two verse lines of `visual-selection-01`.
      */
     if (text === '' && extra.length === 0) {
-      move(textHeight(size) + box)
+      // …and the probe is `"i"` in the ROW's own font — `getTextSize.calc("i", defFont,
+      // klass)` (`rich-text.js:4`). See `rowProbe`.
+      move(rowProbe(size, fontType, 'i') + box)
       return
     }
     // A BOXED ROW MOVES IN BY ONE PADDING ON BOTH AXES AND OWNS FOUR RULES — the same
@@ -17749,20 +17883,25 @@ function bottomTextBlock(
         : {
             boxRect: {
               x: Math.round(PAGE_PADDING.left),
-              // **THE WIDEST NON-EMPTY TSPAN, AND ONE EXTRA LINE PER TSPAN AFTER THE
-              // FIRST** — `h + (nonEmptyCount - 1) * fontSize * 1.2` and the max width
-              // over the same set, which is the generator's patched `getBBox`
-              // (`dump-svg.js:106-128`). An EMPTY line counts for neither.
-              width: Math.round(
-                Math.max(0, ...[text, ...extra].filter((l) => l !== '').map((l) => textWidth(l, size, 'serif'))) +
-                  pad * 2,
-              ),
-              height: Math.round(
-                textHeight(size) +
-                  Math.max(0, [text, ...extra].filter((l) => l !== '').length - 1) *
-                    size *
-                    ABCJS_RATIO.textLineStep +
-                  pad * 2,
+              /**
+               * **THE WIDEST NON-EMPTY TSPAN, AND ONE EXTRA LINE PER TSPAN AFTER THE
+               * FIRST** — `h + (nonEmptyCount - 1) * fontSize * 1.2` and the max width over
+               * the same set, which is the generator's patched `getBBox`
+               * (`dump-svg.js:106-128`). An EMPTY line counts for neither.
+               *
+               * ⚠️ **AND THAT IS THE STUB'S ARITHMETIC, NOT A RULE** — the fifth time on
+               * this branch. The row is ONE `<text>` with a tspan per line and abcjs boxes
+               * whatever `getBBox()` says about the lot (`draw/text.js:69`), so live
+               * measures the JOIN and headless keeps the computed form its goldens were
+               * made with. Both are in the ROW's own font, which neither was: a `serif`
+               * width and a default-probe height put the `%%historyfont Palatino 9 box` and
+               * `%%wordsfont Georgia 13 box` rects up to 6px narrow.
+               */
+              ...boxInk(
+                [text, ...extra].filter((l) => l !== ''),
+                size,
+                fontType,
+                pad,
               ),
             },
           }),
@@ -17780,9 +17919,18 @@ function bottomTextBlock(
       ...(selectable === undefined ? {} : { selectable }),
     })
     recordRow(fontType)
+    /**
+     * **AND THE ADVANCE IS A PROBE, NOT THE ROW** — `size = getTextSize.calc("A",
+     * params.font, params.klass)` and `move: Math.round(size.height * 1.1 * numLines)`
+     * (`add-text-if.js:21-27`), whose own comment says why: "if there are blank lines they
+     * won't be counted by getTextSize, so just get the height of one line and multiply".
+     * The STRING is abcjs's stand-in; the FONT is the directive's, and asking for the
+     * default face made a `%%wordsfont`/`%%historyfont` block the same height whatever it
+     * named — `cursive` was 34px of page on `W:` and 38px on `H:`.
+     */
     move(
       Math.round(
-        (textHeight(size) + box) *
+        (rowProbe(size, fontType) + box) *
           ENGRAVE.lineSkipFactor *
           (1 + extra.length) *
           UNIT_PX,
@@ -17791,6 +17939,8 @@ function bottomTextBlock(
   }
   const history = sizeOf('historyfont')
   const historyBox = boxOf('historyfont')
+  /** `addMultiLine`'s `getTextSize.calc("A", 'historyfont', klass)` — probe and font both. */
+  const historyProbe = (): number => textHeight(history, 'A', fontOfType(fonts, 'historyfont', history))
   /**
    * **`addMultiLine`'S ARRAY BRANCH CLOSES WITH A SELECTABLE OF ITS OWN** —
    * `{endGroup, absElemType, startChar: -1, endChar: -1, name}` (`bottom-text.js:61`),
@@ -17870,9 +18020,19 @@ function bottomTextBlock(
     for (const line of metadata.unalignedWords)
       addText(line, [], words, 'unalignedWords', false, 0, 'unalignedWords', 'wordsfont', undefined, 'abcjs-extra-text abcjs-unaligned-words')
     closeGroup('unalignedWords', 'unalignedWords', 'unalignedWords')
-    // TWO raw heights, and abcjs spends them as two separate rows.
-    move(textHeight(words))
-    move(textHeight(words))
+    /**
+     * TWO raw heights, and abcjs spends them as two separate rows — **each measured with
+     * its OWN probe string in `wordsfont`'s OWN font.** `addMultiLine` closes on
+     * `getTextSize.calc("A", defFont, klass).height` and `unalignedWords` then adds
+     * `getTextSize.calc("i", defFont, klass).height` (`bottom-text.js:15`, `:40`, `:63`).
+     *
+     * The probes are abcjs's — a stand-in it chose — but the FONT is the directive's, and
+     * asking for the default face made this block the same height whatever `%%wordsfont`
+     * said: `Georgia 13` was 0.97px short, `Verdana 13` 7.66, `cursive 13` 34.16.
+     */
+    const wordsFont = fontOfType(fonts, 'wordsfont', words)
+    move(textHeight(words, 'A', wordsFont))
+    move(textHeight(words, 'i', wordsFont))
   }
 
   /** `addSingleLine` — the preface joins the phrases as one more of them when rich. */
@@ -17911,7 +18071,9 @@ function bottomTextBlock(
       emptyRow()
       addText(preface, [], history, 'description', true, historyBox, 'description', 'historyfont', groupId, klass,
         { elType: 'extraText', startChar: -2, endChar: -2, text: preface })
-      move((textHeight(history) * 3) / 4)
+      // `size = getTextSize.calc("A", defFont, klass)` (`bottom-text.js:40`) — abcjs's own
+      // probe string, in the DIRECTIVE's font. See the `%%wordsfont` note below.
+      move((historyProbe() * 3) / 4)
       value.forEach((entry, j) => {
         if (plainText(entry) !== '') {
           addText(entry, [], history, 'description', false, historyBox, 'description', 'historyfont', groupId, klass)
@@ -17920,11 +18082,11 @@ function bottomTextBlock(
         // same amount of space without this" (`bottom-text.js:58-59`).
         const next = value[j + 1]
         if (j < value.length - 1 && typeof entry === 'string' && next !== undefined && typeof next !== 'string') {
-          move((textHeight(history) * 3) / 4)
+          move((historyProbe() * 3) / 4)
         }
       })
       closeGroup('extraText', 'description', groupId)
-      move(textHeight(history))
+      move(historyProbe())
       return
     }
     /**
@@ -18628,9 +18790,32 @@ function aboveLadder<
   // box` and not at all for `%%partsbox` — 15.6px each way.
   const partSize = fontSizeOf('partsfont')
   const boxPad = partsBox ? partSize * ENGRAVE.fontBoxPadding : 0
+  /**
+   * …**AND IT IS THE LABEL'S OWN STRING IN THE DIRECTIVE'S OWN FONT.**
+   * `RelativeElement`'s height is `getTextSize.calc(this.c, type, klass)` over the text it
+   * will draw, so both the STRING and the FAMILY reach the lane. Asking for a default probe
+   * in the default face made this lane the same height whatever `%%partsfont` said:
+   * `sans-serif 29` reserved 1.81px too little, `cursive 29` 18.53px, and `Times-Roman 29`
+   * was exact for the one reason that Times is what the fallback measures.
+   *
+   * The TALLEST label wins, because `partHeightAbove` is per element and `incTop` takes a
+   * maximum over the staff's elements.
+   *
+   * Node is unmoved: `goldenTextHeight` ignores both arguments, and the 691 goldens are
+   * that table. This is a BROWSER measurement or it is nothing.
+   */
+  const partFont = fontOfType(SCORE_FONTS, 'partsfont', partSize)
+  const partInk = Math.max(
+    ...parts.flatMap((p) =>
+      p.elements
+        .filter((el) => el.type === 'part')
+        .map((el) => textHeight(partSize, el.sourcePartLabel ?? el.texts[0]?.text, partFont)),
+    ),
+    0,
+  )
   // …and the box's own PADDING is `renderText`'s, not the lane's: it adds it to the
   // baseline at draw time (`draw/text.js:57`), so adding it here too counted it twice.
-  const partY = partLabels ? reserve(textHeight(partSize) + boxPad * 4) + partSize : null
+  const partY = partLabels ? reserve(partInk + boxPad * 4) + partSize : null
   const tempoY = tempos
     ? reserve(ENGRAVE.tempoHeightAbove) + ENGRAVE.tempoTextSize + ENGRAVE.tempoDescenderBump
     : null
