@@ -1,4 +1,4 @@
-# NEXT AGENT PROMPT — abcts, 2026-09-01 (rev b)
+# NEXT AGENT PROMPT — abcts, 2026-09-01 (rev c)
 
 Paste the block below.
 
@@ -53,30 +53,44 @@ measured a STAND-IN — a probe string, a generic font, the wrong family, one li
 where the whole block's was wanted. And `h + (n-1) * size * 1.2` IS THE STUB'S `getBBox`,
 NOT A RULE — it has appeared FOUR times.
 
-WHAT IS LEFT — 5, and most of it is DECISIONS rather than effort:
+WHAT IS LEFT — 4, and TWO OF THEM ARE NOT DEFECTS OF THE RENDERER:
 
-  1. CSSOM SERIALISATION (1). THE OWNER'S CALL — abcjs sets style through the DOM and the
+  1. TWO FIXTURES THAT ARE BYTE-IDENTICAL RENDERED ALONE. `visual-selection-01` and
+     `svg-per-line-01` pass zzpair exactly and fail zzlive; the whole difference is the
+     cache below. ⚠️ CONFIRM WITH zzpair BEFORE CHASING ANY RED — zzlive shares one page
+     across 691 cases and abcjs's text cache is module-global.
+  2. `misc-06-title-1bold` — ONE ULP, and only in the FULL fixture. Page height exact; one
+     bottom-block row reads 460.779 against 460.77900000000005 and every row after it
+     agrees, because the next add absorbs it. Leave-one-out says removing ANY of four lines
+     closes it, so it is an ACCUMULATION — "A TOTAL IS NOT A WALK", the fifth time.
+     Two hypotheses are DEAD and measured: a per-phrase `richHeight` (abcjs's actual rule,
+     ported, moved NOTHING, reverted) and every `%%setfont` control rung. INSTRUMENT THE
+     PAGE CURSOR; do not reason about which term it is.
+  3. CSSOM SERIALISATION (1). THE OWNER'S CALL — abcjs sets style through the DOM and the
      browser serialises; abcjs disagrees with ITSELF across browsers. Matching it means
      setting styles through the DOM, which is architectural.
-  2. A HELD SYLLABLE TAKES THE DEFAULT FONT. Measured, fixed, REVERTED — inheriting the
+  4. A HELD SYLLABLE TAKES THE DEFAULT FONT. Measured, fixed, REVERTED — inheriting the
      directive closes the control and takes FOUR gates red. Scope to the held/empty
      syllable alone and prove against those four, not the control.
-  3. Two large font fixtures (several causes each — use a control).
-  4. Two selection/tablature fixtures, page heights already exact, unexamined.
 
-  AND ONE MEASURED DIVERGENCE WRITTEN DOWN RATHER THAN LANDED — abcjs's `sizeCache` is
-  MODULE-scoped and keyed WITHOUT x (`write/svg.js:306,316`), so the first width it measures
-  for a string under 20 chars is the width EVERY later render in that page gets. Ours caches
-  per measurer and keys ON the x. No gate can see it — they all render fresh — and a
-  long-lived HOST page (Studio's WKWebView) is exactly where it bites. Reproduce:
-  `SHARE=1 node scripts/zzcontrol.mjs tempo` → 9 of 13. Fixing it makes our output depend on
-  render HISTORY, so it is the owner's call.
+  ⛔ AND DO NOT RE-TRY THE NAIVE CACHE PORT. abcjs's `sizeCache` is MODULE-scoped and keyed
+  WITHOUT x (`write/svg.js:306,316`) — but WITH the class. Porting it (module-scoped, x
+  dropped) takes the live gate from 4 to SEVEN: it re-breaks all three tempo fixtures,
+  because each engine's cache freezes at ITS OWN first x and the two only track once every
+  x already agrees. Measured both ways, reverted. A faithful port needs the CLASS in the
+  key, which `TextFont` cannot express today.
 
-✅ CLOSED SINCE (`35d7031`): THE TEMPO'S SUB-PIXEL X, 8 → 5. The old note said passing an x
-"changes NOTHING" — true of ONE of the two sites. The prefix branch ALREADY rebuilds a
-HEADER tempo at the solved x, so passing `cursor` there closed it; a MID-TUNE [Q:] is
-TRANSLATED and its measure-pass cursor is BLOCK-LOCAL — a different x entirely, not one
-disagreeing in the last bit — so it had to be rebuilt in the block loop too.
+  ✅ CLOSED SINCE (`5092802`): EVERY `%%<type>font` LANE, 5 → 4. Ten sites, one defect, and
+  it is the arc's own rule — each asked for a DEFAULT PROBE IN A DEFAULT SERIF where abcjs
+  hands `getTextSize.calc` the directive's whole font object. `options-01-fonts` is
+  byte-identical. AND THE PROBE STRING IS ABCJS'S: `addTextIf` measures "A", `richText`'s
+  empty arm "i" — never the row's text — while `Subtitle` measures its own string. `'Mg'`
+  carries a descender the probes do not, so the SIGN of the error moved with the face.
+
+  ⭐ AND LEAVE-ONE-OUT IS THE LADDER'S COMPLEMENT. Delete one LINE of the fixture at a time
+  and print the page delta: it ENUMERATES the causes of a fixture with many, where a ladder
+  ISOLATES one. On an eighteen-directive fixture it named four contributors summing to the
+  observed 3.06px exactly, and a control per contributor then proved each fix.
 
 TRAPS, all measured this session:
   ⚠️ `display:none` ZEROES `getBBox` and abcjs measures at DRAW time for a boxed font, so
@@ -86,7 +100,8 @@ TRAPS, all measured this session:
   ⚠️ An EMPTY line measures zero and still takes a row.
   ⚠️ A narrow probe can miss the effect it was built to find.
   ⚠️ A LADDER SHARING ONE DOCUMENT IS NOT A LADDER — abcjs's `sizeCache` is MODULE-scoped
-     and keyed without x, so rung k inherits every rung before it.
+     and keyed without x, so rung k inherits every rung before it. The same fact makes two
+     of zzlive's four reds page HISTORY rather than layout.
 
 Run `npx tsc --noEmit && echo OK` before every commit, keep BOTH gates green, and commit
 and push after every landing. Never --force. Omit Co-Authored-By trailers here.
@@ -103,7 +118,7 @@ did not exist three days ago.
 produced by reasoning from a fixture instead of a control — and each cost more than the fix
 that eventually landed.
 
-**Then what is left, labelled by what it NEEDS.** Two of the four are decisions, and the
-`sizeCache` divergence below them is a THIRD. An agent that treats them as effort will
-re-try the held-syllable fallback that four gates already refused, or land a global text
-cache nobody asked for.
+**Then what is left, labelled by what it NEEDS.** Two of the four are not renderer defects
+at all and one is a decision, so there is exactly ONE piece of engineering in the list. An
+agent that treats them as effort will chase a fixture that is already byte-identical, re-try
+the held-syllable fallback four gates refused, or re-land the cache port measured at 4 → 7.
