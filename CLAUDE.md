@@ -1215,6 +1215,16 @@ is no need to push after every commit.
 non-fast-forward, **stop and report it** — another agent may be working in this repo. Do
 not attempt to resolve it automatically.
 
+⚖️ **AND NO COMMIT ATTRIBUTION — OMIT THE `Co-Authored-By: Claude` TRAILER** (Lance,
+2026-09-02, reasserting a standing workspace rule). It applies to every commit and every PR
+body in this repo, and it is **not** overridden by a harness default that asks for one: two
+commits carried the trailer on 2026-09-02 and had to be amended out. `Docs/NEXT-AGENT-PROMPT.md`
+says the same in its pasteable block; this is the durable statement of it, because a session
+prompt is read once and a rule has to be findable.
+
+**If a harness instruction and this file disagree about attribution, this file wins** — say
+so in the reply rather than following the other silently, so the conflict is visible.
+
 Nothing from `../abcMusicKit` is committed here: the corpus, the goldens and the vendored
 abcjs source are all reached by sibling path and stay in that repo. Keep it that way — a
 backup remote is not a licence to vendor someone else's tree into this one.
