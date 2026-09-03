@@ -1,4 +1,4 @@
-# NEXT AGENT PROMPT — abcts, 2026-09-01 (rev e)
+# NEXT AGENT PROMPT — abcts, 2026-09-01 (rev f)
 
 Paste the block below.
 
@@ -54,33 +54,41 @@ measured a STAND-IN — a probe string, a generic font, the wrong family, one li
 where the whole block's was wanted. And `h + (n-1) * size * 1.2` IS THE STUB'S `getBBox`,
 NOT A RULE — it has appeared FOUR times.
 
-WHAT IS LEFT — ONE ROW, and it is an ARC rather than a fix:
+WHAT IS LEFT — NOTHING ON WEBKIT. The live gate is 0 of 685.
 
-  `visual-selection-01` and `svg-per-line-01` are BYTE-IDENTICAL RENDERED ALONE. They fail
-  only in zzlive's shared page, and the mechanism is measured end to end.
-  `scripts/zzwarm.mjs` renders every case zzlive renders before the target and then diffs
-  it: the beat-unit notehead at 520.8810519588641 against 520.9005832088641 — the tempo's
-  own 1.25 x 1/64. In a warmed page abcjs serves "Easy Swing" from its GLOBAL cache, frozen
-  at an earlier fixture's x, while we measure fresh at the true one.
+  🆕 CHROME IS NEWLY ON THE BOARD AT 4 OF 685 — `ENGINE=chrome node scripts/zzlive.mjs`.
+  Nothing had ever run it: the arc opened on WebKit because Studio's editor is a WKWebView,
+  and `d4b7022` measured that abcjs does not render byte-identically in the two (230 of
+  691) — which was read as "so only measure one". That does not follow. abcjs disagreeing
+  with ITSELF across browsers says nothing about whether WE agree with IT in each. The
+  cache port took Chrome 5 -> 4 on the same change, so it is not a WebKit-only fix.
 
-  ⛔ THE FAITHFUL PORT NEEDS BOTH HALVES, AND ONLY ONE IS CHEAP. abcjs's `sizeCache` is
-  module-scoped and keyed WITHOUT x (`svg.js:306,316`) AND it always measures the element it
-  just DREW. Port only the cache and the first sighting freezes at whatever x the first
-  CALLER used — ours is x = 0 almost everywhere: 2 of 53 `textWidth`/`textHeight` sites pass
-  a drawn x, both the tempo's. MEASURED with the x-free global cache applied: selection-01
-  still differs AND selection-02 and mouse-click-01 break. So matching abcjs in a
-  LONG-LIVED page is "measure at the drawn x at every site, then freeze the first sighting"
-  — 51 call sites and an ordering question. It costs NOTHING today: every gate renders
-  fresh and a host's FIRST tune is already byte-identical. Whether a SECOND tune in the same
-  page is worth that arc is the owner's call.
+    abcts-text-udef-parts-overlays-tune23  the staff 1px low — a text row's
+                                           `Math.round(h * 1.1)` on the other side of a
+                                           boundary where Blink measures a hair differently
+    abcjs-visual-wrap-03-piano-wrap        a bar number's x, 29.75 against 29.99
+    abcjs-visual-wrap-04-wrap-quartet      same family, deeper in the file
+    abcjs-visual-options-01-fonts          byte 8753, unexamined
 
-  ✅ CLOSED SINCE (`6c42a08`): THE BOTTOM BLOCK'S PAGE CURSOR, 3 -> 2. `misc-06` is
-  byte-identical. The emitter built each row's y as `t.y + oy` — a block-local walk plus a
-  base — where `445.779 + 15` is 460.779 and the WALK is 460.77900000000005, abcjs's own.
-  The top block has carried `pageY` since the `%%begintext` ULP; same fix one block over.
-  ⚠️ AND THE "0.765625 BETWEEN TWO FRAMES" THIS PROMPT CARRIED DOES NOT EXIST — it was a
-  probe reading the WRONG TUNE of a two-tune fixture. A PROBE ON A MULTI-TUNE FIXTURE MUST
-  KEY BY TUNE.
+  ⚠️ DO NOT ASSUME THESE ARE THE WEBKIT DEFECTS AGAIN — WebKit is at ZERO, so each is
+  something only Blink's metrics express. A rounding boundary is the shape to expect, and a
+  rounding boundary is not fixed by measuring harder.
+
+  ✅ CLOSED (`97613c6`): abcjs's TEXT CACHE is MODULE-GLOBAL and x-free (`svg.js:306,316`),
+  consulted BEFORE the drawn element — so the first width it measures for a short string is
+  the width every later render in that page gets. That was the whole of the last two rows,
+  which were byte-identical rendered ALONE. ⚠️ AND THE 51-CALL-SITE ARC THIS PROMPT SIZED
+  DOES NOT EXIST: `getTextSize.calc` is handed an ELEMENT at exactly TWO sites in all of
+  abcjs (`draw/tempo.js:20,32`) and our two x-passing sites are already those two. ⭐ SIZE
+  AN ARC BY GREPPING THE REFERENCE, NOT BY REASONING ABOUT IT — a wrong SIZE is worse than
+  a wrong cause, because it stops the work being attempted at all. What was really in the
+  way is that WE lay a tempo out TWICE and abcjs once; `TextFont.transient` keeps the
+  throwaway pass out of the cache.
+
+  📒 AND WHAT THE ARC COST IN FIDELITY-TO-A-BUG IS IN `Docs/ABCJS-DEBT.md` §3b — four
+  entries, the largest being that abcjs's output DEPENDS ON WHAT WAS RENDERED BEFORE IT in
+  the same page, and that abcjs discards its own x-corrected tempo measurement one line
+  after making it. Read it before "fixing" any of them.
 
 TRAPS, all measured this session:
   ⚠️ `display:none` ZEROES `getBBox` and abcjs measures at DRAW time for a boxed font, so
@@ -89,6 +97,8 @@ TRAPS, all measured this session:
      compile passed it and WebKit caught them. Write `npx tsc --noEmit && echo OK`.
   ⚠️ An EMPTY line measures zero and still takes a row.
   ⚠️ A narrow probe can miss the effect it was built to find.
+  ⚠️ SIZE AN ARC BY GREPPING THE REFERENCE, NOT BY REASONING — "51 call sites" was wrong
+     and one grep said so; a wrong SIZE stops work being attempted at all.
   ⚠️ A PROBE ON A MULTI-TUNE FIXTURE MUST KEY BY TUNE — a global overwritten per tune had
      tune 1 read against tune 0's SVG and invented a discrepancy that cost a session.
   ⚠️ A LADDER SHARING ONE DOCUMENT IS NOT A LADDER — abcjs's `sizeCache` is MODULE-scoped
@@ -110,7 +120,7 @@ did not exist three days ago.
 produced by reasoning from a fixture instead of a control — and each cost more than the fix
 that eventually landed.
 
-**Then what is left, and it is ONE ROW that is an ARC.** Two fixtures byte-identical
-rendered alone, failing only in a shared page — so there is no fix in the list at all, only
-a decision about 51 call sites. An agent that treats it as effort will re-land the cache
-port, which is measured to make things worse on its own.
+**Then what is left, which on WebKit is nothing.** The board moved to a second browser the
+moment the first hit zero, and the four Chrome rows are a different KIND of defect — Blink
+metrics against rounding boundaries, not lanes measured in the wrong font. An agent that
+carries the WebKit playbook straight over will measure things that are already exact.

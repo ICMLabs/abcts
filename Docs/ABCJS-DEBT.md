@@ -179,6 +179,75 @@ load-bearing for byte parity, and they are cited so the reach stops here.
 
 ---
 
+## 3b. THE MEASUREMENT ONES — added 2026-09-03, and they are the costliest class
+
+The browser-parity arc closed by porting how abcjs MEASURES TEXT. Every entry here is a
+place where matching it means reproducing something a clean engine would not do, and each
+one is load-bearing: the live gate went to **0 of 685 in WebKit** on the last of them.
+
+### 3b.1 The size cache is MODULE-GLOBAL, never expires, and its key has no x
+
+    var sizeCache = {};                   // write/svg.js:306 — module scope, no bound
+    key = text + JSON.stringify(attr)     // :316 — the FONT attrs, no x, no element
+
+**What it costs anyone:** abcjs's output for a tune **depends on what was rendered before
+it in the same page.** The same tune is not the same SVG as tune 1 and as tune 5. The cache
+is also unbounded and lives for the life of the module, so a long session accumulates every
+string ever drawn.
+
+**And abcjs is inconsistent with itself here**, which is the sharper half. It goes to the
+trouble of measuring the element it JUST DREW — `getTextSize.calc(str, type, klass, el)`
+(`draw/tempo.js:20`, `:32`) — precisely because a fractional x measures 1/64 px wider, and
+then caches that result under a key with **no x in it**, so the second tempo to use the same
+word gets the first one's x. The correctness the fourth argument buys is discarded by the
+line after it.
+
+**The clean version:** measure per (string, font, sub-pixel phase), or per render. Ours was
+per-render and x-keyed until 2026-09-03 and had to be given up: `visual-selection-01` and
+`svg-per-line-01` are byte-identical rendered ALONE and differ in a shared page, and there
+is no way to be both correct and byte-equal here.
+
+**Gate that goes red if it is "fixed":** `zzlive` (WebKit 0 of 685), and only in a SHARED
+page — `zzpair` cannot see it. `scripts/zzwarm.mjs` exists for exactly this.
+
+### 3b.2 A text row's advance is measured on the probe string `"A"`, never on the row
+
+`addTextIf` measures `getTextSize.calc("A", params.font, params.klass)` and multiplies by
+the line count (`add-text-if.js:21-27`); `richText`'s empty arm measures `"i"`
+(`rich-text.js:4`). abcjs's own comment says why — "if there are blank lines they won't be
+counted by getTextSize, so just get the height of one line and multiply" — which is a
+workaround for the whitespace early-out below, not a typographic choice. A row of descenders
+advances by the same amount as a row of capitals.
+
+**The clean version:** measure the row. `Subtitle` already does (`subtitle.js:8`), which is
+why it is the one row here whose advance is its own string.
+
+### 3b.3 A whitespace-only string measures ZERO, and a zero height then means "4 pitch"
+
+    if (!text || text.match(/^\s+$/)) return { width: 0, height: 0 };   // svg.js:311-312
+    this.height = opt.height ? opt.height : 4;                          // relative-element.js:36
+
+Two independent shortcuts that meet. A held syllable's `lyricStr` is `"\n"`, so it measures
+zero — and zero is FALSY, so the element falls through to a magic 4-pitch default rather
+than reserving nothing or reserving a line. The lyric lane is a max over children, so that
+default silently becomes the floor for every `%%vocalfont` under 13pt.
+
+**The clean version:** an empty row reserves its font's line height, and a legitimate zero
+is not confused with an absent value. The same falsy-zero bug is already recorded at
+`if (opt.bottom)` in §3 — this is its third appearance.
+
+### 3b.4 `-ms-transform` and `-webkit-transform-origin-x/y` are still written
+
+`setScale` assigns eight style properties (`svg.js:71-83`), of which the `-ms-` pair and the
+two `-webkit-transform-origin-*` are dead in every browser abcjs supports — but they are
+assigned through the DOM, so what lands in the attribute is whatever that browser's CSSOM
+serialises, and Chrome and WebKit disagree. We set the same eight for that reason
+(`compat/index.ts`'s `restyleScale`), so the browser writes its own answer rather than ours.
+
+**The clean version:** `transform` and `transform-origin`, once, as text.
+
+---
+
 ## 4. WHAT IS **NOT** IN THIS FILE
 
 - **Real divergences** — anything abcts declines to reproduce — go in
