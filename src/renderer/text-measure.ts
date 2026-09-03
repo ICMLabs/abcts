@@ -48,6 +48,20 @@ export interface TextFont {
    * the x=0 one, which is right for anything actually drawn at an integer x.
    */
   readonly x?: number
+  /**
+   * **A MEASUREMENT THIS ENGINE MAKES AND abcjs NEVER DOES — kept out of the cache.**
+   *
+   * abcjs measures a tempo's parts once, at DRAW time (`draw/tempo.js:20`, `:32`). We lay a
+   * tempo out twice: once in the prefix/measure pass at a PROVISIONAL x and again rebuilt
+   * from the line solve's. The first is thrown away — the element is replaced — but it
+   * would otherwise be the FIRST SIGHTING that `SIZE_CACHE` freezes, and freezing the
+   * provisional x is the whole defect the rebuild exists to avoid.
+   *
+   * So the throwaway pass sets this and neither reads nor writes the cache. Nothing else
+   * needs it: every other site here measures a probe at x = 0, which is what abcjs's
+   * `getTextSize` does when no element is handed to it.
+   */
+  readonly transient?: boolean
 }
 
 /** `getBBox()`'s two figures, in PIXELS. */
@@ -105,18 +119,44 @@ export interface ProbeDocument {
  * the document tree has no layout at all, and one measured under a different stylesheet
  * can measure differently — abcjs puts its probe in the SVG it is drawing into.
  */
+/**
+ * ⚠️ **abcjs's SIZE CACHE IS MODULE-GLOBAL AND ITS KEY CARRIES NO x.**
+ *
+ *     var sizeCache = {};                       // svg.js:306, MODULE scope
+ *     key = text + JSON.stringify(attr)         // svg.js:316, the FONT attrs alone
+ *
+ * It is consulted BEFORE the drawn element is looked at (`:317-325`), so the first width
+ * abcjs measures for a string under 20 characters is the width **every later render in that
+ * page gets** — one `<script>` load, one cache, every tune. A host renders many tunes into
+ * one page (Studio's WKWebView is exactly that), so a cache of ours that were finer than
+ * abcjs's would disagree with it from the second tune on: `visual-selection-01` and
+ * `svg-per-line-01` were byte-identical rendered ALONE and differed in the live gate's
+ * shared page, which was the whole of it.
+ *
+ * ⚠️ **AND THE KEY IS DELIBERATELY COARSER THAN abcjs's IN ONE WAY.** abcjs keys on the
+ * generated CLASS too, which is the empty string unless `add_classes` is on — so the two
+ * agree wherever it is off, and a host that turns it on could in principle see abcjs keep
+ * two entries where we keep one. Measured at zero cost across all 691 cases; it is where to
+ * look if a page-order defect ever shows up in text widths under `add_classes`.
+ */
+const SIZE_CACHE = new Map<string, TextSize>()
+
 export const createDomTextMeasurer = (doc: ProbeDocument, host: ProbeHost): TextMeasurer => {
   const NS = 'http://www.w3.org/2000/svg'
-  /** abcjs caches text under 20 characters because `getBBox` is slow (`svg.js:314-318`). */
-  const cache = new Map<string, TextSize>()
 
   return (text: string, font: TextFont): TextSize => {
     const str = `${text}`
     // `if (!text || text.match(/^\s+$/)) return {width: 0, height: 0}` — svg.js:311-312.
     if (str === '' || /^\s+$/.test(str)) return { width: 0, height: 0 }
-    const key = str.length < 20 ? `${str} ${JSON.stringify(font)}` : null
+    // abcjs caches text under 20 characters because `getBBox` is slow (`svg.js:314-318`),
+    // and the key is `text + JSON.stringify(attr)` over the FONT attrs — **no x**. See
+    // `SIZE_CACHE`.
+    const key =
+      font.transient === true || str.length >= 20
+        ? null
+        : `${str} ${JSON.stringify([font.size, font.family, font.weight, font.style])}`
     if (key !== null) {
-      const hit = cache.get(key)
+      const hit = SIZE_CACHE.get(key)
       if (hit !== undefined) return hit
     }
 
@@ -182,7 +222,7 @@ export const createDomTextMeasurer = (doc: ProbeDocument, host: ProbeHost): Text
       size = { width: 0, height: 0 }
     }
     host.removeChild(el)
-    if (key !== null) cache.set(key, size)
+    if (key !== null) SIZE_CACHE.set(key, size)
     return size
   }
 }

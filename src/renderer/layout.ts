@@ -3293,6 +3293,14 @@ function layoutTempo(
   strict = true,
   /** Where the `Q:` was written — the join to the projection's own tempo element. */
   range?: SourceRange | null,
+  /**
+   * **THIS LAYOUT IS THE THROWAWAY ONE.** A tempo is laid out twice — the prefix or measure
+   * pass at a PROVISIONAL x, then rebuilt from the line solve's — and only the rebuild is
+   * kept. abcjs lays one out ONCE, at draw time, so the provisional pass is an artefact of
+   * ours and must not be the FIRST SIGHTING the shared measurement cache freezes. See
+   * `TextFont.transient`.
+   */
+  provisional = false,
 ): LayoutElement | null {
   /**
    * **`%%printtempo false` — THE MARK IS NOT DRAWN, AND THE TWO SITES DIFFER.**
@@ -3424,7 +3432,7 @@ function layoutTempo(
      * default host, and the whole effect is one sub-pixel, so a non-default `%%scale`
      * measures at an x off by that factor. Thread `OUT` in if one ever matters.
      */
-    const preWidth = textWidth(tempo.text, tempoSize, tempoTextFont, drawAt(cursor))
+    const preWidth = textWidth(tempo.text, tempoSize, tempoTextFont, drawAt(cursor), provisional)
     cursor += preWidth + preWidth / Math.max(1, tempo.text.length)
   }
 
@@ -3574,7 +3582,7 @@ function layoutTempo(
     })
     // …and the RATE advances the same way the pre-string does: its own width plus one
     // average character (`draw/tempo.js:33-35`).
-    const postWidth = textWidth(`= ${tempo.bpm}`, tempoSize, tempoTextFont, drawAt(cursor))
+    const postWidth = textWidth(`= ${tempo.bpm}`, tempoSize, tempoTextFont, drawAt(cursor), provisional)
     cursor += postWidth + postWidth / Math.max(1, `= ${tempo.bpm}`.length)
   }
 
@@ -6821,6 +6829,8 @@ const textWidth = (
    * the attribute the browser lays the element out from.
    */
   x?: number,
+  /** A measurement abcjs never makes, kept out of the shared cache — `TextFont.transient`. */
+  transient = false,
 ): number => {
   // **A LIVE MEASURER WINS OVER BOTH TABLES**, because when there is a DOM the target is
   // not a table at all — it is whatever the browser says, which is what abcjs asks it.
@@ -6828,7 +6838,11 @@ const textWidth = (
   const live = getTextMeasurer()
   if (live !== null) {
     const f = typeof font === 'string' ? fontFor(size, font) : font
-    return live(text, x === undefined ? f : { ...f, x }).width / UNIT_PX
+    return live(text, {
+      ...f,
+      ...(x === undefined ? {} : { x }),
+      ...(transient ? { transient: true } : {}),
+    }).width / UNIT_PX
   }
   // The tables are keyed by our three-way `Face`; an explicit font falls back to the face
   // its weight implies, which is all the tables can express anyway.
@@ -12266,7 +12280,7 @@ function layoutMeasure(
   const tempoChangeAt = meterEventIndex(measure.tempoChangeSourceRange)
   const drawTempoChange = (): void => {
     if (measure.tempoChange == null || tempoChangeAt > 0) return
-    const tempo = layoutTempo(x, measure.tempoChange, strict, measure.tempoChangeSourceRange)
+    const tempo = layoutTempo(x, measure.tempoChange, strict, measure.tempoChangeSourceRange, true)
     if (tempo === null) return
     elements.push(tempo)
     fixed(0, 0)
@@ -12322,7 +12336,7 @@ function layoutMeasure(
   /** …and the mid-measure `[Q:]`, at the event it was written before. */
   const drawTempoBefore = (eventIndex: number): void => {
     if (measure.tempoChange == null || tempoChangeAt === 0 || tempoChangeAt !== eventIndex) return
-    const tempo = layoutTempo(x, measure.tempoChange, strict, measure.tempoChangeSourceRange)
+    const tempo = layoutTempo(x, measure.tempoChange, strict, measure.tempoChangeSourceRange, true)
     if (tempo === null) return
     elements.push(tempo)
     fixed(0, 0)
@@ -13908,7 +13922,7 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
        * and we drew six, the first twice.
        */
       if (withMeter && topStaff && score.tempo !== null && score.tempoInline !== true) {
-        const tempo = layoutTempo(x, score.tempo, strict, score.tempoSourceRange)
+        const tempo = layoutTempo(x, score.tempo, strict, score.tempoSourceRange, true)
         if (tempo !== null) {
           elements.push(tempo)
           advances.push({ rod: 0, gap: 0, duration: 0, left: 0, kind: 'other' })
