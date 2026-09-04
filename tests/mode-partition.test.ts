@@ -210,6 +210,48 @@ describe("the three compatibility modes, as a partition", () => {
     expect(wrong).toEqual([]);
   });
 
+  /**
+   * **NON-STRICT MEASURES TEXT WITH REAL PER-EM METRICS, NOT THE GOLDEN GENERATOR'S.**
+   * `STRICT_TEXT_METRICS` (`layout.ts:6880`, set at `:13171`) picks `golden-widths.ts` —
+   * the five WebKit-calibrated ASCII tables `dump-svg.js` patches onto jsdom's `getBBox`,
+   * which answer a flat `FALLBACK_ADVANCE` for **everything outside ASCII** — against
+   * `text-metrics.ts`'s real per-em advances. Reproducing the generator's tables is what
+   * makes strict match the 691 goldens; non-strict is not bound by them.
+   *
+   * If that wiring ever went always-strict, every non-strict render would silently lay text
+   * out with the generator's tables — the Phase 1 defect (`extended` using the tables in a
+   * real browser) one layer down, and the ratchet would go red saying only "691 moved".
+   *
+   * ⚠️ THE OBSERVABLE IS THE ROOT `width` AND NOTHING ELSE HERE WORKS. The title string is
+   * IN the markup, so a digest differs whatever the metrics say; the title is `middle`-
+   * anchored at a FIXED paper x (abcjs places the top block absolutely), so its own `x`
+   * cannot move; and an annotation is `start`-anchored and does not reach the page width at
+   * all. Two instruments were written and discarded before this one.
+   */
+  it("non-strict measures with real per-em metrics, not the golden tables", () => {
+    const titled = (t: string) => `X:1\nT:${t}\nM:4/4\nL:1/4\nK:C\nC D E F|\n`;
+    const width = (t: string, mode: CompatibilityMode): string | undefined =>
+      /<svg[^>]*\bwidth="([\d.]+)"/.exec(svgOf(titled(t)  , mode))?.[1];
+
+    // ⚠️ THE CONTROL COMES FIRST: an ASCII pair BOTH tables distinguish, so an instrument
+    // that had gone blind cannot pass the rows below by measuring nothing.
+    expect(width("iiii", "abcjs-strict")).not.toBe(width("MMMM", "abcjs-strict"));
+    expect(width("iiii", "abc2.1")).not.toBe(width("MMMM", "abc2.1"));
+
+    // Pairs of equal LENGTH outside ASCII: identical to the generator's flat fallback,
+    // distinct to a real font. (`ŴŴŴŴ`/`ıııı` is NOT here — measured, and the per-em table
+    // gives those two the same advance, so the pair proves nothing either way.)
+    for (const [a, b] of [
+      ["ÀÀÀÀ", "ÎÎÎÎ"],
+      ["ÿÿÿÿ", "ÀÀÀÀ"],
+      ["音音音音", "ÀÀÀÀ"],
+    ] as const) {
+      expect(width(a, "abcjs-strict"), `${a}/${b} strict`).toBe(width(b, "abcjs-strict"));
+      expect(width(a, "abc2.1"), `${a}/${b} non-strict`).not.toBe(width(b, "abc2.1"));
+      expect(width(a, "extended")).toBe(width(a, "abc2.1"));
+    }
+  });
+
   /** And every one of those rows must be the SAME in `extended` as in `abc2.1`. */
   it("every named gate reads identically in abc2.1 and extended", () => {
     const differ = ROWS.filter(({ feat }) => digest(feat, "abc2.1") !== digest(feat, "extended")).map(
