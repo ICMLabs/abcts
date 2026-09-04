@@ -466,10 +466,16 @@ features this paragraph named. The distinction is real in the TYPE and not yet i
 the first genuinely `extended`-only feature takes the gate red and gets an entry here on
 purpose — instead of arriving as a silent digest move in the extended ratchet.
 
-Output is also **about a third the size**: 0.33x abcjs's bytes across the corpus, by
+Output is also **under half the size**: **0.446x abcjs's bytes across the corpus**, by
 emitting each glyph outline once into `<defs>` and placing it with `<use>`, while keeping
 every `abcjs-*` class and `data-name` hook identical so existing stylesheets and click
 handlers keep working.
+
+*Measured 2026-09-04 over all 691 cases of `tests/corpus-abcjs/`: 4,949,600 bytes against
+the goldens' 11,093,783, the goldens being abcjs's own output — `tests/svg-bytes.test.ts`
+reproduces them byte for byte. **This paragraph said 0.33x**, which no longer held. Nineteen
+of the 691 are not smaller at all and they are the header-only tunes that draw no staff:
+136 bytes, and no repeated glyph to fold into a `<defs>`.*
 
 ---
 
