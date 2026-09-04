@@ -31,6 +31,17 @@ const OURS = join(repo, 'dist', 'abcts-browser.global.js')
 const fixtures = join(repo, 'tests', 'corpus-abcjs', 'fixtures')
 
 /**
+ * ⚠️ **BOTH NON-STRICT MODES, NOT JUST `extended`.** `withLiveMeasurement` takes
+ * `isStrict(mode)` (`renderer/index.ts:49`), so `abc2.1` is on the live path for the same
+ * reason `extended` is — and a future wiring of `mode === 'extended'` would pass a rung
+ * that asked only about `extended` while leaving `abc2.1` laying text out with the per-em
+ * TABLES in a real browser. That is exactly the defect Phase 1 fixed, one mode over.
+ * `tests/mode-partition.test.ts` holds the headless half of the same question.
+ */
+const NON_STRICT = ['abc2.1', 'extended']
+
+
+/**
  * ⚠️ **THE WARMER HAS TO POISON THE CACHE, OR THIS RUNG PASSES FOR THE WRONG REASON.**
  * Two cuts of it did not. Warming with the first 40 fixtures reported STRICT as
  * position-independent too; warming with the three fixtures that share `Q:"Easy Swing"`
@@ -82,19 +93,25 @@ const TEXT_HEAVY =
   'X:1\n%%vocalfont Helvetica 10\nT:Title\nW:extra verse\nH:history\nM:4/4\nL:1/4\nK:C\nCDEF|\nw:laa_ la la la\n'
 await page.setContent('<!doctype html><meta charset="utf-8"><body></body>')
 await page.addScriptTag({ content: bundle })
-const inBrowser = await page.evaluate((abc) => {
+const inBrowser = await page.evaluate(({ abc, modes }) => {
   const { parse, render } = window.ABCTS.core
-  const p = parse(abc, { mode: 'extended' })
-  return p.ok && p.scores[0] ? render(p.scores[0], { mode: 'extended', systemWidth: 670 }) : 'NO SCORE'
-}, TEXT_HEAVY)
+  const out = {}
+  for (const mode of modes) {
+    const p = parse(abc, { mode })
+    out[mode] = p.ok && p.scores[0] ? render(p.scores[0], { mode, systemWidth: 670 }) : 'NO SCORE'
+  }
+  return out
+}, { abc: TEXT_HEAVY, modes: NON_STRICT })
 const { parse: nodeParse } = await import('../dist/index.js')
 const { render: nodeRender } = await import('../dist/renderer/index.js')
-const np = nodeParse(TEXT_HEAVY, { mode: 'extended' })
-const inNode = np.ok && np.scores[0]
-  ? nodeRender(np.scores[0], { mode: 'extended', systemWidth: 670 })
-  : 'NO SCORE'
-console.log('extended: browser vs headless          ',
-  inBrowser === inNode ? 'same — ⚠️ NO LIVE MEASURER INSTALLED' : 'DIFFER — measuring live ✅')
+for (const mode of NON_STRICT) {
+  const np = nodeParse(TEXT_HEAVY, { mode })
+  const inNode = np.ok && np.scores[0]
+    ? nodeRender(np.scores[0], { mode, systemWidth: 670 })
+    : 'NO SCORE'
+  console.log(`${mode.padEnd(8)}: browser vs headless          `,
+    inBrowser[mode] === inNode ? 'same — ⚠️ NO LIVE MEASURER INSTALLED' : 'DIFFER — measuring live ✅')
+}
 console.log()
 
 /**

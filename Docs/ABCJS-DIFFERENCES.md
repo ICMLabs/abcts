@@ -409,6 +409,37 @@ Both are stored in `multilineVars` by the directive parser and consulted nowhere
 *From reading `abc_parse_directive.js`, corroborated by abcMusicKit v1, which reproduces
 abcjs byte-for-byte and records the same finding.*
 
+### A declared edge of zero is read as no edge at all
+
+`relative-element.js:40-43` is `if (opt.top) this.top = opt.top` and the same for `bottom`,
+and **`0` is falsy**, so an element that declares an edge AT the reference pitch keeps the
+constructor's default instead. `K:C clef=alto2` declares `bottom` 0, abcjs keeps `clefPos`
+4, and the staff reserves two pitch it does not need. Non-strict honours the declaration.
+
+*Verified: page height 94.77161 in strict against 102.77161 corrected, and it is the one
+corpus row `tests/corpus-abcjs/extended.sha256` moved when the fix landed. The same falsy-zero
+appears at an unbeamed stem's `bottom: p1 - 1`; that site was gated, measured across the 691
+corpus cases, sixteen single notes, a two-staff tune and a lyric row, moved NOTHING, and was
+reverted — see `Docs/ABCJS-DEBT.md` §3b.3.*
+
+### A held syllable reserves four pitch instead of a line of its font
+
+`this.height = opt.height ? opt.height : 4` (`relative-element.js:36`) is the same falsy-zero
+one line up, but the zero here is **measured rather than declared**, so the correction is
+different. The `&nbsp;` that a `_` carries onto the next note has `lyricStr === "\n"` — pure
+whitespace — which `getTextSize` early-outs to zero for (`svg.js:311-312`), so the element
+takes abcjs's four-pitch constructor default. `lyricHeightBelow` maxes over children, so the
+default BINDS under about 15.5px and the lane stops shrinking with the font. Non-strict
+reserves the font's own line height, which is what an empty row actually occupies.
+
+*Verified in a browser, which is the only place it can be: the whitespace early-out lives in
+the live measurer, so a headless render never reaches the branch. `%%vocalfont Helvetica 8`
+over `w:laa_ la` gives 117.84826 in strict and 124.27394 corrected, asserted by
+`scripts/zzextended.mjs`. A SIZE LADDER named it, because the defect has a THRESHOLD and no
+single fixture can show one: abcjs pins at 114.1655 for every size at or below 10pt in both
+faces while the corrected lane keeps shrinking — `4 × 3.875 = 15.5`, where Helvetica 10
+measures 15.015625 and Helvetica 11 measures 17.01.*
+
 ### A space stops ending a beam if anything intervenes
 
 A space between notes normally breaks a beam. In abcjs it only does so when nothing has
@@ -421,9 +452,19 @@ something, despite contributing nothing to the music.
 
 ## What abcts adds beyond fixing these
 
-`abc2.1` corrects the above. `extended` goes further, with features the other engines have
-and abcjs does not — styled noteheads, staccatissimo, caesuras, tremolos, three-quarter-tone
-glyphs, and per-segment lyric fonts.
+`abc2.1` corrects the above, and every correction above is reached by opting out of strict:
+styled noteheads, the phrase and tremolo marks, three-quarter-tone glyphs, per-segment lyric
+fonts, and the two falsy-zero reserves.
+
+⚠️ **`extended` DOES NOT YET GO FURTHER THAN `abc2.1`, and this paragraph used to say it
+did.** Measured 2026-09-04: **every mode branch in `src/` is `isStrict(mode)`** — one
+comparison, `core/model.ts:35`, and it is `mode === 'abcjs-strict'`. Not one site
+distinguishes the two, so they are byte-identical on all 691 corpus cases and on each of the
+features this paragraph named. The distinction is real in the TYPE and not yet in the CODE.
+
+`tests/mode-partition.test.ts` asserts that as the state of affairs rather than as a goal, so
+the first genuinely `extended`-only feature takes the gate red and gets an entry here on
+purpose — instead of arriving as a silent digest move in the extended ratchet.
 
 Output is also **about a third the size**: 0.33x abcjs's bytes across the corpus, by
 emitting each glyph outline once into `<defs>` and placing it with `<use>`, while keeping
