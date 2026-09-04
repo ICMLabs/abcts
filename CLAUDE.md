@@ -950,8 +950,37 @@ checkpoint and hand off as you go so no context is lost.
 > `Docs/CHECKPOINT-2026-08-14.md` — §4 is the work list as it stood, §5 the harness. Then the
 > files below.
 
-**READ `Docs/HANDOFF-2026-09-01.md` FIRST** — the current state, and it opened an axis none
-of the gates below can express: **`scripts/zzlive.mjs` runs abcts and abcjs 6.7.0 in ONE
+**READ `Docs/HANDOFF-2026-09-04.md` FIRST**, then `Docs/CHECKPOINT-2026-09-04.md` — §4 of
+the checkpoint is the five things that were written down wrong in two days and how each was
+caught, and it is the section worth reading before starting anything.
+
+> 🏁 **THE BROWSER-PARITY ARC IS CLOSED ON WEBKIT — `zzlive` 0 of 685**, from 231 when the
+> axis opened on 2026-08-31. WebKit is the deployment engine for this stack: Studio's editor
+> is CodeMirror 6 in a WKWebView. `svg-bytes` 0 of 685 in-repo and 0 of 356 sibling, all four
+> `zzcontrol` ladders at zero, suite 2,456.
+>
+> **TWO AXES ARE OPEN AND THEY WANT DIFFERENT METHODS.** ⚠️ **CHROME is 4 of 685 and was
+> never gated** — the reasoning that kept it shut was that abcjs renders differently in the
+> two browsers, read as "so only measure one", and **abcjs disagreeing with ITSELF says
+> nothing about whether WE agree with IT in each**. Its four rows are rounding boundaries in
+> Blink's metrics, not font lanes, so the WebKit playbook does not transfer. And **the
+> NON-STRICT modes have exactly one gate, one day old**: `abc2.1` is completely unmeasured,
+> four properties of `extended` are asserted, and this week's non-strict fixes have no
+> `ABCJS-DIFFERENCES.md` entries.
+>
+> ⛔ **AND FIVE THINGS WERE WRITTEN, MEASURED AND REVERTED THIS WEEK** — the `"A"` probe
+> (costs nothing: `getBBox().height` is the LINE BOX), the dead vendor prefixes (not
+> reachable non-strict), the stem's falsy-zero, abcjs's cache without `transient`, and a
+> "0.765625 between two page-cursor frames" that never existed. Every one looks like obvious
+> work from the source. The handoff's DO-NOT-RE-OPEN table is there to be read first.
+>
+> ⭐ **THE RULE THE WHOLE WEEK PRODUCED: SIZE AN ARC BY GREPPING THE REFERENCE, NOT BY
+> REASONING ABOUT IT.** "51 call sites must learn their drawn x" was TWO. **A wrong SIZE is
+> worse than a wrong CAUSE** — a wrong cause gets tested and falls over, a wrong size stops
+> the work being attempted at all.
+
+**AND `Docs/HANDOFF-2026-09-01.md` IS THE ONE BEFORE IT** — superseded for the state, but it
+is where the axis opened: **`scripts/zzlive.mjs` runs abcts and abcjs 6.7.0 in ONE
 WebKit page and diffs them live, at 8 of 685 from 231.** Every gate named further down
 compares against goldens harvested from abcjs UNDER JSDOM, where `dump-svg.js` PATCHES
 `getBBox` — so they assert "abcts matches abcjs GIVEN SYNTHETIC TEXT METRICS", which is the

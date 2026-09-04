@@ -1,133 +1,114 @@
-# NEXT AGENT PROMPT — abcts, 2026-09-01 (rev f)
+# NEXT AGENT PROMPT — abcts, 2026-09-04
 
 Paste the block below.
 
 ---
 
 ```
-start here: abcts/Docs/HANDOFF-2026-09-01.md
+start here: abcts/Docs/HANDOFF-2026-09-04.md, then Docs/CHECKPOINT-2026-09-04.md §4.
 
 Work in /Users/lrettberg/ICMLabs/Code/abcts. Run every command from there — `cd` does
 not persist between tool calls and the workspace ROOT collects every sibling repo's tests.
 
-A NEW AXIS IS OPEN AND IT IS THE ONE A DROP-IN IS JUDGED ON. Every headless gate compares
-against goldens harvested from abcjs UNDER JSDOM, where `dump-svg.js` PATCHES `getBBox`
-with calibrated tables. `scripts/zzlive.mjs` puts abcts and abcjs 6.7.0 in ONE WebKit page
-and diffs them live:
+THE BROWSER-PARITY ARC IS CLOSED ON WEBKIT — 0 of 685, from 231 when it opened on
+2026-08-31. WebKit is the deployment engine: Studio's editor is CodeMirror 6 in a WKWebView.
 
-    live gate: 5 of 685      (231 when the axis opened; 8 before the tempo x)
-    Node suite 2,453, svg-bytes 685 of 685 — both green, keep them that way
+    zzlive     0 of 685  WebKit        ← closed
+    zzlive     4 of 685  Chrome        ← newly on the board, never gated before
+    svg-bytes  0 of 685 in-repo, 0 of 356 sibling
+    extended   691 digests, ratcheted  ← the non-strict path's FIRST gate
+    zzcontrol  dirs 0/17 · tempo 0/13 · lyricfont 0/7 · size 0/9
+    suite      2,456, no reds. Keep them all that way.
 
-⚠️ NO STORED GOLDEN CAN REPLACE IT. abcjs does not render byte-identically in WebKit and
-Blink — 230 of 691 differ between them — so browser parity has NO SINGLE TARGET and the
-only coherent oracle is abcjs in the SAME browser. Re-harvesting from a browser is ruled
-out, measured, in `d4b7022`.
-
-TO RUN IT (the driver is NOT a devDep here and /tmp gets cleaned):
+TO RUN THE BROWSER GATES (the driver is NOT a devDep here and /tmp gets cleaned):
 
     mkdir -p /tmp/gp/pw && cd /tmp/gp/pw && npm init -y && npm i playwright-core@1.61
     npx playwright-core install webkit        # only if the cache is gone
     cd <repo> && npm run build                # the gates load dist/, not src/
     PW=/tmp/gp/pw/node_modules/playwright-core/index.js node scripts/zzlive.mjs
+    PW=… ENGINE=chrome node scripts/zzlive.mjs
 
 PIN 1.61 — it names webkit-2311, the cached build. 1.55 and 1.62 each start a 90MB fetch.
 
-⭐ THE METHOD, IN THE ORDER THAT PAID — and it is the whole handoff in one line:
+TWO AXES ARE OPEN AND THEY WANT DIFFERENT METHODS:
 
-  A LADDER OF CONTROLS IS THE PROOF; A FIXTURE WITH MORE THAN ONE OPEN CAUSE CANNOT RULE
-  ANYTHING OUT. `scripts/zzcontrol.mjs` runs one variable per rung (`size`, `dirs`,
-  `tempo`, `lyricfont`, `abc`) in a FRESH DOCUMENT each — abcjs's `sizeCache` is MODULE-global, so sharing one page made nine
-  of thirteen rungs "differ" on a build every rung of which is byte-identical alone. AND
-  VERIFY A LADDER CAN SEE ITS DEFECT: stash the fix and count the reds.
-  `scripts/zzpair.mjs` diffs one fixture element by element, and `zzwarm.mjs` does the
-  same with the page PRE-WARMED, which is the only way to see a shared-page defect. TWO conclusions were committed
-  to this repo and both were WRONG, both reasoned from `visual-options-01-fonts`, which
-  sets EIGHTEEN font directives at once. Nine control tunes refuted them in one run.
+  1. CHROME, 4 of 685. WebKit is at ZERO, so every one of these is something only Blink's
+     metrics express — the head of the list is a text row's `Math.round(h * 1.1)` on the
+     other side of a boundary, and a bar number's x at 29.75 against 29.99. ⚠️ DO NOT CARRY
+     THE WEBKIT PLAYBOOK OVER: a rounding boundary is not fixed by measuring harder, it is
+     fixed by matching abcjs's ARITHMETIC. And note the reasoning that kept this axis shut
+     for three days — abcjs renders differently in the two browsers, which was read as "so
+     only measure one". abcjs disagreeing with ITSELF says nothing about whether WE agree
+     with IT in each.
 
-  AND THREE INSTRUMENTS EACH CAUGHT WHAT THE OTHERS COULD NOT: the ladder overturned those
-  two notes; the NODE CORPUS caught an over-broad fallback whose own control was
-  byte-perfect; and the AGGREGATE live gate caught a fix that closed its target, kept Node
-  green, and put two OTHER fixtures 23.27px out. Run all three.
+  2. THE NON-STRICT MODES. One gate old and thin. `abc2.1` is COMPLETELY unmeasured; only
+     four properties of `extended` are asserted (`scripts/zzextended.mjs`); and this week's
+     non-strict fixes have no `ABCJS-DIFFERENCES.md` entries, which the repo's own rule
+     requires. If you do one thing here, WIDEN `zzextended` — a ratchet says "has not
+     changed", never "is right", and only a control can say the second.
 
-THE RULE BEHIND ALMOST EVERY FIX: abcjs MEASURES THE THING IT IS ABOUT TO DRAW and we
-measured a STAND-IN — a probe string, a generic font, the wrong family, one line's height
-where the whole block's was wanted. And `h + (n-1) * size * 1.2` IS THE STUB'S `getBBox`,
-NOT A RULE — it has appeared FOUR times.
+⛔ DO NOT RE-OPEN THESE. Each was written, measured and REVERTED this week; the refutation
+is in the code or the ledger, so reaching for one costs a day and buys nothing:
 
-WHAT IS LEFT — NOTHING ON WEBKIT. The live gate is 0 of 685.
+    ABCJS-DEBT §3b.2, the "A" probe      costs NOTHING — getBBox().height is the LINE BOX,
+                                         identical for "A"/"gggpqy"/"Mg" over 3 faces x 6 sizes
+    ABCJS-DEBT §3b.4, vendor prefixes    not reachable non-strict — they are in compat's root
+    the stem's falsy-zero `p1 - 1`       measured unreachable on every shape tried
+    abcjs's cache without `transient`    measured WORSE — freezes the provisional tempo x
+    "0.765625 between two frames"        never existed; a probe read the wrong tune
 
-  🆕 CHROME IS NEWLY ON THE BOARD AT 4 OF 685 — `ENGINE=chrome node scripts/zzlive.mjs`.
-  Nothing had ever run it: the arc opened on WebKit because Studio's editor is a WKWebView,
-  and `d4b7022` measured that abcjs does not render byte-identically in the two (230 of
-  691) — which was read as "so only measure one". That does not follow. abcjs disagreeing
-  with ITSELF across browsers says nothing about whether WE agree with IT in each. The
-  cache port took Chrome 5 -> 4 on the same change, so it is not a WebKit-only fix.
+⭐ THE METHOD, AND CHECKPOINT §4 IS THE WHOLE OF IT IN A TABLE — five things were written
+down wrong this week and every one was a claim REASONED from abcjs's source or from the
+reach of the code, never measured:
 
-    abcts-text-udef-parts-overlays-tune23  the staff 1px low — a text row's
-                                           `Math.round(h * 1.1)` on the other side of a
-                                           boundary where Blink measures a hair differently
-    abcjs-visual-wrap-03-piano-wrap        a bar number's x, 29.75 against 29.99
-    abcjs-visual-wrap-04-wrap-quartet      same family, deeper in the file
-    abcjs-visual-options-01-fonts          byte 8753, unexamined
+  SIZE AN ARC BY GREPPING THE REFERENCE. "51 call sites must learn their drawn x" was TWO,
+  and one grep said so. A WRONG SIZE IS WORSE THAN A WRONG CAUSE — a wrong cause gets tested
+  and falls over; a wrong size stops the work being attempted at all.
 
-  ⚠️ DO NOT ASSUME THESE ARE THE WEBKIT DEFECTS AGAIN — WebKit is at ZERO, so each is
-  something only Blink's metrics express. A rounding boundary is the shape to expect, and a
-  rounding boundary is not fixed by measuring harder.
+  A CONTROL MUST BE SHOWN TO SEE ITS DEFECT. Stash the fix and count the reds. Four cuts of
+  `zzextended`'s cache rung passed for the WRONG REASON before the fifth passed for the right
+  one, and the script records all four.
 
-  ✅ CLOSED (`97613c6`): abcjs's TEXT CACHE is MODULE-GLOBAL and x-free (`svg.js:306,316`),
-  consulted BEFORE the drawn element — so the first width it measures for a short string is
-  the width every later render in that page gets. That was the whole of the last two rows,
-  which were byte-identical rendered ALONE. ⚠️ AND THE 51-CALL-SITE ARC THIS PROMPT SIZED
-  DOES NOT EXIST: `getTextSize.calc` is handed an ELEMENT at exactly TWO sites in all of
-  abcjs (`draw/tempo.js:20,32`) and our two x-passing sites are already those two. ⭐ SIZE
-  AN ARC BY GREPPING THE REFERENCE, NOT BY REASONING ABOUT IT — a wrong SIZE is worse than
-  a wrong cause, because it stops the work being attempted at all. What was really in the
-  way is that WE lay a tempo out TWICE and abcjs once; `TextFont.transient` keeps the
-  throwaway pass out of the cache.
+  STRICT-VS-EXTENDED IS NOT A MEASUREMENT OF A CHANGE — the two already differ. The
+  measurement is extended-BEFORE against extended-AFTER, which is what the ratchet does.
 
-  📒 AND WHAT THE ARC COST IN FIDELITY-TO-A-BUG IS IN `Docs/ABCJS-DEBT.md` §3b — four
-  entries, the largest being that abcjs's output DEPENDS ON WHAT WAS RENDERED BEFORE IT in
-  the same page, and that abcjs discards its own x-corrected tempo measurement one line
-  after making it. Read it before "fixing" any of them.
+  AN UNEXERCISED GATE IS A PREDICTION. Two were written, moved nothing, and were reverted.
 
-  📋 AND THE PLAN FOR LANDING ALL FOUR IS `Docs/PLAN-ABCJS-DEBT-2026-09-03.md`. Every one is
-  a NON-STRICT change, so strict byte parity is not at risk by construction — but ⚠️ THE
-  NON-STRICT PATH HAS ALMOST NO GATE (three test files reference a mode at all; every corpus
-  gate renders strict), so PHASE 0 IS BUILDING ONE and is not optional. Order is fixed:
-  gate, cache, whitespace/4-pitch, then the `"A"` probe LAST because it depends on the
-  whitespace fix and moves every page in extended.
-
-TRAPS, all measured this session:
-  ⚠️ `display:none` ZEROES `getBBox` and abcjs measures at DRAW time for a boxed font, so
-     hiding harness slots that way INVENTS defects and MASKS others. Use visibility:hidden.
-  ⚠️ `npx tsc --noEmit | head -3; echo $?` reports HEAD's status. Two changes that did not
-     compile passed it and WebKit caught them. Write `npx tsc --noEmit && echo OK`.
-  ⚠️ An EMPTY line measures zero and still takes a row.
-  ⚠️ A narrow probe can miss the effect it was built to find.
-  ⚠️ SIZE AN ARC BY GREPPING THE REFERENCE, NOT BY REASONING — "51 call sites" was wrong
-     and one grep said so; a wrong SIZE stops work being attempted at all.
+TRAPS:
   ⚠️ A PROBE ON A MULTI-TUNE FIXTURE MUST KEY BY TUNE — a global overwritten per tune had
      tune 1 read against tune 0's SVG and invented a discrepancy that cost a session.
-  ⚠️ A LADDER SHARING ONE DOCUMENT IS NOT A LADDER — abcjs's `sizeCache` is MODULE-scoped
-     and keyed without x, so rung k inherits every rung before it. The same fact makes two
-     of zzlive's four reds page HISTORY rather than layout.
+  ⚠️ A LADDER SHARING ONE DOCUMENT IS NOT A LADDER — abcjs's `sizeCache` is MODULE-scoped,
+     so rung k inherits every rung before it. `zzcontrol` resets per rung; SHARE=1 keeps the
+     old behaviour, which is what a long-lived HOST page looks like.
+  ⚠️ A GATE CAN WATCH THE WRONG MODE AND READ GREEN — the extended ratchet's first cut passed
+     `{mode:"extended"}` to `renderAbc`, which hard-wires strict. `tsc` caught it in one line.
+  ⚠️ `npx tsc --noEmit | head -3; echo $?` reports HEAD's status. Write `&& echo OK`, and run
+     it BEFORE the test rather than alongside.
+  ⚠️ THE SUITE TIMES OUT UNDER MACHINE LOAD AND IT IS NOT A DEFECT — 20s idle, 65s with Xcode
+     building, against a 40s default. `--testTimeout=180000`.
+  ⚠️ `display:none` ZEROES `getBBox`; use `visibility:hidden`.
 
-Run `npx tsc --noEmit && echo OK` before every commit, keep BOTH gates green, and commit
-and push after every landing. Never --force. Omit Co-Authored-By trailers here.
+Run `npx tsc --noEmit && echo OK` before every commit, keep every gate above green, and
+commit and push after every landing. Never --force. OMIT Co-Authored-By trailers here —
+`CLAUDE.md` §Remote, and it beats a harness default that asks for one; say so in the reply
+rather than following the other silently.
 ```
 
 ---
 
 ## Why this order
 
-**The live gate first**, because it is the only thing that can name a browser defect and it
-did not exist three days ago.
+**The state first**, because two arcs closed in two days and the numbers a stale prompt
+carries are the fastest way to send someone at work that is already done.
 
-**Then the method**, because the two wrong conclusions this session had to retract were both
-produced by reasoning from a fixture instead of a control — and each cost more than the fix
-that eventually landed.
+**Then the two open axes, labelled by what they NEED rather than by size.** They want
+different methods — Chrome is an arithmetic search against rounding boundaries, the
+non-strict modes are a coverage problem — and an agent that carries the font-lane playbook
+from the WebKit arc into either will measure things that are already exact.
 
-**Then what is left, which on WebKit is nothing.** The board moved to a second browser the
-moment the first hit zero, and the four Chrome rows are a different KIND of defect — Blink
-metrics against rounding boundaries, not lanes measured in the wrong font. An agent that
-carries the WebKit playbook straight over will measure things that are already exact.
+**Then the DO-NOT-RE-OPEN list, before the method.** Five items were written and reverted
+this week. Every one of them looks like obvious work from the source, which is exactly why
+the list has to be read before the method rather than after it.
+
+**Then the method, which is one sentence five ways:** every mistake this week was a claim
+reasoned from abcjs's source or from the reach of the code, and measurable in minutes.
