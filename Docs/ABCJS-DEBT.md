@@ -181,6 +181,11 @@ load-bearing for byte parity, and they are cited so the reach stops here.
 
 ## 3b. THE MEASUREMENT ONES — added 2026-09-03, and they are the costliest class
 
+> 📋 **THE PLAN FOR LANDING ALL FOUR IS `Docs/PLAN-ABCJS-DEBT-2026-09-03.md`.** Every one is
+> a NON-STRICT change and none of them touches a strict byte — but ⚠️ **the non-strict path
+> has almost no gate today** (three test files reference a mode at all; every corpus gate
+> renders strict), so its Phase 0 is building one. Read it before starting any of these.
+
 The browser-parity arc closed by porting how abcjs MEASURES TEXT. Every entry here is a
 place where matching it means reproducing something a clean engine would not do, and each
 one is load-bearing: the live gate went to **0 of 685 in WebKit** on the last of them.

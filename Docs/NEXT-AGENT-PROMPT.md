@@ -90,6 +90,13 @@ WHAT IS LEFT — NOTHING ON WEBKIT. The live gate is 0 of 685.
   the same page, and that abcjs discards its own x-corrected tempo measurement one line
   after making it. Read it before "fixing" any of them.
 
+  📋 AND THE PLAN FOR LANDING ALL FOUR IS `Docs/PLAN-ABCJS-DEBT-2026-09-03.md`. Every one is
+  a NON-STRICT change, so strict byte parity is not at risk by construction — but ⚠️ THE
+  NON-STRICT PATH HAS ALMOST NO GATE (three test files reference a mode at all; every corpus
+  gate renders strict), so PHASE 0 IS BUILDING ONE and is not optional. Order is fixed:
+  gate, cache, whitespace/4-pitch, then the `"A"` probe LAST because it depends on the
+  whitespace fix and moves every page in extended.
+
 TRAPS, all measured this session:
   ⚠️ `display:none` ZEROES `getBBox` and abcjs measures at DRAW time for a boxed font, so
      hiding harness slots that way INVENTS defects and MASKS others. Use visibility:hidden.
