@@ -14,3 +14,16 @@
  * swapping us in writes `window.ABCJS = window.ABCTS` itself, deliberately.
  */
 export * from "./compat/index.js";
+
+/**
+ * …**AND THE CORE API BESIDE IT, BECAUSE THE COMPAT ONE IS STRICT BY CONSTRUCTION.**
+ * `renderAbc` hard-wires `mode: "abcjs-strict"` (`compat/index.ts:869`, `:999`) and
+ * `AbcjsParams` has no `mode`, which is right for a drop-in — and left `abc2.1` and
+ * `extended` unreachable from a page at all. So the mode that exists to be RIGHT about
+ * text could not be measured in a browser, let alone gated there.
+ *
+ * Namespaced rather than spread, so the global's abcjs-shaped surface is untouched: a host
+ * still sees exactly abcjs's symbols at the top level, and `ABCTS.core.render(score,
+ * { mode: 'extended' })` is an explicit opt-in.
+ */
+export * as core from "./index.js";

@@ -195,25 +195,30 @@ one is load-bearing: the live gate went to **0 of 685 in WebKit** on the last of
     var sizeCache = {};                   // write/svg.js:306 — module scope, no bound
     key = text + JSON.stringify(attr)     // :316 — the FONT attrs, no x, no element
 
-**What it costs anyone:** abcjs's output for a tune **depends on what was rendered before
-it in the same page.** The same tune is not the same SVG as tune 1 and as tune 5. The cache
-is also unbounded and lives for the life of the module, so a long session accumulates every
-string ever drawn.
+**What it costs anyone:** abcjs's output for a tune **depends on what was rendered before it
+in the same page.** The same tune is not the same SVG as tune 1 and as tune 5.
 
 **And abcjs is inconsistent with itself here**, which is the sharper half. It goes to the
 trouble of measuring the element it JUST DREW — `getTextSize.calc(str, type, klass, el)`
 (`draw/tempo.js:20`, `:32`) — precisely because a fractional x measures 1/64 px wider, and
-then caches that result under a key with **no x in it**, so the second tempo to use the same
-word gets the first one's x. The correctness the fourth argument buys is discarded by the
-line after it.
+then caches that result under a key with **no x in it**. The correctness the fourth argument
+buys is discarded by the line after it.
 
-**The clean version:** measure per (string, font, sub-pixel phase), or per render. Ours was
-per-render and x-keyed until 2026-09-03 and had to be given up: `visual-selection-01` and
-`svg-per-line-01` are byte-identical rendered ALONE and differ in a shared page, and there
-is no way to be both correct and byte-equal here.
+✅ **FIXED IN NON-STRICT, 2026-09-04 (Phase 1).** `createDomTextMeasurer(doc, host,
+{ shared })`: strict keeps abcjs's module-global x-free cache because that history-dependence
+is part of abcjs's output; `abc2.1` and `extended` take a per-render cache keyed WITH the x.
+`scripts/zzextended.mjs` asserts the pair — **strict MOVES when warmed by 133 tunes and
+extended does not** — because a rung that only checked extended would pass just as well if
+the split did nothing.
 
-**Gate that goes red if it is "fixed":** `zzlive` (WebKit 0 of 685), and only in a SHARED
-page — `zzpair` cannot see it. `scripts/zzwarm.mjs` exists for exactly this.
+⚠️ **AND THE REAL GAP WAS BIGGER THAN THE CACHE.** `withLiveMeasurement` lived in
+`compat/index.ts`, which hard-wires `abcjs-strict` — so **`extended` had no live measurement
+path at all** and laid text out with the per-em tables in a real browser. The mode that
+exists to be right about text was the one that never asked the browser. Lifted into
+`text-measure.ts` and called from the core `render`; `src/browser.ts` exports `core` beside
+the compat surface, because the modes were unreachable from a page too.
+
+**Still abcjs's in strict, and load-bearing:** `zzlive` 0 of 685 WebKit depends on it.
 
 ### 3b.2 A text row's advance is measured on the probe string `"A"`, never on the row
 

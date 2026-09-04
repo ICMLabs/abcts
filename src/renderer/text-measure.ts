@@ -141,7 +141,23 @@ export interface ProbeDocument {
  */
 const SIZE_CACHE = new Map<string, TextSize>()
 
-export const createDomTextMeasurer = (doc: ProbeDocument, host: ProbeHost): TextMeasurer => {
+export const createDomTextMeasurer = (
+  doc: ProbeDocument,
+  host: ProbeHost,
+  /**
+   * **WHICH CACHE — and it is a MODE decision, not a performance one.**
+   *
+   * `shared: true` is abcjs's: `SIZE_CACHE`, module-global and keyed without the x, so the
+   * first width measured for a string is the width every later render in the page gets.
+   * `abcjs-strict` needs it because that history-dependence is part of abcjs's output.
+   *
+   * `shared: false` is the CORRECT one: a cache of this measurer's own, keyed WITH the x,
+   * so a string measured at two different x's gets two answers and a tune renders the same
+   * wherever it sits in a book. `abc2.1` and `extended` take it. See `ABCJS-DEBT.md` §3b.1.
+   */
+  { shared = true }: { readonly shared?: boolean } = {},
+): TextMeasurer => {
+  const cache = shared ? SIZE_CACHE : new Map<string, TextSize>()
   const NS = 'http://www.w3.org/2000/svg'
 
   return (text: string, font: TextFont): TextSize => {
@@ -154,9 +170,18 @@ export const createDomTextMeasurer = (doc: ProbeDocument, host: ProbeHost): Text
     const key =
       font.transient === true || str.length >= 20
         ? null
-        : `${str} ${JSON.stringify([font.size, font.family, font.weight, font.style])}`
+        : `${str} ${JSON.stringify([
+          font.size,
+          font.family,
+          font.weight,
+          font.style,
+          // …**AND THE x, WHERE THE CACHE IS OURS RATHER THAN abcjs's.** Dropping it is the
+          // whole of §3b.1: a fractional x measures 1/64 px wider, so a key without one
+          // hands the second use of a string the first one's sub-pixel phase.
+          ...(shared ? [] : [font.x]),
+        ])}`
     if (key !== null) {
-      const hit = SIZE_CACHE.get(key)
+      const hit = cache.get(key)
       if (hit !== undefined) return hit
     }
 
@@ -222,7 +247,62 @@ export const createDomTextMeasurer = (doc: ProbeDocument, host: ProbeHost): Text
       size = { width: 0, height: 0 }
     }
     host.removeChild(el)
-    if (key !== null) SIZE_CACHE.set(key, size)
+    if (key !== null) cache.set(key, size)
     return size
+  }
+}
+
+/**
+ * **RUN A RENDER WITH THE BROWSER'S OWN TEXT METRICS, WHEN THERE IS A BROWSER.**
+ *
+ * Lifted out of `compat/index.ts` on 2026-09-04, unchanged, because it was reachable from
+ * ONE mode. `renderAbc` hard-wires `abcjs-strict`, so `extended` — the mode that exists to
+ * be right — had no live measurement path at all and fell back to the per-em tables in a
+ * browser as much as in Node. That is not a tolerance anyone chose; it is where the
+ * function happened to live.
+ *
+ * ⚠️ **THE PROBE MUST BE IN THE DOCUMENT.** A `<text>` outside the tree has no layout and
+ * `getBBox` answers zero, which would silently take every width to nothing — so the host
+ * SVG is appended to `body`, and the measurer is torn down in a `finally` so a throw cannot
+ * leave a stale one installed for the next render.
+ *
+ * ⚠️ **AND jsdom IS EXCLUDED ON PURPOSE.** It defines `document` and `createElementNS` and
+ * has NO layout engine, so `getBBox` is either absent or zero there; the probe below asks
+ * for a real number and keeps the tables when it does not get one. Without that check the
+ * 691 goldens — harvested under jsdom — would all go red.
+ */
+interface LiveDoc extends ProbeDocument {
+  body?: (ProbeHost & { setAttribute(name: string, value: string): void }) | null
+}
+
+export function withLiveMeasurement<T>(shared: boolean, run: () => T): T {
+  const doc = (globalThis as { document?: LiveDoc }).document
+  const body = doc?.body
+  if (doc === undefined || body === undefined || body === null) return run()
+  const NS = 'http://www.w3.org/2000/svg'
+  let host: ReturnType<ProbeDocument['createElementNS']> | undefined
+  try {
+    host = doc.createElementNS(NS, 'svg')
+    host.setAttribute('width', '0')
+    host.setAttribute('height', '0')
+    host.setAttribute('style', 'position:absolute;visibility:hidden')
+    body.appendChild(host)
+    const measure = createDomTextMeasurer(doc, host, { shared })
+    // A real layout engine answers a positive width for a real string. jsdom does not.
+    if (measure('M', { size: 27, family: 'Times New Roman' }).width <= 0) {
+      body.removeChild(host)
+      return run()
+    }
+    setTextMeasurer(measure)
+    return run()
+  } finally {
+    setTextMeasurer(null)
+    if (host !== undefined) {
+      try {
+        body.removeChild(host)
+      } catch {
+        // already gone; nothing to undo
+      }
+    }
   }
 }
