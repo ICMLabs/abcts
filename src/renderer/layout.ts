@@ -654,6 +654,34 @@ export const ENGRAVE = {
   /** abcjs's `margin` in `set-upper-and-lower-elements.js:102` — one pitch on every lane. */
   laneMargin: ABCJS_PITCH.laneMargin,
   /** A lyric whose measured height is zero — see `ABCJS_PITCH.lyricEmptyLane`. */
+  /**
+   * ⚠️ **THE FALSY-ZERO CLASS — one JS bug of abcjs's, reproduced at THREE sites, and the
+   * correct answer is not the same at all three.**
+   *
+   *     if (opt.top) this.top = opt.top;            relative-element.js:40-43
+   *     if (opt.bottom) this.bottom = opt.bottom;
+   *     this.height = opt.height ? opt.height : 4;  relative-element.js:36
+   *
+   * `0` is falsy, so a value of zero reads as ABSENT and the element keeps a default it was
+   * never meant to have. Where it lands:
+   *
+   *   1  A CLEF'S DECLARED EDGE — `K:C alto2` has `bottom` 0, so abcjs keeps `clefPos` 4.
+   *      `layoutClef`'s `declared`.
+   *   2  AN UNBEAMED STEM'S `bottom: p1 - 1` — a stem reaching pitch 1 keeps `p1` itself.
+   *      `verticalExtent`, twice. ⚠️ **GATED, THEN REVERTED: MEASURED UNREACHABLE.** Both
+   *      sites were put behind `strict &&` on 2026-09-04 and moved NOTHING — not one of the
+   *      691 corpus cases, not any of the sixteen single notes from `C,` to `d`, not a
+   *      two-staff tune where `staff.bottom` sets the gap, not a lyric row. Whatever reaches
+   *      `loP - drop === 0`, no shape tried does. **An unexercised gate is a prediction, not
+   *      a measurement**, so it is not landed; find the input first if it is ever worth it.
+   *   3  A LYRIC'S MEASURED HEIGHT — a held syllable's `lyricStr` is `"\n"`, which
+   *      `getTextSize` answers 0 for (`svg.js:311-312`), so it takes the 4-pitch default.
+   *      The lyric lane below.
+   *
+   * **1 and 2 are a DECLARED zero dropped; 3 is a MEASURED zero misread as absent.** So
+   * non-strict honours the declaration at 1 and 2, and reserves a LINE at 3 — the three
+   * gates are `strict &&`, and this is the one place the rule is written out.
+   */
   lyricEmptyLanePitch: ABCJS_PITCH.lyricEmptyLane,
   /**
    * How far below the ending lane's top the bracket is DRAWN — `positionY - 2`
@@ -2662,7 +2690,8 @@ function layoutClef(x: number, clef: Clef, strict = true): LayoutElement | null 
    * 7.75px — 2 pitch — taller than abcjs's own SVG. The same rule is already ported for a
    * STEM's `bottom: p1 - 1` (`CHECKPOINT-2026-08-12`); it belongs to every declared box.
    */
-  const declared = (edge: number): number => (edge === 0 ? 2 * clef.line : edge)
+  const declared = (edge: number): number =>
+    strict && edge === 0 ? 2 * clef.line : edge
   const glyphs: PlacedGlyph[] = [
     {
       ...glyphAt(name, x + ENGRAVE.clefIndent, step),
@@ -20387,8 +20416,18 @@ function verticalExtent(
        * unproven on that path. Reproduce the early-out there too if a golden ever varies a
        * `%%vocalfont` under 11pt over a held syllable; none does today.
        */
+      /**
+       * …**AND NON-STRICT RESERVES A LINE, WHICH IS WHAT AN EMPTY ROW ACTUALLY TAKES.**
+       * abcjs's 4 is a constructor default reached by accident — see `THE FALSY-ZERO
+       * CLASS`. A held syllable draws `&nbsp;` and occupies exactly one line of its font,
+       * so that is what it reserves once we are allowed to say so.
+       */
       const lanePitch =
-        h === 0 ? ENGRAVE.lyricEmptyLanePitch : h / ENGRAVE.spacePerStep
+        h !== 0
+          ? h / ENGRAVE.spacePerStep
+          : strict
+            ? ENGRAVE.lyricEmptyLanePitch
+            : textHeight(versesSize) / ENGRAVE.spacePerStep
       lyricLanePitch = Math.max(
         lyricLanePitch,
         lanePitch + (SPACING.vocalspace ?? 0) / ENGRAVE.spacePerStep,

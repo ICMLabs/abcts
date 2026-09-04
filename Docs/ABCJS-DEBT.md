@@ -234,17 +234,31 @@ why it is the one row here whose advance is its own string.
 
 ### 3b.3 A whitespace-only string measures ZERO, and a zero height then means "4 pitch"
 
-    if (!text || text.match(/^\s+$/)) return { width: 0, height: 0 };   // svg.js:311-312
-    this.height = opt.height ? opt.height : 4;                          // relative-element.js:36
+    if (!text || text.match(/^\s+$/)) return { width: 0, height: 0 };   svg.js:311-312
+    this.height = opt.height ? opt.height : 4;                          relative-element.js:36
 
 Two independent shortcuts that meet. A held syllable's `lyricStr` is `"\n"`, so it measures
-zero — and zero is FALSY, so the element falls through to a magic 4-pitch default rather
-than reserving nothing or reserving a line. The lyric lane is a max over children, so that
-default silently becomes the floor for every `%%vocalfont` under 13pt.
+zero — and zero is FALSY, so the element falls through to a magic 4-pitch default. The lyric
+lane is a max over children, so that default silently becomes the floor for every
+`%%vocalfont` under 13pt.
 
-**The clean version:** an empty row reserves its font's line height, and a legitimate zero
-is not confused with an absent value. The same falsy-zero bug is already recorded at
-`if (opt.bottom)` in §3 — this is its third appearance.
+✅ **FIXED IN NON-STRICT, 2026-09-04 (Phase 2).** An empty row reserves its font's LINE
+HEIGHT, which is what it actually occupies. `%%vocalfont Helvetica 8` over `w:laa_ la`:
+strict 117.84826 (abcjs's 4 pitch), extended 124.27394. **Only `zzextended.mjs` can assert
+it** — the whitespace early-out lives in the LIVE measurer, so Node never reaches the branch
+and the headless ratchet cannot see this gate fire at all.
+
+**And the same falsy-zero bug reaches a CLEF'S DECLARED EDGE**, which is site 1 of the class:
+`K:C clef=alto2` has `bottom` 0, so abcjs keeps `clefPos` 4 and reserves two pitch it does
+not need. Non-strict honours the declaration — 94.77161 → 102.77161, and it is the one
+corpus row the extended ratchet moved.
+
+⚠️ **AND THE THIRD SITE WAS GATED AND THEN REVERTED, MEASURED UNREACHABLE.** An unbeamed
+stem's `bottom: p1 - 1` is skipped when it is zero, and putting both its sites behind
+`strict &&` moved **nothing** — not one of the 691 corpus cases, not any of the sixteen
+single notes `C,` to `d`, not a two-staff tune where `staff.bottom` sets the gap, not a
+lyric row. **An unexercised gate is a prediction, not a measurement**, so it is not landed.
+Find the input first if it is ever worth having.
 
 ### 3b.4 `-ms-transform` and `-webkit-transform-origin-x/y` are still written
 

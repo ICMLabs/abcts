@@ -97,6 +97,30 @@ console.log('extended: browser vs headless          ',
   inBrowser === inNode ? 'same — ⚠️ NO LIVE MEASURER INSTALLED' : 'DIFFER — measuring live ✅')
 console.log()
 
+/**
+ * RUNG 3 — **AN EMPTY LYRIC ROW RESERVES A LINE, NOT abcjs's MAGIC 4 PITCH.**
+ * `ABCJS-DEBT.md` §3b.3, and it can only be asked HERE: the whitespace early-out that makes
+ * a held syllable measure zero (`svg.js:311-312`) lives in the LIVE measurer, so Node never
+ * reaches the branch at all and the headless ratchet cannot see this gate fire.
+ */
+const HELD = 'X:1\n%%vocalfont Helvetica 8\nM:4/4\nL:1/4\nK:C\nC4 D4\nw:laa_ la\n'
+await page.setContent('<!doctype html><meta charset="utf-8"><body></body>')
+await page.addScriptTag({ content: bundle })
+const held = await page.evaluate((abc) => {
+  const { parse, render } = window.ABCTS.core
+  const one = (mode) => {
+    const p = parse(abc, { mode })
+    return p.ok && p.scores[0] ? render(p.scores[0], { mode, systemWidth: 670 }) : 'NO SCORE'
+  }
+  const h = (svg) => /height="([\d.]+)"/.exec(svg)?.[1]
+  return { strict: h(one('abcjs-strict')), extended: h(one('extended')) }
+}, HELD)
+console.log('held syllable, %%vocalfont Helvetica 8 — page height')
+console.log('  strict  (abcjs\'s 4-pitch default) ', held.strict)
+console.log('  extended (reserves a line)         ', held.extended,
+  held.strict === held.extended ? ' ⚠️ SAME — the gate is not firing' : ' ✅')
+console.log()
+
 const r = {}
 for (const mode of ['abcjs-strict', 'extended']) {
   r[`${mode} alone`] = await run(mode, false)
