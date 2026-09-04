@@ -220,17 +220,34 @@ the compat surface, because the modes were unreachable from a page too.
 
 **Still abcjs's in strict, and load-bearing:** `zzlive` 0 of 685 WebKit depends on it.
 
-### 3b.2 A text row's advance is measured on the probe string `"A"`, never on the row
+### 3b.2 A text row's advance is measured on the probe `"A"` ~~and that costs something~~
 
 `addTextIf` measures `getTextSize.calc("A", params.font, params.klass)` and multiplies by
 the line count (`add-text-if.js:21-27`); `richText`'s empty arm measures `"i"`
-(`rich-text.js:4`). abcjs's own comment says why — "if there are blank lines they won't be
-counted by getTextSize, so just get the height of one line and multiply" — which is a
-workaround for the whitespace early-out below, not a typographic choice. A row of descenders
-advances by the same amount as a row of capitals.
+(`rich-text.js:4`). abcjs's own comment says why — *"if there are blank lines they won't be
+counted by getTextSize, so just get the height of one line and multiply"* — which is a
+workaround for the whitespace early-out in §3b.3, not a typographic choice.
 
-**The clean version:** measure the row. `Subtitle` already does (`subtitle.js:8`), which is
-why it is the one row here whose advance is its own string.
+⚠️ **AND THE COST THIS ENTRY CLAIMED IS ZERO — MEASURED 2026-09-04, PHASE 3 WRITTEN AND
+REVERTED.** It read *"a row of descenders advances by the same amount as a row of
+capitals"*. True, **and measuring the row gives the identical answer**, because
+`getBBox().height` on a `<text>` is the **LINE BOX and not the ink extent**:
+
+    Times New Roman   8 / 13 / 17 / 21 / 27 / 40px    "A" == "gggpqy" == "Mg"
+    Helvetica         same six sizes                  "A" == "gggpqy" == "Mg"
+    cursive           same six sizes                  "A" == "gggpqy" == "Mg"
+
+So the probe is not a defect on the HEIGHT axis at all. It would be one against an
+INK-based measurement — which is what `dump-svg.js`'s patched `getBBox` is — but that is
+the golden generator, not a browser, and headless we take the tables anyway.
+
+**The claim was reasoned from abcjs's source comment and never measured**, which is the
+class of error this repo has recorded four times before under *a note that names a cause is
+the reason the row stops being read*. `zzextended.mjs` rung 4 keeps the refutation, asserting
+both modes agree, so the entry cannot quietly come back.
+
+**Nothing to do.** `Subtitle` measuring `info.text` (`subtitle.js:8`) is still the odd one
+out in abcjs, and still costs nothing either.
 
 ### 3b.3 A whitespace-only string measures ZERO, and a zero height then means "4 pitch"
 
@@ -268,7 +285,17 @@ assigned through the DOM, so what lands in the attribute is whatever that browse
 serialises, and Chrome and WebKit disagree. We set the same eight for that reason
 (`compat/index.ts`'s `restyleScale`), so the browser writes its own answer rather than ours.
 
-**The clean version:** `transform` and `transform-origin`, once, as text.
+⚠️ **AND THERE IS NOTHING TO FIX IN NON-STRICT — MEASURED 2026-09-04, PHASE 4 WRITTEN AND
+REVERTED.** The prefixes live in `printStyle`, which is inside the `options.classes ===
+"abcjs"` root markup: **compat's, and compat is strict by construction.** The non-strict
+root is a different emitter branch that carries a `viewBox` and no CSS transform at all, so
+it has no vendor prefixes to remove. A gate was added there and was dead code.
+
+**Still worth knowing, and it is a different question:** `%%scale 0.8` reaches
+`score.scale` in both modes, and the core `render` path emits no transform for it — the
+viewBox does that work instead. Whether the two roots should agree about `%%scale` is a
+markup question for the core emitter, not an abcjs-debt one.
+
 
 ---
 

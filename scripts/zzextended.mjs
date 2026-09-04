@@ -121,6 +121,43 @@ console.log('  extended (reserves a line)         ', held.extended,
   held.strict === held.extended ? ' ⚠️ SAME — the gate is not firing' : ' ✅')
 console.log()
 
+/**
+ * RUNG 4 — **THE `"A"` PROBE COSTS NOTHING ON HEIGHT, AND THIS IS WHY.**
+ * `ABCJS-DEBT.md` §3b.2 read that abcjs advances every bottom-block row by `"A"`
+ * (`add-text-if.js:21`) so a row of DESCENDERS advances by exactly as much as a row of
+ * capitals. True — **and measuring the row gives the identical answer**, because
+ * `getBBox().height` on a `<text>` is the LINE BOX and not the ink extent. Measured across
+ * Times New Roman, Helvetica and cursive at 8/13/17/21/27/40px: `"A"`, `"gggpqy"` and
+ * `"Mg"` return the same height at every one.
+ *
+ * So this rung asserts BOTH modes agree, which is the measured truth rather than a defect.
+ * It is kept because the claim it refutes was reasoned from abcjs's source comment and
+ * would otherwise be re-attempted: a phase was written against it and reverted.
+ */
+const ROWS = (h) => `X:1\nT:t\nH:${h}\nM:4/4\nL:1/4\nK:C\nCDEF|\n`
+await page.setContent('<!doctype html><meta charset="utf-8"><body></body>')
+await page.addScriptTag({ content: bundle })
+const rows = await page.evaluate(({ caps, desc }) => {
+  const { parse, render } = window.ABCTS.core
+  const h = (abc, mode) => {
+    const p = parse(abc, { mode })
+    const svg = p.ok && p.scores[0] ? render(p.scores[0], { mode, systemWidth: 670 }) : ''
+    return /height="([\d.]+)"/.exec(svg)?.[1]
+  }
+  return {
+    strictCaps: h(caps, 'abcjs-strict'), strictDesc: h(desc, 'abcjs-strict'),
+    extCaps: h(caps, 'extended'), extDesc: h(desc, 'extended'),
+  }
+}, { caps: ROWS('AAA EEE'), desc: ROWS('gggpqy jjj') })
+console.log('an H: row of CAPITALS vs one of DESCENDERS — page height')
+console.log('  strict   ', rows.strictCaps, 'vs', rows.strictDesc,
+  rows.strictCaps === rows.strictDesc ? ' same ✅' : ' DIFFER ⚠️')
+console.log('  extended ', rows.extCaps, 'vs', rows.extDesc,
+  rows.extCaps === rows.extDesc
+    ? ' same ✅ — a text bbox height is the LINE BOX, so the probe costs nothing'
+    : ' DIFFER ⚠️ — then the line-box measurement no longer holds; re-read §3b.2')
+console.log()
+
 const r = {}
 for (const mode of ['abcjs-strict', 'extended']) {
   r[`${mode} alone`] = await run(mode, false)

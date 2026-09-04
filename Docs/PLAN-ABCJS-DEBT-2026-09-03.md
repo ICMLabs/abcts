@@ -1,8 +1,35 @@
 ---
 title: Plan — landing the ABCJS-DEBT §3b improvements without touching byte parity
-status: proposed, nothing started
+status: EXECUTED 2026-09-04 — all five phases run; two landed, two measured-not-defects
 supersedes: nothing
 ---
+
+# ✅ OUTCOME, 2026-09-04
+
+| # | Phase | Result |
+|---|---|---|
+| 0 | Non-strict gate | **LANDED** (`db2d61e`). 691 digests + two guards; a `+0.0001` probe takes it red on 88 rows. |
+| 1 | Size cache | **LANDED** (`de12139`), and bigger than planned — `extended` had no live measurer at all. |
+| 2 | Falsy-zero | **PART LANDED** (`9507179`). Clef edge and lyric height fixed; the stem site measured UNREACHABLE and reverted. |
+| 3 | `"A"` probe | **NOT A DEFECT.** `getBBox().height` is the LINE BOX, so measuring the row gives the identical answer. Written, measured, reverted. |
+| 4 | Vendor prefixes | **NOT REACHABLE.** They live in compat's root markup, which is strict by construction; the non-strict root has no CSS transform. Written, measured, reverted. |
+
+**Two of the four "improvements" were not improvements**, and both claims had been reasoned
+from abcjs's source rather than measured — the same class of error this repo has recorded
+four times as *a note that names a cause is the reason the row stops being read*. The
+refutations are in `ABCJS-DEBT.md` §3b.2 and §3b.4 and in `zzextended.mjs` rung 4, so
+neither can quietly come back.
+
+**Strict never moved.** `zzlive` 0 of 685 WebKit, `svg-bytes` 685/685 and 356/356, four
+ladders at zero, suite 2,456, at every phase boundary.
+
+⭐ **AND THE LESSON THE PLAN ITSELF GOT WRONG:** it ordered Phase 3 last and called it *"the
+highest risk in this plan — it moves every text block's height in extended, which moves every
+page."* It moves nothing. The risk was estimated from the reach of the code rather than from
+a measurement, which is the same mistake as sizing the cache arc at 51 call sites.
+
+---
+
 
 # Landing §3b without jeopardising byte parity
 
