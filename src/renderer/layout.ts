@@ -6799,6 +6799,8 @@ function decorationGlyphs(
      */
     texts.push({
       text,
+      // `centerVertically: true` (`draw/relative.js:49`) — see `PlacedText.centered`.
+      centered: true,
       font: 'annotationfont',
       /**
        * **A TEXT DECORATION IS AN `annotation`, AND ITS CLASS IS GENERATED TWICE.**
@@ -7719,6 +7721,14 @@ function noteText(
         size,
         bold: false,
         italic: false,
+        /**
+         * `relative.js:52` passes `centerVertically: params.centerVertically`, and
+         * `RelativeElement` sets that TRUE for a `type: "text"` that HAS a pitch
+         * (`relative-element.js:70-77`) — which this is, being placed on `averageStep`.
+         * The lane annotations (`role: 'chord'` / `'chordBelow'`) have NO pitch and take
+         * the other arm, so they are deliberately not flagged.
+         */
+        centered: true,
         // **`renderText`'s ELEMENT, in `annotationfont`.** `relative.js`'s `case "text"`
         // draws every annotation with `type: 'annotationfont'`, `klass: generate("annotation")`
         // and `name: "annotation"` (`draw/relative.js:52`). Ours had no `font`, so the
@@ -7744,6 +7754,14 @@ function noteText(
         size,
         bold: false,
         italic: false,
+        /**
+         * `relative.js:52` passes `centerVertically: params.centerVertically`, and
+         * `RelativeElement` sets that TRUE for a `type: "text"` that HAS a pitch
+         * (`relative-element.js:70-77`) — which this is, being placed on `averageStep`.
+         * The lane annotations (`role: 'chord'` / `'chordBelow'`) have NO pitch and take
+         * the other arm, so they are deliberately not flagged.
+         */
+        centered: true,
         // **`renderText`'s ELEMENT, in `annotationfont`.** `relative.js`'s `case "text"`
         // draws every annotation with `type: 'annotationfont'`, `klass: generate("annotation")`
         // and `name: "annotation"` (`draw/relative.js:52`). Ours had no `font`, so the
@@ -10811,6 +10829,9 @@ function layoutTuplets(
 
     texts.push({
       text: label,
+      // `centerVertically: true` (`draw/triplet.js:12`) — see `PlacedText.centered`.
+      // `fontTypeCanHaveBox` refuses `tripletfont`, so only the BASELINE half is reachable.
+      centered: true,
       dataName: label,
       font: 'tripletfont',
       // …and the FACE `%%tripletfont` names, as with every other `renderText` element.
@@ -15014,10 +15035,8 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
                   width: textWidth(labelText, size, voiceFontOf(size, score.fonts)),
                   height: textHeight(size, labelText, voiceFontOf(size, score.fonts)),
                 },
-                // `drawVoice` passes `centerVertically: true` (`draw/voice.js:19`) — see
-                // `PlacedText.centered`. It is why this baseline takes no font size, and
-                // also why the rect above it is measured rather than derived.
-                centered: true,
+                // …and `centered`'s BOX half is why this rect is measured rather than
+                // derived. The flag itself is set unconditionally below.
                 // `drawVoice` passes `alreadyInGroup = true` (`draw/voice.js:19`), so the
                 // rect is the text's SIBLING and no `<g>` opens.
                 inGroup: true,
@@ -15042,6 +15061,13 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
               anchor: 'start',
               x: PAGE_PADDING.left,
               y: centre,
+              /**
+               * `centerVertically: true`, UNCONDITIONALLY — `drawVoice` passes it whether
+               * or not the font asked for a box (`draw/voice.js:19`). It lived inside
+               * `nameBox` until 2026-09-04b, so EVERY UNBOXED VOICE NAME WAS MISSING IT,
+               * which stays invisible while only the box branch reads the flag.
+               */
+              centered: true,
               ...nameBox,
               // **AND IT RESERVES NOTHING.** The voice name is not an `AbsoluteElement` at
               // all — `drawVoice` draws it beside the children rather than among them — so

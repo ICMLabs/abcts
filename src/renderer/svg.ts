@@ -3305,6 +3305,41 @@ export function toSVG(
              */
             const pad = t.size * ABCJS_RATIO.fontBoxPadding;
             const bs = t.box === true ? t.boxSize : undefined;
+            /**
+             * **`renderText` BUILDS THE BASELINE AS THREE ADDS ONTO THE PAGE'S y, AND AN
+             * ASSOCIATION IS A DECISION.**
+             *
+             *     hash.attr.y = y                                   draw/text.js:29
+             *     if (!centerVertically) hash.attr.y += font.size    :30-31
+             *     if (font.box)          hash.attr.y += font.padding :58
+             *     hash.attr.y = roundNumber(hash.attr.y)             :64   — ONCE
+             *
+             * So the staff origin is in FIRST and the size and padding go on afterwards.
+             * Ours was `(t.y + pad) * PX + oy`, which sums in the layout and converts at
+             * the end — the same value by algebra and a different double:
+             *
+             *     ours    (t.y + pad) * PX + oy      382.81500000000005 -> "382.82"
+             *     abcjs   ((rung + oy) + size) + pad 382.815            -> "382.81"
+             *
+             * `parseFloat((382.815).toFixed(2))` is `382.81`; the longer double rounds the
+             * other way. One `P:` label on `abcjs-visual-options-01-fonts`, and the last
+             * open row of the Chrome gate.
+             *
+             * ⚠️ **THE RUNG HAS TO BE RECOVERED, AND ONLY `centered` SAYS HOW.** Our `t.y`
+             * is abcjs's `params.y` PLUS the font size on the ordinary branch and
+             * `params.y` itself on the centred one, since that branch takes no
+             * `+= hash.font.size`. Subtracting the size off a CENTRED row that never had it
+             * moves the row by its whole font size — which is why all five of abcjs's
+             * `centerVertically` sites had to be flagged before this could be written. A
+             * first attempt at this regrouping moved three headless goldens for exactly
+             * that reason: `centered` was set only inside the voice name's BOX object, so
+             * every unboxed voice name took the wrong branch.
+             */
+            const baselineY =
+              (t.centered === true ? t.y : t.y - t.size) * PX +
+              oy +
+              (t.centered === true ? 0 : t.size * PX) +
+              (bs === undefined ? 0 : pad * PX);
             // The anchor the ATTRIBUTE carries, which is what `renderText` branches on —
             // `hash.attr["text-anchor"]`, defaulted to `start` a few lines down. An
             // annotation leaves `t.anchor` undefined and is still start-anchored, so reading
@@ -3333,7 +3368,7 @@ export function toSVG(
                 abcjs && face !== undefined
                   ? abcjsText(
                       textNum((t.x + boxDx) * PX),
-                      textNum((t.y + (bs === undefined ? 0 : pad)) * PX + oy),
+                      textNum(baselineY),
                       num(t.size * PX),
                       face,
                       t.italic,
@@ -3369,9 +3404,7 @@ export function toSVG(
                             {
                               xy: {
                                 x: textNum((t.x + boxDx) * PX),
-                                y: textNum(
-                                  (t.y + (bs === undefined ? 0 : pad)) * PX + oy,
-                                ),
+                                y: textNum(baselineY),
                               },
                             },
                           )
