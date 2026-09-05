@@ -38,6 +38,7 @@ import {
   type Score,
   stepIndex,
   type Tempo,
+  type Clef,
   type Voice,
 } from '../core/model.js'
 import { ABCJS_PERC_NOTE_NAMES } from '../renderer/abcjs-constants.js'
@@ -765,6 +766,37 @@ function collectTempoChanges(
   return changes
 }
 
+/**
+ * **THE CLEF BELONGS TO THE STAFF, AND EVERY VOICE ON IT TAKES THE OCTAVE.** abcjs reads
+ * `staff.clef` — `if (staff.clef.type.indexOf("+8") >= 0) push {el_type:'transpose',
+ * transpose: 12}` (`abc_midi_sequencer.js:194-200`) — inside the per-VOICE loop, so a
+ * second voice sharing the staff is transposed by a clef it never declared.
+ *
+ * We read `voice.clef`, which is only ever set on the voice that wrote it. Measured, one
+ * variable per rung:
+ *
+ *     %%staves {(V1 V2)}, V1 clef=treble+8   abcjs 72,74,76,77 72,74,76,77   ours …,60,62,64,65
+ *     %%staves {(V1) (V2)}, V1 clef=treble+8 both 72,74,76,77 60,62,64,65
+ *
+ * So it is not the clef octave that was missing — that works on its own on all five shapes
+ * tried, and the flattener has carried it since `flatten-octave-clefs`. It is WHOSE clef.
+ * `visual-tablature-15` and `visual-mouse-click-01` write
+ * `%%staves {(PianoRightHand extra) (PianoLeftHand)}` with `clef=treble+8` on the first,
+ * and `extra` sounded a whole octave below abcjs — an audible defect on channel 1.
+ *
+ * A voice in no group is its own staff, so this degrades to `voice.clef` and the
+ * single-voice shapes are unmoved.
+ */
+const staffClefOf = (voice: Voice, score: Score): Clef | null => {
+  const group = score.staves.find((g) => g.voiceIds.includes(voice.id))
+  if (group === undefined) return voice.clef
+  for (const id of group.voiceIds) {
+    const clef = score.voices.find((v) => v.id === id)?.clef
+    if (clef != null) return clef
+  }
+  return voice.clef
+}
+
 function sequenceVoice(
   voice: Voice,
   score: Score,
@@ -825,7 +857,8 @@ function sequenceVoice(
     // which inherits it, did not — three notes a whole octave high, under a green gate for
     // every axis but the pitch. abcjs re-pushes the STAFF clef per line and a mid-line
     // `[K: clef=]` updates `multilineVars.clef`, so the octave carries.
-    const clef = measure.clefChange ?? (firstMeasure ? (voice.clef ?? score.clef) : null)
+    const clef =
+      measure.clefChange ?? (firstMeasure ? (staffClefOf(voice, score) ?? score.clef) : null)
     firstMeasure = false
     if (clef != null) {
       if (clef.octaveShift !== 0) {
@@ -2005,8 +2038,19 @@ export function flattenAudio(
      * one that draws a reordered staff's voices under each other's names.
      */
     const staffTitle = (): string | null => {
+      /**
+       * ⚠️ **AND OUT OF RANGE MEANS NO NAME AT ALL, NOT THE VOICE'S OWN.**
+       * `if (!staff || staff.length <= voiceNumber || !staff[voiceNumber].title) return
+       * undefined` (`abc_midi_sequencer.js:607-608`) — so with THREE voices over TWO staves,
+       * voice 2 asks for `staff[2]`, finds nothing, and its track gets no `%FF%03` row.
+       * Falling back to `voice.name` wrote `LH` where abcjs writes no name at all.
+       *
+       * Only a tune with NO `%%staves`/`%%score` at all falls back, and there every voice
+       * is its own staff, so the array is `[voice.name]` and the join is that name.
+       */
       const ids = score.staves[voiceIndex]?.voiceIds
-      if (ids === undefined) return voice.name === '' ? null : voice.name
+      if (ids === undefined)
+        return score.staves.length > 0 ? null : voice.name === '' ? null : voice.name
       const names = ids
         .map((id) => score.voices.find((v) => v.id === id))
         .sort((a, b) => (a?.declaredIndex ?? 0) - (b?.declaredIndex ?? 0))
