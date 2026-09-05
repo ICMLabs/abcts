@@ -1484,7 +1484,48 @@ export function flattenAudio(
     }
   }
 
+  /**
+   * **`%%staffnonote 0` DROPS EVERY STAFF THAT HOLDS NOTHING BUT RESTS — AND WITH IT THE
+   * TRACK.** `cleanUp` nulls any STAFF none of whose voices satisfies `containsNotesStrict`
+   * and filters the nulls out (`tune-builder.js:70-93`), so the sequencer never sees the
+   * staff, never makes a voice, and the flattener pushes no track. Measured through abcjs:
+   *
+   *     rests + %%staffnonote 0      staff count 0   tracks 0
+   *     rests, no directive          staff count 1   tracks 1
+   *     rests + %%staffnonote 1      staff count 1   tracks 1
+   *     notes + %%staffnonote 0      staff count 1   tracks 1
+   *     two voices, one all rests    staff count 1   tracks 1
+   *
+   * So `MThd` says ONE track for a tune of pure rests where we said three — six rows of the
+   * byte gate, and the largest family the widening to all 691 tunes turned up.
+   *
+   * ⚠️ **AND A REST CARRYING A CHORD SYMBOL KEEPS ITS STAFF.** The test is
+   * `el_type === 'note' && (rest === undefined || chord !== undefined)`
+   * (`tune-builder.js:896-902`) — the `chord` clause is the whole difference between
+   * `zzzz|` and `"C"zzzz|`, which is why this cannot be "does the voice have a note".
+   *
+   * ⚠️ **AND THE RENDERER ALREADY HAD ALL OF THIS**, `layout.ts`'s own `sounds()` beside the
+   * same citations — the drawing has dropped these staves since the rule was found and the
+   * AUDIO kept building tracks for them. Eighth instance of A RULE PORTED AT THE SITE THAT
+   * NAMED IT IS NOT A RULE PORTED.
+   */
+  const soundsIn = (v: (typeof allVoices)[number] | undefined): boolean =>
+    (v?.measures ?? []).some((m) =>
+      m.events.some(
+        (e) => e.type === 'note' || (e.type === 'rest' && e.chordSymbol !== null),
+      ),
+    )
+  /** The voices sharing this one's staff — every voice is its own staff without `%%score`. */
+  const staffOf = (voice: (typeof allVoices)[number]): (typeof allVoices)[number][] => {
+    const group = score.staves.find((g) => g.voiceIds.includes(voice.id))
+    if (group === undefined) return [voice]
+    return group.voiceIds
+      .map((id) => allVoices.find((v) => v.id === id))
+      .filter((v): v is (typeof allVoices)[number] => v !== undefined)
+  }
+
   allVoices.forEach((voice, voiceIndex) => {
+    if (score.staffNoNote === true && !staffOf(voice).some(soundsIn)) return
     const voiceOff =
       options.voicesOff === true ||
       (Array.isArray(options.voicesOff) && options.voicesOff.includes(voiceIndex))
