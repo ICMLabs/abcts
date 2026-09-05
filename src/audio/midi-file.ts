@@ -37,8 +37,9 @@
  * one that agrees by construction — that is the whole argument for this file, and it paid
  * before a byte of it was compared.
  */
-import { keyFifths, plainText, type Score } from '../core/model.js'
+import { type DiatonicStep, keyFifths, plainText, type Score } from '../core/model.js'
 import { type AudioOptions, flattenAudio, type MidiEvent } from './flatten.js'
+import { getMeter, millisecondsPerMeasureOf } from './timing.js'
 
 export interface MidiFileOptions extends AudioOptions {
   /** Per-track stereo placement, -1 to 1. abcjs's `pan`, indexed by TRACK. */
@@ -312,12 +313,51 @@ function keySignature(key: Score['key'] | AbcjsKey): string {
     const sig = flats !== 256 ? toHex(flats, 2) : toHex(sharps, 2)
     return `%00%FF%59%02${sig}${(key as AbcjsKey).mode === 'm' ? '%01' : '%00'}`
   }
+  /**
+   * ⚠️ **abcjs COUNTS THE ACCIDENTALS IT WOULD DRAW, AND A `K:` MODIFIER CHANGES THAT LIST.**
+   * The fifths of the key NAME are only the starting point: `K:` field accidentals REPLACE a
+   * standard one on the same letter and otherwise append
+   * (`abc_parse_key_voice.js:320-350`), and `keySignature` then counts `acc === "sharp"` and
+   * `acc === "flat"` and **ignores everything else** (`abc_midi_renderer.js:187-192`).
+   *
+   * So the list, not the name, decides:
+   *
+   *     K:C m=B                natural B, flat e, flat A   -> TWO flats, %fe
+   *     K: C ^/f _/B _A ^D     quarter marks + flat A + sharp D -> ONE flat, %ff
+   *
+   * We took `keyFifths` alone, which is the key name's answer — three flats for C minor,
+   * none for C major — and wrote `%fd` and `%00`. A NATURAL is not a flat, and a QUARTER
+   * tone is neither: abcjs's two `===` tests admit only the exact words.
+   */
   const own = key as Score['key']
   const fifths = keyFifths(own)
-  const sig = fifths < 0 ? toHex(256 + fifths, 2) : toHex(fifths, 2)
+  const useSharps = fifths > 0
+  const order = useSharps ? KEY_SHARP_ORDER : KEY_FLAT_ORDER
+  const list: { step: DiatonicStep; quarters: number }[] = order
+    .slice(0, Math.abs(fifths))
+    .map((step) => ({ step, quarters: useSharps ? 2 : -2 }))
+  for (const e of own.extra ?? []) {
+    const at = list.findIndex((b) => b.step === e.step)
+    if (at >= 0) list[at] = { step: e.step, quarters: e.quarters }
+    else list.push({ step: e.step, quarters: e.quarters })
+  }
+  let sharps = 0
+  let flats = 256
+  for (const a of list) {
+    if (a.quarters === 2) sharps += 1
+    else if (a.quarters === -2) flats -= 1
+  }
+  const sig = flats !== 256 ? toHex(flats, 2) : toHex(sharps, 2)
   const mode = own.mode === 'minor' ? '%01' : '%00'
   return `%00%FF%59%02${sig}${mode}`
 }
+
+/**
+ * The order sharps and flats join a key signature, as STEP LETTERS — `flatten.ts` holds the
+ * same order as indices and does not export it, and `KeyAccidental.step` is the letter.
+ */
+const KEY_SHARP_ORDER: readonly DiatonicStep[] = ['f', 'c', 'g', 'd', 'a', 'e', 'b']
+const KEY_FLAT_ORDER: readonly DiatonicStep[] = ['b', 'e', 'a', 'd', 'g', 'c', 'f']
 
 /**
  * `%00%FF%58%04<num><den><clocks>%08` — and BOTH lookups can fail closed.
@@ -373,16 +413,80 @@ export function midiFile(score: Score, options: MidiFileOptions = {}): string {
 
   let title = plainText(score.metadata.titles[0] ?? null)
   if (title.length > 128) title = `${title.substring(0, 124)}...`
-  const meter = score.meter ?? { numerator: 4, denominator: 4 }
-  const time = { num: meter.numerator, den: meter.denominator }
+  /**
+   * **abcjs PASSES `abcTune.getMeterFraction()`, WHICH IS A WALK LIKE THE KEY IS.**
+   * `getMeter()` scans `lines[].staff[].meter` and answers the FIRST it finds, falling
+   * through to `common_time` (`data/abc_tune.js:181-193`); `getMeterFraction` then reduces
+   * it to a num/den, summing a `2+3` numerator and mapping cut and common time
+   * (`:195-218`).
+   *
+   * ⚠️ **THE STAFF'S METER IS NOT THE HEADER'S.** A standalone body `M:` written before any
+   * music on its line REPLACES the staff's in place — `appendStartingElement`'s "same type
+   * → replace" arm — so `M:4/4` in the header followed by `M:2/4` in the body is a **2/4**
+   * tune to `getMeter`. We read `score.meter`, the header's, and wrote `%FF%58%04%04` where
+   * abcjs writes `%02`.
+   *
+   * ⚠️ **AND THE RULE WAS ALREADY PORTED ONCE, IN `chord-grid.ts`**, whose own comment
+   * spells it out — "the FIRST meter on any staff of any line… not the header's" — and
+   * which reaches it through `score.meter ?? <walk>`, header-first, so it would answer 4/4
+   * here too. `timing.ts`'s `getMeter` is the one that walks properly, and it is in the
+   * file this already imports `millisecondsPerMeasureOf` from. **A RULE PORTED AT THE SITE
+   * THAT NAMED IT IS NOT A RULE PORTED** — third time in this file's own history.
+   */
+  const m = getMeter(score)
+  const time =
+    m.symbol === 'common'
+      ? { num: 4, den: 4 }
+      : m.symbol === 'cut'
+        ? { num: 2, den: 2 }
+        : {
+            num:
+              m.numeratorParts === undefined
+                ? m.numerator
+                : m.numeratorParts.reduce((t, part) => t + part, 0),
+            den: m.denominator,
+          }
 
   // ponytail: abcjs's COMPOUND-METER tempo fix is not ported — for `den === 8` with a
   // numerator other than 5 or 7 it recomputes the tempo from `millisecondsPerMeasure()`,
   // which is a method on its laid-out tune and not on an event list. None of the three
   // harvested cases is in 6/8; the table will say so when one is, and the fix belongs with
   // whatever else ends up needing `millisecondsPerMeasure`.
-  const tempo = commands.tempo
-  const beatsPerSecond = tempo / 60
+  /**
+   * **AN EIGHTH-NOTE METER RECOMPUTES THE TEMPO FROM THE MEASURE'S DURATION, AND HALVES IT.**
+   *
+   *     if (time.den === 8 && time.num !== 5 && time.num !== 7) {
+   *       var msPerMeasure = abcTune.millisecondsPerMeasure();
+   *       tempo = (60000 / (msPerMeasure/time.num)) / 2;
+   *       beatsPerSecond = tempo/60;
+   *     }
+   *
+   * (`abc_midi_create.js:26-35`, whose own comment is "Fix for x/8 meter tempos".) 5/8 and
+   * 7/8 are excluded BY NAME — they do not divide into equal dotted beats — and every other
+   * eighth-note meter takes it, 3/8 and 11/8 included.
+   *
+   * ⚠️ **THIS WAS MARKED UNPORTED WITH A `ponytail:` SAYING IT NEEDED
+   * `millisecondsPerMeasure`, "a method on its laid-out tune and not on an event list".**
+   * It is not: `timing.ts` already exports `millisecondsPerMeasureOf(score)` over the
+   * SCORE, written for the `setTiming` arc. **The answer was in this repo already** —
+   * `CLAUDE.md` records the same thing happening for `padOverlays` and three parser inputs.
+   * Grep this repo for the rule before porting it.
+   *
+   * The same note predicted "none of the three harvested cases is in 6/8; the table will
+   * say so when one is." The table said so: `Q:3/8=60` under `M:6/8` is a 2000ms measure,
+   * so abcjs plays it at `(60000/(2000/6))/2` = **90bpm** where we took `Q:`'s 60 — 666,667
+   * microseconds against our 1,000,000. Five corpus tunes, every one `den === 8`.
+   *
+   * `beatsPerSecond` is recomputed WITH it, so this moves note timings and not just the
+   * tempo meta event.
+   */
+  let tempo = commands.tempo
+  let beatsPerSecond = tempo / 60
+  if (time.den === 8 && time.num !== 5 && time.num !== 7) {
+    const msPerMeasure = millisecondsPerMeasureOf(score)
+    tempo = 60000 / (msPerMeasure / time.num) / 2
+    beatsPerSecond = tempo / 60
+  }
 
   /**
    * ⚠️ **abcjs PASSES `abcTune.getKeySignature()` HERE, WHICH IS A WALK AND NOT A FIELD.**
