@@ -2001,6 +2001,27 @@ export function flattenAudio(
       }
 
       for (const [pitchIndex, written] of pitches.entries()) {
+        /**
+         * ⚠️ **A SLUR WRITTEN INSIDE THE CHORD BRACKETS COUNTS PER PITCH, AND BEFORE THAT
+         * PITCH'S OWN ARTICULATION.** abcjs reads `note.startSlur`/`note.endSlur` off the
+         * PITCH inside its own pitch loop and tests `if (slurCount > 0) p.endType =
+         * 'tenuto'` immediately after (`abc_midi_flattener.js:579-604`) — so in
+         * `[(CE)G]` the C sees a count of 1 and is tenuto, while the E that CLOSES the slur
+         * and the G after it see 0 and take their gap.
+         *
+         * The event-level counting above is right for a slur BETWEEN notes and around a
+         * whole chord — our model puts those on the event where abcjs puts them on the
+         * pitch — but it cancels `+1` against `-1` inside one chord before any pitch is
+         * emitted, so no head was ever slurred. Measured: our first note-off was the C,
+         * abcjs's is the E.
+         *
+         * ⚠️ **THE ORDER WAS ALREADY FIXED HERE AND THE GRANULARITY WAS NOT** — the note
+         * above says in as many words that abcjs "does the two together inside the pitch
+         * loop", and the port moved the counting before the loop rather than into it. Half
+         * a rule reads exactly like the whole one once it is written down.
+         */
+        slurCount += written.slurStarts ?? 0
+        slurCount -= written.slurEnds ?? 0
         // …**AND A HEAD FOLDED INTO AN EARLIER TIE SOUNDS NOTHING**, where its neighbours
         // in the same chord still do — see `VoiceItem.tieExtra`.
         const headName = `${written.step}${written.octave}`
