@@ -308,9 +308,29 @@ function keyAccidentals(key: KeySignature): number[] {
   const out = [0, 0, 0, 0, 0, 0, 0]
   const fifths = keyFifths(key)
   const order = fifths >= 0 ? SHARP_ORDER : FLAT_ORDER
+  /**
+   * ⚠️ **A `K:` MODIFIER REPLACES THE KEY'S OWN ACCIDENTAL ON THAT LETTER — IT DOES NOT ADD
+   * TO IT.** The replacement happens in the PARSER: a field accidental "REPLACES a standard
+   * accidental on the same letter or appends" (`abc_parse_key_voice.js:320-350`), so by the
+   * time `setKeySignature` walks the list with its `accidentals[note] += d` there are no
+   * duplicate letters left for the `+=` to double.
+   *
+   * We summed the two steps instead: C minor's three flats, then `=B`'s natural ADDED to
+   * the B flat — `-1 + 0` is still flat. `K:C m=B` is C harmonic minor and its B is
+   * NATURAL: abcjs sounds 71 where we sounded 70, an audible wrong note on
+   * `abcts-key-modifiers`.
+   *
+   * abcjs's own list for `K:C m=B` is `[natural B, flat e, flat A]` — asked, not reasoned —
+   * which is the replacement already done.
+   */
+  const replaced = new Set<number>()
+  for (const extra of key.extra ?? []) {
+    const step = stepIndex(extra.step)
+    if (step >= 0) replaced.add(step)
+  }
   for (let i = 0; i < Math.abs(fifths); i += 1) {
     const step = order[i]
-    if (step !== undefined) out[step] = fifths >= 0 ? 1 : -1
+    if (step !== undefined && !replaced.has(step)) out[step] = fifths >= 0 ? 1 : -1
   }
   // `K:… ^f _b` and the like ADD to the signature they follow — abcjs's `setKeySignature`
   // does `accidentals[note] += d`, not `=`. And a QUARTER tone is **0.25**, not 0.5:
