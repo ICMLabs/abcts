@@ -1908,8 +1908,40 @@ export function flattenAudio(
      * of `tests/corpus-audio`'s 54 cases declares `V:… name=`. A second surface over the
      * same data is worth having precisely for this.
      */
-    if (voice.name !== null && voice.name !== '') {
-      track.unshift({ cmd: 'text', type: 'name', text: voice.name })
+    /**
+     * ⚠️ **AND THE NAME IS THE STAFF'S TITLE ARRAY JOINED WITH A SPACE, NOT THE VOICE'S
+     * OWN `name=`.** `getTrackTitle` is `staff[voiceNumber].title.join(" ")`
+     * (`abc_midi_sequencer.js:606-610`), and that array carries ONE SLOT PER VOICE ON THE
+     * STAFF with `''` for a voice that has no `name=` — so a staff holding a named voice
+     * and an unnamed one joins to **`"RH "`, with the separator left behind**:
+     *
+     *     %%staves {(PianoRightHand extra) (PianoLeftHand)}
+     *     staff 0 title ["RH", ""]  -> "RH "     staff 1 title ["LH"] -> "LH"
+     *
+     * We wrote `voice.name`, so the track name was one byte short on four corpus fixtures
+     * — `%FF%03%02%52%48` against abcjs's `%FF%03%03%52%48%20`.
+     *
+     * ⚠️ **AND THE RULE WAS ALREADY WRITTEN DOWN IN THIS REPO, IN `compat/lines.ts`**,
+     * whose own comment beside the same array says `synth.sequence` "reads it as the
+     * track's name — `staff[voiceNumber].title`, joined with a space… and nothing else in
+     * this library did". It does now. **A RULE PORTED AT THE SITE THAT NAMED IT IS NOT A
+     * RULE PORTED** — seventh instance, and the fourth in this file alone.
+     *
+     * The STAVES are indexed by the VOICE number, which is abcjs's own quirk and the same
+     * one that draws a reordered staff's voices under each other's names.
+     */
+    const staffTitle = (): string | null => {
+      const ids = score.staves[voiceIndex]?.voiceIds
+      if (ids === undefined) return voice.name === '' ? null : voice.name
+      const names = ids
+        .map((id) => score.voices.find((v) => v.id === id))
+        .sort((a, b) => (a?.declaredIndex ?? 0) - (b?.declaredIndex ?? 0))
+        .map((v) => v?.name ?? '')
+      return names.some((t) => t !== '') ? names.join(' ') : null
+    }
+    const trackTitle = staffTitle()
+    if (trackTitle !== null && trackTitle !== '') {
+      track.unshift({ cmd: 'text', type: 'name', text: trackTitle })
     }
     tracks.push(track)
     chordTrack.finish()
