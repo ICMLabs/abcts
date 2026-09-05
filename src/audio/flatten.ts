@@ -891,9 +891,37 @@ function sequenceVoice(
     const clef =
       measure.clefChange ?? (firstMeasure ? (staffClefOf(voice, score) ?? score.clef) : null)
     firstMeasure = false
+    /**
+     * ⚠️ **THE OCTAVE AND THE DRUMMAP COME FROM DIFFERENT PLACES, SO THEY HAVE DIFFERENT
+     * GRANULARITY.** Read rather than inferred:
+     *
+     *   - the OCTAVE is the SEQUENCER's, per staff per LINE —
+     *     `if (staff.clef.type.indexOf("+8") >= 0) push {transpose: 12}`
+     *     (`abc_midi_sequencer.js:194-200`);
+     *   - the DRUMMAP is the PARSER's, per NOTE — *"If the clef is percussion, there is
+     *     probably some translation of the pitch to a particular drum kit item"*, stamping
+     *     `el.midipitch = drummap[key]` as it walks (`abc_parse_music.js:1129-1137`).
+     *
+     * So a mid-measure `[K: clef=perc]` moves the drummap at the exact note it is written
+     * before and moves the octave not at all until the next line. Confirmed in abcjs's own
+     * parse tree: `B B [K:C clef=perc] B B|` gives the first two notes no `midipitch` and
+     * the last two `midipitch: 38`.
+     *
+     * `compat/lines.ts` already derives that position from `clefChangeSourceRange` — count
+     * the events written before the change — with the same citation beside it. This is the
+     * audio half of the same derivation, and the first cut of this got it wrong by setting
+     * the flag for the WHOLE measure, which made the mid-line shape wrong the other way.
+     */
+    const clefChangeAt =
+      measure.clefChangeSourceRange == null
+        ? 0
+        : measure.events.filter(
+            (e) =>
+              (e.sourceRange?.start ?? Number.POSITIVE_INFINITY) <
+              (measure.clefChangeSourceRange?.start ?? 0),
+          ).length
     if (clef != null) {
-      // See `Timed.percussion` — abcjs re-tests `staff.clef.type === 'perc'` per line.
-      clefPercussion = clef.shape === 'percussion'
+      if (clefChangeAt === 0) clefPercussion = clef.shape === 'percussion'
       if (clef.octaveShift !== 0) {
         clefTranspose = clef.octaveShift * 12
         clefOctaveActive = true
@@ -931,6 +959,9 @@ function sequenceVoice(
     }
     let first = true
     for (const [eventIndex, event] of measure.events.entries()) {
+      // …and a change written INSIDE the measure turns the drummap on at that note.
+      if (clef != null && clefChangeAt > 0 && eventIndex === clefChangeAt)
+        clefPercussion = clef.shape === 'percussion'
       // THE TEMPO IN FORCE IS LOOKED UP BY WRITTEN POSITION, not carried from the measure.
       // Every voice's `[Q:]` is in the same table, so this note may be re-timed by a change
       // written three staves below it — see `collectTempoChanges`.
