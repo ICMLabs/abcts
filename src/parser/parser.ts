@@ -4522,18 +4522,45 @@ class Parser {
          * music, one between two music lines and a tune whose ONLY `T:` follows its notes
          * are all exact either way.
          */
-        if (builder.musicStarted && builder.titles.length > 0) {
+        /**
+         * ⚠️ **AND A `%%text` BLOCK ALREADY STANDING BEFORE THE MUSIC IS A LINE TOO, SO THE
+         * SUBTITLE GOES AFTER IT.** `addSubtitle` is `pushLine(tune, {subtitle})`
+         * (`tune-builder.js:298-300`) — it APPENDS, so its position is simply "after
+         * whatever lines exist", and a `%%text` before the music has already pushed one
+         * (`draw/draw.js` walks them in order). Sending it to `titles` puts it in the TOP
+         * BLOCK, which is drawn before every nonMusic line whatever the source said.
+         *
+         * Measured through abcjs 6.7.0, one variable per rung — only the first moves:
+         *
+         *     %%text then T:, no music before   ours 260.05  abcjs 257.32   ← 2.73px
+         *     %%text then T:, MUSIC before      same
+         *     T: then %%text, no music before   same
+         *     T: alone / %%text alone           same
+         *
+         * The reversed-source rung is what named it: `T:` then `%%text` gives 260.05 in BOTH
+         * engines — **our wrong answer for the forward order is exactly our right answer for
+         * the reversed one**, which says we were emitting one fixed order rather than the
+         * source's.
+         *
+         * ⚠️ **NO GOLDEN COVERS THIS SHAPE.** `svg-bytes` is 0 of 685 and 0 of 356 and stayed
+         * there: every corpus `%%text` has music before it, which is the case that already
+         * worked. A GATE'S REACH IS A PROPERTY OF ITS ENUMERATION.
+         */
+        const beforeMusicBlock = !builder.musicStarted && builder.textAbove.length > 0
+        if ((builder.musicStarted || beforeMusicBlock) && builder.titles.length > 0) {
           // …**AND IT GOES THROUGH `parseFontChangeLine` LIKE THE TITLE DOES** — see
           // `FreeTextBlock.rich`. `setTitle` splits the fonts BEFORE it branches.
           const rich = parseFontChangeLine(theReverser(decodeTextString(value)), builder.setfont)
           this.dropVskipBeforeSubtitle()
-          builder.textBelow.push({
+          const block: FreeTextBlock = {
             lines: [theReverser(decodeTextString(value))],
             align: 'center',
             role: 'subtitle',
             rich,
             sourceRange: range,
-          })
+          }
+          if (beforeMusicBlock) builder.textAbove.push(block)
+          else builder.textBelow.push(block)
         } else {
           this.dropVskipBeforeSubtitle()
           // `T: C: O: A: P:` all run through `parseFontChangeLine`

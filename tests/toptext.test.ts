@@ -4,6 +4,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
 import { renderAbc } from "../src/compat/index.js";
+import { renderAll } from "./render-all.js";
 
 /**
  * **`tune.topText` AND `tune.bottomText` — abcjs's INTERMEDIATE ROW LIST, OVER 312 TUNES
@@ -141,5 +142,63 @@ describe("topText / bottomText — abcjs's own row list", () => {
             `${r.slug} ${r.which}[${r.index}]\n  abcjs ${r.want}\n  ours  ${r.got}`,
         ),
     ).toEqual([]);
+  });
+});
+
+/**
+ * **A `%%text` BLOCK BEFORE THE MUSIC IS A LINE, SO A BODY `T:` AFTER IT COMES AFTER IT.**
+ *
+ * `addSubtitle` is a bare `pushLine(tune, {subtitle})` (`tune-builder.js:298-300`) — it
+ * APPENDS, so a subtitle's position is only ever "after whatever lines exist". A `%%text`
+ * standing before the music has already pushed one. Sending the subtitle to the TOP BLOCK
+ * instead puts it above every nonMusic line whatever the source order said.
+ *
+ * ⚠️ **NO GOLDEN COVERS THIS AND THE FIX PROVED IT** — `svg-bytes` stayed at 0 of 685 and
+ * 0 of 356, and the extended ratchet did not move: every corpus `%%text` has music before
+ * it, which is the case that already worked. **A gate's reach is a property of its
+ * enumeration**, so this shape needs a test of its own or it has none.
+ *
+ * Measured through abcjs 6.7.0, one variable per rung — only the first moved:
+ *
+ *     %%text then T:, no music before   ours 260.05  abcjs 257.32   ← 2.73px, WebKit
+ *     %%text then T:, MUSIC before      same
+ *     T: then %%text, no music before   same
+ *     T: alone / %%text alone           same
+ *
+ * ⭐ **THE REVERSED-SOURCE RUNG IS WHAT NAMED IT**: `T:` then `%%text` gave 260.05 in BOTH
+ * engines, so our wrong answer for the forward order was exactly our right answer for the
+ * reversed one — which says we emitted one FIXED order rather than the source's. Asserting
+ * that the two orders still differ is therefore half the test: a fix that merely swapped
+ * the constant would pass the first assertion and fail this one.
+ */
+describe("a pre-music %%text block and a body T: keep their source order", () => {
+  /**
+   * ⚠️ **`topText.rows` IS THE WRONG INSTRUMENT AND ANSWERS -1.** The list stops at the part
+   * order: a `%%text` or `%%center` before the music is a nonMusic LINE and NOT top text
+   * (`draw/draw.js:12-58`), so the row this is about is not in it at all. The order has to
+   * be read off the drawn SVG, which is where both rows actually land.
+   */
+  const rowsOf = (abc: string): string[] =>
+    [...(renderAll(abc, { staffwidth: 670 })[0]?.svg ?? "").matchAll(/<text[^>]*>([\s\S]*?)<\/text>/g)]
+      .map((m) => m[1]?.replace(/<[^>]*>/g, "").trim() ?? "")
+      .filter((t) => t !== "");
+  const textFirst = "T:t\nK:C\n%%text extra\nT:Sub\n|GGGG|]\n";
+  const titleFirst = "T:t\nK:C\nT:Sub\n%%text extra\n|GGGG|]\n";
+
+  it("puts the subtitle after a %%text that precedes it", () => {
+    const rows = rowsOf(textFirst);
+    expect(rows.indexOf("extra")).toBeGreaterThanOrEqual(0);
+    expect(rows.indexOf("Sub")).toBeGreaterThan(rows.indexOf("extra"));
+  });
+
+  it("puts the subtitle before a %%text that follows it", () => {
+    const rows = rowsOf(titleFirst);
+    expect(rows.indexOf("Sub")).toBeGreaterThanOrEqual(0);
+    expect(rows.indexOf("extra")).toBeGreaterThan(rows.indexOf("Sub"));
+  });
+
+  /** …and the two orders must not collapse onto one another, which a swapped constant would. */
+  it("renders the two orders differently", () => {
+    expect(rowsOf(textFirst)).not.toEqual(rowsOf(titleFirst));
   });
 });
