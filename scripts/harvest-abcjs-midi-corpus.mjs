@@ -14,11 +14,16 @@
  * `tests/midi-bytes.test.ts` checks, so a harvest against the wrong tree fails loudly
  * instead of moving the target.
  *
- * ⚠️ **AND `getMidiFile` ON A STRING YIELDS ONE TUNE, NOT ONE PER `X:`** — it is
+ * ⚠️ **EVERY TUNE, THROUGH THE OBJECT ENTRY POINT.** `getMidiFile` on a STRING is
  * `renderEngine(callback, "*", …)` and `renderEngine` renders one tune per output SLOT
- * (`synth/get-midi-file.js:38`). So a multi-tune fixture is represented by its FIRST tune
- * here, exactly as a host calling the same function would see it. Reaching the others means
- * passing more slots, which is a different entry point and a different gate.
+ * (`synth/get-midi-file.js:38`), so it yields the FIRST tune and nothing else — which left
+ * 460 of the corpus's 691 tunes never compared. The other arm,
+ * `else return callback(null, source, 0)` (`:40`), takes ONE TUNE OBJECT, so `parseOnly`
+ * then one call per tune reaches all of them. Keys are `<slug>#<tune>`.
+ *
+ * ⚠️ That arm was broken on our side until 2026-09-05 — it assumed an ARRAY and threw
+ * `tunes.map is not a function` — so **the entry point needed to test the other 460 tunes
+ * was itself the first defect widening found.**
  */
 import { createRequire } from 'node:module'
 import { readdirSync, readFileSync, writeFileSync } from 'node:fs'
@@ -36,20 +41,27 @@ const out = join(repo, 'tests', 'corpus-abcjs', 'midi.json')
 const files = readdirSync(fixtures).filter((f) => f.endsWith('.abc')).sort()
 const midi = {}
 let threw = 0
+let tunes = 0
 for (const f of files) {
   const slug = f.replace(/\.abc$/, '')
   const abc = readFileSync(join(fixtures, f), 'utf-8')
-  try {
-    const r = abcjs.synth.getMidiFile(abc, { midiOutputType: 'encoded' })
-    const first = Array.isArray(r) ? r[0] : r
-    midi[slug] = typeof first === 'string' ? first : `NOT A STRING: ${typeof first}`
-  } catch (e) {
-    midi[slug] = `THREW: ${e?.message ?? e}`
-    threw += 1
+  let parsed = []
+  try { parsed = abcjs.parseOnly(abc) } catch { parsed = [] }
+  for (let i = 0; i < parsed.length; i += 1) {
+    tunes += 1
+    const key = `${slug}#${i}`
+    try {
+      const r = abcjs.synth.getMidiFile(parsed[i], { midiOutputType: 'encoded' })
+      const v = Array.isArray(r) ? r[0] : r
+      midi[key] = typeof v === 'string' ? v : `NOT A STRING: ${typeof v}`
+    } catch (e) {
+      midi[key] = `THREW: ${e?.message ?? e}`
+      threw += 1
+    }
   }
 }
 writeFileSync(
   out,
   `${JSON.stringify({ abcjs: ABCJS_VERSION, generatedBy: 'scripts/harvest-abcjs-midi-corpus.mjs', midi }, null, 1)}\n`,
 )
-console.log(`${files.length} fixtures -> ${out}  (${threw} threw)`)
+console.log(`${files.length} fixtures, ${tunes} tunes -> ${out}  (${threw} threw)`)

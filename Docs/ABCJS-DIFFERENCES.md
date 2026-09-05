@@ -468,6 +468,27 @@ and `clef=x` debug strings above, and write the 180bpm default instead.
 *Verified by running `abcjs.synth.getMidiFile` over the corpus: 10 tunes of 231 hit it, all
 of them a header with no music. `toHex(NaN, 6)` reproduces `%00%0N%aN` exactly.*
 
+### `getMidiFile` throws on three corpus tunes, and the host gets no file
+
+Not a wrong byte — no output at all. Found by running `abcjs.synth.getMidiFile` over every
+tune of the corpus rather than the first of each fixture:
+
+- **A rich `T:` — `e.charCodeAt is not a function`.** The track name goes through
+  `encodeString(name, "%01")`, which calls `charCodeAt` on it; a title carrying a font
+  change (`$1bold$0`) is an OBJECT, not a string. `visual-misc-06`. *Our own note in
+  `src/audio/midi-file.ts` predicted `[object Object]` would land in the track name;
+  measured, abcjs does not get that far.*
+- **`Cannot read properties of undefined (reading 'el_type')`** on two tunes of
+  `abcts-endings`, reachable only past tune 0 — which is why nothing had seen it: the
+  string form of `getMidiFile` renders one tune per output SLOT and yields the first only.
+
+We produce a playable file in all three cases: the rich title is skipped for the track name
+(a MIDI track name is a byte string, and abcjs's own writer has no way to encode a font
+change into one).
+
+*Verified 2026-09-05 by `scripts/harvest-abcjs-midi-corpus.mjs` over 691 tunes; the three
+are on `tests/midi-bytes.test.ts`'s `DIVERGENT` list.*
+
 ## What abcts adds beyond fixing these
 
 `abcjs-extended` corrects the above, and every correction above is reached by opting out of strict:

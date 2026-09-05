@@ -1776,13 +1776,30 @@ export const synth = {
    * repo after `printStem`'s rounding and the `centerVertically` flag.
    */
   getMidiFile(
-    source: string | readonly TuneObject[],
+    source: string | TuneObject | readonly TuneObject[],
     options: MidiFileParams = {},
   ): (string | Uint8Array)[] {
-    const tunes =
+    /**
+     * ⚠️ **A NON-STRING SOURCE IS ONE TUNE, NOT AN ARRAY OF THEM.** abcjs's else arm is
+     * `return callback(null, source, 0)` (`synth/get-midi-file.js:40`) — `source` goes
+     * straight to `midiCreate` as a single tune object. This assumed an array and threw
+     * `tunes.map is not a function` on the very call a host makes to reach tune 2 of a
+     * book, which is the only way to reach it at all: the STRING form is
+     * `renderEngine(callback, "*", …)` and yields the first tune and nothing else.
+     *
+     * Found while widening the MIDI byte gate past tune 0 — **the entry point needed to
+     * test the other 460 tunes was itself broken**, which is why nothing had noticed.
+     *
+     * An ARRAY is still accepted and mapped, as this always did. abcjs would hand one
+     * whole array to `midiCreate` and produce nonsense, so nothing that works against
+     * abcjs can be relying on that shape; it costs a line and keeps our own callers.
+     */
+    const one = (src: TuneObject | readonly TuneObject[]): readonly TuneObject[] =>
+      Array.isArray(src) ? (src as readonly TuneObject[]) : [src as TuneObject];
+    const tunes: readonly TuneObject[] =
       typeof source === "string"
         ? (renderEngine((_el, tune) => tune, "*", source, {}) as TuneObject[])
-        : (source as readonly TuneObject[]);
+        : one(source);
     return getMidiFileFor(
       tunes.map((t) => t.score),
       // The MIDI track name, which is the title as a plain string — a RICH title is not one
