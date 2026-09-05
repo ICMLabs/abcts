@@ -727,9 +727,18 @@ function writtenTimeline(voice: Voice): WrittenTimeline {
        * Ours scales the r notes at PARSE time, so the first note agrees and every note
        * after it is unscaled: 0.083333 then 0.125 × 2 then 0.25 × 2. Reproducing the leak
        * means running abcjs's state machine over the voice at sequence time — the durations
-       * here are already tuplet-scaled — which is a change to WHERE tuplets are resolved,
-       * for a shape neither corpus writes. Written down rather than half-done; the object,
-       * the SVG and the timings are byte-exact on that tune either way.
+       * here are already tuplet-scaled — which is a change to WHERE tuplets are resolved.
+       * Written down rather than half-done.
+       *
+       * ⚠️ **AND TWO CLAIMS THIS NOTE MADE ARE NOW FALSE — CORRECTED 2026-09-05.** It said
+       * the leak is "a shape neither corpus writes" and that the `startTriplet !== tripletR`
+       * branch "is unreachable here too":
+       *
+       *   - `abcts-ledger-gaps#1` IS that shape, and `tests/midi-bytes.test.ts` — which did
+       *     not exist when this was written — sees it. "The object, the SVG and the timings
+       *     are byte-exact either way" was true of the gates that existed then.
+       *   - the branch is unreachable only for `r = 1`. At `r = 2` and `r = 4` it decides
+       *     the group's total, and it IS ported now, just below.
        */
       const tuplet = event.tuplet
       let dur = spacer ? 0 : ratToNumber(event.duration) * bars
@@ -738,7 +747,33 @@ function writtenTimeline(voice: Voice): WrittenTimeline {
           tripletGroup = tuplet.group
           const notated = ratToNumber(event.notatedDuration)
           const multiplier = notated === 0 ? 1 : ratToNumber(event.duration) / notated
-          tripletTotal = tuplet.number * multiplier * notated
+          /**
+           * ⚠️ **`(p:q:r` WITH `r !== p` TAKES ITS TOTAL FROM THE FIRST `r` WRITTEN
+           * DURATIONS, NOT FROM `p × q × this one`.**
+           *
+           *     if (elem.startTriplet !== elem.tripletR) {   // most commonly (3:2:2
+           *       for (var w = v; w < v + elem.tripletR; w++) durationTotal += voice[w].duration;
+           *       tripletDurationTotal = tripletMultiplier * durationTotal;
+           *     }
+           *
+           * (`abc_midi_sequencer.js:256-263`.) `r` is not in our model — `TupletMark` has
+           * `group` and `number` only — but it does not need to be: **`r` IS the number of
+           * events sharing the group**, and their notated durations are what that loop sums.
+           *
+           * Measured, and the naive total is wrong in both directions:
+           *
+           *     (3:2:2 ABC D2   abcjs 0.0833 0.0833 0.1250   ours was 0.0833 0.1667 0.1250
+           *     (3:2:4 ABCD E2  abcjs …0.0833 (4th)          ours was 0.0000 — a SILENT note
+           *
+           * The `0.0000` is the tell: our total was 0.25 where the group needs 0.3333, so
+           * the remainder arm handed the last note nothing at all.
+           */
+          const inGroup = measure.events.filter((e) => e.tuplet?.group === tuplet.group)
+          tripletTotal =
+            inGroup.length === tuplet.number
+              ? tuplet.number * multiplier * notated
+              : multiplier *
+                inGroup.reduce((sum, e) => sum + ratToNumber(e.notatedDuration), 0)
           dur = round6(dur)
           tripletCount = dur
         } else if (measure.events[index + 1]?.tuplet?.group === tuplet.group) {
