@@ -3964,7 +3964,25 @@ export function toSVG(
             ENGRAVE.spacePerStep * ABCJS_PITCH.bottomLine * PX;
           const w = spaces(ABCJS_LINE_PX.staffConnector) * PX;
           const r2 = (n: number): number => Number.parseFloat(n.toFixed(2));
-          const [x1, x2] = [r2(x * PX), r2(x * PX + w)];
+          /**
+           * **THE FAR EDGE IS BUILT FROM THE *ROUNDED* ANCHOR** — `printStem` does
+           * `x = roundNumber(x); var x2 = roundNumber(x + dx)` (`print-stem.js:13-14`), and
+           * `drawStaffGroup` draws this connector through it:
+           * `printStem(renderer, params.startx, 0.6, topLine, bottomLine, null)`
+           * (`staff-group.js:143`).
+           *
+           * The two agree in exact arithmetic and part company on a rounding boundary:
+           * `visual-wrap-04` in BLINK has this anchor at 107.875, so `r2(107.875 + 0.6)` is
+           * `108.47` where `r2(r2(107.875) + 0.6)` is abcjs's `108.48`. The same rule is
+           * already ported at `lineToRect`'s stem/bar branch and at the beam's second edge;
+           * this was the third site and the only one still chaining off the raw number.
+           *
+           * ⚠️ **AND ONLY BLINK COULD SHOW IT.** In WebKit the upstream text metrics put
+           * this anchor nowhere near a `.xx5`, so the file is byte-identical there and the
+           * live gate read 0 of 685 throughout.
+           */
+          const x1 = r2(x * PX);
+          const x2 = r2(x1 + w);
           parts.push(
             `<path d="M ${x1} ${r2(bottom)}L ${x1} ${r2(top)}L ${x2} ${r2(top)}L ${x2} ${r2(bottom)}z" ` +
               `stroke="none" fill="currentColor"></path>`,
