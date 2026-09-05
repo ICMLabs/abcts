@@ -43,7 +43,7 @@ for doing them properly **without a single strict byte moving.**
 work needs:
 
     abcjs-strict   reproduce abcjs, bugs included — the DEFAULT, and byte-equal to 6.7.0
-    abcjs-extended         the standard read correctly
+    abc2.1         the standard read correctly
     extended       parity+
 
 `isStrict(options.mode)` is resolved once at the layout entry (`layout.ts:13072`) and

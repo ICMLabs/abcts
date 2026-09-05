@@ -70,7 +70,7 @@ whose default output differs from the thing it replaces is not one.
 | Mode | |
 |---|---|
 | `abcjs-strict` | reproduce abcjs, bugs included. **Default.** |
-| `abcjs-extended` | the standard read correctly |
+| `abc2.1` | the standard read correctly |
 | `extended` | beyond the standard |
 
 **The mode gates BEHAVIOUR, not just look**, and that is the point. Every place core
@@ -299,7 +299,7 @@ only mentions of `tuplet` and `style` are in comments.
 | ~~Voltas / 1st–2nd endings~~ | 45 | **DONE** — parsed into `Measure.volta` (a STRING: `1,2` and `1-3` are legal) and bracketed. 32 labels across 2 fixtures. |
 | ~~Mixed-length chords (`headDurations`)~~ | 18 | **NOT A GAP** — see below. We already match abcjs; rendering it would diverge. |
 | ~~Annotations (`"^text"`)~~ | 15 | **DONE** — `^`/`_` stack in abcjs's line order, `<`/`>` sit beside the note. |
-| ~~Microtones~~ | 4 | **DONE** — quarter-tone pair in all modes; three-quarter tones drawn in `abcjs-extended` and BLANK in strict, as abcjs leaves them. Was rendered WRONG (full sharp), not merely unrendered. |
+| ~~Microtones~~ | 4 | **DONE** — quarter-tone pair in all modes; three-quarter tones drawn in `abc2.1`/`extended` and BLANK in strict, as abcjs leaves them. Was rendered WRONG (full sharp), not merely unrendered. |
 | ~~Styled noteheads~~ | 1 inline, 16 via `[K: style=]` | **DONE** — diamond, x, triangle, rhythm slash; 6 Bravura glyphs added. Count understated it: it missed the K: form. |
 | ~~Melisma extension lines~~ | 1 | **DONE** — strict prints abcjs's literal `_`, non-strict strokes the extender to the last held notehead (Gould p.447). NO GATE COVERS IT; see below. |
 | ~~`V:… octave=`~~ | 1 | **DONE** — moves the WRITTEN pitch (abcjs-verified). The gate had been compensating for the bug; compensation removed. |
@@ -312,7 +312,7 @@ Probing abcjs 6.6.3 directly settles it: it takes ONE head glyph for the whole c
 from the FIRST note's duration. `[C4G]` is two whole heads, `[CG4]` two quarter heads,
 `[C4G2]` two whole heads. abcts already produces exactly that, because our chord's
 `notatedDuration` IS that first duration. Drawing `headDurations` per head would be
-better engraving and a divergence — which belongs in `abcjs-extended`, not in the
+better engraving and a divergence — which belongs in `abc2.1`/`extended`, not in the
 strict default. It is now pinned by a test that fails if either rule changes.
 
 The corpus could never have answered this. All 18 of its mixed chords combine eighths,
@@ -412,7 +412,7 @@ first `K:` — which in a multi-tune file is mostly the next tune's header.
      uses. Frequency counts over model fields measure population, not wrongness.
    - **Three more mode splits fell out**, all the same shape as melisma and the
      microtones: abcjs ACCEPTS a decoration and then paints nothing. `invertedturn`,
-     `turnx`, `invertedturnx` draw in `abcjs-extended` and are blank in strict.
+     `turnx`, `invertedturnx` draw in `abc2.1`/`extended` and are blank in strict.
      Distinct from a name abcjs REJECTS, which the parser drops before the renderer sees
      it — different mechanism, different place to handle it.
    - **abcjs's element dump is not a reliable answer to "does it paint this".** It misses

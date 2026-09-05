@@ -92,7 +92,7 @@ and `goldenTextWidth` in `layout.ts`. **Indexed by UTF-16 code UNIT**, as the ge
 `visual-tablature-17` **499.38 → 40.84**; `little swallow`'s dx 24.19 → 21.69.
 
 **The mode split is one module-level switch**, `STRICT_TEXT_METRICS`, set from the mode in
-`layoutScore`. `abcjs-extended` keep the real per-em tables in `text-metrics.ts`.
+`layoutScore`. `abc2.1` and `extended` keep the real per-em tables in `text-metrics.ts`.
 Threading a `strict` argument through `textWidth`'s sixteen call sites was the alternative
 and most of them do not have the mode in scope.
 

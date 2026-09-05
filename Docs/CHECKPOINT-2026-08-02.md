@@ -42,7 +42,7 @@ several rounds.
 ## The contract
 
 `abcjs-strict` reproduces abcjs 6.6.3 exactly. **A passing gate is not parity** — the pixel
-gate only asserts "no worse than recorded". Parity is every axis at ZERO. `abcjs-extended` /
+gate only asserts "no worse than recorded". Parity is every axis at ZERO. `abc2.1` /
 `extended` fix abcjs's bugs; their target is abcm2ps / abc2svg through OUTPUT only (both GPL
 — never read their source). `../abcMusicKit` (MIT) and the vendored abcjs source are safe.
 

@@ -8,7 +8,7 @@ Supersedes `CHECKPOINT-2026-07-22c.md` — read this one, then `ARCHITECTURE.md`
 ## The contract (unchanged)
 
 `abcjs-strict` reproduces abcjs 6.6.3 exactly — 100% parity is the bar, any divergence is a
-defect. `abcjs-extended` fix abcjs's bugs; their target is abcm2ps / abc2svg via the
+defect. `abc2.1` / `extended` fix abcjs's bugs; their target is abcm2ps / abc2svg via the
 golden sets, observed through OUTPUT only. Never raise a pixel-parity ceiling to pass.
 
 ---

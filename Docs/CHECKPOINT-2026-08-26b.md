@@ -331,7 +331,7 @@ read as a CHORD, fails, and yields seven warnings, an invisible barline carrying
 `!accent!`, and four plain notes. ABC 2.1 §4.19 allows any body field inline.
 
 ⚖️ **OWNER'S RULING, 2026-08-27: *"we should support U:"*.** The SPLIT is how it stays:
-strict reproduces abcjs because that is what strict is for, and `abcjs-extended` define
+strict reproduces abcjs because that is what strict is for, and `abc2.1`/`extended` define
 the macro. A HEADER `U:` works in both, abcjs having that one. Both corpora write only those
 eight letters inline, so the restriction costs nothing measurable.
 
@@ -342,7 +342,7 @@ warns on its own. The `=` of `n=!accent!` is warning five of seven, and ours hel
 PENDING and stamped it on the `C` four characters later.
 
 ⚠️ **AND MY FIRST MODE PROBE LIED, BECAUSE I INVENTED THE MODE STRINGS.** It reported all
-three modes identical and the split not working; the modes are `abcjs-strict`, `abcjs-extended`,
+three modes identical and the split not working; the modes are `abcjs-strict`, `abc2.1`,
 `extended` and I passed `abcjsStrict`/`abc2_1`, so `isStrict` answered false everywhere and
 the probe measured the default twice. The byte gate had already said otherwise. **A probe
 that disagrees with a gate is the PROBE's problem until proven otherwise.**

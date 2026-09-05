@@ -172,7 +172,7 @@ are 8px each. **Both are reproducible exactly**: five tables, one size ladder, o
 
 Reproducing it makes our SVG match the goldens and makes our REAL output diverge from a
 browser's: CJK lyrics would be SPACED at 8px while DRAWN at ~17. **v1 ships exactly that**,
-and the mode split is where the two answers live — `abcjs-strict` reproduces abcjs, `abcjs-extended`
+and the mode split is where the two answers live — `abcjs-strict` reproduces abcjs, `abc2.1`
 and `extended` are the corrected ones. `textWidth` does not take `strict` today and 16 call
 sites would have to thread it, or the fallback becomes mode-gated at one place.
 

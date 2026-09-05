@@ -297,7 +297,7 @@ its directives, so abcjs draws every syllable at the default there however many
 `%%vocalfont` lines follow. A true observation on a fixture that cannot discriminate.
 
 The split is real but different: **strict takes the font its music LINE started with;
-`abcjs-extended` take the one in force at that point in the source** (Gonzato §4.1.4,
+`abc2.1`/`extended` take the one in force at that point in the source** (Gonzato §4.1.4,
 per SEGMENT).
 
 Three arithmetic corrections came with it, each its own trap:
