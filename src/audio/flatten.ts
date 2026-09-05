@@ -1591,6 +1591,28 @@ export function flattenAudio(
       ? allVoices.filter((v) => staffOf(v).some(soundsIn))
       : allVoices
 
+  /**
+   * **THE VOLUME CARRIES FROM ONE VOICE TO THE NEXT — abcjs's `currentVolume` IS ONE
+   * VARIABLE FOR THE WHOLE TUNE.** `setDynamics` assigns
+   * `currentVolume = volumes[dynamicType].slice(0)` (`abc_midi_sequencer.js:459`) and
+   * nothing resets it per voice, so a `!mp!` written on voice 1 is still in force when
+   * voice 2 begins. We started every voice at the default and lost it.
+   *
+   * Measured, and the SCOPE is the tune rather than the staff:
+   *
+   *     shared staff, v1 !mp!      abcjs v2 75/65      ours v2 105/95
+   *     separate staves, v1 !mp!   abcjs v2 75/65      ours v2 105/95
+   *     no %%staves at all         abcjs v2 75/65      ours v2 105/95
+   *     three voices, v1 !mp!      abcjs v2 AND v3 75  ours both 105
+   *
+   * ⚠️ **AND THE OBVIOUS CONTROL PASSES FOR THE WRONG REASON.** The same ladder written
+   * with `!f!` agrees in both engines on every rung — because `f`'s table IS the default
+   * `[105, 95, 85]`, so a lost dynamic and a carried one produce identical bytes. Only a
+   * dynamic that differs from the default can see this, which is why the first cut of the
+   * ladder reported no defect at all.
+   */
+  let stress: [number, number, number] = [105, 95, 85]
+
   soundingVoices.forEach((voice, voiceIndex) => {
     const voiceOff =
       options.voicesOff === true ||
@@ -1649,7 +1671,6 @@ export function flattenAudio(
           )
         : sequenced
     /** The running stress table — abcjs's `currentVolume`, seeded at the default triple. */
-    let stress: [number, number, number] = [105, 95, 85]
     /** Per-note increment while a hairpin is open; 0 when none is. */
     let hairpin = 0
     /** `volumesPerNotePitch` — one stress table per pitch of a chord. Empty when none. */

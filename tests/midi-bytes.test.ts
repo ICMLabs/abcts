@@ -80,7 +80,7 @@ const DIVERGENT: readonly string[] = [
 
 
 /**
- * **THE 640 TUNES THAT ARE BYTE-EXACT AND MUST STAY SO.** Named rather than counted: a
+ * **THE 644 TUNES THAT ARE BYTE-EXACT AND MUST STAY SO.** Named rather than counted: a
  * ratchet holding 4% of what is green is a ratchet in name, and `svg-bytes` twice had a
  * fixture go from exact to differing WHILE THE AGGREGATE IMPROVED. Add a slug the moment it
  * goes green, in the same commit that makes it so; never remove one to make a change pass.
@@ -184,6 +184,7 @@ const PASSING: readonly string[] = [
   "abcjs-visual-misc-11-begintext#0",
   "abcjs-visual-misc-12-b-beambr1-b-bb#0",
   "abcjs-visual-misc-13-ceg-t-gce-d-f-b-3-dm7-d-te#0",
+  "abcjs-visual-mouse-click-01-selection-test#0",
   "abcjs-visual-multi-voice-01-score-top-bottom#0",
   "abcjs-visual-multi-voice-02-p-c-2b2-z4-f2a2-f4#0",
   "abcjs-visual-multi-voice-x01#0",
@@ -205,6 +206,7 @@ const PASSING: readonly string[] = [
   "abcjs-visual-parsing-x11#0",
   "abcjs-visual-parsing-x12#0",
   "abcjs-visual-parsing-x14#0",
+  "abcjs-visual-selection-01-selection-test#0",
   "abcjs-visual-selection-02-g4-q-left-1-4-170-right-a4#0",
   "abcjs-visual-selection-03-c4#0",
   "abcjs-visual-slurs-01-score-s-a#0",
@@ -212,6 +214,7 @@ const PASSING: readonly string[] = [
   "abcjs-visual-svg-01-staffwidth-5#0",
   "abcjs-visual-svg-02-staffwidth-12#0",
   "abcjs-visual-svg-03-a4#0",
+  "abcjs-visual-svg-per-line-01-selection-test#0",
   "abcjs-visual-svg-per-line-02-scaled#0",
   "abcjs-visual-tablature-01-gr#0",
   "abcjs-visual-tablature-02-g-fg-a-g2-a-very-very-long-chord-d2-cd-f#0",
@@ -227,6 +230,7 @@ const PASSING: readonly string[] = [
   "abcjs-visual-tablature-12-b#0",
   "abcjs-visual-tablature-13-g8-c4-d4-e4-f4#0",
   "abcjs-visual-tablature-14-c#0",
+  "abcjs-visual-tablature-15-all-element-types#0",
   "abcjs-visual-tablature-16-g-g-g-g#0",
   "abcjs-visual-tablature-18-a-b#0",
   "abcjs-visual-tablature-19-d-a-d-g-b-e#0",
@@ -735,7 +739,7 @@ const PASSING: readonly string[] = [
  * largest is `%%staffnonote 0` over pure rests, where abcjs drops every staff and emits NO
  * TRACKS and we emit one per voice.
  */
-const OPEN_CEILING = 32;
+const OPEN_CEILING = 28;
 
 const PREFIX = "data:audio/midi,";
 
