@@ -1559,6 +1559,26 @@ export function flattenAudio(
       // four louder than abcjs's.
       if (item.kind === 'note' && hairpin !== 0) {
         stress = [stress[0] + hairpin, stress[1] + hairpin, stress[2] + hairpin]
+        /**
+         * ⚠️ **AND THE HAIRPIN DROPS THE PER-PITCH TABLE, BECAUSE IN abcjs IT IS NOT STATE
+         * — IT RIDES A ROW.** `volumesPerNotePitch` is written onto an `el_type: 'beat'`
+         * element pushed into the voice, and ONLY the dynamic arm writes one
+         * (`abc_midi_sequencer.js:468`). The crescendo arm pushes its own beat row with
+         * `{el_type: 'beat', beats: currentVolume.slice(0)}` and no table at all (`:234`,
+         * `:241`), so a hairpin-moved note has none to look up and falls back to the beats.
+         *
+         * We model it as a variable that persists until the next dynamic, which is right
+         * for every OTHER note and wrong across a hairpin: `!mp![b8B8d8]` at the head of a
+         * voice left `mp`'s table standing, so the lowest note of every later chord took
+         * `mp`'s 65 instead of the 115 the crescendo had just computed. Measured on
+         * `visual-selection-01`: the same 293 note-ons and the same pitches, six at the
+         * wrong VELOCITY — **the ramp was computed correctly and then thrown away.**
+         *
+         * ⚠️ A read guard on `decorations.length > pitchIndex` — abcjs's `writeNote` test —
+         * was tried first and moved NOTHING: the closing chord carries `crescendo)`, so the
+         * length is 1 and the guard passes. The state is what is wrong, not the read.
+         */
+        perPitch = []
       }
       const named = DYNAMIC_ORDER.find((d) => decorations.includes(d))
       if (named !== undefined) {
