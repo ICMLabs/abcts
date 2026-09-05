@@ -10,7 +10,7 @@ still stand; its vertical-placement section is history now that the work landed.
 ## The contract
 
 **`abcjs-strict` reproduces abcjs 6.6.3 exactly — 100% parity is the bar, and any
-divergence is a defect rather than a tolerance.** `abc2.1` and `extended` fix abcjs's bugs
+divergence is a defect rather than a tolerance.** `abcjs-extended` fix abcjs's bugs
 and add what the other engines have; their parity target is abcm2ps and abc2svg, via the
 golden sets in v1, v2 and cpp, observed through OUTPUT only.
 

@@ -34,7 +34,7 @@ let out = `// GENERATED from ${B}../abcMusicKit/Tools/abcjs-debug/dump-elements-
 // browser's, which is the point: ${B}abcjs-strict${B} is faithful to abcjs, and abcMusicKit v1
 // — production, byte-identical to these goldens — already does the same on purpose
 // (${B}abcRenderer.swift:108-109${B}, "matches dump-svg.js getBBox patch"). The real per-em
-// metrics in ${B}text-metrics.ts${B} are what ${B}abc2.1${B} and ${B}extended${B} keep.
+// metrics in ${B}text-metrics.ts${B} are what ${B}abcjs-extended${B} and ${B}extended${B} keep.
 //
 // Widths are PIXELS at the table's own size, not per em.
 `

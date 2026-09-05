@@ -13,7 +13,7 @@
 // browser's, which is the point: `abcjs-strict` is faithful to abcjs, and abcMusicKit v1
 // — production, byte-identical to these goldens — already does the same on purpose
 // (`abcRenderer.swift:108-109`, "matches dump-svg.js getBBox patch"). The real per-em
-// metrics in `text-metrics.ts` are what `abc2.1` and `extended` keep.
+// metrics in `text-metrics.ts` are what `abcjs-extended` keep.
 //
 // Widths are PIXELS at the table's own size, not per em.
 

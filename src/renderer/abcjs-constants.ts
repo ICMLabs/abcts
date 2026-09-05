@@ -374,7 +374,7 @@ export const ABCJS_PX = {
  *
  * `abcjs-strict` HAS NO LATITUDE: it exists to reproduce abcjs byte for byte, so every
  * figure it draws with must be abcjs's. Bravura is authorised as a glyph OUTLINE source
- * for `abc2.1`/`extended` and, before the split, for strict too — but it was NEVER
+ * for `abcjs-extended` and, before the split, for strict too — but it was NEVER
  * authorised for strict, and its `ENGRAVING_DEFAULTS` (line thicknesses, extensions,
  * separations) went on being read there at 21 sites with no `strict` gate at all. That is
  * the audit finding of 2026-08-05, and these are its numbers.

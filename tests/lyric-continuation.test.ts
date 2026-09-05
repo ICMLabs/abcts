@@ -120,7 +120,7 @@ describe("lyric continuation across interposed directives", () => {
     });
   });
 
-  for (const mode of ["abc2.1", "extended"] as const) {
+  for (const mode of ["abcjs-extended", "abcjs-extended"] as const) {
     describe(`${mode} — Gonzato §4.1.4 semantics`, () => {
       it("carries the lyric across both interposed directives: 16 syllables, 16 notes", () => {
         expect(events(mode)).toHaveLength(16);
@@ -212,8 +212,8 @@ describe("lyric continuation across interposed directives", () => {
       const plain = "X:1\nL:1/4\nK:C\nCDEF|\nw: la la la la\n";
       for (const mode of [
         "abcjs-strict",
-        "abc2.1",
-        "extended",
+        "abcjs-extended",
+        "abcjs-extended",
       ] as CompatibilityMode[]) {
         const score = parse(plain, { mode }).scores[0];
         if (score === undefined) throw new Error("did not parse");
@@ -239,9 +239,9 @@ describe("lyric continuation across interposed directives", () => {
       // rounding step away — see the conversion in layout.ts.
       const sized =
         "X:1\nL:1/4\nK:C\nCDEF|\n%%vocalfont Times-Roman\nw: la la la la\n";
-      const score = parse(sized, { mode: "extended" }).scores[0];
+      const score = parse(sized, { mode: "abcjs-extended" }).scores[0];
       if (score === undefined) throw new Error("did not parse");
-      const drawn = layout(score, { mode: "extended" })
+      const drawn = layout(score, { mode: "abcjs-extended" })
         .systems.flatMap((system) =>
           system.staves.flatMap((staff) => staff.voices.flat()),
         )
@@ -260,7 +260,7 @@ describe("lyric continuation across interposed directives", () => {
       const viaPercent = "X:1\nV:A\nV:B\n%%score B A\nK:C\nV:A\nC|\nV:B\nE|\n";
       const viaField = "X:1\nV:A\nV:B\nI: score B A\nK:C\nV:A\nC|\nV:B\nE|\n";
       const order = (src: string) =>
-        parse(src, { mode: "extended" }).scores[0]?.voices.map(
+        parse(src, { mode: "abcjs-extended" }).scores[0]?.voices.map(
           (voice) => voice.id,
         );
       expect(order(viaField)).toEqual(order(viaPercent));
@@ -274,7 +274,7 @@ describe("lyric continuation across interposed directives", () => {
       // through to scanMusic as music. No font involved.
       const src =
         "X:1\nL:1/4\nK:C\nCDEF|\nw: la la\\\nI: vocalfont Times-Bold 16\n+: la la\n";
-      const score = parse(src, { mode: "extended" }).scores[0];
+      const score = parse(src, { mode: "abcjs-extended" }).scores[0];
       const evs =
         score?.voices.flatMap((v) => v.measures.flatMap((m) => m.events)) ?? [];
       expect(evs).toHaveLength(4);

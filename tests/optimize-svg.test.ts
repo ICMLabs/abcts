@@ -63,7 +63,7 @@ describe("optimizeSVG — <defs>/<use> deduplication", () => {
       expect(svg).not.toContain("<use");
     });
 
-    for (const mode of ["abc2.1", "extended"] as const) {
+    for (const mode of ["abcjs-extended", "abcjs-extended"] as const) {
       it(`${mode} does optimize`, () => {
         const svg = svgFor(fixture("simple-c"), mode);
         expect(svg).toContain("<defs>");
@@ -75,7 +75,7 @@ describe("optimizeSVG — <defs>/<use> deduplication", () => {
       expect(svgFor(fixture("simple-c"), "abcjs-strict", true)).toContain(
         "<use",
       );
-      expect(svgFor(fixture("simple-c"), "extended", false)).not.toContain(
+      expect(svgFor(fixture("simple-c"), "abcjs-extended", false)).not.toContain(
         "<use",
       );
     });
@@ -92,8 +92,8 @@ describe("optimizeSVG — <defs>/<use> deduplication", () => {
     ]) {
       it(`${name} — same hooks at the same coordinates, optimized or not`, () => {
         const abc = fixture(name);
-        const plain = svgFor(abc, "extended", false);
-        const optimized = svgFor(abc, "extended", true);
+        const plain = svgFor(abc, "abcjs-extended", false);
+        const optimized = svgFor(abc, "abcjs-extended", true);
         // Not "the classes are present somewhere" — the full multiset of class-and-place,
         // so a glyph that moved, vanished or lost its hook all fail.
         expect(hooks(optimized)).toEqual(hooks(plain));
@@ -101,7 +101,7 @@ describe("optimizeSVG — <defs>/<use> deduplication", () => {
     }
 
     it("carries class and data-name onto the <use> itself", () => {
-      const svg = svgFor(fixture("simple-c"), "extended");
+      const svg = svgFor(fixture("simple-c"), "abcjs-extended");
       expect(svg).toMatch(/<use class="abcjs-notehead" href="#g\d+"/);
       // A `<use>` with a bare href and the class left behind on a wrapper would pass a
       // "contains abcjs-notehead" check and still break `svg.querySelectorAll('.abcjs-notehead')`
@@ -112,7 +112,7 @@ describe("optimizeSVG — <defs>/<use> deduplication", () => {
     });
 
     it("uses modern href, not the deprecated xlink:href", () => {
-      expect(svgFor(fixture("simple-c"), "extended")).not.toContain(
+      expect(svgFor(fixture("simple-c"), "abcjs-extended")).not.toContain(
         "xlink:href",
       );
     });
@@ -141,14 +141,14 @@ describe("optimizeSVG — <defs>/<use> deduplication", () => {
         ["zocharti-loch", 0.72],
       ] as const) {
         const abc = fixture(name);
-        const plain = Buffer.byteLength(svgFor(abc, "extended", false));
-        const optimized = Buffer.byteLength(svgFor(abc, "extended", true));
+        const plain = Buffer.byteLength(svgFor(abc, "abcjs-extended", false));
+        const optimized = Buffer.byteLength(svgFor(abc, "abcjs-extended", true));
         expect(optimized, `${name} did not shrink`).toBeLessThan(plain * limit);
       }
     });
 
     it("emits each distinct outline exactly once", () => {
-      const svg = svgFor(fixture("ave-verum-corpus"), "extended");
+      const svg = svgFor(fixture("ave-verum-corpus"), "abcjs-extended");
       const defs = svg.slice(svg.indexOf("<defs>"), svg.indexOf("</defs>"));
       const ids = [...defs.matchAll(/<path id="(g\d+)"/g)].map((m) => m[1]);
       expect(new Set(ids).size).toBe(ids.length);
@@ -167,9 +167,9 @@ describe("optimizeSVG — <defs>/<use> deduplication", () => {
       // different shapes and cannot share one definition. They stay inline paths; the
       // rest of the score still dedupes around them.
       const abc = "X:1\n%%score (A B)\nV:A\nV:B\nK:C\nV:A\nCDEF|\nV:B\nCDEF|\n";
-      const score = parse(abc, { mode: "extended" }).scores[0];
+      const score = parse(abc, { mode: "abcjs-extended" }).scores[0];
       if (score === undefined) throw new Error("did not parse");
-      const svg = render(score, { classes: "abcjs", mode: "extended" });
+      const svg = render(score, { classes: "abcjs", mode: "abcjs-extended" });
       expect(svg).toContain("<use");
       // Whatever the brace is drawn as, the score's noteheads still dedupe.
       expect([...svg.matchAll(/<use[^>]*>/g)].length).toBeGreaterThan(4);

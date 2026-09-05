@@ -23,7 +23,7 @@
  * Parsing runs in `abcjs-strict`, which reproduces abcjs's behaviour including its bugs.
  * That is the point of a compat layer: a page that renders today must render the same
  * tomorrow, oddities included. Opt into corrections with `abcts` proper and mode
- * `abc2.1`.
+ * `abcjs-extended`.
  */
 import {
   type AudioOptions,

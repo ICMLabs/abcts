@@ -51,7 +51,7 @@ Worst remaining dx: `frere-jacques` 637 (the `+:` prose fixture, breaks mid-meas
 ## THE CONTRACT, restated — this changed during the session
 
 **abcts's default mode reproduces abcjs's visual output.** Not "behaviourally similar" —
-the same ink in the same place. `abc2.1` and `extended` fix abcjs's bugs and add what the
+the same ink in the same place. `abcjs-extended` fix abcjs's bugs and add what the
 other engines have.
 
 `ARCHITECTURE.md` used to say "core renders in its own visual style, so the golden SVGs

@@ -4,11 +4,11 @@ abcts's default mode, `abcjs-strict`, reproduces abcjs **exactly, bugs included*
 the point: a drop-in replacement whose default output differs from the thing it replaces
 is not a drop-in.
 
-Opt into `abc2.1` or `extended` and each item below is corrected.
+Opt into `abcjs-extended` and each item below is corrected.
 
 ```js
 import { renderAbc } from 'abcts/compat'   // abcjs's API, abcjs's output
-import { parse, render } from 'abcts'      // render(score, { mode: 'abc2.1' })
+import { parse, render } from 'abcts'      // render(score, { mode: 'abcjs-extended' })
 ```
 
 ---
@@ -160,7 +160,7 @@ on the `:`, `Unknown character ignored` on the `n`, the `=` and the later `n` �
 **invisible barline** spanning `!accent!]` and carrying that decoration, and four plain
 notes. The macro is never defined and the `n` before `C` is discarded.
 
-| | `abcjs-strict` | `abc2.1` / `extended` |
+| | `abcjs-strict` | `abcjs-extended` |
 |---|---|---|
 | `[U:n=!accent!]` | reproduced: no field, seven warnings, the accent on an invisible bar | the macro is defined and `n` is an accent |
 
@@ -452,19 +452,21 @@ something, despite contributing nothing to the music.
 
 ## What abcts adds beyond fixing these
 
-`abc2.1` corrects the above, and every correction above is reached by opting out of strict:
+`abcjs-extended` corrects the above, and every correction above is reached by opting out of strict:
 styled noteheads, the phrase and tremolo marks, three-quarter-tone glyphs, per-segment lyric
 fonts, and the two falsy-zero reserves.
 
-⚠️ **`extended` DOES NOT YET GO FURTHER THAN `abc2.1`, and this paragraph used to say it
-did.** Measured 2026-09-04: **every mode branch in `src/` is `isStrict(mode)`** — one
-comparison, `core/model.ts:35`, and it is `mode === 'abcjs-strict'`. Not one site
-distinguishes the two, so they are byte-identical on all 691 corpus cases and on each of the
-features this paragraph named. The distinction is real in the TYPE and not yet in the CODE.
+⚠️ **THIS PARAGRAPH ONCE DESCRIBED A THREE-WAY SPLIT, AND THE MEASUREMENT KILLED IT.** It
+read that `abc2.1` corrected abcjs's bugs while `extended` went further with the
+beyond-standard engraving. Measured 2026-09-04: **every mode branch in `src/` is
+`isStrict(mode)`** — one comparison, `core/model.ts`. Not one site ever distinguished the
+two, so they were byte-identical on all 691 corpus cases and on every feature the paragraph
+named as `extended`-only. Both intended tiers had landed in the same bucket.
 
-`tests/mode-partition.test.ts` asserts that as the state of affairs rather than as a goal, so
-the first genuinely `extended`-only feature takes the gate red and gets an entry here on
-purpose — instead of arriving as a silent digest move in the extended ratchet.
+**The owner's call was to drop the middle name rather than implement it** (2026-09-04), and
+to rename the survivor `abcjs-extended` to say what it is. So there is ONE opt-in and it
+carries everything above. `tests/mode-partition.test.ts` holds the two modes apart by NAMED
+behaviour, so a future divergence has to be deliberate and gets an entry here.
 
 Output is also **under half the size**: **0.446x abcjs's bytes across the corpus**, by
 emitting each glyph outline once into `<defs>` and placing it with `<use>`, while keeping
@@ -496,4 +498,4 @@ because reproducing these faithfully in strict mode is a feature rather than an 
 | Mode | Compared against |
 |---|---|
 | `abcjs-strict` | abcjs 6.6.3's own parse trees, element dumps and SVG output |
-| `abc2.1`, `extended` | abcm2ps and abc2svg behaviour, via the golden sets in abcMusicKit (v1), abcMusicKit2 (v2) and abcMusicKitCpp — observed output only, never source |
+| `abcjs-extended` | abcm2ps and abc2svg behaviour, via the golden sets in abcMusicKit (v1), abcMusicKit2 (v2) and abcMusicKitCpp — observed output only, never source |

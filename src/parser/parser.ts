@@ -3510,7 +3510,7 @@ class Parser {
      * away with it only because a digit is not a note letter.
      *
      * ponytail: non-strict stops at the first UNESCAPED `%` but does not yet UNESCAPE the
-     * `\%` it keeps, so `abc2.1` prints the backslash. Fixing that means rewriting the text
+     * `\%` it keeps, so `abcjs-extended` prints the backslash. Fixing that means rewriting the text
      * after every field and music handler has taken its source offsets, which is a bigger
      * change than the one this corrects.
      */
@@ -4440,7 +4440,7 @@ class Parser {
     const text = continues ? content.replace(/\\\s*$/, '') : content
     // AND THE MODE SPLIT IS REAL HERE, though not the one that used to be recorded.
     // Strict takes the font its MUSIC LINE started with, because that is abcjs's staff-level
-    // granularity. `abc2.1` and `extended` take the one in force at this point in the
+    // granularity. `abcjs-extended` take the one in force at this point in the
     // source, which is Gonzato §4.1.4's per-SEGMENT reading and the standard's intent.
     // What is NOT the split any more is "strict ignores `%%vocalfont` entirely" — abcjs
     // realizes it, and its own SVG says so in one attribute.

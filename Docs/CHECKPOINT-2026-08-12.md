@@ -948,7 +948,7 @@ the first whichever way the stem points.
 
 **The site already carried a note saying ours "is a divergence in SHAPE and belongs in
 `ABCJS-DIFFERENCES.md`" — and it was in neither that file nor the `DIVERGENT` list.**
-Strict has no latitude, so it is ported; `abc2.1`/`extended` keep the drawn `tremoloN`
+Strict has no latitude, so it is ported; `abcjs-extended` keep the drawn `tremoloN`
 bars, which are the right shape.
 
 ### 2b.6 `sfz` IS THREE LETTERS TOO, AND THE MISSING GLYPHS WERE OURS

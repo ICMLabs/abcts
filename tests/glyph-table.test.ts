@@ -26,8 +26,8 @@ import type { GlyphName } from "../src/renderer/glyphs.js";
 describe("glyph table selection", () => {
   it("strict draws abcjs; the other modes draw Bravura", () => {
     expect(glyphTableFor("abcjs-strict").usesAbcjsGlyphs).toBe(true);
-    expect(glyphTableFor("abc2.1").usesAbcjsGlyphs).toBe(false);
-    expect(glyphTableFor("extended").usesAbcjsGlyphs).toBe(false);
+    expect(glyphTableFor("abcjs-extended").usesAbcjsGlyphs).toBe(false);
+    expect(glyphTableFor("abcjs-extended").usesAbcjsGlyphs).toBe(false);
   });
 
   describe("metrics come from the same font as the outlines", () => {

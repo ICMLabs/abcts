@@ -41,7 +41,7 @@ TWO AXES ARE OPEN AND THEY WANT DIFFERENT METHODS:
      only measure one". abcjs disagreeing with ITSELF says nothing about whether WE agree
      with IT in each.
 
-  2. THE NON-STRICT MODES. One gate old and thin. `abc2.1` is COMPLETELY unmeasured; only
+  2. THE NON-STRICT MODES. One gate old and thin. `abcjs-extended` is COMPLETELY unmeasured; only
      four properties of `extended` are asserted (`scripts/zzextended.mjs`); and this week's
      non-strict fixes have no `ABCJS-DIFFERENCES.md` entries, which the repo's own rule
      requires. If you do one thing here, WIDEN `zzextended` — a ratchet says "has not

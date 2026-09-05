@@ -10,8 +10,8 @@ checkpoint and hand off as you go so no context is lost.
 
 > ⚖️ **THE RULING THAT GOVERNS THE GLYPH/METRIC SPLIT** (Lance, 2026-08-05): the Bravura
 > authorisation **never covered `abcjs-strict`**. Strict reproduces abcjs byte for byte, so
-> it has NO latitude — every figure it draws with must be abcjs's. `abc2.1` and `extended`
-> are where the flexibility lives. **Any Bravura input reachable in strict is a defect, not
+> it has NO latitude — every figure it draws with must be abcjs's. `abcjs-extended`
+> is where the flexibility lives. **Any Bravura input reachable in strict is a defect, not
 > a decision.**
 >
 > **BOTH CLASSES ARE NOW CLOSED, AND THE FIRST ONE HAD TO BE CLOSED TWICE.** The line
@@ -964,7 +964,7 @@ caught, and it is the section worth reading before starting anything.
 > two browsers, read as "so only measure one", and **abcjs disagreeing with ITSELF says
 > nothing about whether WE agree with IT in each**. Its four rows are rounding boundaries in
 > Blink's metrics, not font lanes, so the WebKit playbook does not transfer. And **the
-> NON-STRICT modes have exactly one gate, one day old**: `abc2.1` is completely unmeasured,
+> NON-STRICT modes have exactly one gate, one day old**: `abc2.1` was completely unmeasured (it was later MEASURED, found to be a second name for `extended`, and REMOVED — see §Modes),
 > four properties of `extended` are asserted, and this week's non-strict fixes have no
 > `ABCJS-DIFFERENCES.md` entries.
 >
@@ -1197,8 +1197,11 @@ correct behavior. Nothing ships red.
 
 ## API Modes
 - **compat**    — abcjs-identical API, derived from abcMusicKit
-- **standard**  — bugs fixed, clean pipeline, derived from abcMusicKit2
-- **extended**  — parity+ features via render profile, derived from abcMusicKit2
+- **core**      — `parse`/`render`, which is where the two COMPATIBILITY modes live
+
+⚠️ This list named a **standard** and an **extended** API mode and neither ever existed as
+one: the split is `abcjs-strict` vs `abcjs-extended` on `parse`/`render`, and `compat` hard-
+wires strict. See §Modes.
 
 ## Key Files and Paths
 - `ARCHITECTURE.md`   — full specification and decision record (read first)
@@ -1823,7 +1826,7 @@ per-character tables picked by SIZE alone, three of the six brackets resolving t
 `repeatfont` because their key does not exist, a flat **8** for every character outside them,
 and `getBBox` counting a chord's NESTED tspans as separate lines. `abcMusicKit` v1 —
 production, byte-identical to these goldens — reproduces the fallback ON PURPOSE. Strict
-measures with the golden's tables; `abc2.1`/`extended` keep the real per-em ones, gated at
+measures with the golden's tables; `abcjs-extended` keeps the real per-em ones, gated at
 one place.
 
 **A LADDER OF CONTROL TUNES, THEN THE NAMED FUNCTION, THEN A PROBE.** Ten more rules landed
@@ -1866,7 +1869,7 @@ styled noteheads, hairpins and glissandi, melisma extenders, mid-tune key change
 Two features are MODE-SPLIT, and the split is the point — strict is faithful to abcjs,
 the other modes are correct:
 
-| | `abcjs-strict` | `abc2.1` / `extended` |
+| | `abcjs-strict` | `abcjs-extended` |
 |---|---|---|
 | Melisma | prints abcjs's literal `_` | suppresses it, strokes an extender |
 | Three-quarter tones | draws NOTHING, as abcjs does | draws the three-quarter glyph |
@@ -1930,8 +1933,8 @@ and SVG goldens. 100% is the bar; a divergence is a defect, not a tolerance. It 
 until 2026-08-08; every citation written before that date names a 6.6.3 line number, and
 the two trees are both vendored, so a stale citation can be checked rather than guessed at.
 
-`abc2.1` and `extended` are measured against the OTHER engines, since abcjs is wrong or
-absent for much of what they cover. Golden sets exist in `../abcMusicKit` (v1),
+`abcjs-extended` is measured against the OTHER engines, since abcjs is wrong or
+absent for much of what it covers. Golden sets exist in `../abcMusicKit` (v1),
 `../abcMusicKit2` (v2) and `../abcMusicKitCpp` — abcm2ps and abc2svg observed through
 their OUTPUT only, never their source (both are GPL; see the clean-room rule).
 
@@ -1954,11 +1957,23 @@ checked, and anything read from abcjs's source rather than measured from its out
 so. Three entries were originally written from a plausible reading of its parser and were
 wrong.
 
-## Modes — abcjs-strict is the DEFAULT
-`abcjs-strict` (reproduce abcjs, bugs included) | `abc2.1` (standard read correctly) |
-`extended`. `parse(abc, { mode })` and `render(score, { mode })`. Strict is default
-because a replacement whose default output differs from what it replaces is not one.
+## Modes — TWO of them, and `abcjs-strict` is the DEFAULT
+`abcjs-strict` (reproduce abcjs, bugs included) | `abcjs-extended` (abcjs's parsing bugs
+fixed AND the engraving features abcm2ps and abc2svg have that abcjs lacks — one opt-in,
+not a ladder of them). `parse(abc, { mode })` and `render(score, { mode })`. Strict is
+default because a replacement whose default output differs from what it replaces is not one.
 `abcts/compat` gives abcjs's `renderAbc` signature, classes and density for a drop-in.
+
+⚖️ **THERE WERE THREE AND `abc2.1` WAS NEVER A MODE** (Lance, 2026-09-04). It was meant to be
+the middle rung — the standard read correctly, conventional engraving — and **every mode
+branch in `src/` is `isStrict(mode)`**, one comparison in `core/model.ts`. Not one site ever
+distinguished it from `extended`, so all 691 corpus cases were byte-identical between them
+and both intended tiers had landed in the same bucket: the `+:`/`[U:`/`I:` parsing fixes
+beside the styled noteheads, tremolos, three-quarter-tone glyphs and per-segment lyric fonts.
+A host asking for `abc2.1` got the beyond-standard engraving too, and one asking for
+`extended` got nothing extra. The third name is GONE rather than implemented, and the
+survivor is renamed to say what it is. `tests/mode-partition.test.ts` keeps the two apart by
+NAMED behaviour so the split cannot quietly collapse again.
 
 ## Running it
 `abcts tune.abc` (CLI, after `npm run build`) renders to stdout or a file.

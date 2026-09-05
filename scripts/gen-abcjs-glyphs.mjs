@@ -15,7 +15,7 @@
  * correctly-sized gaps around wrongly-sized shapes.
  *
  * Hence two tables, selected by mode: abcjs's for the parity build, Bravura for
- * `abc2.1`/`extended` where being better matters more than being identical.
+ * `abcjs-extended` where being better matters more than being identical.
  *
  * Run: node scripts/gen-abcjs-glyphs.mjs
  *

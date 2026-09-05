@@ -197,7 +197,7 @@ export interface RenderOptions {
    * TRI-STATE, matching abcMusicKit v1's `optimizeSVG`:
    *   `undefined` → the mode decides. Strict says NO, because `<defs>`/`<use>` is
    *                 different markup from abcjs's and strict's job is byte parity.
-   *                 `abc2.1`/`extended` say yes.
+   *                 `abcjs-extended` say yes.
    *   `true`/`false` → override, whatever the mode.
    *
    * The DOM contract is preserved either way: every class and `data-name` that was on

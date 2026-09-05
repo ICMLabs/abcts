@@ -1620,8 +1620,8 @@ describe("compatibility modes", () => {
     // abcjs sets a quarter note at sqrt(0.25*8)*30px = 42.43px = 5.474 staff spaces,
     // measured identically in the goldens. Core follows abcm2ps and is looser.
     expect(gap("abcjs-strict")).toBeCloseTo(5.474 * SPACE, 2);
-    expect(gap("abc2.1")).toBeCloseTo(6.5 * SPACE, 2);
-    expect(gap("extended")).toBeCloseTo(6.5 * SPACE, 2);
+    expect(gap("abcjs-extended")).toBeCloseTo(6.5 * SPACE, 2);
+    expect(gap("abcjs-extended")).toBeCloseTo(6.5 * SPACE, 2);
   });
 
   it("reads `+:` as music in strict mode and as a continuation otherwise", () => {
@@ -1632,7 +1632,7 @@ describe("compatibility modes", () => {
         .scores.flatMap((s) => s.voices)
         .flatMap((v) => v.measures.flatMap((m) => m.events))
         .filter((e) => e.type === "note").length;
-    expect(notes("abcjs-strict")).toBeGreaterThan(notes("abc2.1"));
+    expect(notes("abcjs-strict")).toBeGreaterThan(notes("abcjs-extended"));
   });
 
   it("binds a spaced lyric hyphen abcjs-style in strict mode only", () => {
@@ -1648,7 +1648,7 @@ describe("compatibility modes", () => {
     // The middle note is COVERED by the `w:` line and given nothing, which is `''` — see
     // the `*` tests in `parse.test.ts`. `null` is a note the line never reached.
     expect(lyrics("abcjs-strict")).toEqual(["A-", "", "ve,"]);
-    expect(lyrics("abc2.1")).toEqual(["A", "ve,", null]);
+    expect(lyrics("abcjs-extended")).toEqual(["A", "ve,", null]);
   });
 });
 
@@ -1874,7 +1874,7 @@ describe("mixed-length chords", () => {
   });
 
   it("still records the per-head durations for a non-strict renderer to use", () => {
-    // Parsed and kept, just not drawn — `abc2.1`/`extended` are where honouring it belongs.
+    // Parsed and kept, just not drawn — `abcjs-extended` are where honouring it belongs.
     const score = parse("X:1\nL:1/4\nK:C\n[C4G]|\n").scores[0] as Score;
     const event = score.voices[0]?.measures[0]?.events[0];
     expect(event?.type).toBe("chord");
@@ -1883,11 +1883,11 @@ describe("mixed-length chords", () => {
 });
 
 describe("melisma extenders", () => {
-  const staffOf = (abc: string, mode: CompatibilityMode = "abc2.1") =>
+  const staffOf = (abc: string, mode: CompatibilityMode = "abcjs-extended") =>
     layout(parse(abc, { mode }).scores[0] as Score, { mode, systemWidth: 400 })
       .systems[0]?.staves[0];
 
-  const textsOf = (abc: string, mode: CompatibilityMode = "abc2.1") =>
+  const textsOf = (abc: string, mode: CompatibilityMode = "abcjs-extended") =>
     (staffOf(abc, mode)?.elements ?? [])
       .flatMap((e) => e.texts)
       .map((t) => t.text);
@@ -2093,10 +2093,10 @@ describe("microtonal accidentals", () => {
     ).toEqual([]);
   });
 
-  it("draws the three-quarter glyphs in abc2.1 and extended", () => {
+  it("draws the three-quarter glyphs in abcjs-extended", () => {
     // The mode split: strict reproduces abcjs's blank, the other modes draw what the ABC
     // actually says. This is the divergence being deliberate rather than accidental.
-    for (const mode of ["abc2.1", "extended"] as const) {
+    for (const mode of ["abcjs-extended", "abcjs-extended"] as const) {
       expect(accidentalsOf("X:1\nL:1/4\nK:C\n^3/2G _3/2A|\n", mode)).toEqual([
         "accidentalThreeQuarterTonesSharpStein",
         "accidentalThreeQuarterTonesFlatZimmermann",
@@ -2105,7 +2105,7 @@ describe("microtonal accidentals", () => {
   });
 
   it("leaves ordinary accidentals alone in every mode", () => {
-    for (const mode of ["abcjs-strict", "abc2.1", "extended"] as const) {
+    for (const mode of ["abcjs-strict", "abcjs-extended", "abcjs-extended"] as const) {
       expect(accidentalsOf("X:1\nL:1/4\nK:C\n^G _A =B|\n", mode)).toEqual([
         "accidentalSharp",
         "accidentalFlat",
@@ -2116,7 +2116,7 @@ describe("microtonal accidentals", () => {
 
   it("differs between the modes on exactly the two three-quarter tones", () => {
     expect(accidentalsOf(ALL, "abcjs-strict")).toHaveLength(3);
-    expect(accidentalsOf(ALL, "abc2.1")).toHaveLength(5);
+    expect(accidentalsOf(ALL, "abcjs-extended")).toHaveLength(5);
   });
 });
 
@@ -2473,10 +2473,10 @@ describe("ornaments and techniques", () => {
     }
   });
 
-  it("draws them in abc2.1 and extended", () => {
+  it("draws them in abcjs-extended", () => {
     // Third instance of the same split, after melisma and the microtones: strict is
     // faithful, the other modes draw what the ABC names.
-    for (const mode of ["abc2.1", "extended"] as const) {
+    for (const mode of ["abcjs-extended", "abcjs-extended"] as const) {
       expect(glyphsOf("!invertedturn!", mode)).toEqual([
         "ornamentTurnInverted",
       ]);
@@ -2623,10 +2623,10 @@ describe("tremolo, phrases and technique", () => {
     // The other modes keep the drawn bars, which are the right shape.
     const extended = (
       layout(
-        parse("X:1\nL:1/4\nK:C\n!//!F|\n", { mode: "extended" })
+        parse("X:1\nL:1/4\nK:C\n!//!F|\n", { mode: "abcjs-extended" })
           .scores[0] as Score,
         {
-          mode: "extended",
+          mode: "abcjs-extended",
           systemWidth: 200,
         },
       ).systems[0]?.staves[0]?.elements ?? []
@@ -2648,10 +2648,10 @@ describe("tremolo, phrases and technique", () => {
   it("puts a tremolo on the stem, not in an ornament lane", () => {
     const y = (
       layout(
-        parse("X:1\nL:1/4\nK:C\n!//!F|\n", { mode: "extended" })
+        parse("X:1\nL:1/4\nK:C\n!//!F|\n", { mode: "abcjs-extended" })
           .scores[0] as Score,
         {
-          mode: "extended",
+          mode: "abcjs-extended",
           systemWidth: 200,
         },
       ).systems[0]?.staves[0]?.elements ?? []
@@ -2710,9 +2710,9 @@ describe("text metrics", () => {
   //
   // THE MODE DECIDES WHICH METRIC. `abcjs-strict` measures with the golden generator's
   // `calcWidth` — five ASCII tables and a flat 8 for everything else — because byte parity
-  // with the goldens is what strict is for. The real per-em tables are what `abc2.1` and
+  // with the goldens is what strict is for. The real per-em tables are what `abcjs-extended` and
   // `extended` keep, so the tests about REAL metrics ask for that mode.
-  const leftOf = (text: string, mode: CompatibilityMode = "abc2.1") => {
+  const leftOf = (text: string, mode: CompatibilityMode = "abcjs-extended") => {
     const staff = layout(
       parse(`X:1\nL:1/4\nK:C\nC|\nw:${text}\n`).scores[0] as Score,
       {
@@ -2727,7 +2727,7 @@ describe("text metrics", () => {
       parse(`X:1\nL:1/4\nK:C\nC|\nw:${text}\n`).scores[0] as Score,
       {
         systemWidth: 200,
-        mode: "abc2.1",
+        mode: "abcjs-extended",
       },
     ).systems[0]?.staves[0];
     return (
@@ -2943,7 +2943,7 @@ describe("drawing bounds include prose, not just music", () => {
     // The general property, rather than the title case that exposed it: nothing the
     // renderer places may fall outside the box it reports.
     //
-    // `abc2.1`, NOT strict. Strict measures with the golden generator's `calcWidth`, which
+    // `abcjs-extended`, NOT strict. Strict measures with the golden generator's `calcWidth`, which
     // is deliberately not what a browser draws — a 27px title is measured with 17px Times
     // widths — so its declared box UNDER-reports on purpose and abcjs's own SVG has the
     // same property. The invariant belongs to the modes whose metric is the real one.
@@ -2953,7 +2953,7 @@ describe("drawing bounds include prose, not just music", () => {
     ]) {
       const d = layout(parse(abc).scores[0] as Score, {
         systemWidth: 20,
-        mode: "abc2.1",
+        mode: "abcjs-extended",
       });
       const right = Math.max(
         0,

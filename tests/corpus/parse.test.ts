@@ -162,7 +162,7 @@ describe("microtonal accidentals", () => {
       .filter((event) => event.type === "note");
   };
 
-  const notesOfAbcIn = (abc: string, mode: "abc2.1") => {
+  const notesOfAbcIn = (abc: string, mode: "abcjs-extended") => {
     const result = parse(abc, { mode });
     if (!result.ok) throw new Error("expected parse to succeed");
     return (result.scores[0]?.voices[0]?.measures ?? [])
@@ -197,10 +197,10 @@ describe("microtonal accidentals", () => {
     ]);
   });
 
-  it("reads the whole fraction in abc2.1", () => {
+  it("reads the whole fraction in abcjs-extended", () => {
     const notes = notesOfAbcIn(
       "X:1\nL:1/8\nK:C\nG ^/G ^G ^3/2G _/A _3/2A |\n",
-      "abc2.1",
+      "abcjs-extended",
     );
     expect(notes.map((n) => n.microtoneCents)).toEqual([
       0, 50, 0, 150, -50, -150,
@@ -780,7 +780,7 @@ describe("V: octave= shifts the written pitch", () => {
 });
 
 describe("strict drops the decorations abcjs does not know", () => {
-  const decorationsOf = (abc: string, mode: "abcjs-strict" | "abc2.1") => {
+  const decorationsOf = (abc: string, mode: "abcjs-strict" | "abcjs-extended") => {
     const result = parse(abc, { mode });
     if (!result.ok) throw new Error("expected parse to succeed");
     const event = result.scores[0]?.voices[0]?.measures[0]?.events[0];
@@ -825,8 +825,8 @@ describe("strict drops the decorations abcjs does not know", () => {
   it("accepts any name in non-strict modes", () => {
     // ABC 2.1's reading: an unknown decoration is one the renderer has no glyph for, not
     // a parse error. Only strict reproduces abcjs's rejection.
-    expect(decorationsOf(note("!staccato!"), "abc2.1")).toEqual(["staccato"]);
-    expect(decorationsOf(note("!madeupname!"), "abc2.1")).toEqual([
+    expect(decorationsOf(note("!staccato!"), "abcjs-extended")).toEqual(["staccato"]);
+    expect(decorationsOf(note("!madeupname!"), "abcjs-extended")).toEqual([
       "madeupname",
     ]);
     expect(decorationsOf(note("!madeupname!"), "abcjs-strict")).toEqual([]);
@@ -868,10 +868,10 @@ describe("frere-jacques: the `+:` prose lexes to abcjs's notes", () => {
     );
   });
 
-  it("reads `+:` as a real continuation under abc2.1, where it is not music at all", () => {
+  it("reads `+:` as a real continuation under abcjs-extended, where it is not music at all", () => {
     // The mode split: the prose is a field continuation, so the tune has only its real
     // notes. This is the number a reader would call correct.
-    const result = parse(abc, { mode: "abc2.1" });
+    const result = parse(abc, { mode: "abcjs-extended" });
     if (!result.ok) throw new Error("expected frere-jacques to parse");
     const notes = result.scores
       .flatMap((s) => s.voices)
@@ -895,14 +895,14 @@ describe("`s:` symbol lines", () => {
   };
 
   it("places them as decorations, skipping a note for `*`", () => {
-    expect(events("extended").map((e) => e.decorations)).toEqual([
+    expect(events("abcjs-extended").map((e) => e.decorations)).toEqual([
       ["trill"],
       [],
       ["fermata"],
       ["staccato"],
     ]);
     // The delimiters are stripped, so they share the namespace `U:` and `!trill!` use.
-    expect(events("extended").map((e) => e.lyric)).toEqual([
+    expect(events("abcjs-extended").map((e) => e.lyric)).toEqual([
       null,
       null,
       null,

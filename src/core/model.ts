@@ -12,22 +12,33 @@
 // ─── Compatibility mode ──────────────────────────────────────────────────────
 
 /**
- * Which dialect and which look abcts produces, mirroring abcMusicKit's own three modes.
+ * Which dialect and which look abcts produces.
  *
  * - `abcjs-strict` — reproduce abcjs, INCLUDING its bugs. The default, because abcts
  *   exists to replace abcjs and a replacement whose default output differs from the
  *   thing it replaces is not one. Someone swapping the import should see their page
  *   unchanged; opting into corrections should be a choice they make.
- * - `abc2.1` — the standard read correctly: abcjs's parsing bugs fixed, engraving
- *   still conventional.
- * - `extended` — beyond the standard, where abcm2ps and abc2svg have features abcjs
- *   lacks.
+ * - `abcjs-extended` — abcjs's parsing bugs fixed AND the engraving features abcm2ps and
+ *   abc2svg have that abcjs lacks. One opt-in, not a ladder of them.
  *
  * The mode gates BEHAVIOUR, not just appearance. Where core deliberately departs from
  * abcjs — `+:` continuations, a dropped decoration, a spaced lyric hyphen — the
  * departure IS the mode, and strict reproduces abcjs instead.
+ *
+ * ⚠️ **THERE WERE THREE OF THESE AND `abcjs-extended` WAS NEVER A MODE** (owner's call,
+ * 2026-09-04). It was meant to be the middle rung — the standard read correctly, with
+ * conventional engraving — but **every mode branch in `src/` is `isStrict(mode)`**, one
+ * comparison, this file. Not one site ever distinguished it from `extended`, so on all 691
+ * corpus cases the two were byte-identical, and both intended tiers had landed in the same
+ * bucket: the `+:`/`[U:`/`I:` parsing fixes beside the styled noteheads, tremolos,
+ * three-quarter-tone glyphs and per-segment lyric fonts. A host asking for `abcjs-extended` got the
+ * beyond-standard engraving too, and a host asking for `extended` got nothing extra.
+ *
+ * So the third name is gone rather than implemented, and the survivor is renamed
+ * `abcjs-extended` to say what it is: abcjs, extended. `tests/mode-partition.test.ts` keeps
+ * the two apart by NAMED behaviour, so the split cannot quietly collapse again.
  */
-export type CompatibilityMode = 'abcjs-strict' | 'abc2.1' | 'extended'
+export type CompatibilityMode = 'abcjs-strict' | 'abcjs-extended'
 
 export const defaultMode: CompatibilityMode = 'abcjs-strict'
 

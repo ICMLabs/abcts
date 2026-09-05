@@ -20,7 +20,7 @@
  * position-identical either. Borrowing abcjs's advances while drawing Bravura outlines
  * is the worst of both — correctly-sized gaps around wrongly-sized shapes.
  *
- * Hence: abcjs's table for the parity build, Bravura for `abc2.1`/`extended`, where
+ * Hence: abcjs's table for the parity build, Bravura for `abcjs-extended`, where
  * being better matters more than being identical and where the extra glyphs abcjs simply
  * lacks are needed anyway.
  */

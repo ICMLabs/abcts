@@ -24,7 +24,7 @@ arithmetic, its order, or its data model rather than the better one.
 
 ## The one rule that governs all of it
 
-Strict mode has no latitude. `abc2.1` and `extended` are where the better shape belongs, and
+Strict mode has no latitude. `abcjs-extended` are where the better shape belongs, and
 several entries below are already gated on `strict` for exactly that reason — the clean
 version runs in the other modes today. **An entry that is NOT so gated is the interesting
 kind: it means the shape leaked into code both modes share.**
@@ -105,7 +105,7 @@ is listed so the asymmetry is not "tidied".
 SMuFL precomposes `dynamicPPPP` as ONE kerned glyph. abcjs draws four `p` outlines and
 adjusts the advance for three specific pairs (`draw/print-symbol.js:16-57`), so `pppp` is
 four paths inside a group instead of one path. **Clean version:** the precomposed glyph, in
-`abc2.1`/`extended`. **Cost in strict:** every multi-letter dynamic in the corpus.
+`abcjs-extended`. **Cost in strict:** every multi-letter dynamic in the corpus.
 **Note:** `sfz` still draws precomposed because this repo's Bravura table has no
 single-letter `s` or `z` — that one is a DIVERGENCE and belongs in `ABCJS-DIFFERENCES.md`
 if a fixture ever reaches it.
@@ -154,7 +154,7 @@ every character outside them.
 
 This reproduces `dump-svg.js`'s `getBBox` stub, which is what the goldens were generated
 with — not real font metrics. `abcMusicKit` v1 reproduces the same fallback on purpose.
-**Clean version:** real per-em metrics, which `abc2.1`/`extended` already use.
+**Clean version:** real per-em metrics, which `abcjs-extended` already use.
 **Cost in strict:** every text position in the corpus. Gated at one place.
 
 ---
@@ -206,7 +206,7 @@ buys is discarded by the line after it.
 
 ✅ **FIXED IN NON-STRICT, 2026-09-04 (Phase 1).** `createDomTextMeasurer(doc, host,
 { shared })`: strict keeps abcjs's module-global x-free cache because that history-dependence
-is part of abcjs's output; `abc2.1` and `extended` take a per-render cache keyed WITH the x.
+is part of abcjs's output; `abcjs-extended` take a per-render cache keyed WITH the x.
 `scripts/zzextended.mjs` asserts the pair — **strict MOVES when warmed by 133 tunes and
 extended does not** — because a rung that only checked extended would pass just as well if
 the split did nothing.

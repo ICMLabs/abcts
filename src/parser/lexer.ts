@@ -76,7 +76,7 @@ export class Lexer {
     /**
      * **`abcjs-strict` ONLY, and it decides whether `[U:…]` IS A FIELD AT ALL.** See
      * `ABCJS_INLINE_FIELDS` and the mode split in `Docs/ABCJS-DIFFERENCES.md`: abcjs has no
-     * inline `U:`, `w:` or `T:`, and strict reproduces that; `abc2.1` and `extended` read
+     * inline `U:`, `w:` or `T:`, and strict reproduces that; `abcjs-extended` read
      * them as ABC 2.1 says to. Ruled by the owner on 2026-08-27 — the FEATURE stays.
      */
     private readonly strictFields = false,

@@ -74,7 +74,7 @@ const CASES: Case[] = readdirSync(fixtures)
  * ⚠️ **THE COMPAT LAYER CANNOT REACH THIS MODE, AND THE TYPECHECKER IS WHAT SAID SO.**
  * `renderAbc` hard-wires `mode: "abcjs-strict"` (`compat/index.ts:869`, `:999`) because a
  * drop-in whose default output differs from what it replaces is not one, and `AbcjsParams`
- * has no `mode` at all. A first cut of this file passed `{ mode: "extended" }` there, and it
+ * has no `mode` at all. A first cut of this file passed `{ mode: "abcjs-extended" }` there, and it
  * was silently ignored: **the snapshot it recorded was 691 STRICT renders**, which would
  * have been a gate that reads green while watching the wrong mode — the exact failure
  * `pixel-parity`'s enumeration and `compat`'s density test each shipped once.
@@ -92,11 +92,11 @@ const CASES: Case[] = readdirSync(fixtures)
  */
 const renderCase = (c: Case): string => {
   try {
-    const parsed = parse(c.abc, { mode: "extended" });
+    const parsed = parse(c.abc, { mode: "abcjs-extended" });
     if (!parsed.ok) return `PARSE FAILED: ${parsed.errors.length} error(s)`;
     const score = parsed.scores[c.tune];
     if (score === undefined) return "NO SCORE";
-    return render(score, { mode: "extended", systemWidth: 670 });
+    return render(score, { mode: "abcjs-extended", systemWidth: 670 });
   } catch (e) {
     return `THREW: ${e instanceof Error ? e.message : String(e)}`;
   }

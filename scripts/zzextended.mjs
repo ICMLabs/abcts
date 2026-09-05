@@ -31,14 +31,15 @@ const OURS = join(repo, 'dist', 'abcts-browser.global.js')
 const fixtures = join(repo, 'tests', 'corpus-abcjs', 'fixtures')
 
 /**
- * ⚠️ **BOTH NON-STRICT MODES, NOT JUST `extended`.** `withLiveMeasurement` takes
- * `isStrict(mode)` (`renderer/index.ts:49`), so `abc2.1` is on the live path for the same
- * reason `extended` is — and a future wiring of `mode === 'extended'` would pass a rung
- * that asked only about `extended` while leaving `abc2.1` laying text out with the per-em
- * TABLES in a real browser. That is exactly the defect Phase 1 fixed, one mode over.
- * `tests/mode-partition.test.ts` holds the headless half of the same question.
+ * ⚠️ **THIS RUNG ASKED TWO MODES UNTIL 2026-09-04, AND THERE IS ONLY ONE NOW.**
+ * `withLiveMeasurement` takes `isStrict(mode)` (`renderer/index.ts:49`), so it was worth
+ * checking that `abc2.1` was on the live path too and not just `extended` — a wiring of
+ * `mode === 'extended'` would have passed a rung that asked only about `extended`. The
+ * owner's call removed `abc2.1` rather than implementing it (it was never a mode: not one
+ * branch in `src/` distinguished the two), so the list is one entry and the question it
+ * guarded is now a COMPILE error instead.
  */
-const NON_STRICT = ['abc2.1', 'extended']
+const NON_STRICT = ['abcjs-extended']
 
 
 /**
@@ -130,7 +131,7 @@ const held = await page.evaluate((abc) => {
     return p.ok && p.scores[0] ? render(p.scores[0], { mode, systemWidth: 670 }) : 'NO SCORE'
   }
   const h = (svg) => /height="([\d.]+)"/.exec(svg)?.[1]
-  return { strict: h(one('abcjs-strict')), extended: h(one('extended')) }
+  return { strict: h(one('abcjs-strict')), extended: h(one('abcjs-extended')) }
 }, HELD)
 console.log('held syllable, %%vocalfont Helvetica 8 — page height')
 console.log('  strict  (abcjs\'s 4-pitch default) ', held.strict)
@@ -173,7 +174,7 @@ const rows = await page.evaluate(({ caps, desc }) => {
   }
   return {
     strictCaps: h(caps, 'abcjs-strict'), strictDesc: h(desc, 'abcjs-strict'),
-    extCaps: h(caps, 'extended'), extDesc: h(desc, 'extended'),
+    extCaps: h(caps, 'abcjs-extended'), extDesc: h(desc, 'abcjs-extended'),
   }
 }, { caps: ROWS('AAA EEE'), desc: ROWS('gggpqy jjj') })
 console.log('an H: row of CAPITALS vs one of DESCENDERS — page height')
@@ -186,7 +187,7 @@ console.log('  extended ', rows.extCaps, 'vs', rows.extDesc,
 console.log()
 
 const r = {}
-for (const mode of ['abcjs-strict', 'extended']) {
+for (const mode of ['abcjs-strict', 'abcjs-extended']) {
   r[`${mode} alone`] = await run(mode, false)
   r[`${mode} warmed`] = await run(mode, true)
 }

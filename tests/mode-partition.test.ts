@@ -1,20 +1,23 @@
 /**
- * **THE MODE PARTITION — which of the three modes is actually a mode.**
+ * **THE MODE PARTITION — what each of the two modes is actually FOR.**
  *
  * `tests/extended-snapshot.test.ts` renders ONE mode and asks whether it moved. It cannot
- * ask the question this file exists for, because that question is about the RELATION
- * between modes: is `abc2.1` a third behaviour, or a second name for `extended`?
+ * ask the question this file exists for, which is about the RELATION between the modes:
+ * does each behaviour fire on the side it belongs to?
  *
- * Measured 2026-09-04, and this is the whole finding: **every mode branch in `src/` is
- * `isStrict(mode)`** — `grep -rn "mode ===" src/` returns one comparison,
- * `model.ts:35`, and it is `mode === 'abcjs-strict'`. Not one site distinguishes `abc2.1`
- * from `extended`, so on all 691 corpus cases the two are byte-identical, and so are the
- * six features `ABCJS-DIFFERENCES.md` advertises as `extended`-only.
+ * ⚠️ **THERE WERE THREE MODES AND `abcjs-extended` WAS NEVER ONE** (owner's call, 2026-09-04, after
+ * this file measured it). **Every mode branch in `src/` is `isStrict(mode)`** — one
+ * comparison, `core/model.ts`. Not one site ever distinguished `abcjs-extended` from `extended`, so
+ * all 691 corpus cases were byte-identical between them and both intended tiers had landed
+ * in the same bucket: the `+:`/`[U:`/`I:` parsing fixes beside the styled noteheads,
+ * tremolos, three-quarter-tone glyphs and per-segment lyric fonts. The third name is gone
+ * rather than implemented, and the survivor is `abcjs-extended`.
  *
- * That is not asserted here as a GOAL. It is asserted as the state of affairs, so that the
- * day someone gives `extended` its first real feature the gate goes red and the split gets
- * recorded on purpose — in `ABCJS-DIFFERENCES.md`, which the repo's own rule requires —
- * rather than arriving as a silent digest move in the ratchet.
+ * **The type now carries what a corpus assertion used to.** `CompatibilityMode` has two
+ * members, so "the modes have not silently collapsed into one" is a COMPILE error rather
+ * than a test — which is why the two `it`s that compared `abcjs-extended` against `extended` are
+ * gone rather than rewritten. What a type cannot say is that each behaviour still fires on
+ * the right SIDE, and that is what is left here.
  *
  * ── ⚠️ WHY THE ROWS ARE PAIRED WITHIN ONE MODE ───────────────────────────────
  * The obvious control is `strict(feature) !== nonStrict(feature)`, and it is worthless: the
@@ -133,33 +136,15 @@ const ROWS: { name: string; sees: "strict" | "nonStrict"; base: string; feat: st
   },
 ];
 
-describe("the three compatibility modes, as a partition", () => {
-  it("renders every corpus case in every mode — no failure digests as a success", () => {
+describe("the two compatibility modes, as a partition", () => {
+  it("renders every corpus case in both modes — no failure digests as a success", () => {
     const broken: string[] = [];
     for (const c of CASES)
-      for (const mode of ["abcjs-strict", "abc2.1", "extended"] as const) {
+      for (const mode of ["abcjs-strict", "abcjs-extended"] as const) {
         const svg = svgOf(c.abc, mode, c.tune);
         if (!svg.startsWith("<svg")) broken.push(`${c.slug} [${mode}]: ${svg.slice(0, 60)}`);
       }
     expect(broken).toEqual([]);
-  });
-
-  /**
-   * **`abc2.1` AND `extended` ARE ONE BEHAVIOUR WITH TWO NAMES.** 0 of 691 differ.
-   *
-   * A red here is not a regression — it is the first real `extended`-only feature, and it
-   * is a good day. What it must not be is SILENT: `ABCJS-DIFFERENCES.md` §"What abcts adds
-   * beyond fixing these" already claims a split that does not exist yet, so the entry and
-   * this list have to move together.
-   */
-  it("abc2.1 and extended agree on every corpus case", () => {
-    const differ = CASES.filter(
-      (c) => digest(c.abc, "abc2.1", c.tune) !== digest(c.abc, "extended", c.tune),
-    ).map((c) => c.slug);
-    expect(
-      differ,
-      "extended diverged from abc2.1 — record the feature in ABCJS-DIFFERENCES.md",
-    ).toEqual([]);
   });
 
   /**
@@ -168,9 +153,9 @@ describe("the three compatibility modes, as a partition", () => {
    * the diff is the finding. A slug ARRIVING means a non-strict fix stopped applying to it;
    * a slug LEAVING means a new one reached it, which is the ordinary good case.
    */
-  it("names the cases where all three modes agree", () => {
+  it("names the cases where the two modes agree", () => {
     const same = CASES.filter(
-      (c) => digest(c.abc, "abcjs-strict", c.tune) === digest(c.abc, "abc2.1", c.tune),
+      (c) => digest(c.abc, "abcjs-strict", c.tune) === digest(c.abc, "abcjs-extended", c.tune),
     ).map((c) => c.slug);
     expect(same).toEqual([
       "abcjs-parse-book_parser-01-example",
@@ -201,7 +186,7 @@ describe("the three compatibility modes, as a partition", () => {
     const wrong = ROWS.flatMap(({ name, sees, base, feat }) => {
       const moved = {
         strict: digest(base, "abcjs-strict") !== digest(feat, "abcjs-strict"),
-        nonStrict: digest(base, "abc2.1") !== digest(feat, "abc2.1"),
+        nonStrict: digest(base, "abcjs-extended") !== digest(feat, "abcjs-extended"),
       };
       const blind = sees === "strict" ? "nonStrict" : "strict";
       if (moved[sees] && !moved[blind]) return [];
@@ -236,7 +221,7 @@ describe("the three compatibility modes, as a partition", () => {
     // ⚠️ THE CONTROL COMES FIRST: an ASCII pair BOTH tables distinguish, so an instrument
     // that had gone blind cannot pass the rows below by measuring nothing.
     expect(width("iiii", "abcjs-strict")).not.toBe(width("MMMM", "abcjs-strict"));
-    expect(width("iiii", "abc2.1")).not.toBe(width("MMMM", "abc2.1"));
+    expect(width("iiii", "abcjs-extended")).not.toBe(width("MMMM", "abcjs-extended"));
 
     // Pairs of equal LENGTH outside ASCII: identical to the generator's flat fallback,
     // distinct to a real font. (`ŴŴŴŴ`/`ıııı` is NOT here — measured, and the per-em table
@@ -247,16 +232,8 @@ describe("the three compatibility modes, as a partition", () => {
       ["音音音音", "ÀÀÀÀ"],
     ] as const) {
       expect(width(a, "abcjs-strict"), `${a}/${b} strict`).toBe(width(b, "abcjs-strict"));
-      expect(width(a, "abc2.1"), `${a}/${b} non-strict`).not.toBe(width(b, "abc2.1"));
-      expect(width(a, "extended")).toBe(width(a, "abc2.1"));
+      expect(width(a, "abcjs-extended"), `${a}/${b} non-strict`).not.toBe(width(b, "abcjs-extended"));
     }
   });
 
-  /** And every one of those rows must be the SAME in `extended` as in `abc2.1`. */
-  it("every named gate reads identically in abc2.1 and extended", () => {
-    const differ = ROWS.filter(({ feat }) => digest(feat, "abc2.1") !== digest(feat, "extended")).map(
-      (r) => r.name,
-    );
-    expect(differ).toEqual([]);
-  });
 });

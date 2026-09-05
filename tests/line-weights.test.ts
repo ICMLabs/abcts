@@ -11,7 +11,7 @@
  * engine emits, resolved to absolute pixels.
  *
  * `abcjs-strict` has no latitude — it exists to reproduce abcjs byte for byte — so these
- * are equalities, not ceilings. `abc2.1` and `extended` keep Bravura's weights and are
+ * are equalities, not ceilings. `abcjs-extended` keep Bravura's weights and are
  * deliberately not measured here.
  */
 import { readFileSync } from "node:fs";

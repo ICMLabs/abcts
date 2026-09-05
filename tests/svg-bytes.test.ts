@@ -692,7 +692,7 @@ const PASSING: readonly string[] = [
    * `U:` at all: `letter_to_inline_header` switches on exactly eight, `[I: [M: [K: [P: [L:
    * [Q: [V: [r:` (`abc_parse_header.js:347-410`), so it reads the `[` as a CHORD, fails,
    * and emits seven warnings, an invisible barline carrying the `!accent!`, and four plain
-   * notes. **Strict reproduces that; `abc2.1` and `extended` keep the feature.** Owner's
+   * notes. **Strict reproduces that; `abcjs-extended` keep the feature.** Owner's
    * ruling, 2026-08-27 — see `Docs/ABCJS-DIFFERENCES.md`.
    */
   ...Array.from(

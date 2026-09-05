@@ -223,7 +223,7 @@ output is worth more to a library than restyleable glyphs.
 
 **THE AUTHORISATION NEVER COVERED `abcjs-strict`.** *Clarified by Lance, 2026-08-05.*
 Strict exists to reproduce abcjs byte for byte, so it has NO latitude: every figure it
-draws with must be abcjs's. Bravura is for `abc2.1` and `extended`, which is where the
+draws with must be abcjs's. Bravura is for `abcjs-extended` and `extended`, which is where the
 flexibility lives. **Any Bravura input reachable in strict is a defect, not a decision.**
 
 Two consequences, both since acted on:
@@ -237,7 +237,7 @@ Two consequences, both since acted on:
 
 **Metrics are not extracted.** `bravura_metadata.json` publishes bounding boxes, anchors
 and engraving defaults in staff spaces already, so only outlines need the font binary.
-Its ENGRAVING DEFAULTS are used for `abc2.1`/`extended` only — see the clarification above.
+Its ENGRAVING DEFAULTS are used for `abcjs-extended`/`extended` only — see the clarification above.
 That the two agree is a genuine cross-check and they do — the extracted `noteheadBlack`
 path spans exactly the published 1.18 × 1.0 box.
 

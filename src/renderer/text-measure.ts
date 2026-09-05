@@ -153,7 +153,7 @@ export const createDomTextMeasurer = (
    *
    * `shared: false` is the CORRECT one: a cache of this measurer's own, keyed WITH the x,
    * so a string measured at two different x's gets two answers and a tune renders the same
-   * wherever it sits in a book. `abc2.1` and `extended` take it. See `ABCJS-DEBT.md` §3b.1.
+   * wherever it sits in a book. `abcjs-extended` take it. See `ABCJS-DEBT.md` §3b.1.
    */
   { shared = true }: { readonly shared?: boolean } = {},
 ): TextMeasurer => {

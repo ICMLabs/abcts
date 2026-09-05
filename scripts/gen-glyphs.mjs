@@ -91,7 +91,7 @@ const GLYPHS = [
   'accidentalDoubleFlat',
   // Microtones. abcjs draws only the QUARTER-tone pair — Stein's half-sharp and
   // half-flat — and nothing at all for three-quarter tones, which strict reproduces.
-  // The three-quarter glyphs are for abc2.1/extended, which draw what the ABC says.
+  // The three-quarter glyphs are for abcjs-extended, which draw what the ABC says.
   'accidentalQuarterToneSharpStein',
   'accidentalQuarterToneFlatStein',
   'accidentalThreeQuarterTonesSharpStein',
@@ -157,7 +157,7 @@ const GLYPHS = [
   'stringsThumbPosition',
   'pluckedSnapPizzicatoAbove',
   'pluckedSnapPizzicatoBelow',
-  // Only reachable in abc2.1/extended — abcjs draws nothing for the inverted turns.
+  // Only reachable in abcjs-extended — abcjs draws nothing for the inverted turns.
   'ornamentTurnInverted',
   'ornamentTurnSlash',
   // Tremolo: SMuFL gives ONE glyph per stroke count, so `!//!` is tremolo2 rather than

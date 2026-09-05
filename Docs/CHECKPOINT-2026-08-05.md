@@ -12,7 +12,7 @@ the ladder method; `-08-04b.md` keeps 41–50, `-08-04.md` the expensive lesson,
 
 **THE RULING, and it is the general principle:** the Bravura authorisation **never covered
 `abcjs-strict`**. Strict exists to reproduce abcjs byte for byte, so it has NO latitude —
-every figure it draws with must be abcjs's. `abc2.1` and `extended` are where the
+every figure it draws with must be abcjs's. `abcjs-extended` are where the
 flexibility lives. Recorded in `ARCHITECTURE.md` beside the original decision.
 
 `ENGRAVING_DEFAULTS` (Bravura's metadata) was read at **21 sites** in `layout.ts` with **not

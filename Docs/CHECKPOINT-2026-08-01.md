@@ -8,7 +8,7 @@ The older checkpoints' **method notes** still stand; their priority lists are fo
 ## The contract (unchanged)
 
 `abcjs-strict` reproduces abcjs 6.6.3 exactly — 100% parity is the bar, any divergence is a
-defect. `abc2.1` / `extended` fix abcjs's bugs; their target is abcm2ps / abc2svg via the
+defect. `abcjs-extended` fix abcjs's bugs; their target is abcm2ps / abc2svg via the
 golden sets, observed through OUTPUT only (both GPL — never read their source). v1
 `../abcMusicKit` (MIT) and the vendored abcjs source are safe to read.
 

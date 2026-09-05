@@ -4386,7 +4386,7 @@ const MICROTONE_GLYPHS: Readonly<Record<number, GlyphName>> = {
  *
  *   `^/G`   half-sharp     abcjs draws `accidentals.halfsharp`; so do we, both modes.
  *   `^3/2G` ¾-sharp        abcjs draws NOTHING — no accidental in its element dump at
- *                          all. Strict reproduces that; abc2.1/extended draw the
+ *                          all. Strict reproduces that; abcjs-extended draw the
  *                          three-quarter glyph, which is what the ABC actually says.
  *
  * Before this, every microtone drew a FULL sharp or flat — so `^/G` printed as a plain
@@ -6173,7 +6173,7 @@ const DECORATIONS: Readonly<
     place: 'ornament',
   },
 
-  // ── Drawn only in abc2.1 / extended ────────────────────────────────────────
+  // ── Drawn only in abcjs-extended ────────────────────────────────────────
   // abcjs paints NOTHING for these three — confirmed twice, by element dump and by
   // rendered SVG. Strict reproduces the blank; the other modes draw the ornament the ABC
   // actually names. Third instance of this split, after melisma and the microtones.
@@ -6455,7 +6455,7 @@ function decorationGlyphs(
    * A previous note here recorded the shape difference — "ours is a divergence in SHAPE and
    * belongs in `ABCJS-DIFFERENCES.md`" — and it never went in either file. It is a defect
    * that had not been written down yet: strict has no latitude, so it is ported.
-   * `abc2.1`/`extended` keep the drawn `tremoloN` bars, which are the right shape.
+   * `abcjs-extended` keep the drawn `tremoloN` bars, which are the right shape.
    */
   if (strict) {
     for (const name of names) {
@@ -7321,7 +7321,7 @@ const goldenTextWidth = (text: string, size: number, face: Face): number => {
 }
 
 /**
- * The REAL per-em metrics — what `abc2.1` and `extended` measure with, and what strict
+ * The REAL per-em metrics — what `abcjs-extended` measure with, and what strict
  * measured with until `calcWidth` was ported.
  */
 const realTextWidth = (text: string, size: number, face: Face): number => {
