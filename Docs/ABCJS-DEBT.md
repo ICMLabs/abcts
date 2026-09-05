@@ -316,6 +316,41 @@ viewBox does that work instead. Whether the two roots should agree about `%%scal
 markup question for the core emitter, not an abcjs-debt one.
 
 
+### 3b.5 The sequencer resets its volume per LINE-VOICE, and we do not — MEASURED, NOT LANDED
+
+`currentVolume = [105, 95, 85, 1]` sits immediately before
+`for (var v = 0; v < voice.length; v++)` (`abc_midi_sequencer.js:223-225`), and that loop
+runs once per **(line, staff, voice)** — `var voice = staff.voices[k]` inside the per-LINE
+walk. So the stress table restarts on every new source line.
+
+**INSTRUMENTED IN A SCRATCHPAD COPY**, because two readings of the arithmetic had already
+failed to fit:
+
+    CRESC line-voice len=5 at=0 n=3 cur=[105,95,85]
+      STEP +7 -> from [105,95,85]  [112,102,92]  [119,109,99]
+      STEP +7 -> from [105,95,85]      <- the line boundary
+      STEP +7 -> from [112,102,92]  [119,109,99]  [126,116,106]
+
+and with `!mp!` on line 1 the restart is still `[105,95,85]`, so it goes to the DEFAULT and
+not back to the last named dynamic. The count is line-scoped too — `n=3` where the voice
+array is 5 long — which confirms the existing note on `Timed.line`.
+
+**AND IT DOES NOT CONTRADICT THE FLATTENER'S CARRY** (`cd53b74`): those are two different
+variables in two different files. The sequencer's resets per line-voice and is invisible
+until a beat row is pushed from it — only a dynamic or a hairpin step does that
+(`:234`, `:241`, `:468`) — while the flattener's carries across tracks.
+
+⚠️ **TWO PORTS WERE WRITTEN AND BOTH WERE REVERTED.** Resetting only under an open hairpin
+made all four ladder rungs exact and took `visual-selection-01` and `svg-per-line-01` from
+byte-exact to differing at byte 758 (velocity 81 against 76). Resetting unconditionally at
+every line took the gate from 27 open to 31. **The ladder passes and the corpus regresses,
+which means the rule interacts with the flattener's carry in a way neither cut models.**
+
+The open row is `abcts-ledger-gaps-4#1`, "a hairpin opening on one system and closing on the
+next": abcjs `105,102,109,116,112,109,116,123`, ours `105,102,109,116,127,127,127,127`.
+Both engines' numbers are here so the next attempt starts from data. **A half-understood fix
+is worth less than a written-down measurement.**
+
 ---
 
 ## 4. WHAT IS **NOT** IN THIS FILE
