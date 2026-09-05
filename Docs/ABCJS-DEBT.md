@@ -220,7 +220,7 @@ the compat surface, because the modes were unreachable from a page too.
 
 **Still abcjs's in strict, and load-bearing:** `zzlive` 0 of 685 WebKit depends on it.
 
-### 3b.2 A text row's advance is measured on the probe `"A"` ~~and that costs something~~
+### 3b.2 A text row's advance is measured on the probe `"A"` — and in BLINK that costs a pixel
 
 `addTextIf` measures `getTextSize.calc("A", params.font, params.klass)` and multiplies by
 the line count (`add-text-if.js:21-27`); `richText`'s empty arm measures `"i"`
@@ -228,26 +228,45 @@ the line count (`add-text-if.js:21-27`); `richText`'s empty arm measures `"i"`
 counted by getTextSize, so just get the height of one line and multiply"* — which is a
 workaround for the whitespace early-out in §3b.3, not a typographic choice.
 
-⚠️ **AND THE COST THIS ENTRY CLAIMED IS ZERO — MEASURED 2026-09-04, PHASE 3 WRITTEN AND
-REVERTED.** It read *"a row of descenders advances by the same amount as a row of
-capitals"*. True, **and measuring the row gives the identical answer**, because
-`getBBox().height` on a `<text>` is the **LINE BOX and not the ink extent**:
+✅ **PORTED 2026-09-04. `advance` measures `"A"` and multiplies by `numLines`, as abcjs
+does.** `zzlive` Chrome 4 → 3 of 685, WebKit unmoved at 0, the headless suite unmoved at
+2,462 — `textHeight` ignores its text argument headless (`goldenTextHeight(size)`), so the
+change cannot reach a golden.
+
+⚠️ **AND THIS ENTRY SPENT A DAY ON THE DO-NOT-RE-OPEN LIST, REFUTED BY A MEASUREMENT THAT
+WAS TOO NARROW ON TWO AXES AT ONCE.** Phase 3 was written, measured to cost nothing, and
+reverted, on this table:
 
     Times New Roman   8 / 13 / 17 / 21 / 27 / 40px    "A" == "gggpqy" == "Mg"
     Helvetica         same six sizes                  "A" == "gggpqy" == "Mg"
     cursive           same six sizes                  "A" == "gggpqy" == "Mg"
 
-So the probe is not a defect on the HEIGHT axis at all. It would be one against an
-INK-based measurement — which is what `dump-svg.js`'s patched `getBBox` is — but that is
-the golden generator, not a browser, and headless we take the tables anyway.
+Every cell of it is correct. Re-measured across the same three faces at **every integer
+size from 6 to 39px, in both engines**:
 
-**The claim was reasoned from abcjs's source comment and never measured**, which is the
-class of error this repo has recorded four times before under *a note that names a cause is
-the reason the row stops being read*. `zzextended.mjs` rung 4 keeps the refutation, asserting
-both modes agree, so the entry cannot quietly come back.
+    WebKit     0 of 102 combos where ANY string differs from "A"
+    Blink     25 of 102        — "A" comes back an INTEGER, every other string fractional
+    both       0 of  18 at this entry's own six sizes
 
-**Nothing to do.** `Subtitle` measuring `info.text` (`subtitle.js:8`) is still the odd one
-out in abcjs, and still costs nothing either.
+So `getBBox().height` is the LINE BOX in WebKit and is **not** in Blink — and the six sizes
+sampled miss every boundary, so **the refutation would have read "costs nothing" even if it
+had been run in Chrome.** A browser and a size sweep, and it needed both.
+
+Where it lands: `%%partsfont` defaults to 20px, where Blink gives `"A"` 22 and the row's own
+`"(AB)2"` 22.27734375. `round(22 * 1.1)` is 24 and `round(22.27734375 * 1.1)` is 25 — the
+boundary sits at `24.5 / 1.1 = 22.2727…`, between them — so the part-order row advanced one
+whole pixel too far and every staff below it moved with it.
+
+⭐ **THE RULE: A LADDER MUST SAMPLE THE BOUNDARY, NOT SIX ROUND NUMBERS** — and a browser
+measurement is scoped to the browser that made it. This is the sixth time in the ledger that
+*a note naming a cause is the reason the row stops being read*, and the first where the note
+was a correct measurement rather than a plausible reading.
+
+`zzextended.mjs` rung 4 still asserts both modes agree, which remains true **in WebKit,
+where that script runs**. Its own comment now carries the Blink caveat.
+
+**Still open, and still costing nothing that has been measured:** `Subtitle` measures
+`info.text` (`subtitle.js:8`) rather than a probe, the odd one out in abcjs.
 
 ### 3b.3 A whitespace-only string measures ZERO, and a zero height then means "4 pitch"
 

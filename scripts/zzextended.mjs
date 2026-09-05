@@ -147,6 +147,16 @@ console.log()
  * Times New Roman, Helvetica and cursive at 8/13/17/21/27/40px: `"A"`, `"gggpqy"` and
  * `"Mg"` return the same height at every one.
  *
+ * ⚠️ **AND THAT IS TRUE OF WEBKIT, WHICH IS THE ENGINE THIS SCRIPT LAUNCHES, AND NOT OF
+ * BLINK.** Re-measured 2026-09-04 over the same three faces at every integer size 6-39px:
+ * WebKit 0 of 102 combos differ from `"A"`, Blink 25 of 102 — and 0 of 18 in BOTH at the
+ * six sizes above, so the sample missed every boundary. The probe is therefore NOT free:
+ * `advance` now measures `"A"` and multiplies by `numLines` as `add-text-if.js:21-27` does,
+ * which took `zzlive` Chrome from 4 of 685 to 3. See `ABCJS-DEBT.md` §3b.2.
+ *
+ * The rung is kept and still passes, because the claim it asserts is a WEBKIT claim and
+ * this is a WebKit script. Do not read it as saying the probe costs nothing anywhere.
+ *
  * So this rung asserts BOTH modes agree, which is the measured truth rather than a defect.
  * It is kept because the claim it refutes was reasoned from abcjs's source comment and
  * would otherwise be re-attempted: a phase was written against it and reverted.

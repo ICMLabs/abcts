@@ -16821,11 +16821,39 @@ function topTextBlock(
     rows.push({ move: px })
     y += px
   }
-  const advance = (size: number, extra = 0, text = 'Mg', type?: AbcFontType): void => {
+  /**
+   * **`addTextIf` MEASURES `"A"` AND MULTIPLIES BY THE LINE COUNT — IT NEVER MEASURES THE
+   * ROW.** `getTextSize.calc("A", params.font, params.klass)`, then
+   * `h = (size.height * 1.1) * numLines` with ONE rounding (`add-text-if.js:21-27`), and
+   * its own comment says why: blank lines are not counted by `getTextSize`, so it takes one
+   * line's height and multiplies. A trailing newline is decremented (`:23-24`).
+   *
+   * ⚠️ **THIS PROBE IS NOT COSMETIC, AND `ABCJS-DEBT.md` §3b.2 SAID IT WAS.** That entry
+   * measured `"A"` against `"Mg"`/`"gggpqy"` and found them equal, so the probe was ruled to
+   * cost nothing and a phase was reverted. **It was measured in WebKit only, at six round
+   * sizes.** Re-measured across three faces x every integer size 6-39px:
+   *
+   *     WebKit    0 of 102 combos where any string differs from "A"
+   *     Blink    25 of 102        — "A" comes back an INTEGER and the rest fractional
+   *     both      0 of 18 at the entry's own 8/13/17/21/27/40px
+   *
+   * So `getBBox().height` is the line box in WebKit and is not in Blink, the entry's six
+   * sample sizes miss every boundary, and the refutation would have read "costs nothing"
+   * even if it HAD been run in Chrome. `%%partsfont`'s default is 20px, where Blink gives
+   * `"A"` 22 and `"(AB)2"` 22.27734375 — `round(24.2)` against `round(24.505)`, one whole
+   * pixel of page, and the whole staff below it moved with it.
+   *
+   * ⚠️ AND THE LINE COUNT HAD TO COME WITH THE PROBE, not after it. Measuring the ROW's own
+   * string is how a multi-line row was getting its extra height at all; swapping in `"A"`
+   * alone would have collapsed every such row to one line.
+   */
+  const advance = (size: number, extra = 0, text = 'A', type?: AbcFontType): void => {
     const font = type === undefined ? 'serif' : fontOfType(fonts, type, size)
+    const lines = text.split('\n').length - (text.endsWith('\n') ? 1 : 0)
     const step =
-      Math.round((textHeight(size, text, font) + extra) * ENGRAVE.lineSkipFactor * UNIT_PX) /
-      UNIT_PX
+      Math.round(
+        (textHeight(size, 'A', font) + extra) * ENGRAVE.lineSkipFactor * lines * UNIT_PX,
+      ) / UNIT_PX
     advances.push(step)
     rows.push({ move: step })
     y += step
