@@ -609,6 +609,15 @@ interface Timed {
   readonly factor: number
   /** Semitones the CLEF adds, which replaces the voice's transpose rather than adding. */
   readonly clefTranspose: number
+  /**
+   * **PERCUSSION FOLLOWS THE CLEF, AND A MID-TUNE `[K: clef=perc]` SWITCHES IT.** abcjs
+   * tests `staff.clef.type === 'perc'` per staff per line (`abc_midi_sequencer.js:175`), so
+   * the drummap starts applying at the change. This rode a once-computed voice-level
+   * boolean, so `%%MIDI drummap B 38` over `B B [K:C clef=perc] B B|` sounded four B
+   * naturals where abcjs sounds `71,71,38,38`. It travels per ROW for the same reason
+   * `clefTranspose` does.
+   */
+  readonly percussion: boolean
   /** A tie's continuation, silenced: it was folded into the note that opened the tie. */
   readonly tiedOver: boolean
   /**
@@ -850,6 +859,8 @@ function sequenceVoice(
    */
   let clefTranspose = 0
   let clefOctaveActive = false
+  /** See `Timed.percussion`. Seeded from the STAFF's clef, then re-set at every change. */
+  let clefPercussion = (staffClefOf(voice, score) ?? score.clef).shape === 'percussion'
   let line = -1
   let firstMeasure = true
   let key = score.key
@@ -881,6 +892,8 @@ function sequenceVoice(
       measure.clefChange ?? (firstMeasure ? (staffClefOf(voice, score) ?? score.clef) : null)
     firstMeasure = false
     if (clef != null) {
+      // See `Timed.percussion` — abcjs re-tests `staff.clef.type === 'perc'` per line.
+      clefPercussion = clef.shape === 'percussion'
       if (clef.octaveShift !== 0) {
         clefTranspose = clef.octaveShift * 12
         clefOctaveActive = true
@@ -910,6 +923,7 @@ function sequenceVoice(
         duration: 0,
         factor: tempoFactor,
         clefTranspose,
+      percussion: clefPercussion,
         tiedOver: false,
         midi: measure.midiCommands,
       })
@@ -984,6 +998,7 @@ function sequenceVoice(
         duration: dur,
         factor: tempoFactor,
         clefTranspose,
+      percussion: clefPercussion,
         tiedOver,
         ...(silenced === undefined ? {} : { tieSilenced: silenced }),
       })
@@ -1015,6 +1030,7 @@ function sequenceVoice(
       duration: 0,
       factor: tempoFactor,
       clefTranspose,
+      percussion: clefPercussion,
       tiedOver: false,
     })
     durations.push(0)
@@ -1159,6 +1175,8 @@ function spliceDrumIntro(
     time,
     barStart: true,
     key: seed.key,
+    // A synthetic row inherits the seed's clef state — it inserts no clef of its own.
+    percussion: seed.percussion,
     meter: null,
     duration,
     factor: 1,
@@ -1903,7 +1921,7 @@ export function flattenAudio(
         let at = start
         for (const g of graces) {
           const each = ratToNumber(g.length) * multiplier
-          const mappedGrace = percussion ? drumMap[writtenName(g)] : undefined
+          const mappedGrace = item.percussion ? drumMap[writtenName(g)] : undefined
           const raw =
             mappedGrace ?? midiPitchOf(g, accidentals, barAccidentals, null) + transposeOf(item)
           const sound =
@@ -1983,7 +2001,7 @@ export function flattenAudio(
         // bar accidental, no transpose. Keyed on the written LETTER plus any accidental
         // prefix, which is `line[index]` at the moment the pitch is read, so the octave
         // marks that follow are not part of the key.
-        const mapped = percussion ? drumMap[writtenName(written)] : undefined
+        const mapped = item.percussion ? drumMap[writtenName(written)] : undefined
         if (mapped !== undefined) {
           const drum: MidiNote = {
             cmd: 'note',
