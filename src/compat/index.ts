@@ -1759,14 +1759,29 @@ export const synth = {
   supportsAudio,
   registerAudioContext,
   activeAudioContext,
-  /** `getMidiFile(source, options)` — a string is parsed, a tune array is used as given. */
+  /**
+   * `getMidiFile(source, options)` — a string goes through `renderEngine`, a tune array is
+   * used as given.
+   *
+   * ⚠️ **A STRING SOURCE YIELDS ONE TUNE, NOT ONE PER `X:`.** abcjs is
+   * `tunebook.renderEngine(callback, "*", source, params)` (`synth/get-midi-file.js:38`),
+   * and **`renderEngine` renders ONE TUNE PER OUTPUT SLOT** — `"*"` is a single headless
+   * slot, so a three-tune book gets the FIRST tune and nothing else. This mapped
+   * `parseOnly(source)` and answered one file per `X:`: three where abcjs gives one,
+   * measured on `abcjs-parse-book_parser-03-a`.
+   *
+   * **Exactly the divergence `renderAbc` itself had** (`CHECKPOINT-2026-08-15c`) — found
+   * then, fixed there, and this call site kept its own copy of the old shape. **A RULE
+   * PORTED AT THE SITE THAT NAMED IT IS NOT A RULE PORTED**, for the third time in this
+   * repo after `printStem`'s rounding and the `centerVertically` flag.
+   */
   getMidiFile(
     source: string | readonly TuneObject[],
     options: MidiFileParams = {},
   ): (string | Uint8Array)[] {
     const tunes =
       typeof source === "string"
-        ? parseOnly(source)
+        ? (renderEngine((_el, tune) => tune, "*", source, {}) as TuneObject[])
         : (source as readonly TuneObject[]);
     return getMidiFileFor(
       tunes.map((t) => t.score),

@@ -450,6 +450,24 @@ something, despite contributing nothing to the music.
 
 ---
 
+### A tune with no music writes `NaN` into the MIDI tempo
+
+`abc_midi_create.js:21` takes `var tempo = commands.tempo`, and a tune with no music has
+none, so `Math.round(60000000 / undefined)` is `NaN` and `toHex(NaN, 6)` pads the STRING
+`"NaN"` to six characters and slices it into byte pairs:
+
+    abcjs   %00%FF%51%03%00%0N%aN      ← the tempo is the characters of "NaN"
+    abcts   %00%FF%51%03%05%16%15      ← 333,333 microseconds, abcjs's own 180bpm default
+
+`%0N` and `%aN` are not hex. abcjs's own `midiOutputType: "binary"` decoder reads them with
+`parseInt(…, 16)` and gets 0 and 10, so the file it hands a host has a tempo of 0x000A0A
+microseconds — about 2.6 microseconds per quarter note — rather than the one it meant. **We
+decline to reproduce a corrupt file**, exactly as we decline the red `pitch is undefined`
+and `clef=x` debug strings above, and write the 180bpm default instead.
+
+*Verified by running `abcjs.synth.getMidiFile` over the corpus: 10 tunes of 231 hit it, all
+of them a header with no music. `toHex(NaN, 6)` reproduces `%00%0N%aN` exactly.*
+
 ## What abcts adds beyond fixing these
 
 `abcjs-extended` corrects the above, and every correction above is reached by opting out of strict:

@@ -156,13 +156,13 @@ export class MidiWriter {
   setGlobalInfo(
     qpm: number,
     name: string,
-    key: Score['key'] | AbcjsKey,
+    key: Score['key'] | AbcjsKey | undefined,
     time: { num: number; den: number },
   ) {
     if (this.trackcount !== 0) return
     this.startTrack()
     this.track += `%00%FF%51%03${toHex(Math.round(60000000 / qpm), 6)}`
-    this.track += keySignature(key)
+    if (key !== undefined) this.track += keySignature(key)
     this.track += timeSignature(time)
     if (name) this.track += encodeString(name, '%01')
     this.endTrack()
@@ -384,7 +384,31 @@ export function midiFile(score: Score, options: MidiFileOptions = {}): string {
   const tempo = commands.tempo
   const beatsPerSecond = tempo / 60
 
-  midi.setGlobalInfo(tempo, title, score.key, time)
+  /**
+   * ⚠️ **abcjs PASSES `abcTune.getKeySignature()` HERE, WHICH IS A WALK AND NOT A FIELD.**
+   * It scans `lines[].staff[]` for the first `key` and returns **`{}`** when there is none
+   * (`data/abc_tune.js:222-233`). `{}` is TRUTHY, so `if (key)` passes
+   * (`abc_midi_create.js:38`) and `keySignature` then bails on the missing `accidentals`
+   * and returns `""` (`abc_midi_renderer.js:184`). **Two guards, and only the inner one
+   * ever fires** — porting the outer `if (key)` alone is a gate nothing reaches, which is
+   * how the first attempt at this moved not one byte.
+   *
+   * We handed it `score.key`, which is always populated — C major standing in for "no key"
+   * — so the writer produced `%00%FF%59%02%00%00` for a tune abcjs writes no key signature
+   * for at all: six bytes, plus six on the track length. Measured over the first 20 corpus
+   * fixtures, **EIGHT of them**, every `book_parser` tune, each a header with no music.
+   *
+   * ⚠️ **AND `K:C` WITH MUSIC IS THE OPPOSITE CASE AND MUST KEEP ITS BYTES**: that key HAS
+   * an `accidentals`, empty, and `!key.accidentals` is false for `[]` — so abcjs writes
+   * `%00%FF%59%02%00%00` there. The predicate is whether the tune has a STAFF, not whether
+   * the key is C, which is why this mirrors the walk rather than reading `key.none`.
+   *
+   * The three-case `corpus-midi` oracle could not see any of it: all three tunes have music,
+   * so the walk finds a key in every row it has. **A GUARD IS INVISIBLE TO A CORPUS THAT
+   * NEVER MAKES IT FALSE.**
+   */
+  const keyForFile = score.voices.length === 0 ? undefined : score.key
+  midi.setGlobalInfo(tempo, title, keyForFile, time)
 
   commands.tracks.forEach((track, i) => {
     midi.startTrack()
