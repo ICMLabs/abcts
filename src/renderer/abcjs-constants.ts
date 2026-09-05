@@ -952,6 +952,30 @@ export const ABCJS_FONT_FACE: Readonly<Record<string, string>> = {
 }
 
 /**
+ * abcjs's DEFAULT WEIGHT AND STYLE per `%%…font` type — the OTHER two columns of
+ * `initializeFonts` (`parse/abc_parse_directive.js:22-44`), and they are not all `normal`.
+ *
+ * ⚠️ **A TYPE'S DEFAULT STYLE IS PART OF WHAT IT MEASURES WITH.** `getFontAndAttr` hands
+ * `getTextSize` the whole font object, so a tune that sets no `%%measurefont` is still
+ * measured ITALIC — and in Blink an italic `6` inks 9.982422 against an upright 9.5 at 19px,
+ * which is a bar number 0.24px out. WebKit inks every digit at 9.5 either way and cannot
+ * express it at all, which is why this survived WebKit reaching zero.
+ *
+ * Only the seven that differ are listed; everything else is `normal`/`normal`.
+ */
+export const ABCJS_FONT_DEFAULT_STYLE: Readonly<
+  Record<string, { readonly bold?: true; readonly italic?: true }>
+> = {
+  infofont: { italic: true },
+  measurefont: { italic: true },
+  tripletfont: { italic: true },
+  composerfont: { italic: true },
+  vocalfont: { bold: true },
+  tempofont: { bold: true },
+  voicefont: { bold: true },
+}
+
+/**
  * **THE DEBUG PROBES' ENVIRONMENT, AND THE ONLY PLACE `process` IS TOUCHED OUTSIDE THE CLI.**
  *
  * ⚠️ **`process` DOES NOT EXIST IN A BROWSER, AND READING IT AT MODULE SCOPE KILLS THE

@@ -57,6 +57,7 @@ import {
   ABCJS_ARC,
   ABCJS_CLEF_OFFSET_PITCH,
   ABCJS_FONT_FACE,
+  ABCJS_FONT_DEFAULT_STYLE,
   ABCJS_KEY_ACCIDENTAL_FUDGE_PITCH,
   ABCJS_PERC_NOTE_NAMES,
   ABCJS_PITCH,
@@ -6945,6 +6946,28 @@ const voiceFontOf = (size: number, fonts: Partial<Record<AbcFontType, LyricFont>
   }
 }
 
+/**
+ * A `%%<type>font`'s font as `getTextSize` receives it — the directive's where there is one
+ * and **abcjs's own default for that type where there is not**.
+ *
+ * ⚠️ **THE DEFAULT WEIGHT AND STYLE ARE PART OF IT, AND THEY ARE NOT ALL `normal`.**
+ * `initializeFonts` gives `measurefont`, `infofont`, `tripletfont` and `composerfont`
+ * ITALIC and `vocalfont`, `tempofont` and `voicefont` BOLD
+ * (`abc_parse_directive.js:22-44`), and `getFontAndAttr` hands the whole object to
+ * `getTextSize` — so a tune that sets no `%%measurefont` is still MEASURED italic. Reading
+ * only what the score SET dropped that, and an upright `6` inks 9.5 in Blink where an
+ * italic one inks 9.982422, which is `visual-wrap-03`'s bar number 6 at 29.75 against
+ * abcjs's 29.99.
+ *
+ * ⚠️ **AND NO GATE COULD SEE IT UNTIL CHROME WAS ONE.** WebKit inks every digit at 9.5
+ * upright OR italic, so it cannot express a per-digit width at all — which is how this
+ * survived WebKit reaching 0 of 685. **A comparison can only catch what its representation
+ * can express**, and here the representation was the browser.
+ *
+ * A directive REPLACES the font rather than amending it, so once `fonts[type]` exists its
+ * flags are authoritative INCLUDING when they are false — `%%measurefont Times 14` is
+ * upright, and only the absent case falls back.
+ */
 const fontOfType = (
   fonts: Partial<Record<AbcFontType, LyricFont>>,
   type: AbcFontType,
@@ -6952,11 +6975,14 @@ const fontOfType = (
 ): TextFont => {
   const f = fonts[type]
   const face = f?.face
+  const fallback = ABCJS_FONT_DEFAULT_STYLE[type] ?? {}
+  const bold = f === undefined ? fallback.bold === true : f.bold === true
+  const italic = f === undefined ? fallback.italic === true : f.italic === true
   return {
     size: size * UNIT_PX,
     family: face === undefined || face === '' ? (ABCJS_FONT_FACE[type] ?? 'Times New Roman') : face,
-    ...(f?.bold === true ? { weight: 'bold' } : {}),
-    ...(f?.italic === true ? { style: 'italic' } : {}),
+    ...(bold ? { weight: 'bold' } : {}),
+    ...(italic ? { style: 'italic' } : {}),
   }
 }
 
@@ -15549,7 +15575,11 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
      * A title is measured BARE because it has not been centred yet — that happens below,
      * against this width. Everything else is already placed, so it measures from its x.
      */
-    const textWidth_ = (t: { text: string; size: number }) => textWidth(t.text, t.size)
+    // …**AND IN THE ROW'S OWN FONT**, which is what `markFontOf` carries. Asking for a
+    // default serif here made the page's prose reach depend on a font nothing draws in —
+    // the same stand-in the lanes and advances were measured with, at the one site whose
+    // answer is a PAGE WIDTH rather than a position.
+    const textWidth_ = (t: PlacedText) => textWidth(t.text, t.size)
     const proseWidth = Math.max(
       0,
       ...staves.flatMap((staff) =>
