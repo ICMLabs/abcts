@@ -1461,7 +1461,8 @@ export function flattenAudio(
       if (totalDuration < meter.numerator / meter.denominator) return
       drumTrack.push({
         cmd: 'program',
-        channel: allVoices.length + 1,
+        // The channel after the last VOICE track, so it moves with a dropped staff too.
+        channel: soundingVoices.length + 1,
         instrument: PERCUSSION_PROGRAM,
       })
     }
@@ -1524,8 +1525,20 @@ export function flattenAudio(
       .filter((v): v is (typeof allVoices)[number] => v !== undefined)
   }
 
-  allVoices.forEach((voice, voiceIndex) => {
-    if (score.staffNoNote === true && !staffOf(voice).some(soundsIn)) return
+  /**
+   * ⚠️ **AND THE SURVIVORS ARE ITERATED, NOT SKIPPED OVER**, because the index IS the
+   * channel: abcjs seeds each track with `{cmd: 'program', channel: i}` where `i` runs over
+   * its OWN already-filtered voices (`abc_midi_flattener.js:117`). Returning early from a
+   * loop over every voice leaves the later ones on their original index, so a tune that
+   * drops a staff wrote `%b2` where abcjs writes `%b1` — the track count agreed and the
+   * channel did not. `voicesOff` indexes the same array in abcjs, so it moves with it.
+   */
+  const soundingVoices =
+    score.staffNoNote === true
+      ? allVoices.filter((v) => staffOf(v).some(soundsIn))
+      : allVoices
+
+  soundingVoices.forEach((voice, voiceIndex) => {
     const voiceOff =
       options.voicesOff === true ||
       (Array.isArray(options.voicesOff) && options.voicesOff.includes(voiceIndex))

@@ -80,7 +80,7 @@ const DIVERGENT: readonly string[] = [
 
 
 /**
- * **THE 637 TUNES THAT ARE BYTE-EXACT AND MUST STAY SO.** Named rather than counted: a
+ * **THE 638 TUNES THAT ARE BYTE-EXACT AND MUST STAY SO.** Named rather than counted: a
  * ratchet holding 4% of what is green is a ratchet in name, and `svg-bytes` twice had a
  * fixture go from exact to differing WHILE THE AGGREGATE IMPROVED. Add a slug the moment it
  * goes green, in the same commit that makes it so; never remove one to make a change pass.
@@ -609,6 +609,7 @@ const PASSING: readonly string[] = [
   "abcts-staffnonote-and-directives#2",
   "abcts-staffnonote-and-directives#3",
   "abcts-staffnonote-and-directives#4",
+  "abcts-staffnonote-and-directives#5",
   "abcts-staffnonote-and-directives#6",
   "abcts-staffnonote-and-directives#7",
   "abcts-staffnonote-and-directives#8",
@@ -732,7 +733,7 @@ const PASSING: readonly string[] = [
  * largest is `%%staffnonote 0` over pure rests, where abcjs drops every staff and emits NO
  * TRACKS and we emit one per voice.
  */
-const OPEN_CEILING = 35;
+const OPEN_CEILING = 34;
 
 const PREFIX = "data:audio/midi,";
 
