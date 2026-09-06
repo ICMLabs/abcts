@@ -66,9 +66,16 @@ disagree, and each of these has disagreed with the others at least once.
 sixteen real defects in code the other audio gates had called green for a month — the usual
 result when a new axis opens.
 
-**Out of scope by design:** soundfonts and WebAudio. We match the note stream and the MIDI
-file; turning those into sound is the host's job, the same split the renderer makes between
-geometry and glyph outlines.
+**And the SYNTH itself is ported and gated, which an earlier note here got wrong.** A
+2026-08-08 decision put WebAudio out of scope; it was REVERSED on 2026-08-15 when the scope
+became the whole of abcjs's `index.js`. `CreateSynth` fetches the same soundfonts from the
+same default URLs, and `tests/audio-recorder.ts` replaces `XMLHttpRequest`, `AudioContext`
+and `OfflineAudioContext` with recorders on BOTH engines — so which sound is fetched, where
+each note is placed in the output buffer and at what gain are all compared. The samples are
+fake and the placement is real.
+
+**What is NOT gated, and it is the one thing a website should smoke-test itself:** actual
+mp3 decoding and real `AudioContext` scheduling in a browser. Nothing here makes a sound.
 
 ---
 
@@ -143,6 +150,48 @@ Read this section before quoting the numbers above.
    not a milestone — it has happened eleven times, and the answer has always been to build
    the surface that expresses an axis none of the others can, or to render a control abcjs's
    own suite does not contain.
+
+---
+
+## 6. Swapping abcjs for abcts on a site
+
+Measured on 2026-09-06, not assumed.
+
+**What is already true**
+
+- **Zero missing symbols.** All 64 of abcjs's public symbols exist and behave;
+  `Object.keys` on the built CJS bundle against abcjs 6.7.0's shows *nothing* abcjs has that
+  we lack. We add a few extras, which is harmless.
+- **`signature` reports `abcjs-basic v6.7.0`**, because a host that version-sniffs is
+  sniffing for a behaviour contract we meet. `abctsSignature` says which engine it really is.
+- **Zero runtime dependencies.**
+- **The `<script>` build is browser-verified**, not just built: `zzlive` loads
+  `dist/abcts-browser.global.js` in WebKit and Chrome and diffs it against abcjs live.
+- **The published artifacts are gated too** — `npm run test:dist` renders the whole corpus
+  through `dist/` in ESM and CJS: 0 of 685 each.
+- **The audio-control CSS still applies.** `CreateSynthControl` emits abcjs's own class names
+  (`abcjs-inline-audio`, `abcjs-midi-start`, `abcjs-btn`, …), so a page already linking
+  `abcjs-audio.css` keeps its styling. **We ship no CSS of our own — keep that link.**
+
+**What the swap needs**
+
+- **The global is `ABCTS`, not `ABCJS`** — deliberately, so both can load in one page.
+  A `<script>`-tag host writes `window.ABCJS = window.ABCTS` itself.
+- **Bundler hosts** import `abcts/compat`, which is the abcjs-shaped surface.
+  The bare `abcts` entry is the core API and is a different shape.
+- **`package.json` is not release-ready**: `version` is `0.0.0`, and there is no
+  `repository`, `homepage`, `browser`, `unpkg` or `jsdelivr` field, so a CDN will not resolve
+  the script build by default. Those are release decisions, not defects.
+
+**What to smoke-test on the site itself**
+
+1. **Playback makes sound**, and the soundfont fetch is not blocked. Default URL is
+   `https://paulrosen.github.io/midi-js-soundfonts/FluidR3_GM/` — same as abcjs, so an
+   existing CSP already allows it, but check if the site passes its own `soundFontUrl`.
+2. **Anything reading `abcjs-extended`** — it is unreachable from `renderAbc`, which
+   hard-wires strict. Reach it with `ABCTS.core.render(score, { mode: 'abcjs-extended' })`.
+3. **The editor**, if the site uses `abcjs.Editor` — it is implemented and gated on 14
+   cases, but against recorded call sequences rather than a live textarea.
 
 ---
 
