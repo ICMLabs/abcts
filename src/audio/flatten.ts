@@ -423,6 +423,26 @@ function resolveRepeats<
   // `startEnding` after the `endRepeat` of the same measure and unrolls the wrong span.
   const lastIndex = measures.length - 1
   const sections: Section[] = [{ type: 'startRepeat', index: 0 }]
+  /**
+   * ⚠️ **A VOLTA ON THE FIRST MEASURE IS A SECTION TOO, AND THE BAR LOOP CANNOT SEE IT.**
+   * The loop below reads each barline's volta off the measure AFTER it, so measure 0's —
+   * written on the opening `|1` — is never anyone's `after`. abcjs has no such gap: its
+   * `addBar` files the `|1` at `voice.length - 1`, which for a leading barline is the last
+   * HEADER element, and the ending's span then runs from the first note.
+   *
+   * `|1"Gbmaj7"DEGB:|` is the shape: with no `startEnding` at all the repeat has an empty
+   * `endings` array, which is the PLAIN kind, so we played the bar TWICE where abcjs plays
+   * it once. Instrumented: abcjs's sections are `startRepeat -1 · startEnding 2 [1] ·
+   * endRepeat 7` and its one instruction is `{common -1..2, endings [_, 3..7]}` — a
+   * common span holding no music and an ending holding all of it.
+   *
+   * Open rows `abcjs-visual-tablature-17-stretchlast#0` and
+   * `abcjs-visual-options-01-fonts#0`.
+   */
+  const firstVolta = measures[0]?.volta
+  if (firstVolta != null && firstVolta !== '') {
+    sections.push({ type: 'startEnding', index: 0, endings: endingNumbers(firstVolta) })
+  }
   for (let k = 1; k <= measures.length; k += 1) {
     const before = measures[k - 1]
     const after = measures[k]
