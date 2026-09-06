@@ -2387,7 +2387,8 @@ export function flattenAudio(
         // `transpose` element. Reading it here as well put the voice an octave and a half
         // low — 23 against 47.
         const raw =
-          midiPitchOf(written, accidentals, barAccidentals, quarterAlter(item.event)) + transpose
+          midiPitchOf(written, accidentals, barAccidentals, quarterAlter(item.event, written)) +
+          transpose
         /**
          * `%%percmap` REPLACES THE PITCH OUTRIGHT, once the voice is on the drum kit.
          *
@@ -2551,9 +2552,24 @@ const transposeOfFactory =
   (item: Timed): number =>
     item.clefTranspose !== 0 ? item.clefTranspose : global
 
-/** A microtone's alteration in abcjs's units — `^/` is +0.25, `_3/2` is -0.75. */
-function quarterAlter(event: MusicEvent): number | null {
-  const cents = event.type === 'rest' ? 0 : event.microtoneCents
+/**
+ * A microtone's alteration in abcjs's units — `^/` is +0.25, `_3/2` is -0.75.
+ *
+ * ⚠️ **AND A QUARTER TONE IS A PROPERTY OF THE HEAD, NOT OF THE EVENT.** `getCoreNote` runs
+ * per pitch on both paths (`abc_parse_music.js:357`), so `[^/CE]` is a HALFSHARP C beside a
+ * plain E — while our model carries ONE `microtoneCents` per chord and the parser leaves it
+ * at 0 with a `ponytail:` beside it. `layout.ts:4661-4669` already answers this from the
+ * head's own `writtenAccidental`, with that citation; the flattener asked the event and so
+ * sounded `[^/CE]` as a full sharp, pitch 61 with no detune, where abcjs plays 60 at +50
+ * cents. Open row `abcts-ledger-gaps#4`.
+ */
+function quarterAlter(
+  event: MusicEvent,
+  pitch?: { readonly writtenAccidental?: string },
+): number | null {
+  const written = pitch?.writtenAccidental
+  const cents =
+    written === '^/' ? 50 : written === '_/' ? -50 : event.type === 'rest' ? 0 : event.microtoneCents
   return cents === 0 ? null : cents / 200
 }
 
