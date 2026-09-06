@@ -3323,6 +3323,21 @@ class Parser {
   private readonly scores: Score[] = []
   private readonly diagnostics: Diagnostic[] = []
   private builder: ScoreBuilder | null = null
+  /**
+   * **`%%beginps` … `%%endps` — abcjs SWALLOWS THE BLOCK AND WARNS ONCE.** Its arm reads
+   * `line = tokenizer.nextLine(); while (line && line.indexOf('%%endps') !== 0)
+   * { tokenizer.nextLine(); }` then `warn("Postscript ignored", str, 0)`
+   * (`abc_parse_directive.js:969-975`), so the whole block is consumed and ONE warning is
+   * raised — at the line the tokenizer stopped on, which is the `%%endps` line, column 0,
+   * pointing into the text `beginps`.
+   *
+   * ⚠️ **AND THE LOOP NEVER REASSIGNS `line`, so a NON-EMPTY block never returns.** That is
+   * a declared divergence (`ABCJS-DIFFERENCES.md`) — we decline to reproduce a hang, and a
+   * host handing user-supplied ABC to a parser that can be made to spin forever has a
+   * denial of service rather than a rendering difference. We consume the body and warn the
+   * same once, which is what abcjs would do if its `line` were reassigned.
+   */
+  private inPsBlock = false
   private inTextBlock = false
   /** Lines gathered since `%%begintext`, closed into one block by `%%endtext`. */
   private textBlock: string[] = []
@@ -3448,6 +3463,22 @@ class Parser {
     //
     // The WHOLE block is ONE `FreeText`, however many lines it holds — abcjs draws it as a
     // single `<text>` with a `tspan` per line and reserves one multi-line height for it.
+    if (this.inPsBlock) {
+      // An `X:` closes it too, for the same reason `%%begintext` needs that arm: an
+      // unterminated block must not swallow every remaining tune in the file.
+      const closed = line.startsWith('%%endps')
+      if (closed || /^X:/.test(line)) {
+        this.inPsBlock = false
+        // The range is THIS line's, because abcjs's warning carries the line number the
+        // tokenizer stopped on rather than the one the directive was written on.
+        this.warn('postscript-ignored', 'Postscript ignored', sourceRange(start, end))
+        if (closed) return
+      } else return
+    }
+    if (line.startsWith('%%beginps')) {
+      this.inPsBlock = true
+      return
+    }
     if (this.inTextBlock) {
       if (line.startsWith('%%endtext')) {
         this.inTextBlock = false

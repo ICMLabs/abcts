@@ -153,6 +153,7 @@ const PASSING: readonly string[] = [
   "repo/abcts-staffnonote-and-directives-tune13",
   "repo/abcts-staffnonote-and-directives-tune14",
   "repo/abcts-staffnonote-and-directives-tune15",
+  "repo/abcts-staffnonote-and-directives-tune16",
   "repo/abcts-staffnonote-and-directives-tune6",
   /**
    * `abcts-unknown-clef.abc` — `Expected clef name. Found x`, which the clef arm raises

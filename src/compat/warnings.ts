@@ -363,6 +363,18 @@ const AS_ABCJS: Record<
         };
   },
   /** `letter_to_chord`'s own, raised at the opening quote (`abc_parse_music.js:604`). */
+  /**
+   * **`%%beginps` — ONE WARNING, AND NEITHER ITS LINE NOR ITS TEXT IS THE DIRECTIVE'S.**
+   * `warn("Postscript ignored", str, 0)` runs AFTER the block has been consumed, so the
+   * line number is the `%%endps` one the tokenizer stopped on, while `str` is the
+   * directive's own NAME — no `%%`, no body (`abc_parse_directive.js:969-975`). The parser
+   * files the diagnostic against the closing line for the first half; this is the second.
+   */
+  "postscript-ignored": () => ({
+    message: "Postscript ignored",
+    column: 0,
+    text: "beginps",
+  }),
   "chord-unterminated-quote": (diagnostic, abc) => {
     const at = diagnostic.range?.start ?? 0;
     let start = 0;
