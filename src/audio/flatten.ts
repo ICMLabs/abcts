@@ -1048,11 +1048,27 @@ function sequenceVoice(
       written += dur
       let tiedOver = false
       let silenced: Set<string> | undefined
+      /** The pitch names this element carries — see the tie-death rule below. */
+      const touched = new Set<string>()
       if (event.type === 'note') {
         const name = `${event.pitch.step}${event.pitch.octave}`
+        touched.add(name)
         const open = ties.get(name)
         if (open !== undefined) {
-          durations[open] = (durations[open] ?? 0) + dur
+          /**
+           * **A NOTE CLOSING A CHORD'S TIE EXTENDS THAT HEAD, NOT THE CHORD.** abcjs merges
+           * into `voice[tie.el].pitches[tie.pitch].duration` — a PITCH's duration
+           * (`abc_midi_flattener.js:305-307`) — where `durations` here is the element's, so
+           * `[CE]-C|` handed E the C's extension too: abcjs sounds C 0.25 and E 0.125, we
+           * sounded both 0.25. The chord arm below already writes the head; this is the
+           * same write from the other side.
+           */
+          const opener = out[open]
+          if (opener?.event?.type === 'chord') {
+            const extra = opener.tieExtra ?? new Map<string, number>()
+            extra.set(name, (extra.get(name) ?? 0) + dur)
+            ;(opener as { tieExtra?: Map<string, number> }).tieExtra = extra
+          } else durations[open] = (durations[open] ?? 0) + dur
           tiedOver = true
           ties.delete(name)
         }
@@ -1072,6 +1088,7 @@ function sequenceVoice(
           event.tiedPitches ?? (event.tiedToNext ? event.pitches.map(() => true) : [])
         for (const [k, head] of event.pitches.entries()) {
           const name = `${head.step}${head.octave}`
+          touched.add(name)
           const open = ties.get(name)
           let carried = false
           if (open !== undefined) {
@@ -1091,6 +1108,29 @@ function sequenceVoice(
         // the whole-event flag already says.
         tiedOver = silenced !== undefined && silenced.size === event.pitches.length
       }
+      /**
+       * ⚠️ **A TIE CLOSES ON THE VERY NEXT NOTE ELEMENT AND DIES THERE IF IT CANNOT.**
+       * abcjs's PARSER, not its flattener, decides what may close a tie: it stamps
+       * `endTie` on the element that FOLLOWS the tied one whatever its pitch, and
+       * `preProcess` then looks that pitch up in its `ties` table — a miss just
+       * `delete pitch.endTie`, and the leftover `startTie` is dropped by the loop after
+       * the walk (`abc_midi_flattener.js:280-318`). So an open tie never survives one
+       * element.
+       *
+       * Measured through both engines, one variable per rung:
+       *
+       *     C-z C|     abcjs 0.125 + 0.125   ours 0.25          ← the rest kills it
+       *     C-D C|     abcjs three notes     ours 0.25 + D
+       *     [CE]-C|    abcjs C 0.25, E 0.125 ours E 0.25 too
+       *     C-|C|      both 0.25                                ← a BARLINE is not one
+       *     C-y C|     both 0.25                                ← nor is a `y` SPACER
+       *
+       * A REST is `el_type: 'note'` with no pitches and takes the `endTie` with it; a `y`
+       * is not, which is the same split the `currentTrackMilliseconds` stamp draws.
+       * Open row `abcts-rests-and-bars#1`.
+       */
+      if (event.type !== 'rest' || event.kind !== 'spacer')
+        for (const name of [...ties.keys()]) if (!touched.has(name)) ties.delete(name)
       out.push({
         kind: 'note',
         line,
