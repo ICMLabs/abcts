@@ -166,7 +166,11 @@ Measured on 2026-09-06, not assumed.
   sniffing for a behaviour contract we meet. `abctsSignature` says which engine it really is.
 - **Zero runtime dependencies.**
 - **The `<script>` build is browser-verified**, not just built: `zzlive` loads
-  `dist/abcts-browser.global.js` in WebKit and Chrome and diffs it against abcjs live.
+  `dist/abcts-browser.global.js` in WebKit and Chrome and diffs it against abcjs live —
+  **including the minification**, so a minifier that broke something would show up on 685
+  byte comparisons rather than on someone's site. It is **666 KB raw, 175 KB brotli**
+  (abcjs's own min build is 122 KB brotli). The esm/cjs builds stay unminified, because a
+  consuming bundler minifies them with better information than we have.
 - **The published artifacts are gated too** — `npm run test:dist` renders the whole corpus
   through `dist/` in ESM and CJS: 0 of 685 each.
 - **The audio-control CSS still applies.** `CreateSynthControl` emits abcjs's own class names

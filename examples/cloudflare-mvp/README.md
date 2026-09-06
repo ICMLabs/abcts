@@ -22,8 +22,8 @@ npm run build
 cp dist/abcts-browser.global.js examples/cloudflare-mvp/public/vendor/
 ```
 
-1.4 MB raw, **0.36 MB gzipped** — Cloudflare compresses it in transit, so that is what a
-visitor pays.
+**666 KB raw, 175 KB brotli** — minified, and brotli is what Cloudflare actually serves, so
+that is what a visitor pays. (abcjs's own `abcjs-basic-min.js` is 122 KB brotli, for scale.)
 
 > For a bundler-based site instead of a script tag, `npm pack` here and
 > `npm i ./abcts-0.0.0.tgz` there, then `import { renderAbc } from "abcts/compat"`. The
