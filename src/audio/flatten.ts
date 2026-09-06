@@ -437,11 +437,26 @@ function resolveRepeats<
       }
       sections.push({ type: 'endRepeat', index: k })
     }
-    if (opens) sections.push({ type: 'startRepeat', index: k })
+    /**
+     * ⚠️ **AND THE `startEnding` GOES BEFORE THE `startRepeat`, NOT AFTER IT.** abcjs's
+     * three pushes are `endRepeat`, `startEnding`, `startRepeat` in that order on ONE bar
+     * element (`synth/repeats.js:16-21`) — the note at the head of this function already
+     * said so and the code below it had the last two the other way round.
+     *
+     * `::2E8` is the bar that shows it: with the ending pushed LAST, the `startRepeat` arm
+     * runs while the ending for `2` does not exist yet, so `sections[i-1]` is the
+     * `endRepeat`, the "one more bare pass" rule fires for a pass that belongs to nothing,
+     * and the `2` ending lands in the NEXT repeat dragging a backwards common span with
+     * it. `|:C8|1D8::2E8||F8:|` came out `C D C E F` where abcjs plays `C D C E F E F` —
+     * the trailing `:|` repeating the whole `2E8||F8` section, which reaches the emitter
+     * as an `endings: []` plain repeat. Instrumented in a scratchpad abcjs. Open row
+     * `abcjs-synth-synth-y01#0`.
+     */
     if (after?.volta != null) {
       const endings = endingNumbers(after.volta)
       if (endings.length > 0) sections.push({ type: 'startEnding', index: k, endings })
     }
+    if (opens) sections.push({ type: 'startRepeat', index: k })
   }
 
   /**

@@ -145,6 +145,7 @@ const PASSING: readonly string[] = [
   "abcjs-synth-midi-01-midi-options#0",
   "abcjs-synth-midi-02-staccato#0",
   "abcjs-synth-midi-03-percmap#0",
+  "abcjs-synth-synth-y01#0",
   "abcjs-synth-timing-01-cde-fg-ab-1-bcd-2-efg#0",
   "abcjs-synth-timing-02-score-1-2#0",
   "abcjs-synth-timing-03-cd-e-f-3gab-ac#0",
@@ -759,7 +760,7 @@ const PASSING: readonly string[] = [
  * largest is `%%staffnonote 0` over pure rests, where abcjs drops every staff and emits NO
  * TRACKS and we emit one per voice.
  */
-const OPEN_CEILING = 8;
+const OPEN_CEILING = 7;
 
 const PREFIX = "data:audio/midi,";
 
