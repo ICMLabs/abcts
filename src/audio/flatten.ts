@@ -727,7 +727,7 @@ interface WrittenTimeline {
   readonly positionOf: Map<object, number>
 }
 
-function writtenTimeline(voice: Voice): WrittenTimeline {
+function writtenTimeline(voice: Voice, startMeter: Meter | null): WrittenTimeline {
   const durationsOf = new Map<object, number[]>()
   const positionOf = new Map<object, number>()
   let written = 0
@@ -747,6 +747,7 @@ function writtenTimeline(voice: Voice): WrittenTimeline {
    * construction, so one flat pass answers both. Open row
    * `abcts-bars-graces-and-groups#19`.
    */
+  let meter: Meter | null = startMeter
   const flat = voice.measures.flatMap((m) => m.events)
   /** The same walk, indexed by group, so a tuplet start is not a scan of the voice. */
   const inGroupOf = new Map<number, MusicEvent[]>()
@@ -760,6 +761,7 @@ function writtenTimeline(voice: Voice): WrittenTimeline {
   let flatIndex = -1
 
   for (const measure of voice.measures) {
+    if (measure.meterChange !== null) meter = measure.meterChange
     positionOf.set(measure, written)
     const durations: number[] = []
     for (const [index, event] of measure.events.entries()) {
@@ -780,11 +782,19 @@ function writtenTimeline(voice: Voice): WrittenTimeline {
       // written duration is one bar — abcjs multiplies by `measureLength` where we carried
       // the single bar through, so everything after it on `flatten-multi-measure-rest` ran
       // three whole notes early.
-      const bars =
+      /**
+       * ⚠️ **AND THE MEASURE IT IS AS LONG AS IS THE METER'S, NOT A WHOLE NOTE.** abcjs's
+       * PARSER already hands the flattener the full span — `Z3` is `duration: 1.5` under
+       * `M:2/4`, `3` under `4/4` and `2.25` under `6/8`, asked of abcjs at all three — so
+       * the count multiplies the METER's measure length. Ours multiplied the event's own
+       * duration, which our model makes a whole note, and `4/4` is the meter where the two
+       * agree: `Z24` under `M:2/4` put the next note at 24 where abcjs puts it at 12.
+       * Open row `abcjs-visual-parsing-10-song#0`.
+       */
+      const multiMeasure =
         event.type === 'rest' &&
         (event.kind === 'multiMeasure' || event.kind === 'invisibleMultiMeasure')
-          ? (event.measureCount ?? 1)
-          : 1
+      const bars = multiMeasure ? (event.measureCount ?? 1) : 1
       /**
        * A TRIPLET'S LAST NOTE IS THE REMAINDER, NOT A THIRD — and that is the whole of the
        * `0.083333` vs `0.083334` on the table.
@@ -827,7 +837,13 @@ function writtenTimeline(voice: Voice): WrittenTimeline {
        *     the group's total, and it IS ported now, just below.
        */
       const tuplet = event.tuplet
-      let dur = spacer ? 0 : ratToNumber(event.duration) * bars
+      let dur = spacer
+        ? 0
+        : multiMeasure
+          ? // A tune with no `M:` still has a measure length and it is 1 — abcjs's own
+            // `var measureLength = 1` default (`abc_midi_sequencer.js:10`).
+            bars * (meter === null ? 1 : meter.numerator / meter.denominator)
+          : ratToNumber(event.duration)
       /**
        * **A ZERO-LENGTH NOTE IS TIMED AS A QUARTER** — `noteElem.duration =
        * (elem.duration === 0) ? 0.25 : elem.duration` (`abc_midi_sequencer.js:252`),
@@ -917,7 +933,7 @@ function collectTempoChanges(
 ): Map<number, number> {
   const changes = new Map<number, number>([[0, startingTempo]])
   for (const voice of voices) {
-    const { durationsOf, positionOf } = writtenTimeline(voice)
+    const { durationsOf, positionOf } = writtenTimeline(voice, score.meter)
     let meter = score.meter
     for (const measure of voice.measures) {
       if (measure.meterChange !== null) meter = measure.meterChange
@@ -1026,7 +1042,7 @@ function sequenceVoice(
    * restore the opening tempo rather than being a no-op at an already-changed position.
    */
   let lastTempo = startingTempo
-  const { durationsOf, positionOf } = writtenTimeline(voice)
+  const { durationsOf, positionOf } = writtenTimeline(voice, score.meter)
   /** Open ties, keyed by written pitch, holding the index into `out` that owns them. */
   const ties = new Map<string, number>()
   const durations: number[] = []

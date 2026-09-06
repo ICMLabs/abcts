@@ -204,6 +204,7 @@ const PASSING: readonly string[] = [
   "abcjs-visual-parsing-07-score-t-b#0",
   "abcjs-visual-parsing-08-score-t-b#0",
   "abcjs-visual-parsing-09-score-t-b#0",
+  "abcjs-visual-parsing-10-song#0",
   "abcjs-visual-parsing-x10#0",
   "abcjs-visual-parsing-x11#0",
   "abcjs-visual-parsing-x12#0",
@@ -760,7 +761,7 @@ const PASSING: readonly string[] = [
  * largest is `%%staffnonote 0` over pure rests, where abcjs drops every staff and emits NO
  * TRACKS and we emit one per voice.
  */
-const OPEN_CEILING = 7;
+const OPEN_CEILING = 6;
 
 const PREFIX = "data:audio/midi,";
 
