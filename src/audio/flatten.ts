@@ -2295,11 +2295,26 @@ function quarterAlter(event: MusicEvent): number | null {
   return cents === 0 ? null : cents / 200
 }
 
-/** `startSlur`/`endSlur` counts, which a chord carries on its own events. */
+/**
+ * ⚠️ **A SLUR MARK WRITTEN AROUND A CHORD IS INVISIBLE TO THE FLATTENER, AND THAT IS NOT A
+ * BUG WE GET TO FIX.** abcjs hangs the mark on `pitches[0]` for a single note and on the
+ * ELEMENT for a chord — one pitch or three, `([C]D)` included — while the flattener reads
+ * `note.startSlur`/`note.endSlur` off the PITCH inside its own pitch loop
+ * (`abc_midi_flattener.js:579-582`). So an element-level mark never reaches `slurCount`.
+ *
+ * Asked of abcjs rather than reasoned, on a seven-rung ladder:
+ *
+ *     ([CE]G)      the chord's OPEN is lost, so no note of the bar is tenuto
+ *     (C[EG])      the chord's CLOSE is lost, so the count stays 1 and the chord IS tenuto
+ *     ([CE][GB])   both lost — every gap 0
+ *     ([C]D)       a one-pitch chord is still a chord
+ *
+ * A mark written INSIDE the brackets is a PITCH's and counts per head; that is the
+ * `written.slurStarts` arm at the head loop. Open rows `abcts-slur-shapes#1,6,7`.
+ */
 const slurStartsOf = (event: MusicEvent): number =>
-  event.type === 'note' ? event.slurStarts : event.type === 'chord' ? event.slurStarts : 0
-const slurEndsOf = (event: MusicEvent): number =>
-  event.type === 'note' ? event.slurEnds : event.type === 'chord' ? event.slurEnds : 0
+  event.type === 'note' ? event.slurStarts : 0
+const slurEndsOf = (event: MusicEvent): number => (event.type === 'note' ? event.slurEnds : 0)
 
 /**
  * abcjs's `processVolume`, and it is a BEAT-STRESS model rather than a dynamic one.
