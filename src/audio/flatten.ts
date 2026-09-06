@@ -2008,7 +2008,33 @@ export function flattenAudio(
             options.drumOff === true && voiceIndex === 0,
           )
         : sequenced
-    /** The running stress table — abcjs's `currentVolume`, seeded at the default triple. */
+    /**
+     * ⚠️ **`currentVolume` AND `stressBeat1/Down/Up` ARE TWO VARIABLES IN TWO FILES, AND
+     * CONFLATING THEM IS WHY TWO EARLIER PORTS OF THIS WERE REVERTED** (`ABCJS-DEBT.md`
+     * §3b.5, which is now CLOSED by this).
+     *
+     * The SEQUENCER's `currentVolume = [105, 95, 85, 1]` sits immediately before
+     * `for (var v = 0; v < voice.length; v++)` (`abc_midi_sequencer.js:223-225`), and that
+     * loop runs once per **(line, staff, voice)** — so it restarts at every source line.
+     * The FLATTENER's `stressBeat*` are reset once per `flatten()` (`:76-79`) and change
+     * only when an `el_type: 'beat'` row reaches them.
+     *
+     * **The reset is therefore INVISIBLE until a beat row is pushed**, and only a hairpin
+     * step or a dynamic pushes one (`:234`, `:241`, `:468`). That is the whole reconciliation:
+     * a voice with neither carries the PREVIOUS voice's table (the `!mp!`-across-voices
+     * finding, `cd53b74`), while a hairpin crossing a line boundary steps from the DEFAULT
+     * again rather than from where it had climbed to.
+     *
+     * `abcts-ledger-gaps-4#1` is the row: abcjs `105,102,109,116,112,109,116,123` against
+     * our `105,102,109,116,127,127,127,127`. Resetting `stress` itself — which is what both
+     * reverted attempts did, conditionally and then unconditionally — breaks the carry;
+     * resetting only this one does not.
+     *
+     * The hairpin's own STEP is `Math.floor((top - currentVolume[0]) / n)` (`:480`), so it
+     * is measured from this variable too, never from the flattener's table.
+     */
+    let currentVolume: [number, number, number] = [105, 95, 85]
+    let lastLine = -1
     /** Per-note increment while a hairpin is open; 0 when none is. */
     let hairpin = 0
     /** `volumesPerNotePitch` — one stress table per pitch of a chord. Empty when none. */
@@ -2016,6 +2042,13 @@ export function flattenAudio(
     let currentKey = score.key
     for (const [index, item] of timed.entries()) {
       const decorations = item.decorations.map(canonical)
+      // …and the reset is per LINE-VOICE, which is where that loop begins. `inCrescendo`
+      // and `inDiminuendo` are declared OUTSIDE it (`abc_midi_sequencer.js:140-141`), so an
+      // open hairpin survives the boundary and steps from the restored default.
+      if (item.line !== lastLine) {
+        lastLine = item.line
+        currentVolume = [105, 95, 85]
+      }
       // THE HAIRPIN MOVES FIRST AND THE DYNAMIC OVERRIDES IT, which is abcjs's order in
       // its own loop: the crescendo increment is applied at the top of the `note` arm and
       // `setDynamics` is called immediately after (`abc_midi_sequencer.js:229-245`).
@@ -2024,7 +2057,12 @@ export function flattenAudio(
       // on it; letting one step the volume as well put every bar of `flatten-dynamics2`
       // four louder than abcjs's.
       if (item.kind === 'note' && hairpin !== 0) {
-        stress = [stress[0] + hairpin, stress[1] + hairpin, stress[2] + hairpin]
+        currentVolume = [
+          currentVolume[0] + hairpin,
+          currentVolume[1] + hairpin,
+          currentVolume[2] + hairpin,
+        ]
+        stress = [...currentVolume]
         /**
          * ⚠️ **AND THE HAIRPIN DROPS THE PER-PITCH TABLE, BECAUSE IN abcjs IT IS NOT STATE
          * — IT RIDES A ROW.** `volumesPerNotePitch` is written onto an `el_type: 'beat'`
@@ -2048,7 +2086,8 @@ export function flattenAudio(
       }
       const named = DYNAMIC_ORDER.find((d) => decorations.includes(d))
       if (named !== undefined) {
-        stress = [...(DYNAMIC_VOLUMES[named] as readonly [number, number, number])]
+        currentVolume = [...(DYNAMIC_VOLUMES[named] as readonly [number, number, number])]
+        stress = [...currentVolume]
         /**
          * A CHORD CAN CARRY ONE DYNAMIC PER NOTE — `volumesPerNotePitch`.
          *
@@ -2069,9 +2108,9 @@ export function flattenAudio(
         hairpin = 0
       }
       if (decorations.includes('crescendo(')) {
-        hairpin = hairpinStep(timed, index, stress[0], 'crescendo)', CRESCENDO_SIZE)
+        hairpin = hairpinStep(timed, index, currentVolume[0], 'crescendo)', CRESCENDO_SIZE)
       } else if (decorations.includes('diminuendo(')) {
-        hairpin = hairpinStep(timed, index, stress[0], 'diminuendo)', -CRESCENDO_SIZE)
+        hairpin = hairpinStep(timed, index, currentVolume[0], 'diminuendo)', -CRESCENDO_SIZE)
       } else if (decorations.includes('crescendo)') || decorations.includes('diminuendo)')) {
         hairpin = 0
       }

@@ -316,7 +316,29 @@ viewBox does that work instead. Whether the two roots should agree about `%%scal
 markup question for the core emitter, not an abcjs-debt one.
 
 
-### 3b.5 The sequencer resets its volume per LINE-VOICE, and we do not — MEASURED, NOT LANDED
+### 3b.5 The sequencer resets its volume per LINE-VOICE — ✅ CLOSED 2026-09-06
+
+**PORTED, AND THE THING THAT MADE IT PORTABLE WAS SPLITTING ONE VARIABLE INTO TWO.** The
+entry below is kept because its measurements are what the fix was built on and because the
+reason two earlier attempts failed is the finding.
+
+`currentVolume` (the SEQUENCER's, `abc_midi_sequencer.js:223`) and `stressBeat1/Down/Up`
+(the FLATTENER's, `abc_midi_flattener.js:76-79`) are two variables in two files, and
+`flatten.ts` had modelled them as one. The sequencer's restarts at every (line, staff,
+voice); the flattener's is reset once per `flatten()` and changes only when an
+`el_type: 'beat'` row reaches it — which only a hairpin step or a dynamic pushes
+(`:234`, `:241`, `:468`).
+
+**That is the whole reconciliation.** A voice with neither carries the previous voice's
+table, which is the `!mp!`-across-voices finding (`cd53b74`); a hairpin crossing a line
+boundary steps from the restored default rather than from where it had climbed. Both
+reverted attempts reset the FLATTENER's table, conditionally and then unconditionally, and
+each broke the half the other kept. `abcts-ledger-gaps-4#1` is byte-exact and ratcheted, the
+suite is 2,470 and no other row moved.
+
+---
+
+#### The original entry, for its measurements
 
 `currentVolume = [105, 95, 85, 1]` sits immediately before
 `for (var v = 0; v < voice.length; v++)` (`abc_midi_sequencer.js:223-225`), and that loop
