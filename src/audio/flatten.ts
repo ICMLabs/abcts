@@ -955,10 +955,18 @@ function sequenceVoice(
               (e.sourceRange?.start ?? Number.POSITIVE_INFINITY) <
               (measure.clefChangeSourceRange?.start ?? 0),
           ).length
-    if (clef != null) {
-      if (clefChangeAt === 0) clefPercussion = clef.shape === 'percussion'
-      if (clef.octaveShift !== 0) {
-        clefTranspose = clef.octaveShift * 12
+    /**
+     * ⚠️ **AND THE OCTAVE MOVES AT THE CLEF, NOT AT THE MEASURE** — the same granularity
+     * the drummap above has, and it was ported for the drummap alone. A mid-line clef is
+     * its OWN element in abcjs's voice stream and pushes its `transpose` where it is
+     * written (`abc_midi_sequencer.js:300-308`), so `CD[K:C bass-8]EF|` sounds
+     * 60, 62, 52, 53 — asked of abcjs, not reasoned. We shifted the whole measure, so `C`
+     * and `D` sounded a whole octave low. `compat/sequence.ts:736-744` already carries the
+     * rule; this is the audio half of it. Open row `abcts-clef-midmeasure#13`.
+     */
+    const applyClefOctave = (c: Clef) => {
+      if (c.octaveShift !== 0) {
+        clefTranspose = c.octaveShift * 12
         clefOctaveActive = true
       } else if (voice.transpose !== 0) {
         // `V:… transpose=` is pushed as its own `transpose` element BEFORE the `±8` arm
@@ -970,6 +978,10 @@ function sequenceVoice(
         clefTranspose = 0
         clefOctaveActive = false
       }
+    }
+    if (clef != null && clefChangeAt === 0) {
+      clefPercussion = clef.shape === 'percussion'
+      applyClefOctave(clef)
     }
     if (measure.keyChange !== null) key = measure.keyChange
     if (measure.meterChange !== null) meter = measure.meterChange
@@ -995,8 +1007,10 @@ function sequenceVoice(
     let first = true
     for (const [eventIndex, event] of measure.events.entries()) {
       // …and a change written INSIDE the measure turns the drummap on at that note.
-      if (clef != null && clefChangeAt > 0 && eventIndex === clefChangeAt)
+      if (clef != null && clefChangeAt > 0 && eventIndex === clefChangeAt) {
         clefPercussion = clef.shape === 'percussion'
+        applyClefOctave(clef)
+      }
       // THE TEMPO IN FORCE IS LOOKED UP BY WRITTEN POSITION, not carried from the measure.
       // Every voice's `[Q:]` is in the same table, so this note may be re-timed by a change
       // written three staves below it — see `collectTempoChanges`.
