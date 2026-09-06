@@ -84,8 +84,8 @@ controller.setTune(visualObj, false, { soundFontUrl: "/soundfont/" });
 ```
 
 ⚠️ **Do not inline the mp3s into your JS.** Measured: one instrument as base64 is **2.63 MB**
-(~2 MB gzipped — base64 of already-compressed audio barely compresses), against a 0.36 MB
-bundle today. All 128 GM instruments would be ~330 MB. A real tune fetches 205–717 KB
+(~2 MB gzipped — base64 of already-compressed audio barely compresses), against a 175 KB
+brotli bundle. All 128 GM instruments would be ~330 MB. A real tune fetches 205–717 KB
 lazily, on first play only, and never again. See `Docs/PARITY-STATUS.md` §6.
 
 ⚠️ **And check the licence before redistributing.** Serving FluidR3_GM from your own origin
