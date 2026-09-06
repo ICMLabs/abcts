@@ -1501,6 +1501,19 @@ export function flattenAudio(
   let program = Math.trunc(options.program ?? 0)
   let channel = Math.trunc(options.channel ?? 0)
   let transposeGlobal = Math.trunc(options.midiTranspose ?? 0)
+  /**
+   * **`%%bagpipes` IS A PROGRAM CHANGE** — `if (bagpipes) program = 71`
+   * (`abc_midi_sequencer.js:47-49`), read off `abctune.formatting.bagpipes` and set BEFORE
+   * the `%%MIDI program` reads below, so a tune naming its own program still wins.
+   *
+   * The directive's other half is not implemented in abcjs at all: the flattener's
+   * `case "bagpipes": bagpipes = true` assigns a variable READ NOWHERE ELSE in the file
+   * (`abc_midi_flattener.js:17, 62, 167-168` are its only four mentions), so the comment
+   * promising the grace notes play on top of the main note describes nothing.
+   * `compat/sequence.ts:485-486` already carried the program; this is the audio half.
+   * Open row `abcts-directives#8`.
+   */
+  if (score.bagpipes) program = 71
   /** `channelExplicitlySet` — a tune that named a channel or program keeps what it asked. */
   let channelExplicit = false
   // `%%MIDI program 4` sets the instrument; `%%MIDI program 2 4` sets channel AND
