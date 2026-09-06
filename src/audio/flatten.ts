@@ -377,6 +377,15 @@ interface Section {
   readonly type: 'startRepeat' | 'endRepeat' | 'startEnding'
   readonly index: number
   readonly endings?: readonly number[]
+  /**
+   * The trailing synthetic `startRepeat`, and it is the ONE section abcjs does not place
+   * on a bar: its index is `lastSection.index + 1`, the element AFTER the barline, which
+   * is the first note of that measure. Everything else here is indexed by barline, so a
+   * span ending at a section stops one measure short — but a span ending at THIS one
+   * reaches the measure itself, which is how abcjs's gap span and the final span overlap
+   * on it. See the gap arm below.
+   */
+  readonly synthetic?: true
 }
 
 /** `"1"`, `"1,3"`, `"1-3"` — anything that is not a number at all is skipped. */
@@ -452,9 +461,21 @@ function resolveRepeats<
      * as an `endings: []` plain repeat. Instrumented in a scratchpad abcjs. Open row
      * `abcjs-synth-synth-y01#0`.
      */
-    if (after?.volta != null) {
-      const endings = endingNumbers(after.volta)
-      if (endings.length > 0) sections.push({ type: 'startEnding', index: k, endings })
+    /**
+     * ⚠️ **AND A LABEL THAT NAMES NO NUMBER IS STILL A `startEnding`.** abcjs writes
+     * `var startEnding = elem.startEnding ? startEndingNumbers(elem.startEnding) :
+     * undefined` and then `if (startEnding)` — and `[]` is TRUTHY in JS
+     * (`synth/repeats.js:12, 19`), so a quoted `["first"]`, which parses to no numbers at
+     * all, pushes a section whose `endings` is empty. That empty array reaches
+     * `currentRepeat.endings` and turns the repeat into the PLAIN kind, which the emitter
+     * copies TWICE.
+     *
+     * We skipped the push when the parse gave nothing, so `C2|["first"] D2:|["second"]
+     * E2|]` unrolled as a bare repeat of the whole thing — `C D C D E` where abcjs plays
+     * `C C D E E`. Open row `abcts-endings#2`.
+     */
+    if (after?.volta != null && after.volta !== '') {
+      sections.push({ type: 'startEnding', index: k, endings: endingNumbers(after.volta) })
     }
     if (opens) sections.push({ type: 'startRepeat', index: k })
   }
@@ -480,7 +501,7 @@ function resolveRepeats<
     lastSection.type !== 'startRepeat' &&
     lastSection.index <= lastIndex
   ) {
-    sections.push({ type: 'startRepeat', index: lastSection.index })
+    sections.push({ type: 'startRepeat', index: lastSection.index, synthetic: true })
   }
   if (sections.length < 2) return measures
 
@@ -517,8 +538,30 @@ function resolveRepeats<
           for (const e of current.endings ?? []) {
             if (e !== undefined) lastUsed = e.end === undefined ? Number.NaN : Math.max(lastUsed, e.end)
           }
+          /**
+           * ⚠️ **THE GAP'S GUARD AND ITS END ARE NOT THE SAME NUMBER** —
+           * `if (lastUsed < section.index - 1) push({start: lastUsed+1, end: section.index})`
+           * (`synth/repeats.js:88-91`), and the `- 1` is only in the test. On a section
+           * indexed by BARLINE that difference is invisible, because the extra element is
+           * the bar; on the trailing SYNTHETIC one, whose index is the element after the
+           * bar, it is the first note of the measure — and the next repeat starts there
+           * too, so abcjs plays it twice. `C2|["first"] D2:|["second"] E2|]` is
+           * `C C D E E` there and was `C C D E` here.
+           *
+           * ⚠️ **AND ONE BYTE OF THAT ROW IS MEASURED AND DELIBERATELY NOT LANDED.** The
+           * two E's are ADJACENT ELEMENTS in abcjs — its gap span stops at the note and
+           * the next span starts at the same note — so no `bar` element lies between them
+           * and `lastBarTime` never moves: the second E is an on-beat 95, and ours is a
+           * bar-first 105. Our unrolling is by MEASURE, so the copy necessarily carries
+           * the measure's closing barline with it. Suppressing it would mean either
+           * copying the measure — which breaks the object identity `durationsOf` and
+           * `positionOf` are keyed on — or a `barless` flag that is only right when the
+           * measure holds exactly ONE element, which is this fixture and not the rule.
+           * `abcts-endings#2` stays open at byte 184, from 156.
+           */
           if (lastUsed < section.index - 1) {
-            instructions.push({ common: { start: lastUsed + 1, end: section.index - 1 } })
+            const end = section.synthetic === true ? section.index : section.index - 1
+            instructions.push({ common: { start: lastUsed + 1, end } })
           }
         }
         current = { common: { start: section.index } }
