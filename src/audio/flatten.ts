@@ -818,13 +818,34 @@ function collectTempoChanges(
 ): Map<number, number> {
   const changes = new Map<number, number>([[0, startingTempo]])
   for (const voice of voices) {
-    const { positionOf } = writtenTimeline(voice)
+    const { durationsOf, positionOf } = writtenTimeline(voice)
     let meter = score.meter
     for (const measure of voice.measures) {
       if (measure.meterChange !== null) meter = measure.meterChange
       if (measure.tempoChange == null) continue
       const qpm = qpmOfTempo(measure.tempoChange, meter)
-      changes.set(positionOf.get(measure) ?? 0, qpm)
+      /**
+       * ⚠️ **AND THE POSITION IS THE `[Q:]`'S OWN, NOT ITS MEASURE'S.** abcjs pushes the
+       * `tempo` element where the field is WRITTEN and stamps it with the voice's
+       * `durationCounter` at that moment (`abc_midi_sequencer.js:355-361`), so
+       * `CD[Q:1/4=90]EF|` leaves C and D at the opening tempo and stretches only E and F.
+       * We keyed the whole change on the measure's start, which doubled all four — asked
+       * of abcjs, not reasoned. Same granularity the mid-measure clef needed, one field
+       * over. Open rows `abcts-inline-fields-and-blocks#0,3,4`.
+       */
+      const durations = durationsOf.get(measure) ?? []
+      const start = measure.tempoChangeSourceRange?.start
+      const before =
+        start == null
+          ? 0
+          : measure.events.reduce(
+              (sum, e, i) =>
+                (e.sourceRange?.start ?? Number.POSITIVE_INFINITY) < start
+                  ? sum + (durations[i] ?? 0)
+                  : sum,
+              0,
+            )
+      changes.set((positionOf.get(measure) ?? 0) + before, qpm)
     }
   }
   return changes

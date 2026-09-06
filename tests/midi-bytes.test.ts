@@ -390,6 +390,7 @@ const PASSING: readonly string[] = [
   "abcts-grace-tie#5",
   "abcts-grace-tie#6",
   "abcts-grace-tie#7",
+  "abcts-inline-fields-and-blocks#0",
   "abcts-inline-fields-and-blocks#1",
   "abcts-inline-fields-and-blocks#10",
   "abcts-inline-fields-and-blocks#11",
@@ -397,6 +398,8 @@ const PASSING: readonly string[] = [
   "abcts-inline-fields-and-blocks#13",
   "abcts-inline-fields-and-blocks#14",
   "abcts-inline-fields-and-blocks#2",
+  "abcts-inline-fields-and-blocks#3",
+  "abcts-inline-fields-and-blocks#4",
   "abcts-inline-fields-and-blocks#5",
   "abcts-inline-fields-and-blocks#6",
   "abcts-inline-fields-and-blocks#7",
@@ -748,7 +751,7 @@ const PASSING: readonly string[] = [
  * largest is `%%staffnonote 0` over pure rests, where abcjs drops every staff and emits NO
  * TRACKS and we emit one per voice.
  */
-const OPEN_CEILING = 19;
+const OPEN_CEILING = 16;
 
 const PREFIX = "data:audio/midi,";
 
