@@ -414,7 +414,7 @@ function resolveRepeats<
     readonly closingBarline: unknown
     readonly volta: string | null
   },
->(measures: readonly M[]): readonly M[] {
+>(measures: readonly M[]): readonly { measure: M; take?: number }[] {
   // INDEXED BY BARLINE, NOT BY MEASURE, and that is the whole of the translation. abcjs
   // records a bar ELEMENT's position; bar k sits between measure k-1 and measure k, so a
   // section that STARTS there starts at measure k and one that ENDS there ends at k-1. One
@@ -523,11 +523,17 @@ function resolveRepeats<
   ) {
     sections.push({ type: 'startRepeat', index: lastSection.index, synthetic: true })
   }
-  if (sections.length < 2) return measures
+  if (sections.length < 2) return measures.map((measure) => ({ measure }))
 
   interface Repeat {
     common: { start: number; end?: number }
     endings?: ({ start: number; end?: number } | undefined)[]
+    /**
+     * The common span ends INSIDE its last measure, at that measure's first event — see the
+     * gap arm. Only a span ending on a SYNTHETIC section can, because only that section's
+     * index is an element rather than a barline.
+     */
+    commonTruncated?: true
   }
   const instructions: Repeat[] = []
   let current: Repeat | null = null
@@ -568,20 +574,24 @@ function resolveRepeats<
            * too, so abcjs plays it twice. `C2|["first"] D2:|["second"] E2|]` is
            * `C C D E E` there and was `C C D E` here.
            *
-           * ⚠️ **AND ONE BYTE OF THAT ROW IS MEASURED AND DELIBERATELY NOT LANDED.** The
-           * two E's are ADJACENT ELEMENTS in abcjs — its gap span stops at the note and
-           * the next span starts at the same note — so no `bar` element lies between them
-           * and `lastBarTime` never moves: the second E is an on-beat 95, and ours is a
-           * bar-first 105. Our unrolling is by MEASURE, so the copy necessarily carries
-           * the measure's closing barline with it. Suppressing it would mean either
-           * copying the measure — which breaks the object identity `durationsOf` and
-           * `positionOf` are keyed on — or a `barless` flag that is only right when the
-           * measure holds exactly ONE element, which is this fixture and not the rule.
-           * `abcts-endings#2` stays open at byte 184, from 156.
+           * ✅ **AND THE LAST BYTE OF THAT ROW IS THE TRUNCATION, LANDED 2026-09-06.** The
+           * two E's are ADJACENT ELEMENTS in abcjs — its gap span stops AT the note and
+           * the next span starts at the same note — so no `bar` lies between them,
+           * `lastBarTime` never moves, and the second E is an on-beat 95 where ours was a
+           * bar-first 105. **A `barless` flag would have been the wrong shape**: what
+           * abcjs takes is ONE EVENT, not a whole measure minus its barline, and the two
+           * only coincide when the measure holds a single event. `span`'s `truncate` says
+           * the event count instead, which is `take: 1` on the copy and nothing else in
+           * the model changed — the measure OBJECT still travels, so `durationsOf` and
+           * `positionOf` keep their keys.
            */
           if (lastUsed < section.index - 1) {
-            const end = section.synthetic === true ? section.index : section.index - 1
-            instructions.push({ common: { start: lastUsed + 1, end } })
+            const synthetic = section.synthetic === true
+            const end = synthetic ? section.index : section.index - 1
+            instructions.push({
+              common: { start: lastUsed + 1, end },
+              ...(synthetic ? { commonTruncated: true as const } : {}),
+            })
           }
         }
         current = { common: { start: section.index } }
@@ -618,23 +628,36 @@ function resolveRepeats<
     instructions.push(c)
   }
 
-  const out: M[] = []
-  const span = (from: number, to: number): void => {
+  const out: { measure: M; take?: number }[] = []
+  /**
+   * ⚠️ **`truncate` IS THE ONE PLACE A SPAN CAN STOP INSIDE A MEASURE**, and it exists
+   * because abcjs's spans are ELEMENT ranges where ours are measure ranges. Every span end
+   * here is a BARLINE — a clean boundary — except the gap span that ends at the trailing
+   * SYNTHETIC section, whose index is by construction the element right AFTER a bar, which
+   * is that measure's first event. So the span takes ONE event of it and no closing
+   * barline, and the instruction that follows starts at the same measure and takes all of
+   * it. That is why abcjs plays the first event of such a measure twice — and why no `bar`
+   * element lies between the two copies, which is what keeps `lastBarTime` where it was and
+   * makes the second copy an on-beat rather than a downbeat.
+   */
+  const span = (from: number, to: number, truncate = false): void => {
     for (let i = Math.max(0, from); i <= to; i += 1) {
       const m = measures[i]
-      if (m !== undefined) out.push(m)
+      if (m === undefined) continue
+      out.push(truncate && i === to ? { measure: m, take: 1 } : { measure: m })
     }
   }
   for (const r of instructions) {
     const end = r.common.end ?? lastIndex
-    if (r.endings === undefined) span(r.common.start, end)
+    const cut = r.commonTruncated === true
+    if (r.endings === undefined) span(r.common.start, end, cut)
     else if (r.endings.length === 0) {
-      span(r.common.start, end)
-      span(r.common.start, end)
+      span(r.common.start, end, cut)
+      span(r.common.start, end, cut)
     } else {
       for (const ending of r.endings) {
         if (ending === undefined) continue
-        span(r.common.start, end)
+        span(r.common.start, end, cut)
         // …AND AN ENDING WITH NO `end` EMITS NOTHING. `duplicateSpan`'s
         // `for (i = start; i <= end; i++)` with `end === undefined` runs zero times
         // (`synth/repeats.js:165`), so the pass takes the common span alone.
@@ -1085,7 +1108,7 @@ function sequenceVoice(
   const ties = new Map<string, number>()
   const durations: number[] = []
 
-  for (const measure of resolveRepeats(voice.measures)) {
+  for (const { measure, take } of resolveRepeats(voice.measures)) {
     const measureDurations = durationsOf.get(measure) ?? []
     let written = positionOf.get(measure) ?? 0
     if (measure.startsSystem || line < 0) line += 1
@@ -1179,7 +1202,10 @@ function sequenceVoice(
       durations.push(0)
     }
     let first = true
-    for (const [eventIndex, event] of measure.events.entries()) {
+    // …and a TRUNCATED copy takes only its first event and writes no barline — see
+    // `resolveRepeats`'s `truncate`. `take` is 1 wherever it is set at all.
+    const events = take === undefined ? measure.events : measure.events.slice(0, take)
+    for (const [eventIndex, event] of events.entries()) {
       // …and a change written INSIDE the measure turns the drummap on at that note.
       if (clef != null && clefChangeAt > 0 && eventIndex === clefChangeAt) {
         clefPercussion = clef.shape === 'percussion'
@@ -1311,7 +1337,7 @@ function sequenceVoice(
     // where one actually is. Emitting one either way restarted the beat-stress clock at
     // every line end — `flatten-treble-8` writes one note per line with no barlines at all
     // and every one of them came out at the bar-first 105 instead of 85.
-    if (measure.closingBarline === null) continue
+    if (measure.closingBarline === null || take !== undefined) continue
     out.push({
       kind: 'bar',
       line,
