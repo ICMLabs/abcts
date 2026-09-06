@@ -1,0 +1,5 @@
+# The bundle is a BUILD ARTIFACT, copied in by the README's step 1. Committing 1.4MB of
+# generated JS would put it out of date the first time src/ changes.
+public/vendor/abcts-browser.global.js
+public/vendor/abcjs-audio.css
+public/soundfont/

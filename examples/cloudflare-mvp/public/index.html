@@ -1,0 +1,65 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>abcts on Cloudflare — MVP</title>
+<link rel="stylesheet" href="/vendor/abcjs-audio.css">
+<style>
+  body { font: 15px system-ui, sans-serif; margin: 2rem auto; max-width: 46rem; }
+  textarea { width: 100%; height: 8rem; font: 13px ui-monospace, monospace; }
+  #status { color: #555; }
+</style>
+
+<h1>abcts — drop-in check</h1>
+
+<textarea id="abc">X:1
+T:Cooley's
+M:4/4
+L:1/8
+K:Edor
+|:D2|EBBA B2 EB|B2 AB dBAG|FDAD BDAD|FDAD dAFD|
+EBBA B2 EB|B2 AB defg|afe^c dBAF|DEFD E2:|</textarea>
+
+<div id="paper"></div>
+<div id="audio"></div>
+<p id="status">…</p>
+
+<script src="/vendor/abcts-browser.global.js"></script>
+<script>
+  // THE ONE LINE A DROP-IN NEEDS. The global is ABCTS on purpose, so that abcts and abcjs
+  // can be loaded in the same page and compared; a host adopting it claims the name itself.
+  window.ABCJS = window.ABCTS;
+
+  const status = document.getElementById("status");
+  let visualObj;
+
+  function render() {
+    visualObj = ABCJS.renderAbc("paper", document.getElementById("abc").value, {
+      responsive: "resize",
+      add_classes: true,
+    })[0];
+    report();
+  }
+
+  // abcts's own — abcjs has no equivalent. Says which sounds are already here BEFORE play.
+  async function report() {
+    // ⚠️ `supportsAudio()` RETURNS `undefined`, NOT `true`, UNTIL A CONTEXT EXISTS — abcjs's
+    // last arm is `if (aac) return aac.resume !== undefined` with no else, and a context
+    // needs a user gesture. So a page guarding on `!supportsAudio()` hides its own player
+    // on first load. Test for the explicit `false`.
+    if (ABCJS.synth.supportsAudio() === false) {
+      status.textContent = "no WebAudio in this browser";
+      return;
+    }
+    const a = await ABCJS.synth.notesAvailable(visualObj);
+    status.textContent =
+      `${a.inMemory.length} in memory · ${a.inCache.length} cached · ${a.missing.length} to fetch` +
+      ` — ${ABCTS.abctsSignature}, reporting ${ABCJS.signature}`;
+  }
+
+  const controller = new ABCJS.synth.SynthController();
+  controller.load("#audio", null, { displayPlay: true, displayProgress: true, displayClock: true });
+
+  document.getElementById("abc").addEventListener("input", render);
+  document.getElementById("audio").addEventListener("click", () => setTimeout(report, 1500));
+  render();
+  controller.setTune(visualObj, false).then(report);
+</script>

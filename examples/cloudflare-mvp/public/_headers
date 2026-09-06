@@ -1,0 +1,13 @@
+# Cloudflare Pages — https://developers.cloudflare.com/pages/configuration/headers/
+#
+# The bundle is content-addressed by nothing, so DO NOT immutable-cache it under a stable
+# name: rename it per release (abcts-browser.<version>.js) if you want a year-long cache.
+# A day is the safe MVP.
+/vendor/*
+  Cache-Control: public, max-age=86400
+
+# Self-hosted soundfont, if you take step 4. These files never change — the note recordings
+# are fixed — so they are the one thing here that genuinely is immutable.
+/soundfont/*
+  Cache-Control: public, max-age=31536000, immutable
+  Access-Control-Allow-Origin: *
