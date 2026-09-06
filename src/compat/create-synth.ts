@@ -145,6 +145,126 @@ export interface LoadedNote {
  */
 export const soundsCache: Record<string, Record<string, Promise<LoadedNote>>> = {};
 
+/**
+ * **EVERY SOUND A FLATTENED TUNE NEEDS, IN abcjs's OWN WALK ORDER.** Lifted out of
+ * `CreateSynth.init` unchanged so that `notesAvailable` below cannot drift from what `init`
+ * actually loads — the two answering differently would be worse than not asking.
+ *
+ * The rules are abcjs's: a `program` event sets the running instrument, a note carries its
+ * own `instrument` or inherits that one, and a pitch with no name in `pitchToNoteName` is an
+ * ERROR rather than a silent skip. `pairs` holds duplicates in encounter order, because the
+ * caller's first-seen ordering is part of the load batching.
+ */
+export function soundsNeededBy(tracks: readonly (readonly MidiEvent[])[]): {
+  pairs: { instrument: string; note: string }[];
+  error: string[];
+} {
+  const pairs: { instrument: string; note: string }[] = [];
+  const error: string[] = [];
+  let currentInstrument = instrumentIndexToName[0] as string;
+  for (const track of tracks) {
+    for (const event of track) {
+      if (event.cmd === "program" && instrumentIndexToName[event.instrument])
+        currentInstrument = instrumentIndexToName[event.instrument] as string;
+      const note = event as MidiNote;
+      if (note.pitch === undefined) continue;
+      const noteName = pitchToNoteName[note.pitch];
+      const instrument =
+        note.instrument !== undefined
+          ? (instrumentIndexToName[note.instrument] as string)
+          : currentInstrument;
+      if (noteName) pairs.push({ instrument, note: noteName });
+      else {
+        const label = `${instrument}:${noteName}`;
+        if (error.indexOf(label) < 0) error.push(label);
+      }
+    }
+  }
+  return { pairs, error };
+}
+
+/** `params.soundFontUrl` with abcjs's default and its trailing-slash rule (`:525-528`). */
+const resolveSoundFontUrl = (params: Record<string, unknown>): string => {
+  const url = params["soundFontUrl"] ? (params["soundFontUrl"] as string) : defaultSoundFontUrl;
+  return url.endsWith("/") ? url : `${url}/`;
+};
+
+/** The URL `loadNote` fetches, which is the only place the naming rule may live. */
+const noteUrlOf = (url: string, instrument: string, note: string): string =>
+  `${url}${instrument}-mp3/${note}.mp3`;
+
+/** What `notesAvailable` answers. Labels are `instrument:note`, as `init`'s arrays are. */
+export interface NotesAvailable {
+  /** Already decoded in `soundsCache` — this page will not fetch them again. */
+  inMemory: string[];
+  /** Not in memory, but present in the Cache API — a fetch will not touch the network. */
+  inCache: string[];
+  /** Neither. These are the bytes a first play will actually go and get. */
+  missing: string[];
+  /** Pitches with no name in `pitchToNoteName`, exactly as `init` reports them. */
+  error: string[];
+  /** The soundfont these were looked up against, after the trailing-slash rule. */
+  soundFontUrl: string;
+}
+
+/**
+ * **WHICH SOUNDS THE USER ALREADY HAS — abcts's own, NOT part of abcjs's surface.**
+ *
+ * abcjs answers half of this already: `init` resolves `{loaded, cached, error}`, where
+ * `cached` means "was in `soundsCache`". But that is a report of what a load DID, after the
+ * fetching, and it can only see this page's memory. A host wanting a progress bar, an
+ * "available offline" badge or a decision about whether to prefetch needs the answer
+ * BEFORE playing, and needs it to survive a reload.
+ *
+ * ⚠️ **THE HTTP CACHE IS NOT READABLE AND THIS DOES NOT PRETEND OTHERWISE.** No API exposes
+ * it; `fetch(url, {cache: "only-if-cached"})` requires `mode: "same-origin"` and these are
+ * cross-origin. So `inCache` means the **Cache API** — a service worker's store, or one the
+ * host filled itself. A note absent from both is reported `missing` even when the browser
+ * would in fact serve it from disk, because the honest answer to an unanswerable question
+ * is the pessimistic one.
+ *
+ * The default soundfont sends `access-control-allow-origin: *`, so its responses are NOT
+ * opaque and a service worker can store and read them normally. Measured against
+ * `paulrosen.github.io/midi-js-soundfonts` on 2026-09-06.
+ *
+ * Where `caches` does not exist at all — Node, or a page without secure context — every
+ * uncached note is `missing` and nothing throws.
+ */
+export async function notesAvailable(
+  visualObj: { setUpAudio: (params: Record<string, unknown>) => Playable },
+  params: Record<string, unknown> = {},
+): Promise<NotesAvailable> {
+  const soundFontUrl = resolveSoundFontUrl(params);
+  const { pairs, error } = soundsNeededBy(visualObj.setUpAudio(params).tracks);
+  const inMemory: string[] = [];
+  const inCache: string[] = [];
+  const missing: string[] = [];
+  const store = (globalThis as { caches?: { match: (url: string) => Promise<unknown> } }).caches;
+  const seen = new Set<string>();
+  for (const { instrument, note } of pairs) {
+    const label = `${instrument}:${note}`;
+    if (seen.has(label)) continue;
+    seen.add(label);
+    if (soundsCache[instrument]?.[note] !== undefined) {
+      inMemory.push(label);
+      continue;
+    }
+    // `caches.match` on the global searches every cache this origin owns, which is what a
+    // host with one service worker and one bucket means by "do I have it".
+    let hit = false;
+    if (store !== undefined) {
+      try {
+        hit = (await store.match(noteUrlOf(soundFontUrl, instrument, note))) !== undefined;
+      } catch {
+        // A blocked or unavailable store is "no", not a failure of the question.
+        hit = false;
+      }
+    }
+    (hit ? inCache : missing).push(label);
+  }
+  return { inMemory, inCache, missing, error, soundFontUrl };
+}
+
 /** `getNote(url, instrument, name, audioContext)` — one mp3, over XHR (`load-note.js`). */
 export function loadNote(
   url: string,
@@ -163,7 +283,7 @@ export function loadNote(
         return;
       }
       const xhr = new XHR();
-      const noteUrl = `${url}${instrument}-mp3/${name}.mp3`;
+      const noteUrl = noteUrlOf(url, instrument, name);
       xhr.open("GET", noteUrl, true);
       xhr.responseType = "arraybuffer";
       xhr.onload = (): void => {
@@ -572,36 +692,18 @@ export class CreateSynth {
     // If we are given a sequence instead of a regular visual obj, then don't do the swing.
     this.meterFraction = opts.visualObj ? opts.visualObj.getMeterFraction() : { den: 1 };
 
+    const { pairs, error: errorNotes } = soundsNeededBy(this.flattened.tracks);
     const allNotes: Record<string, Record<string, boolean>> = {};
     const cached: string[] = [];
-    const errorNotes: string[] = [];
-    let currentInstrument = instrumentIndexToName[0] as string;
-    this.flattened.tracks.forEach((track) => {
-      track.forEach((event) => {
-        if (event.cmd === "program" && instrumentIndexToName[event.instrument])
-          currentInstrument = instrumentIndexToName[event.instrument] as string;
-        const note = event as MidiNote;
-        if (note.pitch !== undefined) {
-          const noteName = pitchToNoteName[note.pitch];
-          const inst =
-            note.instrument !== undefined
-              ? (instrumentIndexToName[note.instrument] as string)
-              : currentInstrument;
-          if (noteName) {
-            if (!allNotes[inst]) allNotes[inst] = {};
-            if (!soundsCache[inst] || !soundsCache[inst]?.[noteName])
-              (allNotes[inst] as Record<string, boolean>)[noteName] = true;
-            else {
-              const label2 = `${inst}:${noteName}`;
-              if (cached.indexOf(label2) < 0) cached.push(label2);
-            }
-          } else {
-            const label = `${inst}:${noteName}`;
-            if (errorNotes.indexOf(label) < 0) errorNotes.push(label);
-          }
-        }
-      });
-    });
+    for (const { instrument: inst, note: noteName } of pairs) {
+      if (!soundsCache[inst] || !soundsCache[inst]?.[noteName]) {
+        if (!allNotes[inst]) allNotes[inst] = {};
+        (allNotes[inst] as Record<string, boolean>)[noteName] = true;
+      } else {
+        const label2 = `${inst}:${noteName}`;
+        if (cached.indexOf(label2) < 0) cached.push(label2);
+      }
+    }
 
     const notes: { instrument: string; note: string }[] = [];
     Object.keys(allNotes).forEach((instrument) => {

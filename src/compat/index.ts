@@ -171,12 +171,14 @@ export {
   type CreateSynthInitOptions,
   createNoteMap,
   type MappedNote,
+  type NotesAvailable,
+  notesAvailable,
   playEvent,
   type Playable,
   soundsCache,
 } from "./create-synth.js";
 import { abcjsFont, ABCJS_DEFAULT_FONTS, CHANGING_FONTS, richOf } from "./fonts.js";
-import { CreateSynth, playEvent } from "./create-synth.js";
+import { CreateSynth, notesAvailable, playEvent } from "./create-synth.js";
 import {
   type MeasureSection,
   measureWidthsOf,
@@ -1759,6 +1761,22 @@ export const synth = {
   supportsAudio,
   registerAudioContext,
   activeAudioContext,
+  /**
+   * **`notesAvailable(visualObj, params)` — WHICH SOUNDS THE USER ALREADY HAS. abcts's own,
+   * and NOT one of abcjs's symbols**, so `compat-surface`'s "nothing abcjs has is absent"
+   * is untouched and a host that never calls it sees exactly abcjs's shape.
+   *
+   * abcjs answers half of this: `init` resolves `{loaded, cached, error}` — but that is a
+   * report of what a load DID, after the fetching, and it can only see this page's memory.
+   * This answers BEFORE playing and survives a reload, which is what a prefetch decision,
+   * a progress bar or an "available offline" badge actually needs.
+   *
+   * `{ inMemory, inCache, missing, error, soundFontUrl }`. See `create-synth.ts` for why
+   * `inCache` is the Cache API and not the HTTP cache — the latter is not readable by
+   * anything, and a note the browser would in fact serve from disk is still reported
+   * `missing`, because the honest answer to an unanswerable question is the pessimistic one.
+   */
+  notesAvailable,
   /**
    * `getMidiFile(source, options)` — a string goes through `renderEngine`, a tune array is
    * used as given.

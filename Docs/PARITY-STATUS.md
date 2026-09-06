@@ -183,6 +183,19 @@ Measured on 2026-09-06, not assumed.
   `repository`, `homepage`, `browser`, `unpkg` or `jsdelivr` field, so a CDN will not resolve
   the script build by default. Those are release decisions, not defects.
 
+**One helper abcts adds that abcjs has no equivalent for**
+
+`synth.notesAvailable(visualObj, params)` → `{ inMemory, inCache, missing, error,
+soundFontUrl }`, answering **which sounds the user already has, before playing**. abcjs's
+`init` reports `{loaded, cached, error}`, but that is what a load DID, after the fetching,
+and it only sees this page's memory. Use it for a prefetch decision, a progress bar, or an
+"available offline" badge.
+
+`inCache` is the **Cache API** — a service worker's store, or one you filled yourself. The
+HTTP cache is not readable by anything, so a note the browser would in fact serve from disk
+is still reported `missing`; the honest answer to an unanswerable question is the
+pessimistic one. It is abcts's own symbol, not abcjs's, so the drop-in surface is untouched.
+
 **What to smoke-test on the site itself**
 
 1. **Playback makes sound**, and the soundfont fetch is not blocked. Default URL is
