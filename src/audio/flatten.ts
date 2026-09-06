@@ -1601,8 +1601,20 @@ export function flattenAudio(
    * the pattern (`abc_midi_sequencer.js:86-92`). A tune that writes `%%MIDI drum …` and
    * never `drumon` gets silence.
    */
-  let drumPattern: readonly (string | number)[] =
-    midi.drum ?? (options.drum !== undefined && options.drum !== '' ? options.drum.split(' ') : [])
+  /**
+   * ⚠️ **AND AN ABSENT PATTERN IS `[""]`, NOT `[]`.** abcjs splits unconditionally —
+   * `drumPattern = options.drum || ""` then `drumPattern = drumPattern.split(" ")`
+   * (`abc_midi_sequencer.js:28, 42`) — and `"".split(" ")` is a ONE-element array holding
+   * the empty string. `normalizeDrumDefinition` then passes its `pattern.length === 0`
+   * guard, reads `str = ""`, finds no events, and `1 !== 0*2 + 1` is FALSE, so it returns
+   * `{on: true, pattern: []}` (`abc_midi_flattener.js:820-830`).
+   *
+   * So `%%MIDI drumon` with no `%%MIDI drum` gives abcjs a drum track holding its `program`
+   * row and NOTHING ELSE — a fourth track in the file, which we emitted as three. Skipping
+   * the split on an empty string made the definition fail closed and the track vanish.
+   * Open row `abcts-midi#6`.
+   */
+  let drumPattern: readonly (string | number)[] = midi.drum ?? (options.drum ?? '').split(' ')
   let drumBars =
     typeof midi.drumbars?.[0] === 'number'
       ? (midi.drumbars[0] as number)
