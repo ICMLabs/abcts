@@ -583,5 +583,11 @@ See `CLAUDE.md` at repo root — Claude Code reads it automatically at session s
 
 ---
 
-*Last updated: 2026-07-17*
-*Status: Toolchain scaffolded, pre-implementation*
+*Last updated: 2026-09-06*
+
+*Status: **implemented and at parity.** Every gate in the repo reads zero against abcjs
+6.7.0 — the SVG byte for byte (headless and live in both WebKit and Chrome), the MIDI file
+byte for byte, the audio event list, the timings, the parse tree and the public API surface.
+See `Docs/PARITY-STATUS.md` for the dated table, what each gate does and does not measure,
+and the declared divergences. This footer read "Toolchain scaffolded, pre-implementation"
+until today, which it had not been since July.*

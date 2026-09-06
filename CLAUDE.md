@@ -951,7 +951,9 @@ checkpoint and hand off as you go so no context is lost.
 > files below.
 
 **READ `Docs/HANDOFF-2026-09-06.md` FIRST.** It supersedes `-09-05.md` and `-09-04.md` for
-the state.
+the state. **`Docs/PARITY-STATUS.md` is the dated, plain-language companion** — every gate,
+what it measures, what it does NOT, and the declared divergences, all re-run rather than
+carried forward. It is the file to hand anyone asking "how close are we to abcjs?".
 
 > 📼 **THE MIDI-FILE ARC IS CLOSED — 24 open to 0 of 691 in one session** (2026-09-06), with
 > **672 byte-exact and NAMED**, 19 ruled divergent and `OPEN_CEILING` at 0. Every SVG gate is
@@ -974,6 +976,17 @@ the state.
 > COPY or a `barless` flag; what abcjs takes is an EVENT COUNT, so the copy is `take: 1` and
 > the measure object still travels. A wrong cause gets tested and falls over; a wrong size
 > stops the work being attempted at all.
+>
+> ✅ **AND THE FULL RE-RUN CONFIRMS IT AND CLOSED THE LAST NON-ZERO NUMBER** (2026-09-06):
+> the suite green at 2,470, `svg-bytes` 0 of 691 and 0 of 356 sibling, and **both browser
+> comparisons RE-RUN against a fresh build — WebKit and Chrome, 0 of 685 each.** The one row
+> anywhere that still read non-zero was `tune.warnings`, and it was `%%beginps`: abcjs
+> swallows the block and warns ONCE, `warn("Postscript ignored", str, 0)` AFTER the consume,
+> so neither the line number (the `%%endps` one the tokenizer stopped on) nor the text
+> (`beginps`, no `%%` and no body) is the directive's own. We raised `Unknown directive`
+> twice instead. `warnings` is 0 of 815. **The non-terminating half stays a declared
+> divergence** — abcjs never reassigns `line`, so a NON-EMPTY block spins forever; we consume
+> it and warn the same once.
 >
 > **Sixteen landings, every one a read of a named abcjs function or a probe of its real
 > output, and SIX were rules ALREADY IMPLEMENTED WITH THEIR CITATIONS ELSEWHERE IN THIS

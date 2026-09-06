@@ -11,13 +11,15 @@ section, then THE THREE "DO NOT RE-OPEN" ROWS THAT ALL FELL.
 Work in /Users/lrettberg/ICMLabs/Code/abcts. Run every command from there — `cd` does not
 persist between tool calls and the workspace ROOT collects every sibling repo's tests.
 
-EVERY GATE IN THIS REPO IS AT ZERO. The MIDI-file arc went 24 open to 0 of 691 in one
-session, and `ABCJS-DEBT.md` has no measured-not-landed entry left.
+EVERY GATE IN THIS REPO IS AT ZERO, and `Docs/PARITY-STATUS.md` is the dated, plain-language
+version of that — read it second. The MIDI-file arc went 24 open to 0 of 691 in one session
+and `ABCJS-DEBT.md` has no measured-not-landed entry left.
 
-    zzlive      0 of 685  WebKit AND Chrome
-    svg-bytes   0 of 685 in-repo, 0 of 356 sibling
+    zzlive      0 of 685  WebKit AND Chrome — both re-run against a fresh build
+    svg-bytes   0 of 691 in-repo, 0 of 356 sibling
     midi-bytes  0 of 691 — 672 byte-exact and NAMED, 19 ruled divergent, OPEN_CEILING 0
-    suite       2,470, no reds. Keep them all that way.
+    warnings    0 of 815 tunes
+    suite       79 files, 2,470 tests, no reds. Keep them all that way.
 
     npx vitest run tests/midi-bytes.test.ts && cat /tmp/abcts-midi-bytes.txt
 
@@ -68,6 +70,13 @@ the estimate beside them is not.
      yields that tune. The gate uses the object form.
   ⚠️ A `*/` inside a block comment closes it.
   ⚠️ `npx tsc --noEmit && echo OK` BEFORE the test; `--testTimeout=180000` under load.
+  ⚠️ THE BROWSER HARNESS NEEDS A MATCHING playwright-core. `~/Library/Caches/ms-playwright`
+     holds `webkit-2311`, which is playwright-core 1.61.0; a mismatch fails with
+     "Executable doesn't exist" and tells you to run `npx playwright install`, which is the
+     wrong fix. `/tmp` is cleaned periodically and leaves EMPTY directories behind — both
+     `/tmp/gp/pw` and `/tmp/gp/abcjs` — which reads as a corrupt install, not a missing one.
+  ⚠️ A GATE'S REPORT FILE OUTLIVES ITS RUN. `/tmp/abcts-*.txt` has twice been read as a
+     result when it was yesterday's. Check the timestamp.
 
 Run `npx tsc --noEmit && echo OK` before every commit, keep every gate above green, and
 commit and push after every landing. Never --force. OMIT Co-Authored-By trailers here —
