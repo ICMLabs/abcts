@@ -1,63 +1,69 @@
-# NEXT AGENT PROMPT — abcts, 2026-09-05
+# NEXT AGENT PROMPT — abcts, 2026-09-06
 
 Paste the block below.
 
 ---
 
 ```
-start here: abcts/Docs/HANDOFF-2026-09-05.md — its METHOD section first, then THE PATTERN
-section, then the open arc.
+start here: abcts/Docs/HANDOFF-2026-09-06.md — its METHOD section first, then THE PATTERN
+section, then WHAT LANDED.
 
 Work in /Users/lrettberg/ICMLabs/Code/abcts. Run every command from there — `cd` does not
 persist between tool calls and the workspace ROOT collects every sibling repo's tests.
 
-EVERY SVG GATE IS AT ZERO, IN BOTH BROWSERS. The open arc is the MIDI FILE, byte for byte.
+EVERY GATE IS AT ZERO OR EFFECTIVELY SO. The MIDI-file arc went 24 open to 3 in one
+session and NONE OF THE THREE IS ORDINARY WORK.
 
     zzlive      0 of 685  WebKit AND Chrome
     svg-bytes   0 of 685 in-repo, 0 of 356 sibling
-    midi-bytes  24 of 691 open, 648 byte-exact and NAMED, 19 ruled divergent  ← THE ARC
+    midi-bytes  3 of 691 open, 669 byte-exact and NAMED, 19 ruled divergent
     suite       2,470, no reds. Keep them all that way.
 
     npx vitest run tests/midi-bytes.test.ts && cat /tmp/abcts-midi-bytes.txt
 
-⭐ THE STANDING ORDER, AND THE OWNER HAS NOW SAID IT THREE TIMES: REFERENCE THE ACTUAL
-abcjs. Do not intuit, do not trial-and-error. Last session a percussion fix was written by
-adjusting until the bytes moved — it landed half-right, was committed with the wrong
-explanation ("a model limit"), and had to be superseded. Reading the named function gave
-the real rule in one pass, and `grep clef src/synth/abc_midi_flattener.js` returning NOTHING
-said outright that the layer being patched never sees a clef.
+⛔ THE THREE ARE ALL MEASURED AND DELIBERATELY NOT LANDED. Read them before touching one;
+two have had ports written and reverted, and the third is a granularity limit, not a bug:
+
+    the sequencer resets currentVolume per LINE-VOICE   ledger-gaps-4#1   ABCJS-DEBT §3b.5
+    `(p:q:r` with r = 1 never clears the multiplier     ledger-gaps#1     ABCJS-DEBT
+    ONE velocity byte, our unrolling is per MEASURE     endings#2         at the site in flatten.ts
+
+⭐ SO THE NEXT ARC IS NOT THIS GATE. No table can name the next defect, which is the normal
+condition here rather than a milestone — it has happened eleven times and the answer was
+always the same: BUILD THE SURFACE that expresses an axis none of the others can, or render
+a CONTROL abcjs's own suite does not contain. Ask the owner which axis is worth the most
+before spending a session on one.
+
+⭐⭐ THE STANDING ORDER, AND THE OWNER HAS SAID IT FOUR TIMES: REFERENCE THE ACTUAL abcjs.
+Thirteen landings last session and every one was a read of a named function or a probe of
+its real output — not one came from a diff.
 
   1. READ the named abcjs function. Its answer is usually one `if`.
   2. GREP THIS REPO before porting it.
   3. LADDER it, one variable per rung, through BOTH engines.
-  4. INSTRUMENT abcjs when the source is not enough — scratchpad copy at /tmp/gp/abcjs,
-     NEVER ../abcMusicKit, probes gated on an env var, and BRACE every `if` you write under.
+  4. INSTRUMENT abcjs when the source is not enough — and its `src/` RUNS WITHOUT A BUILD:
+       cp -R ../abcMusicKit/Docs/References/abcjs/abcjs-6.7.0/. /tmp/gp/abcjs/
+       node -e "const A=require('/tmp/gp/abcjs/index.js'); …"
+     NEVER ../abcMusicKit itself, probes gated on an env var, and BRACE every `if`.
   5. Only then write code, and let the gate arbitrate.
 
-⭐⭐ AND STEP 2 IS NOT OPTIONAL. Nine of last session's fixes were rules ALREADY understood,
-cited and implemented somewhere in this repo and simply not carried to the site being fixed
-— the meter walk was in `chord-grid.ts`, `millisecondsPerMeasureOf` was exported from
-`timing.ts`, the track-name join and the mid-tune `clef=perc` rule were both spelled out in
-`compat/lines.ts`, `%%staffnonote` was in `layout.ts`, and once the rule was in the comment
-AT THE SITE with only half of it in the code below. A RULE PORTED AT THE SITE THAT NAMED IT
-IS NOT A RULE PORTED.
-
-⛔ TWO THINGS ARE MEASURED, INSTRUMENTED AND DELIBERATELY NOT LANDED. Read `ABCJS-DEBT.md`
-§3b.5 and the tuplet note in `flatten.ts` before touching either; both carry BOTH engines'
-numbers, and one of them already had two ports written and reverted:
-
-    the sequencer resets currentVolume per LINE-VOICE   ledger-gaps-4#1
-    `(p:q:r` with r = 1 never clears the multiplier     ledger-gaps#1
+⭐⭐⭐ AND STEP 2 IS NOT OPTIONAL. SIX of last session's thirteen were rules already
+implemented, with their citations, elsewhere in this repo — five in `compat/sequence.ts` or
+`layout.ts`, and ONE in `flatten.ts` THREE LINES ABOVE the site that needed it, under a
+comment block explaining the very rule. A RULE PORTED AT THE SITE THAT NAMED IT IS NOT A
+RULE PORTED.
 
 ⚠️ TRAPS:
-  ⚠️ A CONTROL MUST BE SHOWN TO SEE ITS DEFECT — a dynamics ladder written with `!f!`
-     reported nothing, because `f`'s table IS the default. Only a marking that differs from
-     the default can express a lost dynamic.
-  ⚠️ THE COUNT IS THE WRONG DIAL while a row differs LATER rather than not at all. Four
-     fixes moved a row's first differing byte deep — 70 → 1787 on one — without closing it.
+  ⚠️ THE SUITE TIMES OUT UNDER LOAD AND IT IS NOT A DEFECT — one run reported `3 failed`
+     with a worker-start error at 592s; the same tree re-ran green at 2,470 in 35s.
+     RE-RUN BEFORE BELIEVING A RED.
+  ⚠️ A FIXTURE'S FIRST DIFFERING BYTE IS A SYMPTOM, NOT THE DEFECT. One row's byte was a
+     VELOCITY and the defect was a duration a millionth out, which moved the note onto a
+     downbeat.
+  ⚠️ `cd /tmp/gp/abcjs` RESETS THE SHELL'S CWD for the next call. Re-`cd` into the repo.
   ⚠️ `getMidiFile` has TWO entry points: a STRING yields the FIRST tune only, a TUNE OBJECT
      yields that tune. The gate uses the object form.
-  ⚠️ A `*/` inside a block comment closes it — abcjs's own "x/8 meter" wording did.
+  ⚠️ A `*/` inside a block comment closes it.
   ⚠️ `npx tsc --noEmit && echo OK` BEFORE the test; `--testTimeout=180000` under load.
 
 Run `npx tsc --noEmit && echo OK` before every commit, keep every gate above green, and
@@ -70,14 +76,13 @@ rather than following the other silently.
 
 ## Why this order
 
-**The METHOD before the state**, which reverses the usual shape on purpose. The state is
-four numbers and they are all zero except one; the method is what the last session got
-wrong and then right within an hour, and it is the owner's standing order restated for the
-third time.
+**The METHOD before the state**, as last time and for the same reason: the state is four
+numbers and three of them are zero.
 
-**Then the ported-once pattern**, because it is where nine of thirteen fixes came from and
-it is invisible unless you grep for it — every one of those rules was already written down,
-correctly, somewhere else in the repo.
+**Then the ported-once pattern**, because it produced six of thirteen and it is invisible
+unless you grep for it. Its worst instance last session was inside the file being edited,
+three lines from the defect, under a comment that stated the rule in full.
 
-**Then the do-not-re-open pair.** Both look like obvious work from the source. One of them
-has already had two ports written and reverted, in opposite directions.
+**Then the do-not-re-open THREE**, which is what the whole remaining table is. Two have had
+ports written and reverted; the third is a limit of the measure-granular model and its
+alternatives are both written down at the site.

@@ -950,7 +950,48 @@ checkpoint and hand off as you go so no context is lost.
 > `Docs/CHECKPOINT-2026-08-14.md` — §4 is the work list as it stood, §5 the harness. Then the
 > files below.
 
-**READ `Docs/HANDOFF-2026-09-04.md` FIRST**, then `Docs/CHECKPOINT-2026-09-04.md` — §4 of
+**READ `Docs/HANDOFF-2026-09-06.md` FIRST.** It supersedes `-09-05.md` and `-09-04.md` for
+the state.
+
+> 📼 **THE MIDI-FILE ARC IS EFFECTIVELY CLOSED — 24 open to 3 of 691 in one session**
+> (2026-09-06), with 669 byte-exact and NAMED. Every SVG gate is still at zero in both
+> browsers and the suite is 2,470 with no reds. **All three remaining rows are MEASURED AND
+> DELIBERATELY NOT LANDED**: two are `ABCJS-DEBT.md` entries that have each had ports
+> written and reverted, and the third is one VELOCITY byte caused by our unrolling being
+> per MEASURE where abcjs's is per ELEMENT, written up at the site in `flatten.ts` with both
+> alternatives and why neither is taken. **So no table can name the next defect** — the
+> normal condition here, and the answer has been the same eleven times: build the surface
+> that expresses an axis none of the others can.
+>
+> **Thirteen landings, every one a read of a named abcjs function or a probe of its real
+> output, and SIX were rules ALREADY IMPLEMENTED WITH THEIR CITATIONS ELSEWHERE IN THIS
+> REPO** — five in `compat/sequence.ts` or `layout.ts`, and **one in `flatten.ts` THREE
+> LINES ABOVE the site that needed it, under a comment block explaining that very rule**
+> (the mid-measure clef moved the DRUMMAP at the written note and the OCTAVE at the measure
+> start). A RULE PORTED AT THE SITE THAT NAMED IT IS NOT A RULE PORTED.
+>
+> The findings whose LESSON transfers: **a field takes effect WHERE IT IS WRITTEN** — a
+> mid-line `[K: clef=]` and an inline `[Q:]` both move at their own position, not their
+> measure's; **the PARSER decides what the flattener can see** — a slur around a CHORD hangs
+> on the ELEMENT and never reaches `slurCount`, and a tie's `endTie` lands on the very next
+> element whatever its pitch, so `C-z C|` is two notes and `C-|C|` is one; **the SEQUENCER
+> makes substitutions the parse tree denies** — `elem.duration === 0 ? 0.25` is nowhere in
+> abcjs's own tree, and `"".split(" ")` is `[""]`, which is why `%%MIDI drumon` with no
+> pattern yields a drum track holding one `program` row; **a voice is not a measure** — a
+> tuplet crosses a barline and `Z3` is as long as the METER says, with 4/4 the one meter
+> where our whole-note assumption agreed; and **the repeat resolver's THREE order/edge
+> rules**, all instrumented (`endRepeat, startEnding, startRepeat` on one bar element; `[]`
+> is TRUTHY so a quoted `["first"]` still pushes a section; the gap span's guard and its end
+> differ by one, which only shows on the trailing synthetic section; and a volta on the
+> FIRST measure is one the bar loop structurally cannot see).
+>
+> ⚠️ **AND THE SUITE TIMED OUT UNDER LOAD AND REPORTED THREE REDS** — a worker-start error
+> at 592 seconds — where the same tree re-ran green at 2,470 in 35. RE-RUN BEFORE BELIEVING
+> A RED. ⚠️ **AND A FIXTURE'S FIRST DIFFERING BYTE IS A SYMPTOM**: one row's byte was a
+> VELOCITY and the defect was a duration a millionth out, which had moved the note onto a
+> downbeat.
+
+**AND `Docs/HANDOFF-2026-09-04.md` IS THE ONE BEFORE IT**, then `Docs/CHECKPOINT-2026-09-04.md` — §4 of
 the checkpoint is the five things that were written down wrong in two days and how each was
 caught, and it is the section worth reading before starting anything.
 
