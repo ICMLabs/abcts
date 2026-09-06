@@ -194,6 +194,10 @@ export interface MidiDirectives extends ChordOptions {
   /** Present-or-absent, and abcjs tests it as `if (globals.drumon)` — `[]` is truthy. */
   readonly drumon?: readonly (string | number)[]
   readonly drumbars?: readonly (string | number)[]
+  /** `%%MIDI beat <bar1> <down> <up> <n>` — the stress table. abcjs uses the first three. */
+  readonly beat?: readonly number[]
+  /** Present-or-absent, like `drumon`: abcjs tests `if (globals.nobeataccents)`. */
+  readonly nobeataccents?: readonly (string | number)[]
 }
 
 const MICRO = 1000000
@@ -1452,6 +1456,7 @@ function midiOf(score: Score): MidiDirectives {
     'chordprog',
     'bassvol',
     'chordvol',
+    'beat',
   ]) {
     const v = nums(key)
     if (v !== undefined) out[key] = v
@@ -1464,7 +1469,7 @@ function midiOf(score: Score): MidiDirectives {
   // is truthy, which is how `%%MIDI drumon` with no argument turns the drums on.
   const raw2 = raw as Record<string, readonly (string | number)[] | undefined>
   const passthrough: Record<string, readonly (string | number)[]> = {}
-  for (const key of ['drum', 'drumon', 'drumbars']) {
+  for (const key of ['drum', 'drumon', 'drumbars', 'nobeataccents']) {
     const v = raw2[key]
     if (v !== undefined) passthrough[key] = v
   }
@@ -1744,6 +1749,24 @@ export function flattenAudio(
    * ladder reported no defect at all.
    */
   let stress: [number, number, number] = [105, 95, 85]
+  /**
+   * **`%%MIDI beat` REPLACES THE STRESS TABLE AND `%%MIDI nobeataccents` BYPASSES IT.**
+   * abcjs pushes each as a row of `startVoice` — `{el_type:'beat', beats: globals.beat}`
+   * and `{el_type:'beataccents', value:false}` (`abc_midi_sequencer.js:92-95`) — which the
+   * flattener reads into `stressBeat1/Down/Up` and `doBeatAccents`
+   * (`abc_midi_flattener.js:194-211`). Both are reset ONCE per `flatten()` and not per
+   * voice (`:76-79`), which is why one tune-wide pair holds them.
+   *
+   * `!doBeatAccents` is `volume = stressBeatDown` — the ON-BEAT figure, not the weak one —
+   * and it is tested BEFORE the pickup arm (`:367-371`), so a tune with neither directive
+   * and a bar-length pickup still takes the weak 85 while `nobeataccents` takes 95.
+   * `compat/sequence.ts:509-511` already carried both; this is the audio half.
+   * Open rows `abcts-midi#3,42`.
+   */
+  const beats = midi.beat
+  if (beats !== undefined && beats.length >= 3)
+    stress = [beats[0] as number, beats[1] as number, beats[2] as number]
+  let doBeatAccents = midi.nobeataccents === undefined
 
   soundingVoices.forEach((voice, voiceIndex) => {
     const voiceOff =
@@ -1930,6 +1953,19 @@ export function flattenAudio(
             case 'drumbars':
               drumBars = typeof params[0] === 'number' ? params[0] : 1
               break
+            // The stress table and its bypass also arrive mid-tune, and `case "beat"`
+            // CLEARS the per-pitch table with them (`abc_midi_flattener.js:194-201`).
+            case 'beat':
+              if (params.length >= 3)
+                stress = [params[0] as number, params[1] as number, params[2] as number]
+              perPitch = []
+              continue
+            case 'beataccents':
+              doBeatAccents = true
+              continue
+            case 'nobeataccents':
+              doBeatAccents = false
+              continue
             default:
               continue
           }
@@ -1973,7 +2009,15 @@ export function flattenAudio(
           : stamp(item.event, (start / beatFractionOf(meter) / startingTempo) * 60 * 1000, start)
       if (item.event === null || item.event.type === 'rest' || item.tiedOver) continue
 
-      const volume = stressVolume(start, lastBarTime, meter, pickupLength, voiceOff, stress)
+      const volume = stressVolume(
+        start,
+        lastBarTime,
+        meter,
+        pickupLength,
+        voiceOff,
+        stress,
+        doBeatAccents,
+      )
       // A CHORD SOUNDS FROM THE BOTTOM UP, whatever order it was written in. abcjs's parser
       // sorts `elem.pitches`, so `[cD]` emits D and then c; ours keeps the source order, so
       // the sort is here. `volume-in-chords` is the whole of it: pitch 62 where we had 72.
@@ -2128,6 +2172,7 @@ export function flattenAudio(
                 pickupLength,
                 voiceOff,
                 perPitch[pitchIndex] ?? stress,
+                doBeatAccents,
               )
             : (mods.velocity ?? volume)
         // `%%MIDI drummap B 38` — the PARSER stamps this onto the note in abcjs
@@ -2365,9 +2410,13 @@ function stressVolume(
   pickupLength: number,
   voiceOff: boolean,
   stress: readonly [number, number, number],
+  doBeatAccents: boolean,
 ): number {
   if (voiceOff) return 0
   const clamp = (v: number) => Math.max(0, Math.min(127, v))
+  // `%%MIDI nobeataccents` is the ON-BEAT figure for every note, and abcjs tests it BEFORE
+  // the pickup arm (`abc_midi_flattener.js:367-371`).
+  if (!doBeatAccents) return clamp(stress[1])
   if (pickupLength > start) return clamp(stress[2])
   const barBeat = (start - lastBarTime) / beatFractionOf(meter)
   if (barBeat === 0) return clamp(stress[0])
