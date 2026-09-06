@@ -87,6 +87,7 @@ const DIVERGENT: readonly string[] = [
  */
 const PASSING: readonly string[] = [
   "abcjs-parse-note-id-01-v-v1-c-d-e-f#0",
+  "abcjs-parse-note-01-c0-d1-eg-0-fa-1#0",
   "abcjs-parse-tie-slur-01-multipart#0",
   "abcjs-parse-tie-slur-01-staffwidth-200#0",
   "abcjs-parse-tie-slur-02-chord#0",
@@ -436,6 +437,7 @@ const PASSING: readonly string[] = [
   "abcts-ledger-gaps-2#5",
   "abcts-ledger-gaps-2#6",
   "abcts-ledger-gaps-2#7",
+  "abcts-ledger-gaps-3#0",
   "abcts-ledger-gaps-3#1",
   "abcts-ledger-gaps-3#2",
   "abcts-ledger-gaps-3#3",
@@ -756,7 +758,7 @@ const PASSING: readonly string[] = [
  * largest is `%%staffnonote 0` over pure rests, where abcjs drops every staff and emits NO
  * TRACKS and we emit one per voice.
  */
-const OPEN_CEILING = 11;
+const OPEN_CEILING = 9;
 
 const PREFIX = "data:audio/midi,";
 

@@ -746,6 +746,19 @@ function writtenTimeline(voice: Voice): WrittenTimeline {
        */
       const tuplet = event.tuplet
       let dur = spacer ? 0 : ratToNumber(event.duration) * bars
+      /**
+       * **A ZERO-LENGTH NOTE IS TIMED AS A QUARTER** — `noteElem.duration =
+       * (elem.duration === 0) ? 0.25 : elem.duration` (`abc_midi_sequencer.js:252`),
+       * substituted BEFORE the triplet arithmetic and spending a quarter of the voice's
+       * clock with it. abcjs's own parse tree still says 0, so this is the sequencer's
+       * substitution and not the parser's: `C0 D E F|` sounds four quarters there and, in
+       * ours, a silent C followed by three notes each a quarter EARLY — which moves every
+       * later note off its beat and takes its stress volume with it.
+       *
+       * `compat/sequence.ts:684` already carried it. Open rows `abcts-ledger-gaps-3#0` and
+       * `abcjs-parse-note-01-c0-d1-eg-0-fa-1#0`.
+       */
+      if (!spacer && dur === 0) dur = 0.25
       if (tuplet !== null) {
         if (tuplet.group !== tripletGroup) {
           tripletGroup = tuplet.group
