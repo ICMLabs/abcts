@@ -953,17 +953,29 @@ checkpoint and hand off as you go so no context is lost.
 **READ `Docs/HANDOFF-2026-09-06.md` FIRST.** It supersedes `-09-05.md` and `-09-04.md` for
 the state.
 
-> 📼 **THE MIDI-FILE ARC IS EFFECTIVELY CLOSED — 24 open to 3 of 691 in one session**
-> (2026-09-06), with 669 byte-exact and NAMED. Every SVG gate is still at zero in both
-> browsers and the suite is 2,470 with no reds. **All three remaining rows are MEASURED AND
-> DELIBERATELY NOT LANDED**: two are `ABCJS-DEBT.md` entries that have each had ports
-> written and reverted, and the third is one VELOCITY byte caused by our unrolling being
-> per MEASURE where abcjs's is per ELEMENT, written up at the site in `flatten.ts` with both
-> alternatives and why neither is taken. **So no table can name the next defect** — the
-> normal condition here, and the answer has been the same eleven times: build the surface
-> that expresses an axis none of the others can.
+> 📼 **THE MIDI-FILE ARC IS CLOSED — 24 open to 0 of 691 in one session** (2026-09-06), with
+> **672 byte-exact and NAMED**, 19 ruled divergent and `OPEN_CEILING` at 0. Every SVG gate is
+> still at zero in both browsers and the suite is 2,470 with no reds. **So EVERY RANKED TABLE
+> IN THIS REPO READS ZERO and `ABCJS-DEBT.md` has no measured-not-landed entry left** — the
+> normal condition here rather than a milestone, and the answer has been the same eleven
+> times: build the surface that expresses an axis none of the others can.
 >
-> **Thirteen landings, every one a read of a named abcjs function or a probe of its real
+> ⚠️ **AND ALL THREE "DO NOT RE-OPEN" ROWS FELL, WHICH IS THE SESSION'S SHARPEST LESSON: A
+> "MEASURED, NOT LANDED" NOTE IS A CLAIM ABOUT SIZE AS WELL AS CAUSE, AND THE SIZE IS THE
+> PART THAT ROTS.** Two had ports written and REVERTED; each was about an hour once the right
+> model was in hand, and every one had the cause right and the size wrong. **The sequencer's
+> volume reset** needed only the recognition that `currentVolume` (`abc_midi_sequencer.js:223`,
+> reset per line-voice) and `stressBeat1/Down/Up` (`abc_midi_flattener.js:76-79`, reset once
+> per `flatten()`) are TWO VARIABLES IN TWO FILES that `flatten.ts` had modelled as one —
+> which is why resetting the flattener's table broke the `!mp!`-across-voices carry both times
+> it was tried. **`(p:q:r` with `r = 1`** was said to need tuplet resolution moved from parse
+> time to sequence time; it needed three lines, because our model already marks exactly one
+> event of such a group. **`abcts-endings#2`'s last velocity byte** was said to need a measure
+> COPY or a `barless` flag; what abcjs takes is an EVENT COUNT, so the copy is `take: 1` and
+> the measure object still travels. A wrong cause gets tested and falls over; a wrong size
+> stops the work being attempted at all.
+>
+> **Sixteen landings, every one a read of a named abcjs function or a probe of its real
 > output, and SIX were rules ALREADY IMPLEMENTED WITH THEIR CITATIONS ELSEWHERE IN THIS
 > REPO** — five in `compat/sequence.ts` or `layout.ts`, and **one in `flatten.ts` THREE
 > LINES ABOVE the site that needed it, under a comment block explaining that very rule**
@@ -982,8 +994,9 @@ the state.
 > where our whole-note assumption agreed; and **the repeat resolver's THREE order/edge
 > rules**, all instrumented (`endRepeat, startEnding, startRepeat` on one bar element; `[]`
 > is TRUTHY so a quoted `["first"]` still pushes a section; the gap span's guard and its end
-> differ by one, which only shows on the trailing synthetic section; and a volta on the
-> FIRST measure is one the bar loop structurally cannot see).
+> differ by one, which only shows on the trailing synthetic section; a volta on the FIRST
+> measure is one the bar loop structurally cannot see; and a SPAN CAN STOP INSIDE A MEASURE,
+> because abcjs's spans are ELEMENT ranges where ours are measure ranges).
 >
 > ⚠️ **AND THE SUITE TIMED OUT UNDER LOAD AND REPORTED THREE REDS** — a worker-start error
 > at 592 seconds — where the same tree re-ran green at 2,470 in 35. RE-RUN BEFORE BELIEVING
