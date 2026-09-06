@@ -677,11 +677,35 @@ function writtenTimeline(voice: Voice): WrittenTimeline {
   let tripletTotal = 0
   let tripletCount = 0
   const round6 = (x: number): number => Math.round(x * MICRO) / MICRO
+  /**
+   * ⚠️ **A TUPLET GROUP IS NOT BOUNDED BY ITS MEASURE.** abcjs's `tripletMultiplier` and
+   * its running total are per VOICE — one `for (var v = 0; v < voice.length; v++)` over a
+   * flat element stream (`abc_midi_sequencer.js:253-277`) — and a barline is just another
+   * element in it. `(3CD|EFGA|` is a triplet whose THIRD member is the E of the next bar.
+   *
+   * Both look-ups here were scoped to `measure.events`, so the group counted TWO members
+   * and D took the remainder that belongs to E: abcjs sounds 0.083333, 0.083333, 0.083334
+   * and we sounded 0.083333, 0.083334, 0.083333. `TupletMark.group` is tune-unique by
+   * construction, so one flat pass answers both. Open row
+   * `abcts-bars-graces-and-groups#19`.
+   */
+  const flat = voice.measures.flatMap((m) => m.events)
+  /** The same walk, indexed by group, so a tuplet start is not a scan of the voice. */
+  const inGroupOf = new Map<number, MusicEvent[]>()
+  for (const e of flat) {
+    const g = e.tuplet?.group
+    if (g === undefined) continue
+    const list = inGroupOf.get(g)
+    if (list === undefined) inGroupOf.set(g, [e])
+    else list.push(e)
+  }
+  let flatIndex = -1
 
   for (const measure of voice.measures) {
     positionOf.set(measure, written)
     const durations: number[] = []
     for (const [index, event] of measure.events.entries()) {
+      flatIndex += 1
       // A SPACER SOUNDS NOTHING, TAKES NO TIME — AND STILL COUNTS.
       //
       // `y` is skipped where the sequence is BUILT — `if (!elem.rest || elem.rest.type
@@ -785,7 +809,7 @@ function writtenTimeline(voice: Voice): WrittenTimeline {
            * The `0.0000` is the tell: our total was 0.25 where the group needs 0.3333, so
            * the remainder arm handed the last note nothing at all.
            */
-          const inGroup = measure.events.filter((e) => e.tuplet?.group === tuplet.group)
+          const inGroup = inGroupOf.get(tuplet.group) ?? []
           tripletTotal =
             inGroup.length === tuplet.number
               ? tuplet.number * multiplier * notated
@@ -793,7 +817,7 @@ function writtenTimeline(voice: Voice): WrittenTimeline {
                 inGroup.reduce((sum, e) => sum + ratToNumber(e.notatedDuration), 0)
           dur = round6(dur)
           tripletCount = dur
-        } else if (measure.events[index + 1]?.tuplet?.group === tuplet.group) {
+        } else if (flat[flatIndex + 1]?.tuplet?.group === tuplet.group) {
           dur = round6(dur)
           tripletCount += dur
         } else {
