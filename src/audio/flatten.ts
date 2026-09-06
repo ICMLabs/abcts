@@ -754,6 +754,32 @@ function writtenTimeline(voice: Voice, startMeter: Meter | null): WrittenTimelin
   let tripletGroup: number | null = null
   let tripletTotal = 0
   let tripletCount = 0
+  /**
+   * ⚠️ **`(p:q:r` WITH `r = 1` NEVER CLEARS THE MULTIPLIER, AND EVERY LATER NOTE OF THE
+   * VOICE KEEPS IT** (`ABCJS-DEBT.md`, now closed by this).
+   *
+   * `tripletNotesLeft = num_notes` makes the group ONE note, so that note carries BOTH
+   * `startTriplet` and `endTriplet` — and `if (elem.startTriplet)` wins the if/else, so the
+   * `endTriplet` arm that assigns `tripletMultiplier = 0` never runs
+   * (`abc_midi_sequencer.js:253-277`). The multiplier then scales every element after it:
+   * `noteElem.duration = noteElem.duration * tripletMultiplier`, rounded to a millionth.
+   *
+   * Ours scales the r notes at PARSE time, so the marked note agreed and nothing after it
+   * did. **The note that used to sit here said reproducing this meant moving tuplet
+   * resolution from parse time to sequence time; it does not.** Our model marks exactly
+   * ONE event of such a group, which is the same fact abcjs's `tripletNotesLeft` states, so
+   * carrying the ratio forward is the whole port.
+   *
+   * Laddered through both engines, one variable per rung:
+   *
+   *     (3:2:1 ABC D2 E2|          abcjs scales ALL FIVE      ← the open row
+   *     (3:2:1 A|B C|              …and the BARLINE is not a boundary
+   *     (3:2:1 ABC|(3:2:1 DEF|     …and the next tuplet RESTARTS it
+   *     (3:2:2 ABC D2 E2|          r = 2 clears normally, already exact
+   *     (3 AB|C2 D2|               an under-filled `(3` is a THREE-member group, exact
+   *     (2:2:1 ABC|                r = 1 with a ratio of 1 leaks the identity
+   */
+  let leak = 0
   const round6 = (x: number): number => Math.round(x * MICRO) / MICRO
   /**
    * ⚠️ **A TUPLET GROUP IS NOT BOUNDED BY ITS MEASURE.** abcjs's `tripletMultiplier` and
@@ -829,32 +855,19 @@ function writtenTimeline(voice: Voice, startMeter: Meter | null): WrittenTimelin
        * gives 0.166667 twice and 0.166666 last, and `(3 C` gives 0.083333 twice and
        * 0.083334 last.
        *
-       * ⚠️ **AND `(p:q:r` WITH `r < p` NEVER ENDS IN ABCJS — MEASURED, NOT PORTED.**
-       * `abcts-ledger-gaps` tune 1 is `(3:2:1 ABC D2 E2` at `L:1/8`, and abcjs sounds ALL
-       * FIVE notes at two thirds: 0.083333 × 3 then 0.166667 × 2. The mechanism is one
-       * `if`: `tripletNotesLeft = num_notes` makes the group ONE note, so that note carries
-       * BOTH `startTriplet` and `endTriplet` — and `if (elem.startTriplet)` wins the
-       * if/else, so the `endTriplet` arm that clears `tripletMultiplier` never runs
-       * (`abc_midi_sequencer.js:253-277`). The multiplier is then applied to every element
-       * to the end of the voice. Its `startTriplet !== tripletR` branch — the sum of the
-       * first `r` written durations — only feeds the remainder that arm would have used, so
-       * it is unreachable here too.
+       * ✅ **AND `(p:q:r` WITH `r = 1` NEVER ENDS IN ABCJS — PORTED 2026-09-06**, as `leak`
+       * at the head of this function. Its `startTriplet !== tripletR` branch — the sum of
+       * the first `r` written durations — is what decides the group's total at `r = 2` and
+       * `r = 4`, and is ported just below.
        *
-       * Ours scales the r notes at PARSE time, so the first note agrees and every note
-       * after it is unscaled: 0.083333 then 0.125 × 2 then 0.25 × 2. Reproducing the leak
-       * means running abcjs's state machine over the voice at sequence time — the durations
-       * here are already tuplet-scaled — which is a change to WHERE tuplets are resolved.
-       * Written down rather than half-done.
-       *
-       * ⚠️ **AND TWO CLAIMS THIS NOTE MADE ARE NOW FALSE — CORRECTED 2026-09-05.** It said
-       * the leak is "a shape neither corpus writes" and that the `startTriplet !== tripletR`
-       * branch "is unreachable here too":
-       *
-       *   - `abcts-ledger-gaps#1` IS that shape, and `tests/midi-bytes.test.ts` — which did
-       *     not exist when this was written — sees it. "The object, the SVG and the timings
-       *     are byte-exact either way" was true of the gates that existed then.
-       *   - the branch is unreachable only for `r = 1`. At `r = 2` and `r = 4` it decides
-       *     the group's total, and it IS ported now, just below.
+       * **THIS NOTE WAS WRONG ABOUT THE SIZE OF IT, TWICE, AND A WRONG SIZE IS WORSE THAN A
+       * WRONG CAUSE** — a wrong cause gets tested and falls over, a wrong size stops the
+       * work being attempted at all. It first said the leak is "a shape neither corpus
+       * writes" (`abcts-ledger-gaps#1` IS that shape) and then that reproducing it "means
+       * running abcjs's state machine over the voice at sequence time… a change to WHERE
+       * tuplets are resolved". It does not. Our model marks exactly ONE event of such a
+       * group — the same fact `tripletNotesLeft = num_notes` states — so the ratio is
+       * already in hand at the start arm and carrying it forward is three lines.
        */
       const tuplet = event.tuplet
       let dur = spacer
@@ -909,6 +922,9 @@ function writtenTimeline(voice: Voice, startMeter: Meter | null): WrittenTimelin
               ? tuplet.number * multiplier * notated
               : multiplier *
                 inGroup.reduce((sum, e) => sum + ratToNumber(e.notatedDuration), 0)
+          // A GROUP OF ONE both starts and ends, and abcjs's if/else lets only the start
+          // arm run — so the ratio is never cleared. Any other group clears a leaked one.
+          leak = inGroup.length === 1 ? multiplier : 0
           dur = round6(dur)
           tripletCount = dur
         } else if (flat[flatIndex + 1]?.tuplet?.group === tuplet.group) {
@@ -918,6 +934,8 @@ function writtenTimeline(voice: Voice, startMeter: Meter | null): WrittenTimelin
           dur = round6(tripletTotal - tripletCount)
           tripletGroup = null
         }
+      } else if (leak !== 0) {
+        dur = round6(dur * leak)
       }
       durations.push(dur)
       written += dur
