@@ -252,6 +252,14 @@ async function renderFixture(name) {
     const panes = wrap.querySelectorAll('.pane');
     const js = renderInto(window.ABCJS, abc, t, panes[0]);
     const ts = renderInto(window.ABCTS, abc, t, panes[1]);
+    // ⚠️ A PHANTOM SLOT PRODUCES NO SVG IN EITHER ENGINE, AND IS NOT A TUNE.
+    // numberOfTunes is abc.split(newline + X:).length with a floor of 1 — a SPLIT, not a
+    // parse (api/abc_tunebook.js:13-18) — so it over-counts whenever the text holds an X:
+    // that opens no tune. Eleven for the ten tunes of abcts-slur-shapes, nine for the
+    // eight of abcts-endings, two for the one of abcjs-visual-wrap-02. renderAbc still
+    // needs a slot per COUNT, so the extra slot is passed and its empty row dropped here.
+    // Both engines agree on the count, which is why the row was blank on both sides.
+    if (js === 'NO SVG' && ts === 'NO SVG') { wrap.remove(); continue; }
     wrap.querySelector('.slug').textContent = tuneSlug;
     const badge = wrap.querySelector('.badge');
     if (js === ts) { badge.className = 'badge same'; badge.textContent = 'identical'; tally.same++; }
