@@ -6,6 +6,13 @@ import { numberOfTunes, TuneBook } from "../src/compat/tunebook.js";
  * `TuneBook` is STRING SURGERY, not parsing — abcjs splits a file on `"\nX:"`, truncates
  * each tune at the first blank line, and reads the title and id back out with more splits
  * (`abc_parse_book.js`). What matters is that the offsets and the quirks agree.
+ *
+ * ⚠️ **THESE FIVE CASES ARE PROSE, NOT THE ORACLE.** They were written from a READING of
+ * `abc_parse_book.js`, and a test can encode an inference as firmly as a comment can while
+ * being harder to notice, because a green test reads as a checked fact. What says these
+ * quirks are abcjs's is `tunebook-corpus.test.ts` beside this file: 22 control shapes and
+ * all 231 fixtures, compared against a golden harvested by RUNNING abcjs 6.7.0. Keep this
+ * file for what it EXPLAINS; change behaviour against that one.
  */
 describe("TuneBook", () => {
   const book =
