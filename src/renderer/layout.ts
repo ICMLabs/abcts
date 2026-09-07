@@ -5153,7 +5153,21 @@ function layoutNoteheads(
     // only for a beamed stem.
     const baseShift = beamed ? stemHeadOffset : 0
     const anchor = up ? head.anchors.stemUpSE : head.anchors.stemDownNW
-    const [bravuraX, bravuraY] = anchor ?? [up ? headW : 0, 0]
+    /**
+     * ⚠️ **BRAVURA'S ANCHORS ARE PUBLISHED IN STAFF SPACES AND WERE USED AS PIXELS.**
+     * `bravuraEntry` multiplies every other Bravura figure by `SPACE` — advance, width,
+     * height, y, with the comment saying exactly why — and the ANCHORS were read raw. So
+     * an up-stem in `abcjs-extended` sat 1.18 LAYOUT UNITS right of the notehead's origin
+     * where it belongs 1.18 SPACES right, which is 9.145: measured, the stem drew 0.7px
+     * from the head's left edge instead of at its right, and the flag followed it there.
+     * Every up-stemmed note in extended had its stem and flag on the wrong side.
+     *
+     * `1.18 * SPACE` is 9.145, which is the head's own width to the thousandth — the two
+     * agreeing is the check, since a stem anchor IS the right edge of the head.
+     */
+    const [bravuraX, bravuraY] = anchor
+      ? [anchor[0] * SPACE, anchor[1] * SPACE]
+      : [up ? headW : 0, 0]
     /**
      * `dx = (dir === "down" || heads.length === 0) ? 0 : abselem.heads[0].w` — the SCALED
      * head width (`abstract-engraver.js:747`). See `headW`.
