@@ -107,7 +107,7 @@ const PAGE = (slug) => `<!doctype html>
   .same { background: #1a7f37; color: #fff; }
   .diff { background: #b42318; color: #fff; }
   .div  { background: #8250df; color: #fff; }
-  .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  .pair { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; }
   .pane { min-width: 0; overflow-x: auto; }
   .pane h4 { margin: 0 0 .25rem; font-size: 11px; color: GrayText; text-transform: uppercase; letter-spacing: .06em; }
   .byte { font: 12px ui-monospace, monospace; color: GrayText; }
@@ -123,8 +123,16 @@ const PAGE = (slug) => `<!doctype html>
   .overlay .pane:first-child { position: relative; filter: url(#red); }
   .overlay .pane:last-child { filter: url(#cyan); mix-blend-mode: multiply; }
   .overlay .pane h4 { display: none; }
-  .only-js .pane:last-child, .only-ts .pane:first-child { display: none; }
-  .only-js .pair, .only-ts .pair { grid-template-columns: 1fr; }
+  /* The extended pane is abcts's OWN engraving, not a parity target — it is out of the
+     way in every view whose question is "do the two agree". */
+  .overlay .pane.ext, .only-js .pane.ext, .only-ts .pane.ext { display: none; }
+  .only-js .pane:nth-child(2), .only-ts .pane:nth-child(1),
+  .only-ext .pane:nth-child(1), .only-ext .pane:nth-child(2) { display: none; }
+  .only-js .pair, .only-ts .pair, .only-ext .pair { grid-template-columns: 1fr; }
+  .overlay .pair { grid-template-columns: 1fr 1fr; }
+  /* Extended is EXPECTED to differ; say when it does rather than leaving it ambiguous. */
+  .extmark { font-size: 11px; padding: .1rem .45rem; border-radius: 999px; background: #0969da; color: #fff; font-weight: 600; }
+  .extsame { font-size: 11px; padding: .1rem .45rem; border-radius: 999px; background: #57606a; color: #fff; font-weight: 600; }
   svg { max-width: none; }
 </style>
 
@@ -143,6 +151,7 @@ const PAGE = (slug) => `<!doctype html>
     <label><input type="radio" name="view" value="overlay"> overlay</label>
     <label><input type="radio" name="view" value="only-js"> abcjs</label>
     <label><input type="radio" name="view" value="only-ts"> abcts</label>
+    <label><input type="radio" name="view" value="only-ext"> extended</label>
   </span>
   <label><input type="checkbox" id="onlyDiff"> only differing</label>
   <span id="summary" class="byte"></span>
@@ -246,8 +255,9 @@ async function renderFixture(name) {
     const wrap = document.createElement('div');
     wrap.className = 'tune';
     wrap.innerHTML = '<div class="head"><span class="slug"></span><span class="badge"></span>' +
-      '<span class="byte"></span></div><div class="pair">' +
-      '<div class="pane"><h4>abcjs</h4></div><div class="pane"><h4>abcts</h4></div></div>';
+      '<span class="byte"></span><span class="ext"></span></div><div class="pair">' +
+      '<div class="pane"><h4>abcjs</h4></div><div class="pane"><h4>abcts strict</h4></div>' +
+      '<div class="pane ext"><h4>abcts extended</h4></div></div>';
     host.appendChild(wrap);
     const panes = wrap.querySelectorAll('.pane');
     const js = renderInto(window.ABCJS, abc, t, panes[0]);
@@ -260,6 +270,29 @@ async function renderFixture(name) {
     // needs a slot per COUNT, so the extra slot is passed and its empty row dropped here.
     // Both engines agree on the count, which is why the row was blank on both sides.
     if (js === 'NO SVG' && ts === 'NO SVG') { wrap.remove(); continue; }
+    /**
+     * THE THIRD COLUMN IS abcts's OTHER MODE, and it is reached a different way on purpose.
+     * compat's renderAbc hard-wires abcjs-strict and AbcjsParams has no mode, which is
+     * right for a drop-in and left extended unreachable from a page at all. The core API
+     * is the opt-in: core.parse then core.render with the mode.
+     *
+     * It is NOT a parity target. Strict reproduces abcjs bug for bug; extended fixes
+     * abcjs's parsing bugs and adds engraving abcjs lacks, so a DIFFERENCE here is the
+     * feature working. The badge above still compares abcjs against strict; this column
+     * only says whether extended departed from it.
+     */
+    const extPane = wrap.querySelector('.pane.ext');
+    let ext = null;
+    try {
+      const parsed = window.ABCTS.core.parse(abc, { mode: 'abcjs-extended' });
+      const score = parsed.ok && parsed.scores ? parsed.scores[t] : null;
+      ext = score ? window.ABCTS.core.render(score, { mode: 'abcjs-extended', staffwidth: 670 }) : null;
+      if (ext) extPane.insertAdjacentHTML('beforeend', ext);
+    } catch (e) { extPane.insertAdjacentHTML('beforeend', '<p class="empty">threw: ' + e.message + '</p>'); }
+    const mark = wrap.querySelector('.ext');
+    if (ext === null) { mark.className = 'empty'; mark.textContent = 'extended: no score'; }
+    else if (ext === ts) { mark.className = 'extsame'; mark.textContent = 'extended = strict'; }
+    else { mark.className = 'extmark'; mark.textContent = 'extended differs'; }
     wrap.querySelector('.slug').textContent = tuneSlug;
     const badge = wrap.querySelector('.badge');
     if (js === ts) { badge.className = 'badge same'; badge.textContent = 'identical'; tally.same++; }
