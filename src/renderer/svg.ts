@@ -32,6 +32,27 @@ import {
 import { SMUFL_TO_ABCJS } from "./glyph-map.js";
 import { glyphsFor } from "./glyph-table.js";
 import { GLYPHS, type GlyphName } from "./glyphs.js";
+
+/**
+ * **FNV-1a over the glyph outlines, as the `<defs>` id prefix.**
+ *
+ * An SVG id is DOCUMENT-global and a page holds many SVGs, so `g0` cannot be the id — but
+ * a COUNTER cannot be either: `extended-snapshot`'s own "renders a tune the same alone as
+ * after forty others" is exactly the property a counter breaks, and it is the right
+ * property to keep. Hashing the outlines gives both: distinct scores get distinct ids,
+ * the same score always renders identically, and two IDENTICAL scores on one page share
+ * ids that point at the same outline, which is correct rather than a collision.
+ */
+const outlineHash = (parts: readonly string[]): string => {
+  let h = 0x811c9dc5;
+  for (const part of parts) {
+    for (let i = 0; i < part.length; i += 1) {
+      h ^= part.charCodeAt(i);
+      h = Math.imul(h, 0x01000193) >>> 0;
+    }
+  }
+  return h.toString(36);
+};
 import { ENGRAVE, stepToY } from "./layout.js";
 import type {
   ConnectorSpan,
@@ -1058,14 +1079,51 @@ export function toSVG(
     return `<path d="${d}" stroke="none" data-name="box"></path>`;
   };
 
+  /**
+   * ⚠️ **A `<defs>` ID IS DOCUMENT-GLOBAL, SO IT MUST NOT BE `g0`.**
+   *
+   * `glyphDefs` is per render, so the ids restarted at `g0` for every SVG — and
+   * `<use href="#g0">` resolves against the FIRST `#g0` in the DOCUMENT, not the one in
+   * its own `<svg>`. Two extended renders on one page therefore draw each other's
+   * glyphs: measured, `3 of 3` ids collided between two tunes, and a page of them showed
+   * time-signature figures where noteheads belong.
+   *
+   * **NO GATE COULD SEE IT.** Every comparison in this repo renders ONE SVG and diffs it
+   * against another engine's; a collision needs two in one document, which is a shape no
+   * gate has. It took a human looking at three panes side by side.
+   *
+   * Only `abcjs-extended` is affected — strict emits no `<use>` at all (`abcjs-debt`: the
+   * `<defs>`/`<use>` saving is an extended-only departure), so no byte golden moves.
+   *
+   * The counter is module-level and monotonic: unique across every render in a process,
+   * which is what document-global means in a page that renders more than one tune.
+   */
   const glyphDefs = new Map<GlyphName, string>();
   const defId = (name: GlyphName): string => {
     let id = glyphDefs.get(name);
     if (id === undefined) {
+      // The PLACEHOLDER. Its document-unique form is stamped in at serialisation, once
+      // every outline is known — see `stampDefIds`.
       id = `g${glyphDefs.size}`;
       glyphDefs.set(name, id);
     }
     return id;
+  };
+  /**
+   * Rewrite the placeholder ids into document-unique ones. Done at the END because the
+   * prefix is a hash of the OUTLINES, and the last of them is only known once the walk is.
+   * Longest id first, so `g1` never eats the start of `g10`.
+   */
+  const stampDefIds = (markup: string): string => {
+    if (glyphDefs.size === 0) return markup;
+    const p = `a${outlineHash([...glyphDefs.keys()].map((n) => GLYPHS[n]?.path ?? n))}`;
+    const ids = [...glyphDefs.values()].sort((x, y) => y.length - x.length);
+    let out = markup;
+    for (const id of ids) {
+      out = out.split(`id="${id}"`).join(`id="${p}${id}"`);
+      out = out.split(`href="#${id}"`).join(`href="#${p}${id}"`);
+    }
+    return out;
   };
 
   /**
@@ -4270,7 +4328,7 @@ export function toSVG(
    * the next and much larger piece, and the byte table is what will rank it.
    */
   if (abcjs) {
-    return (
+    return stampDefIds(
       `<svg xmlns:xlink="http://www.w3.org/1999/xlink" role="img" fill="currentColor" ` +
       `stroke="currentColor" aria-label="Sheet Music${
         lastTitle === undefined || lastTitle === ""
@@ -4313,7 +4371,7 @@ export function toSVG(
     );
   }
 
-  return (
+  return stampDefIds(
     `<svg xmlns="http://www.w3.org/2000/svg"${abcjs ? "" : ` class="${escapeAttr(prefix)}"`} ` +
     // abcjs SETS `fill` ON THE `<svg>` ITSELF and wraps nothing round the music, so its
     // outermost child is the staff-wrapper. Ours carried an extra `<g fill>`, which put

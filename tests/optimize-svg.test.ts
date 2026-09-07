@@ -102,12 +102,12 @@ describe("optimizeSVG — <defs>/<use> deduplication", () => {
 
     it("carries class and data-name onto the <use> itself", () => {
       const svg = svgFor(fixture("simple-c"), "abcjs-extended");
-      expect(svg).toMatch(/<use class="abcjs-notehead" href="#g\d+"/);
+      expect(svg).toMatch(/<use class="abcjs-notehead" href="#a[0-9a-z]+g\d+"/);
       // A `<use>` with a bare href and the class left behind on a wrapper would pass a
       // "contains abcjs-notehead" check and still break `svg.querySelectorAll('.abcjs-notehead')`
       // returning the same nodes.
       expect(svg).not.toMatch(
-        /<use href="#g\d+"[^>]*\/>\s*<\/g>\s*<g class="abcjs-notehead"/,
+        /<use href="#a[0-9a-z]+g\d+"[^>]*\/>\s*<\/g>\s*<g class="abcjs-notehead"/,
       );
     });
 
@@ -150,14 +150,35 @@ describe("optimizeSVG — <defs>/<use> deduplication", () => {
     it("emits each distinct outline exactly once", () => {
       const svg = svgFor(fixture("ave-verum-corpus"), "abcjs-extended");
       const defs = svg.slice(svg.indexOf("<defs>"), svg.indexOf("</defs>"));
-      const ids = [...defs.matchAll(/<path id="(g\d+)"/g)].map((m) => m[1]);
+      const ids = [...defs.matchAll(/<path id="(a[0-9a-z]+g\d+)"/g)].map((m) => m[1]);
       expect(new Set(ids).size).toBe(ids.length);
       // Every referenced id must exist, or the browser draws nothing where a glyph
       // belongs — a failure that is invisible to a byte count and to a class check.
       const referenced = new Set(
-        [...svg.matchAll(/href="#(g\d+)"/g)].map((m) => m[1]),
+        [...svg.matchAll(/href="#(a[0-9a-z]+g\d+)"/g)].map((m) => m[1]),
       );
       for (const id of referenced) expect(ids).toContain(id);
+    });
+
+    /**
+     * ⚠️ **AN SVG ID IS DOCUMENT-GLOBAL, AND TWO RENDERS SHARE A DOCUMENT.**
+     * The ids were `g0`, `g1`, … per render, so a page holding two extended scores had
+     * `<use href="#g0">` resolving against the FIRST `#g0` in the document — the other
+     * score's glyph. Measured before the fix: 3 of 3 ids collided between two tunes, and
+     * a page of them drew time-signature figures where noteheads belong.
+     *
+     * **No other gate in this repo can express this**, because every one of them renders
+     * ONE SVG and compares it to another engine's. A collision needs two in one document.
+     * It was found by a human looking at three panes side by side.
+     */
+    it("gives two renders disjoint ids, because a page holds both", () => {
+      const ids = (svg: string) =>
+        new Set([...svg.matchAll(/<path id="([^"]+)"/g)].map((m) => m[1]));
+      const a = ids(svgFor(fixture("simple-c"), "abcjs-extended"));
+      const b = ids(svgFor(fixture("ave-verum-corpus"), "abcjs-extended"));
+      expect(a.size).toBeGreaterThan(0);
+      expect(b.size).toBeGreaterThan(0);
+      for (const id of a) expect(b.has(id)).toBe(false);
     });
   });
 
