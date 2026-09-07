@@ -1176,11 +1176,25 @@ export function toSVG(
     // A PITCH → A LENGTH, which is `spacesOfPitch` — written `0.5 *`, the same number only
     // while a staff space is the unit. `glyph-ycorr` and `above-lane-order` both caught it
     // under the flip, by 3.375px per pitch: exactly `3.875 - 0.5`.
-    const ycorr = strict
-      ? name.startsWith("dynamic")
-        ? (ABCJS_YCORR.f ?? 0)
-        : (ABCJS_YCORR[SMUFL_TO_ABCJS[name] ?? ""] ?? 0)
-      : 0;
+    /**
+     * ⚠️ **THE DYNAMIC'S DROP IS NOT STRICT-ONLY, AND THE NOTE ABOVE ALREADY SAID SO** —
+     * "the dynamics are the exception on BOTH counts" — while the code kept it inside the
+     * `strict` guard with everything else. So `abcjs-extended` placed every dynamic four
+     * pitch high: measured on `!pppp!C !ffff!D !ppp!E !fff!F|`, strict draws them at
+     * y 19.5, below the staff, and extended at 3.9 — ON the notes. 15.6px is 4 x 3.875,
+     * the correction exactly.
+     *
+     * The rest of the table IS strict-only and stays so: those figures are a property of
+     * abcjs's own outlines and Bravura's are authored against one baseline. The dynamic is
+     * the exception because the four pitch is not an outline correction at all — it is
+     * where abcjs PUTS the mark relative to its lane, and that is the same intent in
+     * either font.
+     */
+    const ycorr = name.startsWith("dynamic")
+      ? (ABCJS_YCORR.f ?? 0)
+      : strict
+        ? (ABCJS_YCORR[SMUFL_TO_ABCJS[name] ?? ""] ?? 0)
+        : 0;
     /**
      * ⚠️ **AND WHERE THE PRODUCER HOLDS THE PITCH, THE CORRECTION JOINS IT THERE.** abcjs
      * draws at `renderer.calcY(offset + ycorr)` — one sum, one multiply
