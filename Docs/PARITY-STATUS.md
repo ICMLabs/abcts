@@ -131,10 +131,18 @@ All at zero, re-run 2026-09-06. These are the parse and API surfaces rather than
 
 Read this section before quoting the numbers above.
 
-1. **It is `abcjs-strict`.** The other mode, `abcjs-extended`, differs **on purpose** — it
-   fixes abcjs's parsing bugs (`+:`, inline `[U:`) and adds engraving abcjs lacks (styled
-   noteheads, three-quarter-tone glyphs, melisma extenders, per-segment lyric fonts). Its
-   own partition is held by `tests/mode-partition.test.ts`.
+1. **It is `abcjs-strict`** — but as of 2026-09-07 that is a much smaller caveat than it
+   was. The owner's rule is that `abcjs-extended` is **byte-identical to strict except for
+   the divergences declared in `Docs/ABCJS-DIFFERENCES.md`**, and
+   `tests/mode-bytes.test.ts` holds all 691 fixtures to it: **11 differ, every one
+   declared**. So the numbers above carry over to extended everywhere it has not been given
+   leave to differ.
+
+   It opened at **675 of 691**. `strict` had been gating the LOOK as well as the bugs, so
+   extended was drawing Bravura outlines at Bravura's advances, spacing at abcm2ps's
+   density and measuring text with real per-em tables — none of it declared, none of it
+   compared to anything. `tests/mode-partition.test.ts` still holds the partition by named
+   behaviour; `mode-bytes` holds the bytes.
 
 2. **Parity is only as broad as the corpus.** ~1,000 tunes: abcjs's own test suite plus
    purpose-built controls. **Every previous "everything is green" moment here was followed
@@ -207,6 +215,10 @@ pessimistic one. It is abcts's own symbol, not abcjs's, so the drop-in surface i
    existing CSP already allows it, but check if the site passes its own `soundFontUrl`.
 2. **Anything reading `abcjs-extended`** — it is unreachable from `renderAbc`, which
    hard-wires strict. Reach it with `ABCTS.core.render(score, { mode: 'abcjs-extended' })`.
+   ⚠️ **And pass the same options compat does, or you are comparing pipelines rather than
+   modes**: `classes: 'abcjs'`, `staffSpace: 7.75`, and `systemWidth` (the PAGE — there is
+   no `staffwidth` option on `render`, so one passed there is silently dropped). All three
+   caught out this repo's own comparison site.
 3. **The editor**, if the site uses `abcjs.Editor` — it is implemented and gated on 14
    cases, but against recorded call sequences rather than a live textarea.
 

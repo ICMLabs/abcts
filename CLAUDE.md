@@ -1933,17 +1933,50 @@ symbols, the full decoration set, lyrics, slurs and ties, tuplets, voltas, annot
 styled noteheads, hairpins and glissandi, melisma extenders, mid-tune key changes, and
 `%%score` staff grouping with braces and brackets.
 
-Two features are MODE-SPLIT, and the split is the point — strict is faithful to abcjs,
-the other modes are correct:
+⚖️ **EXTENDED IS STRICT, BYTE FOR BYTE, EXCEPT FOR THIS TABLE** (owner, 2026-09-07:
+*"extended mode should always be byte compatible with strict, except for those explicitly
+agreed upon divergences (usually we've fixed a bug in abcjs)"*). `tests/mode-bytes.test.ts`
+is that sentence as a gate, and it opened at **675 of 691 fixtures differing**:
+
+|  | fixtures |
+|---|---|
+| layout's `strict` flag | 331 |
+| the emitter's `strict` flag | 333 |
+| glyph table / line weights / spacing density / text metrics | 5 |
+| the parser's `isStrict` — the only ones intended | 6 |
+
+**ONE FLAG WAS DOING TWO JOBS.** `strict` gated both *reproduce abcjs's bug* and *engrave
+the way abcjs engraves*, threaded through two hundred sites without the distinction ever
+being drawn — so extended was not "abcjs plus fixes" but a second engraving engine no gate
+compared to anything: Bravura outlines at Bravura's advances, abcm2ps's density (16%
+looser), Bravura's line weights, real per-em text metrics. Every one of those is a LOOK, not
+a bug abcjs has. `ABCJS_GAPS` in `layout.ts` is the half that survived. 675 → 11.
+
+⛔ **ONE CORRECTION WAS MEASURED AND DECLINED, and the reasoning is here so it is not
+re-argued.** The golden text tables are ASCII-only — `dump-svg.js`'s `widths[ch] || 8`
+measures CJK at a flat 8 — so extended measured for real. Keeping that costs **156 of 691**
+fixtures to fix something **no browser ever shows**: with a DOM both modes ask it
+(`text-measure.ts`), and the split existed only under jsdom. Both modes use the golden
+tables; `realTextWidth` is unreachable in consequence and left in place with the note.
 
 | | `abcjs-strict` | `abcjs-extended` |
 |---|---|---|
 | Melisma | prints abcjs's literal `_` | suppresses it, strokes an extender |
 | Three-quarter tones | draws NOTHING, as abcjs does | draws the three-quarter glyph |
+| Decorations abcjs lacks (`STRICT_UNDRAWN`, tremolo bars) | draws NOTHING | draws the ornament the ABC names |
 | `%%vocalfont` | realized, per music LINE (abcjs's staff granularity) | realized, per lyric SEGMENT |
 | `+:` in a lyric continuation | abcjs's leak, reproduced | ABC 2.1 semantics |
 | **inline `[U:` / `[w:` / `[T:`** | **not a field at all — abcjs has only eight** | **read, as ABC 2.1 §4.19 says** |
 | `<defs>`/`<use>` | off, so markup stays abcjs-shaped | on, 0.34x the bytes |
+
+⚠️ **AND A PIPELINE DIFFERENCE IS NOT A MODE DIFFERENCE.** `scripts/zzsite.mjs`'s third
+column reported extended "way out of whack" for a day, and three of its render options were
+simply not the ones compat passes: `classes` (core's vocabulary takes a different emitter
+path — which is what dropped the BOX round a `%%titlefont … box` row), `staffSpace` (8
+against abcjs's 7.75, so every coordinate came out 32/31 too large), and `staffwidth`, which
+**`core.render` does not have** — the key is `systemWidth` and it is the PAGE, not the music
+area, so the option was silently dropped. Hold the pipeline equal before reading a mode
+comparison.
 
 ⚖️ **THE INLINE-FIELD ROW IS AN OWNER RULING, 2026-08-27: *"we should support U:"*.** The
 split is HOW it is supported. `letter_to_inline_header` switches on exactly `[I: [M: [K: [P:

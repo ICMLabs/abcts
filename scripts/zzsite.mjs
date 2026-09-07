@@ -279,22 +279,41 @@ async function renderFixture(name) {
     // Both engines agree on the count, which is why the row was blank on both sides.
     if (js === 'NO SVG' && ts === 'NO SVG') { wrap.remove(); continue; }
     /**
-     * THE THIRD COLUMN IS abcts's OTHER MODE, and it is reached a different way on purpose.
-     * compat's renderAbc hard-wires abcjs-strict and AbcjsParams has no mode, which is
-     * right for a drop-in and left extended unreachable from a page at all. The core API
-     * is the opt-in: core.parse then core.render with the mode.
+     * THE THIRD COLUMN IS abcts's OTHER MODE, reached through core because compat's
+     * renderAbc hard-wires abcjs-strict and AbcjsParams has no mode.
      *
-     * It is NOT a parity target. Strict reproduces abcjs bug for bug; extended fixes
-     * abcjs's parsing bugs and adds engraving abcjs lacks, so a DIFFERENCE here is the
-     * feature working. The badge above still compares abcjs against strict; this column
-     * only says whether extended departed from it.
+     * ⚠️ IT IS A PARITY TARGET NOW, and this column used to make that impossible to see.
+     * Owner's rule, 2026-09-07: extended is byte-compatible with strict except where a
+     * divergence is declared. So the ONLY thing that may differ here is the mode — which
+     * means every other render option must match what compat passes, and two of them did
+     * not:
+     *
+     *   - classes. Panes 1 and 2 are abcjs's vocabulary; this pane asked for core's, so it
+     *     took a different emitter path entirely. That is what dropped the BOX round a
+     *     %%titlefont … box row: the box is drawn in the abcjs branch and the core branch
+     *     has no equivalent. Nothing to do with the mode.
+     *   - staffwidth. core.render has NO SUCH OPTION — the key is systemWidth — so this
+     *     pane was rendering at the engine default while the other two rendered at 670,
+     *     and every row differed by the page width before a note was drawn.
+     *
+     * A pipeline difference reported as a mode defect is the whole reason this column
+     * looked "way out of whack". Held equal, it is tests/mode-bytes.test.ts in a browser.
      */
+    // ⚠️ systemWidth IS THE PAGE, staffwidth IS THE MUSIC AREA — and core.render has no
+    // 'staffwidth' at all, so the old { staffwidth: 670 } here was silently DROPPED and
+    // this pane rendered at the engine default. compat computes staffwidth + 2 * margin,
+    // which is the 700 the goldens are generated at (compat/index.ts:916).
+    // ⚠️ AND staffSpace TOO. toSVG defaults to 8 px per staff space; compat passes abcjs's
+    // own 7.75 (STAFF_SPACE_PX), so a core render at the default came out 32/31 too wide —
+    // 722.58 for a 700px page — with every glyph scaled to match. Three options had to be
+    // held equal before "extended vs strict" was a question about the MODE at all.
+    const CORE_OPTS = { systemWidth: 700, staffSpace: 7.75, classes: 'abcjs', optimizeSVG: false };
     const extPane = wrap.querySelector('.pane.ext');
     let ext = null;
     try {
       const parsed = window.ABCTS.core.parse(abc, { mode: 'abcjs-extended' });
       const score = parsed.ok && parsed.scores ? parsed.scores[t] : null;
-      ext = score ? window.ABCTS.core.render(score, { mode: 'abcjs-extended', staffwidth: 670 }) : null;
+      ext = score ? window.ABCTS.core.render(score, { mode: 'abcjs-extended', ...CORE_OPTS }) : null;
       if (ext) extPane.insertAdjacentHTML('beforeend', ext);
     } catch (e) { extPane.insertAdjacentHTML('beforeend', '<p class="empty">threw: ' + e.message + '</p>'); }
     /**
@@ -310,22 +329,21 @@ async function renderFixture(name) {
     // ⚠️ The page is a TEMPLATE LITERAL, so a regex in it needs its backslashes DOUBLED —
     // the first cut emitted /translate(([-d.]+),([-d.]+))/ and matched nothing, so every
     // row fell into the "different glyph count" arm and all 577 were flagged as drifting.
-    const noteAt = (svg) => [...svg.matchAll(/<(?:path|use)[^>]*class="abcts-note"[^>]*transform="translate\\(([-\\d.]+),([-\\d.]+)\\)/g)]
+    const noteAt = (svg) => [...svg.matchAll(/<(?:path|use)[^>]*class="abcjs-notehead"[^>]*transform="translate\\(([-\\d.]+),([-\\d.]+)\\)/g)]
       .map((m) => ({ x: +m[1], y: +m[2] }));
     /**
-     * ⚠️ **THE TWO PANES SPEAK DIFFERENT MARKUP.** Panes 1 and 2 come from compat's
-     * renderAbc, which emits abcjs's vocabulary — class abcjs-notehead, data-name — while
-     * pane 3 comes from core.render and emits abcts-note. Comparing them by class matched
-     * NOTHING on the strict side, so every row fell into the "different glyph count" arm
-     * and all 577 were flagged. The comparison renders strict through the CORE api too,
-     * purely for the number; the pane still shows the compat one.
+     * ⚠️ **THE TWO PANES USED TO SPEAK DIFFERENT MARKUP** — panes 1 and 2 in abcjs's
+     * vocabulary, pane 3 in core's abcts-note — so a class comparison matched NOTHING on
+     * the strict side and all 577 rows were flagged. Both speak abcjs's now, because the
+     * pane asks for it; the strict side is still rendered through CORE for the number, so
+     * the comparison is mode against mode with the pipeline held equal.
      */
     let drift = null;
+    let stc = null;
     if (ext !== null) {
-      let stc = null;
       try {
         const psx = window.ABCTS.core.parse(abc, { mode: 'abcjs-strict' });
-        stc = psx.ok && psx.scores ? window.ABCTS.core.render(psx.scores[t], { mode: 'abcjs-strict', staffwidth: 670 }) : null;
+        stc = psx.ok && psx.scores ? window.ABCTS.core.render(psx.scores[t], { mode: 'abcjs-strict', ...CORE_OPTS }) : null;
       } catch (e) { stc = null; }
       const a = noteAt(stc ?? ''), b = noteAt(ext);
       if (a.length === b.length && a.length > 0) {
@@ -339,7 +357,8 @@ async function renderFixture(name) {
     }
     const mark = wrap.querySelector('.ext');
     if (ext === null) { mark.className = 'empty'; mark.textContent = 'extended: no score'; }
-    else if (ext === ts) { mark.className = 'extsame'; mark.textContent = 'extended = strict'; }
+    // BYTE-EQUAL is the expected answer now, not a happy accident — see the note above.
+    else if (stc !== null && ext === stc) { mark.className = 'extsame'; mark.textContent = 'extended = strict (byte-equal)'; }
     else if (drift === null) { mark.className = 'extmark'; mark.textContent = 'extended: different glyph count'; wrap.dataset.drift = '1'; }
     else {
       const big = drift.mx > 4 || drift.my > 0.5;

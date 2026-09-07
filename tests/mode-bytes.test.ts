@@ -23,7 +23,7 @@
  * compared to anything. `ABCJS_GAPS` in `layout.ts` is the small half that survived.
  *
  * ── WHAT IS HELD EQUAL, AND WHY EACH ─────────────────────────────────────────
- * `classes` and `systemWidth` because a pipeline difference is not a mode difference — the
+ * `classes` and `systemWidth` (the goldens' own page, 670 + two 15px margins) because a pipeline difference is not a mode difference — the
  * comparison site had extended coming through `core.render` and strict through `compat`,
  * and reported a mode defect for every row. `optimizeSVG: false` because `<defs>`/`<use>`
  * IS a declared divergence and is the one that would otherwise differ on all 691 for a
@@ -91,7 +91,9 @@ const svgOf = (abc: string, mode: CompatibilityMode, tune: number): string => {
   if (score === undefined) return 'NO SCORE'
   return render(score, {
     mode,
-    systemWidth: 670,
+    // The PAGE, not the music area: compat's `staffwidth: 670` plus abcjs's two 15px
+    // margins, which is what every golden in the corpus is generated at.
+    systemWidth: 700,
     classes: 'abcjs',
     optimizeSVG: false,
   })

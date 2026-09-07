@@ -13,6 +13,30 @@ import { parse, render } from 'abcts'      // render(score, { mode: 'abcjs-exten
 
 ---
 
+## ⚖️ AND THIS FILE IS THE WHOLE LIST — EXTENDED IS OTHERWISE BYTE-EQUAL TO STRICT
+
+**Owner's rule, 2026-09-07:** *"extended mode should always be byte compatible with strict,
+except for those explicitly agreed upon divergences (usually we've fixed a bug in abcjs)."*
+
+`tests/mode-bytes.test.ts` enforces it over all 691 corpus fixtures with the pipeline held
+equal, and every slug it lets through names the entry here that permits it. A slug in its
+`DIVERGENT` list without a row in this file is a tolerance wearing a disguise.
+
+**It opened at 675 of 691.** The declared list accounted for eleven; the other 664 came
+from one flag doing two jobs — `strict` gated both *reproduce abcjs's bug* and *engrave the
+way abcjs engraves*, so extended had quietly become a second engraving engine: Bravura
+outlines at Bravura's advances, abcm2ps's spacing density (16% looser), Bravura's line
+weights, real per-em text metrics. None of those is a bug abcjs has, and none was ever
+written down here. They are gone; 675 → 11.
+
+⛔ **One correction was measured and DECLINED.** The golden text tables are ASCII-only —
+`dump-svg.js`'s `widths[ch] || 8` measures CJK at a flat 8px — so extended used to measure
+for real. Keeping it costs **156 of 691** fixtures to fix something no browser ever shows:
+with a DOM both modes ask it, so the divergence existed only under jsdom. Both modes now use
+the golden tables. Recorded here so it is not re-argued as an obvious improvement.
+
+---
+
 ## THE STANDING GOAL: `abcjs-strict` OUTPUT IS BYTE-EQUAL TO abcjs 6.7.0
 
 **Lance, 2026-08-09b: abcts exists to build an abcjs-modern whose output — the SVG FILE and
@@ -26,7 +50,8 @@ Where that stands:
 | MIDI file | `tests/midi-file-ranked.test.ts` | **BYTE-EXACT, 0 of 3** |
 | audio event list | `tests/audio-ranked.test.ts` | 0 of 72 |
 | note timings | `tests/timing-ranked.test.ts` | 0 of 38 |
-| **SVG file** | `tests/svg-bytes.test.ts` | **171 of 171 differ** — the open arc |
+| **SVG file** | `tests/svg-bytes.test.ts` | **BYTE-EXACT, 0 of 691** (closed 2026-08-14) |
+| extended vs strict | `tests/mode-bytes.test.ts` | **11 of 691, all declared above** |
 
 `tests/svg-bytes.test.ts` is the only gate here with no tolerance at all. Every other one
 declares what it ignores — `pixel-parity` compares notehead centres, the harvested table
