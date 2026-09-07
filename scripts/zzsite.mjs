@@ -59,6 +59,20 @@ const fixtures = readdirSync(fixturesDir)
   .sort()
   .map((f) => f.replace(/\.abc$/, ''))
 
+/**
+ * ⚠️ **THE LANDING FIXTURE IS CHOSEN, NOT `fixtures[0]`.** Alphabetically first is
+ * `abcjs-parse-book_parser-01-example`, whose whole content is `X:43` and `T: example` —
+ * and **a line with no note and no barline is DELETED** (`containsNotes` tests
+ * `el_type === 'note' || 'bar'`), so BOTH engines correctly draw a title and no staff.
+ * The site opened on it, rendered no score in either pane, and read as broken.
+ *
+ * A tool's first screen is a claim about what it does. This one has two staves, two
+ * voices, lyrics and dynamics, so a glance says the page works.
+ */
+const DEFAULT_FIXTURE = fixtures.includes('abcjs-visual-multi-voice-01-score-top-bottom')
+  ? 'abcjs-visual-multi-voice-01-score-top-bottom'
+  : fixtures[0]
+
 /** The slugs `svg-bytes` declines to reproduce — labelled here rather than hidden. */
 const DIVERGENT = new Set([
   'abcts-rests-and-bars-tune14',
@@ -90,6 +104,7 @@ const PAGE = (slug) => `<!doctype html>
   .pane { min-width: 0; overflow-x: auto; }
   .pane h4 { margin: 0 0 .25rem; font-size: 11px; color: GrayText; text-transform: uppercase; letter-spacing: .06em; }
   .byte { font: 12px ui-monospace, monospace; color: GrayText; }
+  .empty { margin: .25rem 0 0; font-size: 12px; color: GrayText; font-style: italic; }
   /* OVERLAY — abcjs magenta UNDER abcts cyan. A perfect match reads black. */
   .overlay .pair { display: block; position: relative; }
   .overlay .pane { position: absolute; inset: 0; }
@@ -145,6 +160,14 @@ function renderInto(API, abc, tuneIndex, host) {
     API.renderAbc(slots, abc, { staffwidth: 670 });
     for (let i = 0; i < slots.length; i++) if (i !== tuneIndex) slots[i].remove();
     const svg = host.querySelector('svg');
+    // AN EMPTY PANE AND A BROKEN ONE LOOK THE SAME, so say which this is. A tune with no
+    // note and no barline draws NO STAFF in both engines, by design.
+    if (svg && !svg.querySelector('path, rect, use')) {
+      const note = document.createElement('p');
+      note.className = 'empty';
+      note.textContent = 'no staff drawn — this tune has no note and no barline';
+      host.appendChild(note);
+    }
     return svg ? svg.outerHTML : 'NO SVG';
   } catch (e) { host.textContent = 'THREW: ' + e.message; return 'THREW: ' + e.message; }
 }
@@ -218,8 +241,8 @@ const server = createServer((req, res) => {
     }
     return send('text/plain; charset=utf-8', readFileSync(join(fixturesDir, `${name}.abc`)))
   }
-  const slug = url.startsWith('/f/') ? url.slice('/f/'.length) : fixtures[0]
-  return send('text/html; charset=utf-8', PAGE(fixtures.includes(slug) ? slug : fixtures[0]))
+  const slug = url.startsWith('/f/') ? url.slice('/f/'.length) : DEFAULT_FIXTURE
+  return send('text/html; charset=utf-8', PAGE(fixtures.includes(slug) ? slug : DEFAULT_FIXTURE))
 })
 
 const port = Number(process.env.PORT ?? 8788)
