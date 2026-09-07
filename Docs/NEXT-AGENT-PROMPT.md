@@ -1,12 +1,13 @@
-# NEXT AGENT PROMPT — abcts, 2026-09-06
+# NEXT AGENT PROMPT — abcts, 2026-09-07
 
 Paste the block below.
 
 ---
 
 ```
-start here: abcts/Docs/HANDOFF-2026-09-06.md — its METHOD section first, then THE PATTERN
-section, then THE THREE "DO NOT RE-OPEN" ROWS THAT ALL FELL.
+start here: abcts/Docs/HANDOFF-2026-09-07.md — the mode rule and what enforcing it cost.
+Then HANDOFF-2026-09-06.md: its METHOD section, THE PATTERN section, and THE THREE "DO NOT
+RE-OPEN" ROWS THAT ALL FELL.
 
 Work in /Users/lrettberg/ICMLabs/Code/abcts. Run every command from there — `cd` does not
 persist between tool calls and the workspace ROOT collects every sibling repo's tests.
@@ -18,8 +19,16 @@ and `ABCJS-DEBT.md` has no measured-not-landed entry left.
     zzlive      0 of 685  WebKit AND Chrome — both re-run against a fresh build
     svg-bytes   0 of 691 in-repo, 0 of 356 sibling
     midi-bytes  0 of 691 — 672 byte-exact and NAMED, 19 ruled divergent, OPEN_CEILING 0
+    mode-bytes  11 of 691 — extended vs strict, every one DECLARED (new, 2026-09-07)
     warnings    0 of 815 tunes
-    suite       79 files, 2,470 tests, no reds. Keep them all that way.
+    suite       83 files, 2,503 tests, no reds. Keep them all that way.
+
+⚖️ AND THE NEWEST RULE IS THE OWNER'S: extended is byte-identical to strict except for the
+divergences declared in Docs/ABCJS-DIFFERENCES.md. `mode-bytes` opened at 675 of 691,
+because `strict` had been gating the LOOK as well as abcjs's bugs. `ABCJS_GAPS` in layout.ts
+is the eight sites that remain mode-split. Before reading ANY mode comparison, hold the
+pipeline equal — `classes: 'abcjs'`, `staffSpace: 7.75`, `systemWidth` (the PAGE; there is
+no `staffwidth` option on render and one passed there is silently dropped).
 
     npx vitest run tests/midi-bytes.test.ts && cat /tmp/abcts-midi-bytes.txt
 
