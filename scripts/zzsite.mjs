@@ -118,11 +118,17 @@ const PAGE = (slug) => `<!doctype html>
      is blue rather than black even under multiply. Red (1,0,0) x cyan (0,1,1) IS (0,0,0),
      so a perfect match reads BLACK, ink only abcjs has stays RED, ink only abcts has
      stays CYAN, and nothing else can appear. */
-  .overlay .pair { display: block; position: relative; background: #fff; }
-  .overlay .pane { position: absolute; inset: 0; overflow: visible; }
-  .overlay .pane:first-child { position: relative; filter: url(#red); }
-  .overlay .pane:last-child { filter: url(#cyan); mix-blend-mode: multiply; }
-  .overlay .pane h4 { display: none; }
+  .overlay .pair, .overlay-ext .pair { display: block; position: relative; background: #fff; }
+  .overlay .pane, .overlay-ext .pane { position: absolute; inset: 0; overflow: visible; }
+  .overlay .pane:nth-child(1) { position: relative; filter: url(#red); }
+  .overlay .pane:nth-child(2) { filter: url(#cyan); mix-blend-mode: multiply; }
+  .overlay .pane h4, .overlay-ext .pane h4 { display: none; }
+  /* OVERLAY EXT — abcts STRICT in red under abcts EXTENDED in cyan. Same reading: black
+     is agreement, red is ink only strict has, cyan only extended. This is the one that
+     answers "where does extended depart from a rendering we know is abcjs-exact". */
+  .overlay-ext .pane:nth-child(1) { display: none; }
+  .overlay-ext .pane:nth-child(2) { position: relative; filter: url(#red); }
+  .overlay-ext .pane:nth-child(3) { filter: url(#cyan); mix-blend-mode: multiply; display: block; }
   /* The extended pane is abcts's OWN engraving, not a parity target — it is out of the
      way in every view whose question is "do the two agree". */
   .overlay .pane.ext, .only-js .pane.ext, .only-ts .pane.ext { display: none; }
@@ -148,12 +154,14 @@ const PAGE = (slug) => `<!doctype html>
     .join('')}</select>
   <span>
     <label><input type="radio" name="view" value="pair" checked> side by side</label>
-    <label><input type="radio" name="view" value="overlay"> overlay</label>
+    <label><input type="radio" name="view" value="overlay"> overlay js/ts</label>
+    <label><input type="radio" name="view" value="overlay-ext"> overlay strict/ext</label>
     <label><input type="radio" name="view" value="only-js"> abcjs</label>
     <label><input type="radio" name="view" value="only-ts"> abcts</label>
     <label><input type="radio" name="view" value="only-ext"> extended</label>
   </span>
   <label><input type="checkbox" id="onlyDiff"> only differing</label>
+  <label><input type="checkbox" id="onlyDrift"> only extended drift</label>
   <span id="summary" class="byte"></span>
 </header>
 <main id="out">loading both engines…</main>
@@ -289,10 +297,56 @@ async function renderFixture(name) {
       ext = score ? window.ABCTS.core.render(score, { mode: 'abcjs-extended', staffwidth: 670 }) : null;
       if (ext) extPane.insertAdjacentHTML('beforeend', ext);
     } catch (e) { extPane.insertAdjacentHTML('beforeend', '<p class="empty">threw: ' + e.message + '</p>'); }
+    /**
+     * ⚠️ AN OVERLAY MAKES 1.75px LOOK LIKE A CATASTROPHE. Red-on-cyan separation is
+     * violently visible at two pixels, so every tune reads as broken and none can be
+     * ranked. Measured on visual-layout-03, a tune with no extended feature at all: same
+     * width, same 48 noteheads, dy 0 EVERYWHERE, dx at most 1.75 — decaying to zero across
+     * each line as the justification absorbs a slightly wider prefix.
+     *
+     * So the NUMBER goes beside the badge, and a reader can tell a font's glyph widths
+     * from a defect. That is the difference between a picture and a measurement.
+     */
+    // ⚠️ The page is a TEMPLATE LITERAL, so a regex in it needs its backslashes DOUBLED —
+    // the first cut emitted /translate(([-d.]+),([-d.]+))/ and matched nothing, so every
+    // row fell into the "different glyph count" arm and all 577 were flagged as drifting.
+    const noteAt = (svg) => [...svg.matchAll(/<(?:path|use)[^>]*class="abcts-note"[^>]*transform="translate\\(([-\\d.]+),([-\\d.]+)\\)/g)]
+      .map((m) => ({ x: +m[1], y: +m[2] }));
+    /**
+     * ⚠️ **THE TWO PANES SPEAK DIFFERENT MARKUP.** Panes 1 and 2 come from compat's
+     * renderAbc, which emits abcjs's vocabulary — class abcjs-notehead, data-name — while
+     * pane 3 comes from core.render and emits abcts-note. Comparing them by class matched
+     * NOTHING on the strict side, so every row fell into the "different glyph count" arm
+     * and all 577 were flagged. The comparison renders strict through the CORE api too,
+     * purely for the number; the pane still shows the compat one.
+     */
+    let drift = null;
+    if (ext !== null) {
+      let stc = null;
+      try {
+        const psx = window.ABCTS.core.parse(abc, { mode: 'abcjs-strict' });
+        stc = psx.ok && psx.scores ? window.ABCTS.core.render(psx.scores[t], { mode: 'abcjs-strict', staffwidth: 670 }) : null;
+      } catch (e) { stc = null; }
+      const a = noteAt(stc ?? ''), b = noteAt(ext);
+      if (a.length === b.length && a.length > 0) {
+        let mx = 0, my = 0;
+        for (let i = 0; i < a.length; i++) {
+          mx = Math.max(mx, Math.abs(b[i].x - a[i].x));
+          my = Math.max(my, Math.abs(b[i].y - a[i].y));
+        }
+        drift = { mx, my, n: a.length };
+      }
+    }
     const mark = wrap.querySelector('.ext');
     if (ext === null) { mark.className = 'empty'; mark.textContent = 'extended: no score'; }
     else if (ext === ts) { mark.className = 'extsame'; mark.textContent = 'extended = strict'; }
-    else { mark.className = 'extmark'; mark.textContent = 'extended differs'; }
+    else if (drift === null) { mark.className = 'extmark'; mark.textContent = 'extended: different glyph count'; wrap.dataset.drift = '1'; }
+    else {
+      const big = drift.mx > 4 || drift.my > 0.5;
+      mark.className = big ? 'extmark' : 'extsame';
+      mark.textContent = 'vs strict: dx ' + drift.mx.toFixed(2) + '  dy ' + drift.my.toFixed(2) + '  over ' + drift.n;
+      if (big) wrap.dataset.drift = '1';
+    }
     wrap.querySelector('.slug').textContent = tuneSlug;
     const badge = wrap.querySelector('.badge');
     if (js === ts) { badge.className = 'badge same'; badge.textContent = 'identical'; tally.same++; }
@@ -320,12 +374,14 @@ function applyView() {
   const view = document.querySelector('input[name=view]:checked').value;
   out.className = view === 'pair' ? '' : view;
   const onlyDiff = document.getElementById('onlyDiff').checked;
-  for (const s of out.querySelectorAll('.tune')) s.hidden = onlyDiff && !s.dataset.differs;
+  const onlyDrift = document.getElementById('onlyDrift').checked;
+  for (const s of out.querySelectorAll('.tune'))
+    s.hidden = (onlyDiff && !s.dataset.differs) || (onlyDrift && !s.dataset.drift);
   // A fixture whose every tune is hidden should not leave its heading behind.
   for (const f of out.querySelectorAll('.fixture')) {
     const shown = [...f.querySelectorAll('.tune')].some((t) => !t.hidden);
     // ONLY a finished section may be hidden — see the two-flag note in renderFixture.
-    f.hidden = onlyDiff && f.dataset.done === '1' && !shown;
+    f.hidden = (onlyDiff || onlyDrift) && f.dataset.done === '1' && !shown;
   }
 }
 
@@ -350,6 +406,7 @@ document.getElementById('fixture').addEventListener('change', (e) => {
 });
 for (const r of document.querySelectorAll('input[name=view]')) r.addEventListener('change', applyView);
 document.getElementById('onlyDiff').addEventListener('change', applyView);
+document.getElementById('onlyDrift').addEventListener('change', applyView);
 
 // Keep the dropdown showing whichever fixture is on screen, so it reads as a position
 // rather than a selection once you have scrolled away from it.
