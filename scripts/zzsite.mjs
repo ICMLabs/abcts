@@ -112,11 +112,16 @@ const PAGE = (slug) => `<!doctype html>
   .pane h4 { margin: 0 0 .25rem; font-size: 11px; color: GrayText; text-transform: uppercase; letter-spacing: .06em; }
   .byte { font: 12px ui-monospace, monospace; color: GrayText; }
   .empty { margin: .25rem 0 0; font-size: 12px; color: GrayText; font-style: italic; }
-  /* OVERLAY — abcjs magenta UNDER abcts cyan. A perfect match reads black. */
-  .overlay .pair { display: block; position: relative; }
-  .overlay .pane { position: absolute; inset: 0; }
-  .overlay .pane:first-child { position: relative; filter: url(#magenta); }
-  .overlay .pane:last-child { filter: url(#cyan); mix-blend-mode: screen; }
+  /* OVERLAY — abcjs in RED, abcts in CYAN, blended MULTIPLY.
+     The first cut was magenta + cyan + screen, wrong twice over: screen LIGHTENS, so
+     agreement washed out to near-white instead of reading as a match, and magenta x cyan
+     is blue rather than black even under multiply. Red (1,0,0) x cyan (0,1,1) IS (0,0,0),
+     so a perfect match reads BLACK, ink only abcjs has stays RED, ink only abcts has
+     stays CYAN, and nothing else can appear. */
+  .overlay .pair { display: block; position: relative; background: #fff; }
+  .overlay .pane { position: absolute; inset: 0; overflow: visible; }
+  .overlay .pane:first-child { position: relative; filter: url(#red); }
+  .overlay .pane:last-child { filter: url(#cyan); mix-blend-mode: multiply; }
   .overlay .pane h4 { display: none; }
   .only-js .pane:last-child, .only-ts .pane:first-child { display: none; }
   .only-js .pair, .only-ts .pair { grid-template-columns: 1fr; }
@@ -124,8 +129,8 @@ const PAGE = (slug) => `<!doctype html>
 </style>
 
 <svg width="0" height="0" style="position:absolute"><defs>
-  <filter id="magenta"><feColorMatrix type="matrix" values="0 0 0 0 1  0 0 0 0 0  0 0 0 0 1  0 0 0 -1 1"/></filter>
-  <filter id="cyan"><feColorMatrix type="matrix" values="0 0 0 0 0  0 0 0 0 1  0 0 0 0 1  0 0 0 -1 1"/></filter>
+  <filter id="red"><feColorMatrix type="matrix" values="0 0 0 0 1   1 0 0 0 0   1 0 0 0 0   0 0 0 1 0"/></filter>
+  <filter id="cyan"><feColorMatrix type="matrix" values="1 0 0 0 0   0 0 0 0 1   0 0 0 0 1   0 0 0 1 0"/></filter>
 </defs></svg>
 
 <header>
