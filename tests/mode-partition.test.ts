@@ -31,30 +31,31 @@
  * adding it moves the output **inside** each mode. That comparison has no baseline to be
  * contaminated by.
  */
-import { existsSync, readFileSync, readdirSync } from "node:fs";
-import { createHash } from "node:crypto";
-import { join } from "node:path";
-import { describe, expect, it } from "vitest";
-import type { CompatibilityMode } from "../src/core/model.js";
-import { parse } from "../src/index.js";
-import { render } from "../src/renderer/index.js";
 
-const fixtures = join(import.meta.dirname, "corpus-abcjs", "fixtures");
-const goldens = join(import.meta.dirname, "corpus-abcjs", "golden");
+import { createHash } from 'node:crypto'
+import { existsSync, readdirSync, readFileSync } from 'node:fs'
+import { join } from 'node:path'
+import { describe, expect, it } from 'vitest'
+import type { CompatibilityMode } from '../src/core/model.js'
+import { parse } from '../src/index.js'
+import { render } from '../src/renderer/index.js'
+
+const fixtures = join(import.meta.dirname, 'corpus-abcjs', 'fixtures')
+const goldens = join(import.meta.dirname, 'corpus-abcjs', 'golden')
 
 /** The enumeration `svg-bytes` and the extended ratchet share — see either for why. */
 const CASES = readdirSync(fixtures)
-  .filter((f) => f.endsWith(".abc"))
+  .filter((f) => f.endsWith('.abc'))
   .sort()
   .flatMap((f) => {
-    const slug = f.replace(/\.abc$/, "");
-    const abc = readFileSync(join(fixtures, f), "utf-8");
-    if (existsSync(join(goldens, `${slug}.svg`))) return [{ slug, abc, tune: 0 }];
-    const rows: { slug: string; abc: string; tune: number }[] = [];
+    const slug = f.replace(/\.abc$/, '')
+    const abc = readFileSync(join(fixtures, f), 'utf-8')
+    if (existsSync(join(goldens, `${slug}.svg`))) return [{ slug, abc, tune: 0 }]
+    const rows: { slug: string; abc: string; tune: number }[] = []
     for (let i = 0; existsSync(join(goldens, `${slug}-tune${i}.svg`)); i += 1)
-      rows.push({ slug: `${slug}-tune${i}`, abc, tune: i });
-    return rows;
-  });
+      rows.push({ slug: `${slug}-tune${i}`, abc, tune: i })
+    return rows
+  })
 
 /**
  * ⚠️ **A FAILURE STRING MUST NOT DIGEST AS A SUCCESS.** The ratchet learned this: a
@@ -64,23 +65,23 @@ const CASES = readdirSync(fixtures)
  */
 const svgOf = (abc: string, mode: CompatibilityMode, tune = 0): string => {
   try {
-    const parsed = parse(abc, { mode });
-    if (!parsed.ok) return `PARSE FAILED: ${parsed.errors.length} error(s)`;
-    const score = parsed.scores[tune];
-    if (score === undefined) return "NO SCORE";
-    return render(score, { mode, systemWidth: 670 });
+    const parsed = parse(abc, { mode })
+    if (!parsed.ok) return `PARSE FAILED: ${parsed.errors.length} error(s)`
+    const score = parsed.scores[tune]
+    if (score === undefined) return 'NO SCORE'
+    return render(score, { mode, systemWidth: 670 })
   } catch (e) {
-    return `THREW: ${e instanceof Error ? e.message : String(e)}`;
+    return `THREW: ${e instanceof Error ? e.message : String(e)}`
   }
-};
+}
 
 const digest = (abc: string, mode: CompatibilityMode, tune = 0): string => {
-  const svg = svgOf(abc, mode, tune);
-  if (!svg.startsWith("<svg")) return svg;
-  return createHash("sha256").update(svg, "utf-8").digest("hex").slice(0, 16);
-};
+  const svg = svgOf(abc, mode, tune)
+  if (!svg.startsWith('<svg')) return svg
+  return createHash('sha256').update(svg, 'utf-8').digest('hex').slice(0, 16)
+}
 
-const H = "X:1\nM:4/4\nL:1/4\nK:C\n";
+const H = 'X:1\nM:4/4\nL:1/4\nK:C\n'
 
 /**
  * **THE ROWS, AND EVERY ONE WAS SHOWN TO FIRE BEFORE IT WAS WRITTEN DOWN.**
@@ -104,48 +105,68 @@ const H = "X:1\nM:4/4\nL:1/4\nK:C\n";
  *     intervening character tried (`y`, `)`, `"^x"`, `!trill!`, `.`). A whole-SVG digest is
  *     the wrong instrument for it; it needs the beam grouping, not the page.
  */
-const ROWS: { name: string; sees: "strict" | "nonStrict"; base: string; feat: string }[] = [
+const ROWS: { name: string; sees: 'strict' | 'nonStrict'; base: string; feat: string }[] = [
   // abcjs paints nothing for these; the other modes draw the ornament the ABC names.
-  { name: "!staccato!", sees: "nonStrict", base: `${H}C D E F|\n`, feat: `${H}!staccato!C D E F|\n` },
-  { name: "!invertedturn!", sees: "nonStrict", base: `${H}C D E F|\n`, feat: `${H}!invertedturn!C D E F|\n` },
-  { name: "!invertedturnx!", sees: "nonStrict", base: `${H}C D E F|\n`, feat: `${H}!invertedturnx!C D E F|\n` },
-  { name: "!turnx!", sees: "nonStrict", base: `${H}C D E F|\n`, feat: `${H}!turnx!C D E F|\n` },
+  {
+    name: '!staccato!',
+    sees: 'nonStrict',
+    base: `${H}C D E F|\n`,
+    feat: `${H}!staccato!C D E F|\n`,
+  },
+  {
+    name: '!invertedturn!',
+    sees: 'nonStrict',
+    base: `${H}C D E F|\n`,
+    feat: `${H}!invertedturn!C D E F|\n`,
+  },
+  {
+    name: '!invertedturnx!',
+    sees: 'nonStrict',
+    base: `${H}C D E F|\n`,
+    feat: `${H}!invertedturnx!C D E F|\n`,
+  },
+  { name: '!turnx!', sees: 'nonStrict', base: `${H}C D E F|\n`, feat: `${H}!turnx!C D E F|\n` },
   // ABC 2.1 §3.2 — abcjs has no `+:` handling, so the continuation falls through to the
   // music parser and the words are lexed as notes.
   {
-    name: "+: field continuation",
-    sees: "nonStrict",
-    base: "X:1\nT:one\nM:4/4\nL:1/4\nK:C\nC D E F|\n",
-    feat: "X:1\nT:one\n+:two\nM:4/4\nL:1/4\nK:C\nC D E F|\n",
+    name: '+: field continuation',
+    sees: 'nonStrict',
+    base: 'X:1\nT:one\nM:4/4\nL:1/4\nK:C\nC D E F|\n',
+    feat: 'X:1\nT:one\n+:two\nM:4/4\nL:1/4\nK:C\nC D E F|\n',
   },
   {
-    name: "I: information field",
-    sees: "nonStrict",
-    base: "X:1\nM:4/4\nL:1/4\nK:C\nV:1\nCDEF|\nV:2\nGABc|\n",
-    feat: "X:1\nI:score (1 2)\nM:4/4\nL:1/4\nK:C\nV:1\nCDEF|\nV:2\nGABc|\n",
+    name: 'I: information field',
+    sees: 'nonStrict',
+    base: 'X:1\nM:4/4\nL:1/4\nK:C\nV:1\nCDEF|\nV:2\nGABc|\n',
+    feat: 'X:1\nI:score (1 2)\nM:4/4\nL:1/4\nK:C\nV:1\nCDEF|\nV:2\nGABc|\n',
   },
   // The other polarity: abcjs's bug is the thing that shows, and correctness is invisible.
   // `[U:` is not one of the eight inline fields, so abcjs draws the leftovers.
-  { name: "[U: inline field", sees: "strict", base: `${H}C D E F|\n`, feat: `${H}C [U:n=!trill!] D E F|\n` },
+  {
+    name: '[U: inline field',
+    sees: 'strict',
+    base: `${H}C D E F|\n`,
+    feat: `${H}C [U:n=!trill!] D E F|\n`,
+  },
   // A spaced hyphen in a `w:` line consumes a note in abcjs.
   {
-    name: "spaced lyric hyphen",
-    sees: "strict",
+    name: 'spaced lyric hyphen',
+    sees: 'strict',
     base: `${H}C D E F|\nw:la la la la\n`,
     feat: `${H}C D E F|\nw:la - la la la\n`,
   },
-];
+]
 
-describe("the two compatibility modes, as a partition", () => {
-  it("renders every corpus case in both modes — no failure digests as a success", () => {
-    const broken: string[] = [];
+describe('the two compatibility modes, as a partition', () => {
+  it('renders every corpus case in both modes — no failure digests as a success', () => {
+    const broken: string[] = []
     for (const c of CASES)
-      for (const mode of ["abcjs-strict", "abcjs-extended"] as const) {
-        const svg = svgOf(c.abc, mode, c.tune);
-        if (!svg.startsWith("<svg")) broken.push(`${c.slug} [${mode}]: ${svg.slice(0, 60)}`);
+      for (const mode of ['abcjs-strict', 'abcjs-extended'] as const) {
+        const svg = svgOf(c.abc, mode, c.tune)
+        if (!svg.startsWith('<svg')) broken.push(`${c.slug} [${mode}]: ${svg.slice(0, 60)}`)
       }
-    expect(broken).toEqual([]);
-  });
+    expect(broken).toEqual([])
+  })
 
   /**
    * **AND THE CASES WHERE NOTHING MODE-GATED APPEARS AT ALL, BY NAME.** 16 of 691, and a
@@ -153,87 +174,59 @@ describe("the two compatibility modes, as a partition", () => {
    * the diff is the finding. A slug ARRIVING means a non-strict fix stopped applying to it;
    * a slug LEAVING means a new one reached it, which is the ordinary good case.
    */
-  it("names the cases where the two modes agree", () => {
+  it('names the cases where the two modes agree', () => {
     const same = CASES.filter(
-      (c) => digest(c.abc, "abcjs-strict", c.tune) === digest(c.abc, "abcjs-extended", c.tune),
-    ).map((c) => c.slug);
+      (c) => digest(c.abc, 'abcjs-strict', c.tune) === digest(c.abc, 'abcjs-extended', c.tune),
+    ).map((c) => c.slug)
     expect(same).toEqual([
-      "abcjs-parse-book_parser-01-example",
-      "abcjs-parse-book_parser-02-tune",
-      "abcjs-parse-book_parser-03-a-tune0",
-      "abcjs-parse-book_parser-03-a-tune1",
-      "abcjs-parse-book_parser-03-a-tune2",
-      "abcjs-parse-book_parser-04-wed",
-      "abcjs-parse-book_parser-05-a-tune0",
-      "abcjs-parse-book_parser-05-a-tune1",
-      "abcjs-parse-book_parser-06-a",
-      "abcjs-parse-book_parser-07-a",
-      "abcjs-visual-misc-14-tune",
-      "abcjs-visual-misc-x07",
-      "abcjs-visual-transpose-output-02-transpose-output",
-      "abcts-inline-fields-and-blocks-tune9",
-      "abcts-staffnonote-empty-staves-tune0",
-      "abcts-staffnonote-empty-staves-tune1",
-    ]);
-  });
+      'abcjs-parse-book_parser-01-example',
+      'abcjs-parse-book_parser-02-tune',
+      'abcjs-parse-book_parser-03-a-tune0',
+      'abcjs-parse-book_parser-03-a-tune1',
+      'abcjs-parse-book_parser-03-a-tune2',
+      'abcjs-parse-book_parser-04-wed',
+      'abcjs-parse-book_parser-05-a-tune0',
+      'abcjs-parse-book_parser-05-a-tune1',
+      'abcjs-parse-book_parser-06-a',
+      'abcjs-parse-book_parser-07-a',
+      'abcjs-visual-misc-14-tune',
+      'abcjs-visual-misc-x07',
+      'abcjs-visual-transpose-output-02-transpose-output',
+      'abcts-inline-fields-and-blocks-tune9',
+      'abcts-staffnonote-empty-staves-tune0',
+      'abcts-staffnonote-empty-staves-tune1',
+    ])
+  })
 
   /**
    * **THE NAMED GATES — a red row says WHICH behaviour stopped, which no digest table can.**
    * Reported as one list rather than eight `it`s so a change that switches the `isStrict`
    * sense globally shows as eight rows at once instead of one failure and seven unreported.
    */
-  it("each mode-gated behaviour fires in exactly the mode it belongs to", () => {
+  it('each mode-gated behaviour fires in exactly the mode it belongs to', () => {
     const wrong = ROWS.flatMap(({ name, sees, base, feat }) => {
       const moved = {
-        strict: digest(base, "abcjs-strict") !== digest(feat, "abcjs-strict"),
-        nonStrict: digest(base, "abcjs-extended") !== digest(feat, "abcjs-extended"),
-      };
-      const blind = sees === "strict" ? "nonStrict" : "strict";
-      if (moved[sees] && !moved[blind]) return [];
-      return [`${name}: expected ${sees} to see it and ${blind} to be blind — got ${JSON.stringify(moved)}`];
-    });
-    expect(wrong).toEqual([]);
-  });
+        strict: digest(base, 'abcjs-strict') !== digest(feat, 'abcjs-strict'),
+        nonStrict: digest(base, 'abcjs-extended') !== digest(feat, 'abcjs-extended'),
+      }
+      const blind = sees === 'strict' ? 'nonStrict' : 'strict'
+      if (moved[sees] && !moved[blind]) return []
+      return [
+        `${name}: expected ${sees} to see it and ${blind} to be blind — got ${JSON.stringify(moved)}`,
+      ]
+    })
+    expect(wrong).toEqual([])
+  })
 
   /**
-   * **NON-STRICT MEASURES TEXT WITH REAL PER-EM METRICS, NOT THE GOLDEN GENERATOR'S.**
-   * `STRICT_TEXT_METRICS` (`layout.ts:6880`, set at `:13171`) picks `golden-widths.ts` —
-   * the five WebKit-calibrated ASCII tables `dump-svg.js` patches onto jsdom's `getBBox`,
-   * which answer a flat `FALLBACK_ADVANCE` for **everything outside ASCII** — against
-   * `text-metrics.ts`'s real per-em advances. Reproducing the generator's tables is what
-   * makes strict match the 691 goldens; non-strict is not bound by them.
+   * ⚠️ **THE ROW THAT USED TO BE HERE WAS REMOVED WITH THE DIVERGENCE IT ASSERTED**
+   * (2026-09-07). It measured `abcjs-extended` using REAL per-em text metrics where strict
+   * uses `dump-svg.js`'s ASCII-only tables — a genuine correction, and one that showed up
+   * headless only, because in a browser BOTH modes ask the DOM (`text-measure.ts`).
    *
-   * If that wiring ever went always-strict, every non-strict render would silently lay text
-   * out with the generator's tables — the Phase 1 defect (`extended` using the tables in a
-   * real browser) one layer down, and the ratchet would go red saying only "691 moved".
-   *
-   * ⚠️ THE OBSERVABLE IS THE ROOT `width` AND NOTHING ELSE HERE WORKS. The title string is
-   * IN the markup, so a digest differs whatever the metrics say; the title is `middle`-
-   * anchored at a FIXED paper x (abcjs places the top block absolutely), so its own `x`
-   * cannot move; and an annotation is `start`-anchored and does not reach the page width at
-   * all. Two instruments were written and discarded before this one.
+   * Under the owner's byte-compatibility rule it was measured at **156 of 691 fixtures**
+   * diverging to fix nothing a page ever shows, so both modes now measure with the golden
+   * tables and `tests/mode-bytes.test.ts` holds the line. See `layout.ts`'s
+   * `STRICT_TEXT_METRICS` for the full reasoning.
    */
-  it("non-strict measures with real per-em metrics, not the golden tables", () => {
-    const titled = (t: string) => `X:1\nT:${t}\nM:4/4\nL:1/4\nK:C\nC D E F|\n`;
-    const width = (t: string, mode: CompatibilityMode): string | undefined =>
-      /<svg[^>]*\bwidth="([\d.]+)"/.exec(svgOf(titled(t)  , mode))?.[1];
-
-    // ⚠️ THE CONTROL COMES FIRST: an ASCII pair BOTH tables distinguish, so an instrument
-    // that had gone blind cannot pass the rows below by measuring nothing.
-    expect(width("iiii", "abcjs-strict")).not.toBe(width("MMMM", "abcjs-strict"));
-    expect(width("iiii", "abcjs-extended")).not.toBe(width("MMMM", "abcjs-extended"));
-
-    // Pairs of equal LENGTH outside ASCII: identical to the generator's flat fallback,
-    // distinct to a real font. (`ŴŴŴŴ`/`ıııı` is NOT here — measured, and the per-em table
-    // gives those two the same advance, so the pair proves nothing either way.)
-    for (const [a, b] of [
-      ["ÀÀÀÀ", "ÎÎÎÎ"],
-      ["ÿÿÿÿ", "ÀÀÀÀ"],
-      ["音音音音", "ÀÀÀÀ"],
-    ] as const) {
-      expect(width(a, "abcjs-strict"), `${a}/${b} strict`).toBe(width(b, "abcjs-strict"));
-      expect(width(a, "abcjs-extended"), `${a}/${b} non-strict`).not.toBe(width(b, "abcjs-extended"));
-    }
-  });
-
-});
+})

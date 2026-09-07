@@ -814,9 +814,17 @@ export function toSVG(
   const scale = options.staffSpace ?? 8;
   const prefix = options.className ?? "abcts";
   const abcjs = options.classes === "abcjs";
-  // Tri-state resolved once: explicit wins, otherwise the mode decides and strict says no.
-  const strict = isStrict(options.mode ?? defaultMode);
-  const optimize = options.optimizeSVG ?? !strict;
+  /**
+   * **THE EMITTER DRAWS abcjs'S SHAPES IN BOTH MODES** — owner's rule, 2026-09-07:
+   * *extended must be byte-identical to strict except for the divergences we have
+   * explicitly agreed*. Curve arcs, glyph ycorr and the unscaled-glyph quirk are ENGRAVING,
+   * not a bug we refuse to reproduce, so they are no longer mode-split. Measured before the
+   * flip: this one flag was 333 of the 675 fixtures on which the two modes disagreed.
+   */
+  const strict = true;
+  // …but `<defs>`/`<use>` IS a declared divergence, so it still reads the MODE.
+  const optimize =
+    options.optimizeSVG ?? !isStrict(options.mode ?? defaultMode);
   // The OUTLINES from the same table layout took its metrics from. Drawing Bravura at
   // abcjs's advances would be the worst of both — correctly sized gaps around wrongly
   // sized shapes — which is the whole reason there are two tables rather than one set of

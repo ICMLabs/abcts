@@ -4407,7 +4407,7 @@ function microtoneAccidental(
   const steps = Math.round(cents / 50)
   // abcjs knows the quarter-tone pair and nothing else; anything wider prints no
   // accidental at all rather than an approximation.
-  if (strict && Math.abs(steps) !== 1) return null
+  if (ABCJS_GAPS && Math.abs(steps) !== 1) return null
   return MICROTONE_GLYPHS[steps] ?? null
 }
 
@@ -6471,7 +6471,7 @@ function decorationGlyphs(
    * that had not been written down yet: strict has no latitude, so it is ported.
    * `abcjs-extended` keep the drawn `tremoloN` bars, which are the right shape.
    */
-  if (strict) {
+  if (ABCJS_GAPS) {
     for (const name of names) {
       const count = TREMOLO_COUNT[name]
       if (count === undefined) continue
@@ -6499,7 +6499,7 @@ function decorationGlyphs(
   const topPitch = toPitch(elemTopStep)
   let closeY: number | undefined
   for (const name of names) {
-    if (strict && STRICT_UNDRAWN.has(name)) continue
+    if (ABCJS_GAPS && STRICT_UNDRAWN.has(name)) continue
     const spec = DECORATIONS[name]
     if (spec?.place !== 'articulation') continue
     closeY =
@@ -6590,7 +6590,7 @@ function decorationGlyphs(
   let below = bottomPitch
 
   for (const name of names) {
-    if (strict && STRICT_UNDRAWN.has(name)) continue
+    if (ABCJS_GAPS && STRICT_UNDRAWN.has(name)) continue
     const spec = DECORATIONS[name]
     if (spec === undefined) continue // unmapped — counted by the test, never guessed at
     if (spec.place === 'articulation') continue // already placed, above
@@ -6702,7 +6702,7 @@ function decorationGlyphs(
         leftReach = Math.max(leftReach, 2 * width + roomTaken)
         continue
       }
-      if (strict && TREMOLO_COUNT[name] !== undefined) continue // already placed, above
+      if (ABCJS_GAPS && TREMOLO_COUNT[name] !== undefined) continue // already placed, above
       const onStem = decorationX(headX, headWidth, glyph, glyphsFor(strict).width(glyph))
       // **A STEP COUNT, NOT A LENGTH.** `tip` is fed to `stepToY`, and it was adding
       // `ENGRAVE.stemLength` — which is `spacesOfPitch(7)`, a LENGTH — so the two units
@@ -6790,7 +6790,7 @@ function decorationGlyphs(
   // Ours drew them at a fixed part-lane step instead, so `frere-jacques`'s `!D.C.!` sat
   // 4.09 pitch above where abcjs puts it and took the staff's ink with it.
   for (const name of names) {
-    if (strict && STRICT_UNDRAWN.has(name)) continue
+    if (ABCJS_GAPS && STRICT_UNDRAWN.has(name)) continue
     const text = DECORATION_TEXTS[name]
     if (text === undefined) continue
     const size = ENGRAVE.chordTextSize
@@ -7129,6 +7129,30 @@ let PRINT = false
 let PAGE_TOP = 0
 
 let STRICT_TEXT_METRICS = true
+
+/**
+ * **THE ONLY THING THE MODE STILL DECIDES IN LAYOUT: does abcjs's GAP get reproduced?**
+ *
+ * ⚖️ Owner's rule, 2026-09-07: *"extended mode should always be byte compatible with
+ * strict, except for those explicitly agreed upon divergences (usually we've fixed a bug
+ * in abcjs)"*. So `strict` — which gated the LOOK as well, threaded through two hundred
+ * sites doing both jobs — is `true` for every render now, and this flag carries the small
+ * half it was conflating: the places abcjs draws NOTHING and extended draws the thing the
+ * ABC actually names.
+ *
+ * Measured before the split, over 691 corpus fixtures with everything else held equal:
+ * **675 differed between the modes**. The layout `strict` flag was 331 of them, the
+ * emitter's another 333, the glyph table / line weights / spacing profile / text metrics 5
+ * — and only **6** were parser-level divergences, which are the ones that were supposed to
+ * be the whole list. The other 664 were undeclared engraving differences, not decisions.
+ *
+ * Eight sites read this, each a row of the mode table in `CLAUDE.md` and an entry in
+ * `Docs/ABCJS-DIFFERENCES.md`: the three-quarter-tone accidental, tremolo bars, the two
+ * `STRICT_UNDRAWN` decoration passes, and the melisma `_` with its extender.
+ *
+ * ponytail: a module-level switch, the seventh beside `STRICT_TEXT_METRICS` and `PRINT`.
+ */
+let ABCJS_GAPS = true
 
 /** `%%jazzchords` for the current render — same one-place switch, set beside it. */
 let JAZZ_CHORDS = false
@@ -7983,7 +8007,7 @@ function noteText(
      */
     const held = raw === '' && event.lyricFont === null
     const heldSize = fontSizeOf('vocalfont')
-    const verse = strict && index === 0 && event.lyricMelismaStart ? `${raw}_` : raw
+    const verse = ABCJS_GAPS && index === 0 && event.lyricMelismaStart ? `${raw}_` : raw
     /**
      * **THE TSPANS ARE `renderText`'S TWO REWRITES OVER THE JOINED VERSES.**
      * `lyricStr` is `syllable + div + "\n"` per verse — every one of them, the empty ones
@@ -8577,12 +8601,11 @@ function layoutMelismas(
     // syllable, so `noteText` builds it into the string and the element measures and
     // centres it in one place. This pass used to append it afterwards, which drew the
     // right glyph off the wrong width — see the note there.
-    if (strict) return
+    if (ABCJS_GAPS) return
 
-    // Only the LINE needs the far end, which is why the search sits below the strict
-    // branch rather than above it. The two modes wrap differently — strict renders at
-    // abcjs's denser spacing — so a run can be intact in one mode and split across a
-    // system break in the other. abcjs prints the `_` either way, because for abcjs it
+    // Only the LINE needs the far end, which is why the search sits below the gap branch
+    // rather than above it. abcjs prints the `_` wherever the hold landed, because for
+    // abcjs it
     // is part of the syllable's text and has nothing to do with where the hold landed.
     // Gating it on finding a hold in THIS system dropped the underscore from
     // S5-directives, which is real corpus content no gate renders.
@@ -13153,13 +13176,13 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
           : ((options.systemWidth ?? ENGRAVE.systemWidth) *
               (options.print === true ? ABCJS_RATIO.printScale : 1)) /
             (score.scale ?? options.hostScale ?? 1)
-  // The mode picks the look; `profile` can still override it explicitly.
-  const profile: RenderProfile =
-    options.profile ?? (isStrict(options.mode ?? defaultMode) ? 'abcjs' : 'standard')
+  // **THE LOOK IS abcjs'S IN BOTH MODES** — see `ABCJS_GAPS`. `profile` is still a
+  // caller-facing override; it is no longer something the mode reaches for.
+  const profile: RenderProfile = options.profile ?? 'abcjs'
   // Read from the MODE, not from `profile`: profile is a density override and a caller
   // may set it either way, but whether a melisma prints abcjs's literal `_` or an
   // extender is a question about which engine's behaviour is being reproduced.
-  const strict = isStrict(options.mode ?? defaultMode)
+  const strict = true
   /**
    * **PRINT'S SCALE IS 0.75, `%%scale` WINS OVER IT, AND EVERY UNSCALED ITEM IS DIVIDED
    * BACK OUT** — `scale = formatting.scale || params.scale`, then
@@ -13229,7 +13252,22 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
   TITLE_LEFT = score.titleLeft
   FLAT_BEAMS = score.flatBeams
   GRACE_SLURS = score.graceSlurs
-  STRICT_TEXT_METRICS = strict
+  ABCJS_GAPS = isStrict(options.mode ?? defaultMode)
+  /**
+   * ⚠️ **MEASURED AND DECLINED AS A DIVERGENCE: 156 OF 691 FIXTURES.**
+   *
+   * The golden tables are ASCII-only — `dump-svg.js`'s `widths[ch] || 8` measures CJK, and
+   * everything outside its five tables, at a flat 8px — so extended used to measure for
+   * real instead. That is a genuine correction, and keeping it mode-split costs **156 of
+   * the 691** corpus fixtures against the owner's byte-compatibility rule, for a difference
+   * **no browser ever shows**: with a DOM both modes ask it (`text-measure.ts`), and the
+   * split existed only under jsdom. A quarter of the corpus diverging headless to fix
+   * nothing on a page is the wrong trade, so both modes measure with the golden tables.
+   *
+   * ponytail: `realTextWidth` below is unreachable in consequence. Left in place — it is
+   * the headless real-metrics path if this is ever declared, and it costs one branch.
+   */
+  STRICT_TEXT_METRICS = true
   LINE_WEIGHTS = lineWeightsFor(strict)
   JAZZ_CHORDS = score.jazzChords
   KEYWARN = score.keywarn
