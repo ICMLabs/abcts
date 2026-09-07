@@ -211,8 +211,30 @@ function shell(name) {
 
 async function renderFixture(name) {
   const sec = sections.get(name);
-  if (!sec || sec.dataset.done) return;
-  sec.dataset.done = '1';
+  if (!sec || sec.dataset.started) return;
+  /**
+   * ⚠️ **"started" and "done" ARE TWO FLAGS, AND MERGING THEM RENDERED INTO A HIDDEN
+   * SUBTREE — WHICH abcjs CANNOT MEASURE.**
+   *
+   * renderFixture awaits a fetch, so several run interleaved: A starts, awaits; B
+   * starts, awaits; A finishes and calls applyView, which saw B already flagged and with
+   * no visible tunes yet and set B.hidden — display:none. B then rendered inside it.
+   *
+   * **abcjs measures a boxed font AT DRAW TIME** — var size = elem.getBBox()
+   * (draw/text.js:69) — and a display:none subtree has NO LAYOUT, so getBBox()
+   * answers 0 and abcjs bakes a degenerate box of pure padding. Measured on
+   * visual-tablature-15: abcjs 86,108 bytes against 86,124, first differing byte 1965,
+   * and on screen a 5x5 box beside AABB where abcts draws the real one. The site then
+   * badged it "differs" — **a filter that manufactured the differences it was filtering
+   * for**, which is why it only appeared with "only differing" ticked.
+   *
+   * Ours is unaffected because it measures from its own metric tables rather than the DOM.
+   * The repo's own note about visibility:hidden versus display:none says exactly this;
+   * it was obeyed for the sibling slots and then broken here by the filter.
+   */
+  sec.dataset.started = '1';
+  // A section hidden by the filter must be shown again before anything renders into it.
+  sec.hidden = false;
   const host = sec.querySelector('.tunes');
   let abc;
   try { abc = await (await fetch('/abc/' + encodeURIComponent(name))).text(); }
@@ -241,6 +263,7 @@ async function renderFixture(name) {
       wrap.dataset.differs = '1';
     }
   }
+  sec.dataset.done = '1';
   tally.fixtures++;
   updateSummary();
   applyView();
@@ -260,6 +283,7 @@ function applyView() {
   // A fixture whose every tune is hidden should not leave its heading behind.
   for (const f of out.querySelectorAll('.fixture')) {
     const shown = [...f.querySelectorAll('.tune')].some((t) => !t.hidden);
+    // ONLY a finished section may be hidden — see the two-flag note in renderFixture.
     f.hidden = onlyDiff && f.dataset.done === '1' && !shown;
   }
 }
