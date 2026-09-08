@@ -79,11 +79,31 @@ export interface GlyphTable {
   readonly usesAbcjsGlyphs: boolean
 }
 
+/**
+ * **A BRAVURA OUTLINE THAT WAS NOT SHIPPED FAILS LOUD, and that is the whole reason
+ * `Glyph.path` is optional rather than an empty string.**
+ *
+ * 89 of the 119 outlines are omitted because abcjs's own table answers for them in both
+ * modes — see `scripts/gen-glyphs.mjs`. Reaching one means the mapping changed without the
+ * generator being re-run, and an empty `d` would draw NOTHING with no complaint, which is
+ * the failure mode this repo spends its life hunting. Unreachable in normal operation: the
+ * only caller that can arrive here with a stripped name is the `BRAVURA` table, which no
+ * render path selects any more.
+ */
+const bravuraPath = (name: GlyphName, glyph: { readonly path?: string }): string => {
+  if (glyph.path === undefined)
+    throw new Error(
+      `abcts: Bravura outline for '${name}' was not shipped — abcjs's table answers for it. ` +
+        `Re-run scripts/gen-glyphs.mjs if the glyph map changed.`,
+    )
+  return glyph.path
+}
+
 const bravuraEntry = (name: GlyphName): ResolvedGlyph | undefined => {
   const glyph = GLYPHS[name]
   if (glyph === undefined) return undefined
   return {
-    path: glyph.path,
+    path: bravuraPath(name, glyph),
     // Bravura's metrics are published in STAFF SPACES, so they carry the unit factor;
     // abcjs's are published in ITS PIXELS and are divided by the unit instead. Both land
     // in layout units, which is what every caller means by a width.

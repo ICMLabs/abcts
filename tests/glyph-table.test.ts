@@ -55,7 +55,16 @@ describe("glyph table selection", () => {
         );
         // And the outlines follow the metrics, not the other way round.
         expect(ABCJS_TABLE.get(name)?.unitsPerSpace).toBe(7.75);
-        expect(BRAVURA_TABLE.get(name)?.unitsPerSpace).toBe(1);
+        /**
+         * ⚠️ **AND ASKING THE BRAVURA TABLE FOR ONE OF THESE NOW THROWS, BY DESIGN.**
+         * All four are glyphs abcjs's table answers for, so Bravura's outline is not
+         * shipped and `bravuraEntry` refuses rather than handing back an empty `d` that
+         * would draw nothing in silence. Asserting the THROW is what keeps this row honest:
+         * it used to check that the two fonts' metrics stay with their own outlines, and
+         * for these four there is no longer a Bravura outline to stay with. The metric
+         * assertion above still holds — `BRAVURA_TABLE.advance` reads the shipped metrics.
+         */
+        expect(() => BRAVURA_TABLE.get(name)).toThrow(/was not shipped/);
       });
     }
   });

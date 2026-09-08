@@ -78,10 +78,14 @@ const UNMAPPED_SMUFL_REASONS: Readonly<Record<string, string>> = {
 };
 
 /** Bravura table keys that are engraving constants, not glyphs. */
-const isGlyph = (name: string): boolean => {
-  const entry = (GLYPHS as Record<string, unknown>)[name];
-  return typeof entry === "object" && entry !== null && "path" in entry;
-};
+/**
+ * ⚠️ **`"path" in entry` USED TO BE THIS TEST, AND IT STOPPED MEANING "Bravura has it".**
+ * 89 of the 119 outlines are deliberately not shipped — abcjs's table answers for them in
+ * both modes, so Bravura's copy could never be drawn (see `Glyph.path`). Their METRICS are
+ * still here and still read. Keyed on the ENTRY existing, which is the question this asks.
+ */
+const isGlyph = (name: string): boolean =>
+  (GLYPHS as Record<string, unknown>)[name] !== undefined;
 
 describe("the SMuFL ↔ abcjs glyph bridge", () => {
   it("maps only names abcjs actually has", () => {

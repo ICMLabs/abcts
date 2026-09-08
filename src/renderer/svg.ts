@@ -837,8 +837,15 @@ export function toSVG(
     // pixels — 1 for abcjs's outlines, 7.75 for Bravura's — and a layout unit is
     // `UNIT_PX` of them. Written as one expression so the flip carries it; identical to
     // the `1 / unitsPerSpace` it replaced while `UNIT_PX` is the staff space.
-    if (g === undefined)
-      return { path: GLYPHS[name].path, scale: STAFF_SPACE_PX / UNIT_PX };
+    if (g === undefined) {
+      // Only a glyph NO table knows reaches here, and its Bravura outline is shipped by
+      // construction — the omitted ones are exactly those abcjs's table answers for. A
+      // missing path is a generator/mapping mismatch, not a drawable state. See `Glyph.path`.
+      const path = GLYPHS[name]?.path;
+      if (path === undefined)
+        throw new Error(`abcts: no outline for glyph '${name}'`);
+      return { path, scale: STAFF_SPACE_PX / UNIT_PX };
+    }
     return {
       path: g.path,
       scale: STAFF_SPACE_PX / (g.unitsPerSpace * UNIT_PX),
@@ -1127,7 +1134,12 @@ export function toSVG(
    */
   const stampDefIds = (markup: string): string => {
     if (glyphDefs.size === 0) return markup;
-    const p = `a${outlineHash([...glyphDefs.keys()].map((n) => GLYPHS[n]?.path ?? n))}`;
+    // ⚠️ **THE OUTLINES ACTUALLY EMITTED, NOT BRAVURA'S.** This hashed `GLYPHS[n].path`,
+    // which is the wrong string twice over: the `<defs>` hold whatever `outline()` resolved
+    // — abcjs's shapes in both modes — and Bravura's copy of 89 of them is no longer shipped
+    // at all, so the fallback silently hashed the glyph NAME instead. Hashing what is
+    // written is what makes the id identify its own content, which is the point of it.
+    const p = `a${outlineHash([...glyphDefs.keys()].map((n) => outline(n).path))}`;
     const ids = [...glyphDefs.values()].sort((x, y) => y.length - x.length);
     let out = markup;
     for (const id of ids) {
