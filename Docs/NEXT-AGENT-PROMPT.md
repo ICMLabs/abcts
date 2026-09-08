@@ -21,7 +21,7 @@ and `ABCJS-DEBT.md` has no measured-not-landed entry left.
     midi-bytes  0 of 691 — 672 byte-exact and NAMED, 19 ruled divergent, OPEN_CEILING 0
     mode-bytes  11 of 691 — extended vs strict, every one DECLARED (new, 2026-09-07)
     warnings    0 of 815 tunes
-    suite       83 files, 2,503 tests, no reds. Keep them all that way.
+    suite       85 files, 2,514 tests, no reds. Keep them all that way.
 
 ⚖️ AND THE NEWEST RULE IS THE OWNER'S: extended is byte-identical to strict except for the
 divergences declared in Docs/ABCJS-DIFFERENCES.md. `mode-bytes` opened at 675 of 691,

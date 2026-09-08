@@ -61,41 +61,35 @@ difference live forever**: a `<rect>` where abcjs writes a `<path>` moves nothin
 `<g transform>` where abcjs writes absolute coordinates moves nothing, and an attribute in a
 different order moves nothing. A byte string has no such latitude.
 
-### The blockers, measured rather than estimated
+### The blockers — ⚠️ ALL SIX CLOSED, kept for what they teach
 
-**The document's FRAME is abcjs's now** — the root element attribute for attribute, the
-page width, the group nesting, the drawing ORDER, and every glyph in absolute coordinates
-with abcjs's own name on it. **Best case 5186 bytes in, median 174**, from 10 when the
-table opened.
+**`svg-bytes` reached 0 of 691 on 2026-08-14 and has stayed there**, in-repo and on the 356
+sibling rows, and `zzlive` says the same in WebKit and Chrome. The list below is what was
+open when this section was written and it is HISTORY, not a work list — it is kept because
+each row is a shape that recurs, and one of them (the ULP family) is the reason
+`abcjs-constants.ts` carries a `UNIT_PX` knob at all.
 
-What is left, in the order the byte table hits it:
-
-1. **THE ROOT'S `height`, on 109 of the 171 fixtures.** One or two ULPs, in both
-   directions — `227.68050000000002` against `227.6805`, `176.0775` against
-   `176.07750000000001`. abcjs accumulates `renderer.y` in PIXELS and closes with
-   `y + padding.bottom`; we accumulate the same quantity in staff spaces and multiply by
-   7.75 at the end. Rewriting only the last step was measured and moved 69 exact rows to
-   70, so the noise is spread through the whole accumulation. It is the vertical half of
-   the emission-quantum problem the horizontal arc already knows by name, and **109 rows
-   are unmeasurable behind it**.
-2. **The order and form of an element group's children.** A FLAG precedes its notehead on
-   a single note and sits BETWEEN the heads of a chord, so it is the engraver's add order
-   rather than a rule about flags. A STEM is `printStem`'s form — no separators between
-   path commands, no `stroke`/`fill` inside a group, `class` before `data-name` — where a
-   ledger and a staff line are `printLine`'s, with spaces and `data-name` before `class`.
-   And a stem's two x values are the head's EDGES, in an order that carries which SIDE the
-   stem is on.
-3. **Glyph coordinate noise** — `M 54.78099999999999` against `M 54.781000000000006`, the
-   same family as the height.
-4. **A notehead's `data-name` is the WRITTEN NOTE** — `C`, `c`, `C,`, with its accidental
-   prefixed and rewritten by transposition. A parser value the layout does not carry, so
-   it is left UNNAMED rather than wrongly named. Tracked by `tests/dom-contract.test.ts`,
-   which is at 208 of 694 rows.
+1. **THE ROOT'S `height`, on 109 of 171 fixtures.** One or two ULPs, in both directions —
+   `227.68050000000002` against `227.6805`. abcjs accumulates `renderer.y` in PIXELS; we
+   accumulated the same quantity in staff spaces and multiplied by 7.75 at the end.
+   Rewriting only the last step moved 69 exact rows to 70, so the noise was spread through
+   the whole accumulation. **Closed by holding abcjs's own pixels end to end** — only the
+   SAME ARITHMETIC produces the same bytes, and rounding cannot fix what a different
+   association broke.
+2. **The order and form of an element group's children.** A FLAG precedes its notehead on a
+   single note and sits BETWEEN the heads of a chord — the engraver's add order, not a rule
+   about flags. A STEM is `printStem`'s form (no separators between path commands, no
+   `stroke`/`fill` inside a group, `class` before `data-name`); a ledger and a staff line
+   are `printLine`'s, with spaces and `data-name` first.
+3. **Glyph coordinate noise** — the same family as 1, and closed with it.
+4. **A notehead's `data-name` is the WRITTEN NOTE** — `C`, `c`, `C,`, accidental prefixed
+   and rewritten by transposition. It reads as derivable from the pitch and is not: `c,`
+   and `C` are the same note and abcjs keeps whichever was typed.
 5. **A multi-digit time signature is ONE group** — `<g data-name="12">` with unnamed
    per-character paths, where a single digit is a bare `data-name="3"` path.
-6. **Curves and beams** — a tie is `drawArc`'s two-cubic closed path with
-   `data-name="tie"` and a class built from its anchors' measure/note counters; a beam is
-   `drawBeam`'s single concatenated path. Ours are a classed `<path>` and a `<polygon>`.
+6. **Curves and beams** — a tie is `drawArc`'s two-cubic closed path; a beam is `drawBeam`'s
+   single concatenated path holding every level of its group. Ours were a classed `<path>`
+   and a `<polygon>`.
 
 ### Closed on the way here
 
@@ -126,8 +120,9 @@ in the wrong place: the value it computed was overwritten four hundred lines lat
 left-edge formula applied to a middle-anchored row. **When a change to an input moves
 nothing, the output is not reading that input.**
 
-**None of these is a ruled divergence.** `tests/svg-bytes.test.ts`'s `DIVERGENT` list is
-empty and stays empty until something is written up HERE with its evidence — a slug in that
+**None of these was a ruled divergence** — every one was closed rather than declared.
+`tests/svg-bytes.test.ts`'s `DIVERGENT` list stays empty until something is written up HERE
+with its evidence — a slug in that
 list without an entry in this file is a tolerance wearing a disguise.
 
 ---
