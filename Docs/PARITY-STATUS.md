@@ -196,7 +196,7 @@ drift several percent between runs.
 
 | | abcjs 6.7.0 | abcts | ratio |
 |---|---|---|---|
-| WebKit, whole corpus (warm) | 252 ms | 307 ms | **1.22x** |
+| WebKit, whole corpus (warm) | 249 ms | 302 ms | **1.21x** |
 | Chrome, whole corpus (warm) | 175 ms | 242 ms | **1.38x** |
 | WebKit, median per file | — | — | **1.00x** |
 | Chrome, median per file | — | — | **1.20x** |
@@ -206,9 +206,9 @@ drift several percent between runs.
 
 | | before the pass | after | abcjs |
 |---|---|---|---|
-| WebKit, whole corpus | 1.62x | **1.33x** | 272 ms vs 361 ms |
+| WebKit, whole corpus | 1.62x | **1.32x** | 276 ms vs 365 ms |
 | Chrome, whole corpus | 1.87x | **1.50x** | 186 ms vs 279 ms |
-| WebKit, median per file | 1.41x | **1.13x** | |
+| WebKit, median per file | 1.41x | **1.12x** | |
 | Chrome, median per file | 1.63x | **1.29x** | |
 
 **A page renders a tune in about a millisecond either way**, and in WebKit the median tune
@@ -226,9 +226,24 @@ single-render timing gave `0.00x`, `NaNx` and `Infinityx` ratios — beside an a
 was perfectly sound, because 231 files sum well past the quantum. Each file is timed over
 20 renders now. A broken per-file column can live beside a correct total.
 
-**Bundle size**, brotli, minified both sides: abcjs 123 KB, abcts 175 KB — **1.43x**. That
-is what a from-source TypeScript engine with its own glyph outlines costs and it is not
-going to be minified away.
+**Bundle size**, brotli, minified both sides: abcjs 123 KB, abcts **160 KB** — **1.30x**,
+down from 1.43x on 2026-09-08. ⚠️ **And it is NOT a TypeScript cost** — types are stripped
+at build and the shipped file is JavaScript. It was TWO GLYPH TABLES where abcjs has one:
+31% of the bundle was path data, and 89 of Bravura's 119 outlines could never be drawn once
+both modes started using abcjs's. Those paths are gone (their metrics are still read); the
+rest of the gap is the remaining second table and a larger feature surface.
+
+⚠️ **AND THE MICRO-OPTIMISATION WELL IS DRY, which is worth writing down so it is not
+re-dug.** After the three levers that landed, five more were implemented and measured:
+`deepFreeze` walking with `for…in` instead of `Object.keys` (0.1% / 5.9% / 0.3% across
+runs — under the noise floor), an integer fast path in `roundNumber` (**1.9% SLOWER** — the
+guard costs more than the string round-trip saves, because coordinates rarely are
+integers), a render-scoped text-width cache (**3.3% slower** — building the string key
+costs more than the character walk), dropping `split('\n')` from the same function (−0.3%
+then +7.2%), and the two rejected in the audit. **Every one was reverted.** The machine's
+run-to-run noise is ±5%, the remaining hot spots are each under 6% of self time and
+diffuse, and a change to byte-parity-critical code that measurement cannot defend is churn.
+
 
 **What the swap needs**
 
