@@ -1019,13 +1019,48 @@ function renderInto(
       wrapped = ret !== null && ret.reParse ? applyLineBreaks(score, ret.lineBreaks) : score;
       return wrapped;
     };
-    const laidOut = (): ReturnType<typeof layout> =>
-      layout(drawnScore(), {
+    /**
+     * **THE LAYOUT, LAID OUT ONCE — AND IT WAS BEING LAID OUT TWICE FOR EVERY HOST THAT
+     * READS THE TUNE OBJECT.**
+     *
+     * ⚠️ COUNTED, not inferred: `layout()` ran **1.00 times per tune for a bare render and
+     * 2.00** the moment anything touched `tune.lines`, `noteTimings` or
+     * `getSelectableArray()` — which is exactly what a page with playback highlighting
+     * does. Five call sites, no memo, and layout is **49% of a render**:
+     *
+     *     render only                151ms
+     *     render + lines + timings   258ms      (+71%)
+     *
+     * ── ⚠️ WHY THIS WAS NOT DONE BEFORE, AND WHY THE REASON DID NOT SURVIVE MEASUREMENT ──
+     * `CLAUDE.md` records that retaining the `Layout` in this closure once took the suite
+     * from 5.6s to 50-120s with workers dying, and that it is "the biggest object this
+     * library makes". The first half is history; the second was worth checking, because a
+     * fear with no number attached is what stops the work rather than the cost:
+     *
+     *     691 tunes:  TuneObjects 41MB (59KB each)   Layouts 14MB (20KB each)
+     *
+     * A retained `Layout` is **a third of what the TuneObject beside it already costs**, so
+     * this cache grows a tune's footprint by about a third and cannot be what killed those
+     * workers. The suite is re-run on every change here and its wall time is the check.
+     *
+     * ── AND WHY IT IS SAFE FOR THE BYTES ────────────────────────────────────────
+     * `layout()` re-applies its module-level switches at the top of every call, so a SKIPPED
+     * call could in principle leave stale state behind for whatever ran next. It cannot
+     * here: `svg.ts` imports exactly `ENGRAVE` and `stepToY` from `layout.ts` and both are
+     * constants — no emitter reads a mutable. Everything else that takes a cached `doc`
+     * only reads it. The byte gates are the proof either way.
+     */
+    let laidOutCache: ReturnType<typeof layout> | null = null;
+    const laidOut = (): ReturnType<typeof layout> => {
+      if (laidOutCache !== null) return laidOutCache;
+      laidOutCache = layout(drawnScore(), {
         mode,
         ...(systemWidth ? { systemWidth } : {}),
         ...(printing ? { print: true } : {}),
         ...(hostScale === undefined ? {} : { hostScale }),
       });
+      return laidOutCache;
+    };
     const projection = (): {
       byEvent: ReadonlyMap<MusicEvent, AbcElement>;
       byRange: ReadonlyMap<number, AbcElement>;

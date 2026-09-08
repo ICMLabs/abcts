@@ -12540,6 +12540,27 @@ function layoutMeasure(
       // twenty lines up already reads `glyphsFor(strict)`; this one did not.
       const width = glyphsFor(strict).width(heads[0]?.name ?? 'noteheadBlack')
       /**
+       * **THE HEADS' EXTREMES, ONCE.** These four were eight separate
+       * `Math.min(...heads.map(h => h.x))` expressions in the object below — ten array
+       * allocations and eight spreads per NOTE, per layout — and `tieHeadDx` recomputed the
+       * minimum inside its own `map`, so a chord paid it once per head.
+       *
+       * ⚠️ **BYTE-IDENTICAL BY CONSTRUCTION, and that is worth stating rather than hoping:**
+       * `Math.min` over the same values in the same order is the same double however many
+       * times it is evaluated — there is no accumulation and no association to change, which
+       * is what makes this hoist safe where re-grouping an ADDITION would not be. The byte
+       * gates are the proof.
+       *
+       * The GC lever this is part of measures ~6% of a render
+       * (`node --max-semi-space-size=64` alone buys that much).
+       */
+      const headXs = heads.map((h) => h.x)
+      const headYs = heads.map((h) => h.y)
+      const headMinX = Math.min(...headXs)
+      const headMaxX = Math.max(...headXs)
+      const headMinY = Math.min(...headYs)
+      const headMaxY = Math.max(...headYs)
+      /**
        * **A CURVE HANGS ON THE CHORD'S LOWEST HEAD, NOT ITS FIRST-WRITTEN ONE.**
        * `addSlursAndTies` walks `el.pitches`, which the ENGRAVER has SORTED so the
        * noteheads can stack, and a slur is hung on `pitches[0]` — so `([GCD][GCD])`
@@ -12578,16 +12599,16 @@ function layoutMeasure(
       anchors.push({
         system: 0, // filled in when the block is placed into a system
         element: elements.length,
-        left: Math.min(...heads.map((h) => h.x)),
-        right: Math.max(...heads.map((h) => h.x)) + width,
+        left: headMinX,
+        right: headMaxX + width,
         ...(el.slideRoom === undefined ? {} : { slideRoom: el.slideRoom }),
         // HALF A STAFF SPACE of curve padding either side, which `curveReserves`'
         // `fixedOf` takes back off again before it puts the notehead's real half on.
-        top: Math.min(...heads.map((h) => h.y)) - 0.5 * SPACE,
-        bottom: Math.max(...heads.map((h) => h.y)) + 0.5 * SPACE,
+        top: headMinY - 0.5 * SPACE,
+        bottom: headMaxY + 0.5 * SPACE,
         pitchY:
           first === undefined
-            ? (Math.min(...heads.map((h) => h.y)) + Math.max(...heads.map((h) => h.y))) / 2
+            ? (headMinY + headMaxY) / 2
             : stepToY(pitchToStep(first, clefNow)),
         ...(first === undefined ? {} : { pitchStep: pitchToStep(first, clefNow) }),
         // Ascending, which is the order `layoutNoteheads` draws them in and the order
@@ -12609,7 +12630,7 @@ function layoutMeasure(
           : {}),
         // …and each head's own offset from `left` — see `NoteAnchor.tieHeadDx`. `heads` is
         // ascending, the order `layoutNoteheads` draws them and the order `tieSteps` takes.
-        tieHeadDx: heads.map((h) => h.x - Math.min(...heads.map((g) => g.x))),
+        tieHeadDx: headXs.map((x) => x - headMinX),
         stemUp: el.stemUp ?? el.lines.some((l) => l.x1 === l.x2 && l.y2 < l.y1),
         // The notehead's DECLARED width — `anchor.w` — which an ABOVE slur bumps its own
         // ends by half of. See `buildCurve`.
@@ -12626,7 +12647,7 @@ function layoutMeasure(
             ...el.glyphs
               .filter((g) => g.role === 'notehead' || g.role === 'flag' || g.role === 'dot')
               .map((g) => g.x + glyphsFor(strict).width(g.name)),
-          ) - Math.min(...heads.map((h) => h.x)),
+          ) - headMinX,
         event,
       })
     } else if (event.type === 'rest') {
@@ -19411,9 +19432,11 @@ function anchorChordsBelow<
    * came out 193.270875 against abcjs's 193.27087500000002, one ULP, with OUR number the
    * clean one and abcjs's carrying the tail.
    */
-  const markPitch = Math.max(...marks.map(chordHeightOf)) / ENGRAVE.spacePerStep
+  // The tallest mark, once: `marks.map(chordHeightOf)` was walked TWICE for the same value.
+  const markHeight = Math.max(...marks.map(chordHeightOf))
+  const markPitch = markHeight / ENGRAVE.spacePerStep
   const blockPitch = markPitch * lanes + ENGRAVE.aboveStackMargin / ENGRAVE.spacePerStep
-  const block = Math.max(...marks.map(chordHeightOf)) * lanes + ENGRAVE.aboveStackMargin
+  const block = markHeight * lanes + ENGRAVE.aboveStackMargin
   /**
    * ⚠️ **THE RESERVE IS OFF THE INK AND THE BASELINE IS OFF THE LANE.** abcjs spends the
    * two lanes in turn — `staff.bottom -= lyricLane` then `-= chordLane` — so the chord

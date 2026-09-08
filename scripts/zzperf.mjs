@@ -26,8 +26,15 @@
  * a broken per-file column survives beside a sound total. Each file is now rendered `INNER`
  * times inside one timer and divided back, so the measured span is tens of ticks.
  *
+ * ⚠️ **AND `HOST=1` IS THE OTHER HALF OF THE QUESTION.** The default times `renderAbc`
+ * alone, which is what a static score page does. A page with playback highlighting also
+ * reads `tune.lines` and `tune.noteTimings`, and BOTH engines do real work for those — so
+ * the default number says nothing about it. Measured separately rather than folded in,
+ * because they are different pages.
+ *
  *   PW=/tmp/gp/pw/node_modules/playwright-core node scripts/zzperf.mjs
  *   ENGINE=chrome REPS=5 PW=… node scripts/zzperf.mjs
+ *   HOST=1 PW=… node scripts/zzperf.mjs
  */
 import { createRequire } from 'node:module'
 import { existsSync, readFileSync, readdirSync, writeFileSync } from 'node:fs'
@@ -42,6 +49,8 @@ const OURS = join(repo, 'dist', 'abcts-browser.global.js')
 if (!existsSync(OURS)) throw new Error(`no ${OURS} — run npm run build`)
 const fixtures = join(repo, 'tests', 'corpus-abcjs', 'fixtures')
 const REPS = Number(process.env.REPS ?? 4)
+/** Also read `tune.lines` and `tune.noteTimings` — the playback-highlighting page. */
+const HOST = process.env.HOST === '1'
 /** Renders per timed span — enough that the clock's 0.33ms quantum is noise. See the header. */
 const INNER = Number(process.env.INNER ?? 20)
 
@@ -67,7 +76,7 @@ if (ready.abcjs !== 'function' || ready.abcts !== 'function')
 
 /** One rep: every fixture through both engines, alternating, timed per engine per tune. */
 const rep = async (jsFirst) =>
-  page.evaluate(({ cases, jsFirst, inner }) => {
+  page.evaluate(({ cases, jsFirst, inner, host }) => {
     // ONE timed span over `inner` renders, divided back — the clock is quantised at 0.33ms
     // in WebKit and a single render of most fixtures is under one tick. See the header.
     const time = (API, abc) => {
@@ -84,7 +93,11 @@ const rep = async (jsFirst) =>
           document.body.appendChild(d)
           slots.push(d)
         }
-        API.renderAbc(slots, abc, { staffwidth: 670 })
+        const out = API.renderAbc(slots, abc, { staffwidth: 670 })
+        // The playback-highlighting page, when asked for: both engines build a real
+        // `lines` projection and real note timings, so this is a fair comparison of the
+        // same work rather than of one engine's laziness.
+        if (host) for (const t of out) { void t.lines; void t.noteTimings }
         for (const d of slots) d.remove()
       }
       return (performance.now() - t0) / inner
@@ -100,7 +113,7 @@ const rep = async (jsFirst) =>
       out.perTune.push({ slug: c.slug, js: j, ts: t })
     }
     return out
-  }, { cases, jsFirst, inner: INNER })
+  }, { cases, jsFirst, inner: INNER, host: HOST })
 
 const reps = []
 for (let i = 0; i < REPS; i += 1) {
@@ -131,7 +144,7 @@ const median = ratios[Math.floor(ratios.length / 2)]
 // future corpus of trivial tunes cannot quietly fill the table with noise.
 const measurable = perTune.filter((p) => p.js > 0.02 && p.ts > 0.02)
 const lines = [
-  `abcts vs abcjs 6.7.0, both live in ${engine.name}, ${cases.length} files, ${REPS} reps`,
+  `abcts vs abcjs 6.7.0, both live in ${engine.name}, ${cases.length} files, ${REPS} reps${HOST ? '  [HOST: + lines + noteTimings]' : ''}`,
   ``,
   `  COLD (first rep, compilation included)   abcjs ${cold.js.toFixed(0)}ms   abcts ${cold.ts.toFixed(0)}ms   ${(cold.ts / cold.js).toFixed(2)}x`,
   `  WARM (mean of ${warm.length})                      abcjs ${jsWarm.toFixed(0)}ms   abcts ${tsWarm.toFixed(0)}ms   ${(tsWarm / jsWarm).toFixed(2)}x`,
@@ -145,5 +158,5 @@ const lines = [
   `  FASTEST for abcts, relative:`,
   ...measurable.slice(-8).reverse().map((p) => `    ${p.slug.padEnd(50)} ${p.ratio.toFixed(2)}x   abcjs ${p.js.toFixed(1)}ms  abcts ${p.ts.toFixed(1)}ms`),
 ]
-writeFileSync(`/tmp/abcts-perf-${engine.name}.txt`, lines.join('\n') + '\n')
+writeFileSync(`/tmp/abcts-perf-${engine.name}${HOST ? '-host' : ''}.txt`, lines.join('\n') + '\n')
 console.log(lines.join('\n'))
