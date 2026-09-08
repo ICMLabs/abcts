@@ -1058,6 +1058,9 @@ export function toSVG(
     r: NonNullable<PlacedText["boxRect"]>,
     baseline: number,
     size: number,
+    // The hook the rules wear. abcjs names them; core's own vocabulary classes them, which
+    // is the only thing the two paths disagree about now — see the boxed-text site below.
+    attr = ' data-name="box"',
   ): string => {
     /**
      * ⚠️ **MEASURED AND NOT YET PORTED: abcjs TAKES THIS OFF THE MEASURED HEIGHT.**
@@ -1084,7 +1087,7 @@ export function toSVG(
       `M ${xx} ${from} l 0 ${to - from} l 1 0  l 0 ${from - to}  z `;
     // abcjs-debt: §3 — the doubled spaces are deliberate. Docs/ABCJS-DEBT.md
     const d = [h(y1), h(y2), v(x2, y1, y2), v(x1, y2, y1)].join(" ");
-    return `<path d="${d}" stroke="none" data-name="box"></path>`;
+    return `<path d="${d}" stroke="none"${attr}></path>`;
   };
 
   /**
@@ -3490,7 +3493,13 @@ export function toSVG(
                           )
                         : "",
                     )
-                  : `<text${partAttr} x="${textNum(t.x * PX)}" y="${textNum(t.y * PX + oy)}" ` +
+                  : // …AND THE BOX'S OWN SHIFTS APPLY HERE TOO. `boxDx` and `baselineY`
+                    // are computed above for BOTH vocabularies and were read by the abcjs
+                    // branch alone, so a boxed row on this path drew its text at the
+                    // unshifted x and y — which is half of why it had no box worth drawing.
+                    // Both are identities when `bs` is undefined, so an unboxed row is
+                    // unmoved.
+                    `<text${partAttr} x="${textNum((t.x + boxDx) * PX)}" y="${textNum(bs === undefined ? t.y * PX + oy : baselineY)}" ` +
                     `font-family="serif" font-size="${num(t.size * PX)}"${style}` +
                     // Only the top-text block sets one; the music's text is left-aligned.
                     `${t.anchor === undefined || t.anchor === "start" ? "" : ` text-anchor="${t.anchor}"`}` +
@@ -3498,7 +3507,20 @@ export function toSVG(
             });
             // …and the BOX wraps whatever that produced. `Svg.rect` writes four one-pixel
             // bars and `lines.join(" ")` doubles the space at every joint (`svg.js:112-142`).
-            if (bs !== undefined && abcjs) {
+            /**
+             * ⚠️ **THIS USED TO SAY `&& abcjs`, AND THAT MADE A `%%…box` DIRECTIVE DO
+             * NOTHING ON THE CORE PATH — in BOTH modes.** Measured on
+             * `%%titlefont Times-Roman 22 box`: `classes: 'abcjs'` drew 2 boxes, `'abcts'`
+             * drew 0, identically in strict and extended.
+             *
+             * It was read as an extended-mode defect for an afternoon (the comparison
+             * site's third column renders through core), and it is nothing of the kind: a
+             * box is what the ABC ASKS FOR, not a naming convention. The only thing the
+             * vocabulary decides is what the rules are CALLED — abcjs names the path
+             * `data-name="box"` and wraps an out-of-group row in a named `<g>`; core wears
+             * its own class and needs no name on the wrapper.
+             */
+            if (bs !== undefined) {
               const part = textParts[textParts.length - 1];
               if (part !== undefined) {
                 const bx = Math.round((t.x - boxDelta) * PX);
@@ -3529,15 +3551,46 @@ export function toSVG(
                 // `if (!alreadyInGroup) openGroup(...)` — a `part` label is already inside
                 // its element's group, so the rect is its text's SIBLING (`draw/text.js:50`,
                 // `:80`). See `PlacedText.inGroup`.
-                const boxSvg = `<path d="${d}" stroke="none" data-name="box"></path>`;
+                const boxSvg = abcjs
+                  ? `<path d="${d}" stroke="none" data-name="box"></path>`
+                  : `<path d="${d}" stroke="none" class="${prefix}-box"></path>`;
+                const open = abcjs
+                  ? `<g fill="currentColor" data-name="${t.dataName ?? ""}">`
+                  : `<g fill="currentColor">`;
                 textParts[textParts.length - 1] = {
                   ...part,
                   s:
                     t.inGroup === true
                       ? `${part.s}${boxSvg}`
-                      : `<g fill="currentColor" data-name="${t.dataName ?? ""}">${part.s}${boxSvg}</g>`,
+                      : `${open}${part.s}${boxSvg}</g>`,
                 };
               }
+            }
+            /**
+             * **AND A TOP-TEXT ROW CARRIES ITS BOX AS A `boxRect`, NOT AS `box`/`boxSize`.**
+             * Two shapes for one directive: a MUSIC text (a chord symbol, an annotation, a
+             * voice name) measures its own rect, and a BLOCK row (`%%titlefont … box` and
+             * the rest) is laid out with the rect already placed. abcjs's emitter reaches
+             * both — the block rows through its own top-text pass — and core's reached
+             * neither, so `%%gchordfont … box` came back the moment the guard above lost
+             * its `&& abcjs` and `%%titlefont … box` did not.
+             *
+             * ⚠️ **THE abcjs PATH MUST NOT COME HERE.** Its block rows are drawn by the
+             * top-text pass and skipped in this loop, so gating on `!abcjs` is what stops
+             * the rect being written twice.
+             */
+            if (!abcjs && t.boxRect !== undefined) {
+              const part = textParts[textParts.length - 1];
+              if (part !== undefined)
+                textParts[textParts.length - 1] = {
+                  ...part,
+                  s: `${part.s}${boxRulesPath(
+                    t.boxRect,
+                    t.pageY === undefined ? t.y * PX + oy : t.pageY * PX,
+                    t.size * PX,
+                    ` class="${prefix}-box"`,
+                  )}`,
+                };
             }
           }
           // …AND ONLY THE BAR NUMBER. The comment above says "every other element's text
