@@ -185,6 +185,36 @@ Measured on 2026-09-06, not assumed.
   (`abcjs-inline-audio`, `abcjs-midi-start`, `abcjs-btn`, …), so a page already linking
   `abcjs-audio.css` keeps its styling. **We ship no CSS of our own — keep that link.**
 
+**Speed and size, measured 2026-09-07 — abcts is SLOWER and BIGGER, and both by a little**
+
+Both engines loaded into ONE page and alternated per fixture, so they share a JS engine, a
+font stack, a machine and a thermal state. `scripts/zzperf.mjs`; 231 files, 4 reps, the
+first discarded as compilation.
+
+| | abcjs 6.7.0 | abcts | ratio |
+|---|---|---|---|
+| WebKit, whole corpus (warm) | 229 ms | 280 ms | **1.22x** |
+| Chrome, whole corpus (warm) | 161 ms | 221 ms | **1.38x** |
+| WebKit, per file | 0.99 ms | 1.21 ms | median per-file **1.04x** |
+| Chrome, per file | 0.70 ms | 0.96 ms | median per-file **1.21x** |
+| bundle, brotli (minified both) | 123 KB | 175 KB | **1.43x** |
+
+**A page renders a tune in about a millisecond either way**, which is the number that
+decides whether a visitor notices, and nothing here is within an order of magnitude of
+mattering for a page with a handful of tunes. The worst single fixture is `abcts-midi`
+(2.0x in WebKit, 2.3x in Chrome), a 40-tune `%%MIDI` directive file; the median tune is
+1.04x in WebKit.
+
+⚠️ **The MEDIAN and the TOTAL disagree on purpose** — a corpus total is dominated by its
+largest tunes, and a site renders whatever it renders. Both are reported rather than one
+being picked.
+
+⚠️ **AND THE FIRST PER-FILE TABLE WAS NOISE.** `performance.now()` is clamped to 0.33 ms in
+WebKit as a Spectre mitigation, and most fixtures render in under one tick, so a
+single-render timing gave `0.00x`, `NaNx` and `Infinityx` ratios — beside an aggregate that
+was perfectly sound, because 231 files sum well past the quantum. Each file is timed over
+20 renders now. A broken per-file column can live beside a correct total.
+
 **What the swap needs**
 
 - **The global is `ABCTS`, not `ABCJS`** — deliberately, so both can load in one page.
