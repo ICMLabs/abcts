@@ -1,9 +1,9 @@
-import type { Score } from "../core/model.js";
-import { layout } from "../renderer/layout.js";
-import { UNIT_PX } from "../renderer/abcjs-constants.js";
+import type { CompatibilityMode, Score } from '../core/model.js'
+import { UNIT_PX } from '../renderer/abcjs-constants.js'
+import { layout } from '../renderer/layout.js'
 
-import type { AbcLine } from "./lines.js";
-import { VOICE_CHILD_TYPES } from "./voices-array.js";
+import type { AbcLine } from './lines.js'
+import { VOICE_CHILD_TYPES } from './voices-array.js'
 
 /**
  * **`tuneMetrics(abc, params)` — HOW WIDE EACH MEASURE WANTS TO BE.**
@@ -28,13 +28,13 @@ import { VOICE_CHILD_TYPES } from "./voices-array.js";
  */
 export interface MeasureSection {
   /** The x of the first child that is neither a clef nor a key signature. */
-  left: number;
-  measureWidths: number[];
-  total: number;
+  left: number
+  measureWidths: number[]
+  total: number
 }
 
 /** abcjs's screen padding — the same 15 `renderAbc` adds either side. */
-const PADDING = 15;
+const PADDING = 15
 
 /**
  * The sections of one tune. **A SECTION IS A RUN OF STAFF LINES**: any line without one —
@@ -48,6 +48,13 @@ const PADDING = 15;
 export function measureWidthsOf(
   score: Score,
   lines: readonly AbcLine[],
+  /**
+   * The tune's own mode. Almost everything here is mode-independent — the geometry is
+   * abcjs's in both — but the eight `ABCJS_GAPS` sites are not: a three-quarter tone draws
+   * an accidental in extended and nothing in strict, and an accidental has a width. So the
+   * caller passes what it parsed with rather than this assuming.
+   */
+  mode: CompatibilityMode = 'abcjs-strict',
 ): MeasureSection[] {
   /**
    * ⚠️ **AND `%%staffwidth` DOES NOT WIN HERE.** The directive beats the host's parameter
@@ -64,52 +71,49 @@ export function measureWidthsOf(
    * `visual-directives-01` is exactly that: four measures to abcjs, two to a walk over what
    * was drawn.
    */
-  const doc = layout({ ...score, staffWidth: null, maxStaves: null }, {
-    mode: "abcjs-strict",
-    // abcjs's width 0, in our units: the PAGE is the staff width plus both margins.
-    systemWidth: (0 + PADDING * 2) / UNIT_PX,
-  });
-  const out: MeasureSection[] = [];
-  let section: MeasureSection | null = null;
-  let systemIndex = 0;
+  const doc = layout(
+    { ...score, staffWidth: null, maxStaves: null },
+    {
+      mode,
+      // abcjs's width 0, in our units: the PAGE is the staff width plus both margins.
+      systemWidth: (0 + PADDING * 2) / UNIT_PX,
+    },
+  )
+  const out: MeasureSection[] = []
+  let section: MeasureSection | null = null
+  let systemIndex = 0
   for (const line of lines) {
     if (line.staff === undefined) {
-      section = null;
-      continue;
+      section = null
+      continue
     }
-    const system = doc.systems[systemIndex];
-    systemIndex += 1;
-    if (system === undefined) continue;
+    const system = doc.systems[systemIndex]
+    systemIndex += 1
+    if (system === undefined) continue
     if (section === null) {
-      section = { left: 0, measureWidths: [], total: 0 };
-      out.push(section);
+      section = { left: 0, measureWidths: [], total: 0 }
+      out.push(section)
     }
     // "At this point, the voices are laid out so that the bar lines are even with each
     // other. So we just need to get the placement of the first voice." (`:167`)
     // **PROSE IS NOT A VOICE CHILD** — the same filter `makeVoicesArray` needs, and for the
     // same reason: a title sits in our element stream at x = 0 and would be taken for the
     // first non-staff-extra child, which is what `left` and every width are measured from.
-    const voice = (system.staves[0]?.voices[0] ?? []).filter((el) =>
-      VOICE_CHILD_TYPES.has(el.type),
-    );
-    let foundNotStaffExtra = false;
-    let lastX = 0;
+    const voice = (system.staves[0]?.voices[0] ?? []).filter((el) => VOICE_CHILD_TYPES.has(el.type))
+    let foundNotStaffExtra = false
+    let lastX = 0
     for (const child of voice) {
-      if (
-        !foundNotStaffExtra &&
-        child.type !== "clef" &&
-        child.type !== "keySignature"
-      ) {
-        foundNotStaffExtra = true;
-        section.left = child.x;
-        lastX = child.x;
+      if (!foundNotStaffExtra && child.type !== 'clef' && child.type !== 'keySignature') {
+        foundNotStaffExtra = true
+        section.left = child.x
+        lastX = child.x
       }
-      if (child.type === "bar") {
-        section.measureWidths.push(child.x - lastX);
-        section.total += child.x - lastX;
-        lastX = child.x;
+      if (child.type === 'bar') {
+        section.measureWidths.push(child.x - lastX)
+        section.total += child.x - lastX
+        lastX = child.x
       }
     }
   }
-  return out;
+  return out
 }

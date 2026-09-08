@@ -213,12 +213,16 @@ pessimistic one. It is abcts's own symbol, not abcjs's, so the drop-in surface i
 1. **Playback makes sound**, and the soundfont fetch is not blocked. Default URL is
    `https://paulrosen.github.io/midi-js-soundfonts/FluidR3_GM/` — same as abcjs, so an
    existing CSP already allows it, but check if the site passes its own `soundFontUrl`.
-2. **Anything reading `abcjs-extended`** — it is unreachable from `renderAbc`, which
-   hard-wires strict. Reach it with `ABCTS.core.render(score, { mode: 'abcjs-extended' })`.
-   ⚠️ **And pass the same options compat does, or you are comparing pipelines rather than
-   modes**: `classes: 'abcjs'`, `staffSpace: 7.75`, and `systemWidth` (the PAGE — there is
-   no `staffwidth` option on `render`, so one passed there is silently dropped). All three
-   caught out this repo's own comparison site.
+2. **Anything reading `abcjs-extended`** — `renderAbc(target, abc, { mode:
+   'abcjs-extended' })`. That param is abcts's one addition to abcjs's, it defaults to
+   `abcjs-strict`, and it reaches the parse, the layout, the measure widths and the
+   emitter. (It did not exist until 2026-09-07; extended was reachable only through
+   `ABCTS.core.render`.)
+
+   ⚠️ **If you do go through `core.render`, pass the same options compat does or you are
+   comparing pipelines rather than modes**: `classes: 'abcjs'`, `staffSpace: 7.75`, and
+   `systemWidth` (the PAGE — there is no `staffwidth` option on `render`, so one passed
+   there is silently dropped). All three caught out this repo's own comparison site.
 3. **The editor**, if the site uses `abcjs.Editor` — it is implemented and gated on 14
    cases, but against recorded call sequences rather than a live textarea.
 

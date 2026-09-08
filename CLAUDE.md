@@ -2064,6 +2064,14 @@ not a ladder of them). `parse(abc, { mode })` and `render(score, { mode })`. Str
 default because a replacement whose default output differs from what it replaces is not one.
 `abcts/compat` gives abcjs's `renderAbc` signature, classes and density for a drop-in.
 
+🔌 **AND `AbcjsParams.mode` IS abcts's ONE ADDITION TO abcjs'S PARAMS** (2026-09-07). abcjs
+has no such option, so extended used to be unreachable from the API a drop-in host actually
+calls. It defaults to `abcjs-strict` and it reaches all four hard-wired sites — the parse,
+the layout, `getMeasureWidths` and the emitter — each of which had its own `"abcjs-strict"`
+literal and each of which is a row of `tests/compat-mode.test.ts`. ⚠️ **The measure-width
+row's obvious control was MUTE**: a single `^3/2C` reports the same width in both modes, so
+it takes SIX microtones over two bars to move the number.
+
 ⚖️ **THERE WERE THREE AND `abc2.1` WAS NEVER A MODE** (Lance, 2026-09-04). It was meant to be
 the middle rung — the standard read correctly, conventional engraving — and **every mode
 branch in `src/` is `isStrict(mode)`**, one comparison in `core/model.ts`. Not one site ever

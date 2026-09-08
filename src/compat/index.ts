@@ -46,6 +46,7 @@ import {
 } from "../audio/timing.js";
 import {
   type AbcFontType,
+  type CompatibilityMode,
   defaultClef,
   type MusicEvent,
   type FreeTextBlock,
@@ -228,6 +229,21 @@ const ariaTitle = (title: RichText): string =>
 
 /** The subset of abcjs's params that changes the rendering abcts produces. */
 export interface AbcjsParams {
+  /**
+   * **abcts's ONE ADDITION TO abcjs'S PARAMS, AND IT DEFAULTS TO abcjs.**
+   *
+   * abcjs has no such option — it has only itself to be. Without one, `abcjs-extended` was
+   * reachable only through `parse`/`render`, which means a drop-in host could not get at
+   * the parsing fixes or the engraving abcjs lacks without abandoning the API it already
+   * calls. Omitted, this is `abcjs-strict` and every byte is abcjs's, which is what a
+   * drop-in must be.
+   *
+   * Safe to set because of the owner's rule of 2026-09-07: extended is byte-identical to
+   * strict except for the divergences declared in `Docs/ABCJS-DIFFERENCES.md`, and
+   * `tests/mode-bytes.test.ts` holds all 691 corpus fixtures to it. Before that rule this
+   * option would have handed a host a different engraving engine.
+   */
+  readonly mode?: CompatibilityMode;
   /** Staff width in pixels. abcjs's default is 740 on screen. */
   readonly staffwidth?: number;
   /**
@@ -867,8 +883,11 @@ function renderInto(
   params: AbcjsParams,
   engraved: boolean,
 ): TuneObject[] {
+  // `AbcjsParams.mode`, which is `abcjs-strict` unless a host asks otherwise — and the
+  // ONE place it is resolved, so the parse, the layout and the emitter cannot disagree.
+  const mode: CompatibilityMode = params.mode ?? "abcjs-strict";
   const result = parse(abc, {
-    mode: "abcjs-strict",
+    mode,
     ...(params.visualTranspose
       ? { visualTranspose: params.visualTranspose }
       : {}),
@@ -985,7 +1004,11 @@ function renderInto(
       if (wrapCache !== null) return wrapCache;
       if (paper === null || params.wrap === undefined || params.staffwidth === undefined)
         return null;
-      const sections = measureWidthsOf(score, projectionOf(score, abc, engraved).lines);
+      const sections = measureWidthsOf(
+        score,
+        projectionOf(score, abc, engraved).lines,
+        mode,
+      );
       wrapCache = calcLineWraps(sections, staffwidth, params.wrap, params.scale);
       return wrapCache;
     };
@@ -998,7 +1021,7 @@ function renderInto(
     };
     const laidOut = (): ReturnType<typeof layout> =>
       layout(drawnScore(), {
-        mode: "abcjs-strict",
+        mode,
         ...(systemWidth ? { systemWidth } : {}),
         ...(printing ? { print: true } : {}),
         ...(hostScale === undefined ? {} : { hostScale }),
@@ -1248,6 +1271,9 @@ function renderInto(
         {
           staffSpace,
           classes: "abcjs",
+          // …AND THE EMITTER TAKES IT TOO. It decides `<defs>`/`<use>`, which is a declared
+          // divergence; everything else it draws is abcjs's in both modes.
+          mode,
           selectables: records,
           drawn: drawnRecords,
           // What a host may click decides the markup as well as the array — an element is
@@ -1647,7 +1673,7 @@ export function tuneMetrics(
    * given. Measured: abcjs returns 223 entries over 303 files, one apiece.
    */
   return renderAbc(["*"], abc, params).map((tune) => ({
-    sections: measureWidthsOf(tune.score, tune.lines),
+    sections: measureWidthsOf(tune.score, tune.lines, params.mode ?? "abcjs-strict"),
   }));
 }
 
