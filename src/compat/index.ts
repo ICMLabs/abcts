@@ -265,6 +265,17 @@ export interface AbcjsParams {
   /** Uniform scale factor applied to the whole drawing. */
   readonly scale?: number;
   /**
+   * **`"resize"` — THE SCORE SCALES WITH ITS COLUMN INSTEAD OF OVERFLOWING IT**, and the
+   * option a host reaches for first. abcjs puts a `viewBox` on the SVG, takes its `width`
+   * and `height` off, and gives the CONTAINER a `padding-bottom` ratio
+   * (`draw/set-paper-size.js:30`, `write/svg.js:33-59`) — all of it through the DOM, so
+   * `sizeContainer` applies it after the markup is inserted, exactly as `restyleScale`
+   * does for `%%scale`.
+   *
+   * Any other value is abcjs's `else` arm, which is what an absent one takes too.
+   */
+  readonly responsive?: string;
+  /**
    * abcjs adds its `abcjs-*` classes only when asked. Compat emits them either way,
    * because they are the reason to use this entry point; the flag is accepted so that
    * existing calls do not have to change.
@@ -905,6 +916,23 @@ function renderInto(
    */
   const hostScale =
     typeof params.scale === "number" && params.scale > 0.1 ? params.scale : undefined;
+  /**
+   * ⚠️ **AND `responsive: "resize"` THROWS THE SCALE AWAY — abcjs SAYS SO IN ITS OWN
+   * COMMENT.**
+   *
+   *     if (this.responsive === "resize") // The resizing will mess with the scaling,
+   *         scale = undefined;            // so just don't do it explicitly.
+   *     if (scale === undefined) scale = this.renderer.isPrint ? 0.75 : 1;
+   *
+   * (`engraver-controller.js:213-216`.) It discards the `%%scale` DIRECTIVE with it — the
+   * whole expression is replaced, not just the param — so a responsive render is always at
+   * 1, or print's 0.75, and the viewBox does the resizing instead.
+   *
+   * Measured 2026-09-09 across four scales: abcjs's viewBox and `padding-bottom` are
+   * IDENTICAL at 1, 0.7, 1.5 and 2 — `0 0 700 98.492` and `14.070286%` — where ours moved
+   * with the scale and drew a transform abcjs does not.
+   */
+  const ignoreScale = params.responsive === "resize";
   // abcjs's staffwidth is the MUSIC AREA in pixels; core's `systemWidth` is the PAGE in
   // staff spaces — `%%staffwidth` maps `staffWidth / 7.75 + 2 * marginX` and the engine
   // default is 700 for abcjs's 670. Dropping the padding here made every justified line
@@ -1057,7 +1085,8 @@ function renderInto(
         mode,
         ...(systemWidth ? { systemWidth } : {}),
         ...(printing ? { print: true } : {}),
-        ...(hostScale === undefined ? {} : { hostScale }),
+        ...(hostScale === undefined || ignoreScale ? {} : { hostScale }),
+        ...(ignoreScale ? { ignoreScale: true } : {}),
       });
       return laidOutCache;
     };
@@ -1573,6 +1602,7 @@ function renderInto(
       if (element !== null) {
         element.innerHTML = tune.svg;
         restyleScale(element);
+        sizeContainer(element, params.responsive);
       }
       return tune;
     }),
@@ -1610,8 +1640,16 @@ function restyleScale(element: { innerHTML: string }): void {
   if (style === undefined || style === null) return;
   const scale = /scale\(\s*([0-9.]+)/.exec(style.transform ?? "")?.[1];
   if (scale === undefined) return;
+  applyScaleStyles(style as Record<string, string | undefined>, scale);
+}
+
+/** `setScale`'s eight assignments, in its own order (`write/svg.js:71-83`). */
+function applyScaleStyles(
+  style: Record<string, string | undefined>,
+  scale: string,
+): void {
   const s = `scale(${scale},${scale})`;
-  style.transform = s;
+  style["transform"] = s;
   style["-ms-transform"] = s;
   style["-webkit-transform"] = s;
   style["transform-origin"] = "0 0";
@@ -1624,6 +1662,108 @@ function restyleScale(element: { innerHTML: string }): void {
 /** The one DOM surface `restyleScale` touches — structurally typed, like `LiveElement`. */
 interface StyledElement {
   readonly style?: { transform?: string } & Record<string, string | undefined>;
+}
+
+/**
+ * **abcjs SIZES THE CONTAINER, AND IT DOES IT THROUGH THE DOM** — `setPaperSize`'s last two
+ * lines (`draw/set-paper-size.js:29-41`), which no emitted string can carry:
+ *
+ *     var parentStyles = { overflow: "hidden" };
+ *     if (responsive === 'resize') renderer.paper.setResponsiveWidth(w, h);
+ *     else { parentStyles.width = ""; parentStyles.height = h + "px";
+ *            if (scale < 1) parentStyles.width = w + "px"; … }
+ *     renderer.paper.setParentStyles(parentStyles);
+ *
+ * ⚠️ **MEASURED 2026-09-09 AND THE DEFAULT PATH DIFFERED TOO.** abcjs gives every container
+ * `overflow: hidden; height: <h>px` — a host's layout reserves that space — and ours set
+ * nothing at all. `responsive: "resize"` was unimplemented outright, which is the option a
+ * host reaches for FIRST: the score then scales with its column instead of overflowing it.
+ *
+ * The same shape as `restyleScale` beside it: assignments in abcjs's own ORDER, because
+ * what lands in the attribute is the browser's serialisation of them, and headless is
+ * untouched — no `document`, no `querySelector`, and the emitted string stands.
+ */
+function sizeContainer(
+  element: { innerHTML: string },
+  responsive: string | undefined,
+): void {
+  const host = element as {
+    querySelector?(s: string): StyledElement | null;
+    style?: Record<string, string | undefined>;
+    getAttribute?(name: string): string | null;
+    setAttribute?(name: string, value: string): void;
+  };
+  const root = host.querySelector?.("svg") as
+    | (StyledElement & { getAttribute?(n: string): string | null; removeAttribute?(n: string): void; setAttribute?(n: string, v: string): void })
+    | null
+    | undefined;
+  const parent = host.style;
+  if (root === null || root === undefined || parent === undefined) return;
+  /**
+   * **THE SVG CARRIES `w`/`h` ITSELF, EXCEPT BELOW 1.** `setSize(w, h)` for `scale >= 1`
+   * and `setSize(w / scale, h / scale)` below it (`draw/set-paper-size.js:33-38`) — abcjs
+   * draws a shrunken score at full size and lets the CSS transform shrink it, so only that
+   * arm has to be multiplied back. Measured 2026-09-09: at `scale: 1.5` abcjs's container
+   * is 132.738px, the SVG's own height, where multiplying gave 199.107.
+   */
+  const scale = Number(/scale\(\s*([0-9.]+)/.exec(root.style?.transform ?? "")?.[1] ?? 1);
+  const back = scale < 1 ? scale : 1;
+  const w = Number(root.getAttribute?.("width") ?? 0) * back;
+  const h = Number(root.getAttribute?.("height") ?? 0) * back;
+  if (!(w > 0) || !(h > 0)) return;
+  if (responsive === "resize") {
+    /**
+     * ⚠️ **AND THE `style` ATTRIBUTE IS DROPPED FIRST, SO IT IS RE-CREATED LAST.**
+     * abcjs's SVG has no `style` until `setResponsiveWidth` assigns one, so its attribute
+     * order is `… viewBox, preserveAspectRatio, style`. Ours is parsed from markup that
+     * already carries a `style` when a scale is in force, and `setAttribute` appends —
+     * which put `viewBox` after it. Print plus responsive is the case that has both.
+     */
+    const carried = /scale\(\s*([0-9.]+)/.exec(
+      (root.style as Record<string, string | undefined> | undefined)?.["transform"] ?? "",
+    )?.[1];
+    root.removeAttribute?.("style");
+    // `setResponsiveWidth` — the technique abcjs cites from thenewcode.com, which is a
+    // viewBox on the SVG and a padding-bottom ratio on the parent (`svg.js:33-59`).
+    root.setAttribute?.("viewBox", `0 0 ${w} ${h}`);
+    root.setAttribute?.("preserveAspectRatio", "xMinYMin meet");
+    root.removeAttribute?.("height");
+    root.removeAttribute?.("width");
+    const style = root.style as Record<string, string | undefined> | undefined;
+    if (style !== undefined) {
+      /**
+       * ⚠️ **AND THE SCALE IS RE-APPLIED AFTER, BECAUSE THE ORDER IS THE SERIALISATION.**
+       * `setResponsiveWidth` runs before `setScale` (`draw/set-paper-size.js:30`, `:39`),
+       * so abcjs's attribute reads `display; position; top; left; transform; …` where the
+       * emitter's transform is already first. The four are set, then the transform is
+       * cleared and re-assigned so it lands last — the same trick `restyleScale` plays
+       * with the browser's own serialiser, for the same reason.
+       */
+      const had = carried;
+      style["display"] = "inline-block";
+      style["position"] = "absolute";
+      style["top"] = "0";
+      style["left"] = "0";
+      if (had !== undefined) applyScaleStyles(style, had);
+    }
+    const cls = host.getAttribute?.("class");
+    if (!cls) host.setAttribute?.("class", "abcjs-container");
+    else if (!cls.includes("abcjs-container"))
+      host.setAttribute?.("class", `${cls} abcjs-container`);
+    parent["display"] = "inline-block";
+    parent["position"] = "relative";
+    parent["width"] = "100%";
+    // "I changed the padding from 100% to this through trial and error" — abcjs's own note.
+    parent["padding-bottom"] = `${(h / w) * 100}%`;
+    parent["vertical-align"] = "middle";
+    parent["overflow"] = "hidden";
+    return;
+  }
+  // …and the ORDER is `parentStyles`' own key order: overflow, width, height. An empty
+  // `width` serialises as nothing, which is why the default container carries only two.
+  parent["overflow"] = "hidden";
+  parent["width"] = scale < 1 ? `${w}px` : "";
+  parent["height"] = `${h}px`;
 }
 
 /**

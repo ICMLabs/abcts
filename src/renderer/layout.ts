@@ -10558,6 +10558,13 @@ export interface LayoutOptions {
    */
   readonly hostScale?: number
   /**
+   * **THE `%%scale` DIRECTIVE IS DISCARDED TOO** — `responsive: "resize"` replaces the
+   * whole scale expression, not just the host's half (`engraver-controller.js:213-216`,
+   * and abcjs's own comment says why: "the resizing will mess with the scaling"). Print
+   * still takes its 0.75. See `AbcjsParams.responsive`.
+   */
+  readonly ignoreScale?: boolean
+  /**
    * **WHERE THIS TUNE'S PAGE CURSOR STARTS** — 0 for a tune of its own, and the PREVIOUS
    * tune's `endY` when a whole book is stacked into one SVG. `engraveABC` resets the
    * renderer once and then runs `engraveTune` per tune, so `renderer.y` runs CONTINUOUSLY
@@ -12246,7 +12253,8 @@ function layoutScoped(input: Score, options: LayoutOptions = {}): Layout {
         // (`engraver-controller.js:124-126`), which is one division of the same sum.
         (score.staffWidth + 2 * (options.print === true ? ABCJS_PX.printPaddingLeft : ABCJS_PX.paddingLeft)) /
         UNIT_PX /
-        (score.scale ?? options.hostScale ?? (options.print === true ? ABCJS_RATIO.printScale : 1))
+        ((options.ignoreScale === true ? undefined : (score.scale ?? options.hostScale)) ??
+        (options.print === true ? ABCJS_RATIO.printScale : 1))
       : /**
          * …**AND THE HOST'S OWN WIDTH TAKES THE SAME DIVISION** — `adjustNonScaledItems`
          * divides `this.width` whatever set it (`engraver-controller.js:125`) — **BUT THE
@@ -12260,11 +12268,11 @@ function layoutScoped(input: Score, options: LayoutOptions = {}): Layout {
         // …**AND THE HOST'S OWN `{scale}` TAKES THE SAME DIVISION AS THE DIRECTIVE**, being
         // the same variable one line down (`engraver-controller.js:213`). See
         // `LayoutOptions.hostScale`.
-        (score.scale ?? options.hostScale ?? null) === null
+        (options.ignoreScale === true ? null : (score.scale ?? options.hostScale ?? null)) === null
           ? (options.systemWidth ?? ENGRAVE.systemWidth)
           : ((options.systemWidth ?? ENGRAVE.systemWidth) *
               (options.print === true ? ABCJS_RATIO.printScale : 1)) /
-            (score.scale ?? options.hostScale ?? 1)
+            (options.ignoreScale === true ? 1 : (score.scale ?? options.hostScale ?? 1))
   // **THE LOOK IS abcjs'S IN BOTH MODES** — see `ABCJS_GAPS`. `profile` is still a
   // caller-facing override; it is no longer something the mode reaches for.
   const profile: RenderProfile = options.profile ?? 'abcjs'
@@ -12292,7 +12300,8 @@ function layoutScoped(input: Score, options: LayoutOptions = {}): Layout {
    * the other was reading the number as something else entirely.
    */
   const printScale =
-    score.scale ?? options.hostScale ?? (options.print === true ? ABCJS_RATIO.printScale : 1)
+    (options.ignoreScale === true ? undefined : (score.scale ?? options.hostScale)) ??
+        (options.print === true ? ABCJS_RATIO.printScale : 1)
   PRINT_SCALE = printScale
   PRINT = options.print === true
   // …and the page's own origin, which a stacked book seeds with the tune above's `endY`.

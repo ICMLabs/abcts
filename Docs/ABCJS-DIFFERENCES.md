@@ -237,6 +237,43 @@ a plain four-note tune — differed on the first run.**
   second staff only, and a meter change on the last line of voice 0 alone, are both
   byte-exact MIDI.
 
+## ✅ THE HOST-OPTION SURFACE — a SECOND new axis, same day
+
+`scripts/zzopts.mjs` renders the whole corpus under each switch a drop-in host actually
+passes, and compares the **CONTAINER as well as the SVG** (`outerHTML`) — because half of
+what `setPaperSize` does is assign styles to the PARENT node
+(`draw/set-paper-size.js:29-41`), which no emitted string can carry.
+
+**IT OPENED AT 685 OF 685 ON EVERY ROW**, including the plain one, for a single reason:
+
+- ✅ **abcjs SIZES THE CONTAINER AND WE SET NOTHING.** `overflow: hidden; height: <h>px`,
+  plus `width: <w>px` when the scale is below 1 — a host's layout reserves that space, and
+  ours reserved none.
+- ✅ **`responsive: "resize"` WAS UNIMPLEMENTED**, and it is the option a page reaches for
+  first: `viewBox` + `preserveAspectRatio` on the SVG with its `width`/`height` REMOVED, and
+  `class="abcjs-container"` with a `padding-bottom` ratio on the parent (`svg.js:33-59`).
+  `oneSvgPerLine` and `viewportHorizontal` are still unimplemented — measured, and each is
+  a wrapper of its own.
+- ✅ **AND IT DISCARDS THE SCALE, WHICH abcjs SAYS IN ITS OWN COMMENT** — *"the resizing
+  will mess with the scaling, so just don't do it explicitly"*
+  (`engraver-controller.js:213-216`). The `%%scale` DIRECTIVE goes with it, not just the
+  param. Measured across four scales: abcjs's viewBox and padding are IDENTICAL at 1, 0.7,
+  1.5 and 2, where ours moved with the scale.
+- ⚠️ **AND TWO ORDERING RULES, BOTH BECAUSE THE BROWSER SERIALISES WHAT WE ASSIGN.** The
+  transform is re-applied AFTER the four position styles (`setScale` runs after
+  `setResponsiveWidth`), and the `style` ATTRIBUTE is dropped before the `viewBox` is set so
+  it is re-created last — ours came from markup that already had one, which put `viewBox`
+  after it.
+
+**Three more surfaces are declared open in that gate, with their counts**, and every one is
+geometry INSIDE the SVG rather than option plumbing: `print` 8, `scale` 4 and 2,
+`jazzchords` 95. None had ever been rendered by a gate either.
+
+⚠️ **AND `13` WAS THE JAZZCHORDS COUNT OVER A 1-IN-8 SAMPLE; THE REAL ONE IS 95.** A sample
+is a lower bound and never a number to declare.
+
+---
+
 ## ✅ THE SELECTABLE SURFACE — a NEW AXIS, opened and closed 2026-09-09
 
 `scripts/zzselect.mjs` is `zzlive` with **`selectTypes: true`**, which is how a host asks
