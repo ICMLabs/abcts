@@ -1,99 +1,77 @@
-# NEXT AGENT PROMPT — abcts, 2026-09-08
+# NEXT AGENT PROMPT — abcts, 2026-09-09
 
 Paste the block below.
 
 ---
 
 ```
-start here: abcts/Docs/HANDOFF-2026-09-08.md — §5 THE QUADRATICS first, then §4 THE METHOD,
-then §6 what was measured and DECLINED. Then HANDOFF-2026-09-07.md for the mode rule, and
-HANDOFF-2026-09-06.md for its METHOD and THE THREE "DO NOT RE-OPEN" ROWS THAT ALL FELL.
+start here: abcts/Docs/HANDOFF-2026-09-09.md — §THE METHOD first, then §THE PATTERN THAT
+NAMED FOUR OF THE FOUR, then §WHAT IS OPEN. Then HANDOFF-2026-09-08.md for THE QUADRATICS
+and the scaling gate, and HANDOFF-2026-09-07.md for the MODE RULE.
 
 Work in /Users/lrettberg/ICMLabs/Code/abcts. Run every command from there — `cd` does not
 persist between tool calls and the workspace ROOT collects every sibling repo's tests.
 
-EVERY GATE IN THIS REPO IS AT ZERO, and `Docs/PARITY-STATUS.md` is the dated, plain-language
-version of that — read it second. The MIDI-file arc went 24 open to 0 of 691 in one session
-and `ABCJS-DEBT.md` has no measured-not-landed entry left.
-
-    zzlive      0 of 685  WebKit AND Chrome — both re-run against a fresh build
+    suite       90 files, 2,547 tests, no reds
     svg-bytes   0 of 691 in-repo, 0 of 356 sibling
-    midi-bytes  0 of 691 — 672 byte-exact and NAMED, 19 ruled divergent, OPEN_CEILING 0
-    mode-bytes  11 of 691 — extended vs strict, every one DECLARED
-    zzledger    3 differ, 3 KNOWN — 13 of 16 ponytail predictions held (new)
-    zzscale     8 of 8 shapes LINEAR (new — `npm run scale`)
-    warnings    0 of 815 tunes
-    suite       88 files, 2,522 tests, no reds. Keep them all that way.
+    mode-bytes  11 of 691 — every one DECLARED
+    midi-bytes  0 of 691 — 19 ruled divergent
+    zzlive      0 of 685  WebKit AND Chrome
+    zzselect    0 of 685  WebKit AND Chrome    <- NEW, and it OPENED AT 9
+    zzledger    2 differ, 2 KNOWN — 39 controls (was 16)
+    warnings    0 of 815 · zzscale 8 of 8 LINEAR · test:dist 0 of 685 ESM and CJS
 
-⭐ AND THE CORPUS CANNOT SEE A QUADRATIC — its largest fixture is a few hundred notes, so an
-O(n²) reads as a flat, diffuse cost and a profiler over it says nothing. `npm run scale`
-measures the SHAPE OF THE CURVE and found FIVE in one sitting, TWO of which had been
-"measured and rejected" hours earlier on corpus evidence that was correct and was the wrong
-instrument. Before rejecting a performance finding, ask what INPUT measured it.
-
-⚖️ AND THE NEWEST RULE IS THE OWNER'S: extended is byte-identical to strict except for the
-divergences declared in Docs/ABCJS-DIFFERENCES.md. `mode-bytes` opened at 675 of 691,
-because `strict` had been gating the LOOK as well as abcjs's bugs. `ABCJS_GAPS` in layout.ts
-is the eight sites that remain mode-split. Before reading ANY mode comparison, hold the
-pipeline equal — `classes: 'abcjs'`, `staffSpace: 7.75`, `systemWidth` (the PAGE; there is
-no `staffwidth` option on render and one passed there is silently dropped).
-
-    npx vitest run tests/midi-bytes.test.ts && cat /tmp/abcts-midi-bytes.txt
-
-⭐ SO NO GATE CAN NAME THE NEXT DEFECT, and that is the normal condition here rather than a
-milestone — it has happened eleven times and the answer was always the same: BUILD THE
-SURFACE that expresses an axis none of the others can, or render a CONTROL abcjs's own suite
-does not contain. **ASK THE OWNER WHICH AXIS IS WORTH THE MOST** before spending a session
-on one; the last four surfaces were each a day and each found defects nothing else could
-state.
-
-⭐⭐ THE STANDING ORDER, AND THE OWNER HAS SAID IT FOUR TIMES: REFERENCE THE ACTUAL abcjs.
-Sixteen landings last session and every one was a read of a named function or a probe of its
-real output — not one came from a diff.
+⭐ THE STANDING ORDER, AND THE OWNER HAS SAID IT FIVE TIMES: REFERENCE THE ACTUAL abcjs.
+Seventeen landings on 2026-09-09 and every one was a read of a named function or a probe of
+its real output — not one came from a diff.
 
   1. READ the named abcjs function. Its answer is usually one `if`.
   2. GREP THIS REPO before porting it.
   3. LADDER it, one variable per rung, through BOTH engines.
-  4. INSTRUMENT abcjs when the source is not enough — and its `src/` RUNS WITHOUT A BUILD:
+  4. INSTRUMENT abcjs when the source is not enough — its `src/` RUNS WITHOUT A BUILD:
        cp -R ../abcMusicKit/Docs/References/abcjs/abcjs-6.7.0/. /tmp/gp/abcjs/
        node -e "const A=require('/tmp/gp/abcjs/index.js'); …"
-     NEVER ../abcMusicKit itself, probes gated on an env var, and BRACE every `if`.
-     Three `console.error`s in `synth/repeats.js` settled in one run what two readings of
-     that algorithm had not.
+     NEVER ../abcMusicKit itself, and BRACE every `if` you write under.
   5. Only then write code, and let the gate arbitrate.
 
-⭐⭐⭐ AND STEP 2 IS NOT OPTIONAL. SIX of last session's sixteen were rules already
-implemented, with their citations, elsewhere in this repo — five in `compat/sequence.ts` or
-`layout.ts`, and ONE in `flatten.ts` THREE LINES ABOVE the site that needed it, under a
-comment block explaining that very rule. A RULE PORTED AT THE SITE THAT NAMED IT IS NOT A
-RULE PORTED.
+⭐⭐ AND EVERY CONTROL CARRIES A WITNESS NOW — a regex the shape must produce in abcjs's own
+output. A control that agrees because the FEATURE NEVER RENDERED is a held prediction that
+measures nothing; such a row reports MUTE. It fired four times in eighteen, TWICE ON MY OWN
+WITNESS. Every new harness gets a NEGATIVE CONTROL too: the MIDI sweep's plain four-note
+tune differed on the first run, and that was the first finding.
 
-⚠️ AND THE SHARPEST LESSON OF THE SESSION: A "MEASURED, NOT LANDED" NOTE IS A CLAIM ABOUT
-SIZE AS WELL AS CAUSE, AND THE SIZE IS THE PART THAT ROTS. All three of this repo's standing
-ones — two with ports written and reverted — were closed in about an hour each, and every
-one had the cause right and the size wrong. A wrong cause gets tested and falls over; a
-wrong size stops the work being attempted at all. The MEASUREMENTS in such a note are gold;
-the estimate beside them is not.
+⭐⭐⭐ AND A MARKER'S CAUSE IS USUALLY RIGHT WHILE ITS SIZE IS WRONG. All four remaining
+ledger defects fell in an hour each; TWO were symptoms of a defect the marker had not seen
+(the `|` hint was the whole `w:` distribution loop; the tempo flag was the tempo mark
+reading the NOTE glyph table). Re-derive the size — and when it holds, say so: `style=`
+between voices was re-derived and the "model change" estimate STANDS.
 
-⚠️ TRAPS:
-  ⚠️ THE SUITE TIMES OUT UNDER LOAD AND IT IS NOT A DEFECT — one run reported `3 failed`
-     with a worker-start error at 592s; the same tree re-ran green at 2,470 in 35s.
-     RE-RUN BEFORE BELIEVING A RED.
-  ⚠️ A FIXTURE'S FIRST DIFFERING BYTE IS A SYMPTOM, NOT THE DEFECT. One row's byte was a
-     VELOCITY and the defect was a duration a millionth out, which moved the note onto a
-     downbeat.
+⚠️ TRAPS, and the first two are new and cost the most:
+  ⚠️ A REPO TEST CAN ASSERT THE DEFECT. FOUR did on 2026-09-09, each written from the same
+     reading the defect came from, so it agreed with the code and with nothing else. PROBE
+     abcjs before believing a red.
+  ⚠️ A GATE CAN NORMALISE THE DEFECT AWAY — `Array.isArray(r) ? r[0] : r` in the MIDI gate
+     hid a wrong return shape in the entry point that gate exists to prove. If a gate needs
+     a shim to compare, ask what the shim is hiding.
+  ⚠️ A FLOOR ROTS. Seven ratchets said "at least the rows it did" and six were slack by 48
+     to 844 rows. They read `agree === total` now; write new ones the same way.
+  ⚠️ `git stash push` + rebuild + re-run is how you tell a REGRESSION from a PRE-EXISTING
+     difference. Needed three times, and twice the difference was older than the fix.
+  ⚠️ THE SUITE TIMES OUT UNDER LOAD AND IT IS NOT A DEFECT. Re-run before believing a red.
   ⚠️ `cd /tmp/gp/abcjs` RESETS THE SHELL'S CWD for the next call. Re-`cd` into the repo.
-  ⚠️ `getMidiFile` has TWO entry points: a STRING yields the FIRST tune only, a TUNE OBJECT
-     yields that tune. The gate uses the object form.
-  ⚠️ A `*/` inside a block comment closes it.
-  ⚠️ `npx tsc --noEmit && echo OK` BEFORE the test; `--testTimeout=180000` under load.
-  ⚠️ THE BROWSER HARNESS NEEDS A MATCHING playwright-core. `~/Library/Caches/ms-playwright`
-     holds `webkit-2311`, which is playwright-core 1.61.0; a mismatch fails with
-     "Executable doesn't exist" and tells you to run `npx playwright install`, which is the
-     wrong fix. `/tmp` is cleaned periodically and leaves EMPTY directories behind — both
-     `/tmp/gp/pw` and `/tmp/gp/abcjs` — which reads as a corrupt install, not a missing one.
-  ⚠️ A GATE'S REPORT FILE OUTLIVES ITS RUN. `/tmp/abcts-*.txt` has twice been read as a
-     result when it was yesterday's. Check the timestamp.
+  ⚠️ `/tmp` IS CLEANED MID-SESSION and leaves EMPTY directories behind. Restore playwright:
+     `mkdir -p /tmp/gp/pw && cd /tmp/gp/pw && npm init -y && npm i playwright-core@1.61`.
+  ⚠️ A GATE'S REPORT FILE OUTLIVES ITS RUN. Check the timestamp on `/tmp/abcts-*.txt`.
+
+WHAT TO DO NEXT — ask the owner which, the four surfaces are not equal:
+  1. **`style=` between voices** — the one open ledger defect, and the size is honest.
+  2. **Finish the marker sweep.** ~55 of the 94 are still classified by reading alone, and
+     the 2026-09-09 pass ran 4 defects in 18 controls and then 5 more from one new surface.
+  3. **Another SURFACE.** `zzselect` cost an hour and found five. What else does a host
+     switch on that no gate renders? `%%scale`, print mode, `responsive`, `add_classes`,
+     `oneSvgPerLine`, a non-default `staffwidth`, `jazzchords`, tablature.
+  4. **Package metadata** — `version` is `0.0.0`, no `repository`/`homepage`/`unpkg`, so a
+     CDN cannot resolve the script build. The only thing between the owner and publishing.
 
 Run `npx tsc --noEmit && echo OK` before every commit, keep every gate above green, and
 commit and push after every landing. Never --force. OMIT Co-Authored-By trailers here —
@@ -105,13 +83,14 @@ rather than following the other silently.
 
 ## Why this order
 
-**The METHOD before the state**, as before and for a sharper reason: the state is four
-numbers and all four are zero, so nothing in it tells you what to do.
+**The METHOD first**, because the three additions to it — the witness, the negative control,
+and "a floor rots" — are what found nine of the seventeen. The state is nine numbers and
+eight of them are zero.
 
-**Then the ported-once pattern**, because it produced six of sixteen and is invisible unless
-you grep for it. Its worst instance was inside the file being edited, three lines from the
-defect, under a comment stating the rule in full.
+**Then the size pattern**, because it is the argument for re-opening anything this repo has
+written off, and the 2026-09-09 pass is four more instances: cause right, size wrong, twice
+over a defect the marker had never seen.
 
-**Then the three that fell**, because they are the argument for re-deriving the SIZE of
-anything this repo has written off. Two of them had ports written and reverted and were
-still an hour's work once the right model was in hand.
+**Then the traps**, because two of them are new and both are about a GATE lying: a test that
+asserts the defect, and a gate that normalises it away. Four tests and one gate did exactly
+that this session, and each one had been green for weeks.
