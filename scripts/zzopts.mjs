@@ -15,7 +15,11 @@
  * INSIDE the SVG rather than option plumbing — three more surfaces no gate had rendered:
  *
  *     print        7 — SIX of them a last-digit float, one a mid-tune `%%text` y
- *     scale 0.8    4 · scale 1.5   2 — a non-unit scale
+ *     scale 0.8    4 · scale 1.5   2 — a non-unit scale, and `oneSvgPerLine + scale 0.8`
+ *                  inherits the SAME FOUR
+ *
+ * ✅ **`oneSvgPerLine` AND THE TWO VIEWPORTS LANDED 2026-09-09** and are 0 of 685 apiece,
+ * `oneSvgPerLine + resize` included. All three were unimplemented outright.
  *
  * ✅ **PRINT OPENED AT 8 AND TWO OF ITS CAUSES WERE FEATURES, NOT ROUNDING.** `%%header`
  * was parsed and never drawn — print is the only mode that draws one — and `%%topspace`
@@ -53,9 +57,16 @@ for (const f of readdirSync(fixtures).filter((x) => x.endsWith('.abc')).sort()) 
 }
 const SKIP = new Set(['abcts-rests-and-bars-tune14','abcts-unknown-clef-tune0','abcts-unknown-clef-tune1','abcts-unknown-clef-tune2','abcts-unknown-clef-tune3','abcts-unknown-clef-tune4'])
 /**
- * `[label, options, declared]` — `declared` is how many fixtures differ TODAY for a reason
- * that is not the option plumbing. A row that goes UP fails; a row that goes DOWN says the
- * comment above is out of date.
+ * `[label, options, declared, witness]` — `declared` is how many fixtures differ TODAY for
+ * a reason that is not the option plumbing. A row that goes UP fails; a row that goes DOWN
+ * says the comment above is out of date.
+ *
+ * ⚠️ **AND `witness` IS THE SHAPE THE OPTION MUST PRODUCE IN abcjs'S OWN OUTPUT.** A row
+ * that agrees because the feature NEVER RENDERED is a held prediction that measures
+ * nothing — the repo's own rule, and it has fired four times in eighteen elsewhere. The
+ * witness is asked of abcjs, on the first fixture the row walks, and a row that cannot
+ * produce it reports **MUTE** and fails. Rows whose option changes only geometry inside a
+ * shape every render already draws take no witness.
  */
 const OPTIONS = [
   ['baseline', {}, 0],
@@ -67,6 +78,17 @@ const OPTIONS = [
   ['scale 1.5', { scale: 1.5 }, 2],
   ['print', { print: true }, 7],
   ['jazzchords', { jazzchords: true }, 0],
+  // The witness for the split is the SECOND section: a one-`<g>` tune would produce
+  // `section 1` from a split that never split anything.
+  ['oneSvgPerLine', { oneSvgPerLine: true }, 0, /section 2<\/title>/],
+  ['oneSvgPerLine + resize', { oneSvgPerLine: true, responsive: 'resize' }, 0, /viewBox="0 [1-9]/],
+  // 4, and they are the SAME FOUR FIXTURES as the plain `scale 0.8` row above — measured
+  // by differencing the two sets, not inferred from a shared first-three. The split adds
+  // nothing; it is inheriting the non-unit-scale geometry that row already declares.
+  ['oneSvgPerLine + scale 0.8', { oneSvgPerLine: true, scale: 0.8 }, 4, /<div style="overflow: hidden;height:/],
+  ['viewportHorizontal', { viewportHorizontal: true }, 0, /<div class="abcjs-inner" style="overflow: hidden/],
+  ['viewportHorizontal + scroll', { viewportHorizontal: true, scrollHorizontal: true }, 0, /overflow: auto hidden/],
+  ['viewportVertical', { viewportVertical: true }, 0, /<div class="abcjs-inner scroll-amount"/],
 ]
 const every = Number(process.argv[2] ?? 1)
 const browser = await webkit.launch()
@@ -75,8 +97,8 @@ await page.setContent('<!doctype html><meta charset="utf-8"><body></body>')
 await page.addScriptTag({ content: readFileSync(join(repo, cfg.abcjsRef, 'dist', 'abcjs-basic-min.js'), 'utf-8') })
 await page.addScriptTag({ content: readFileSync(join(repo, 'dist', 'abcts-browser.global.js'), 'utf-8') })
 let bad = 0
-for (const [label, opts, declared] of OPTIONS) {
-  let off = 0, n = 0
+for (const [label, opts, declared, witness] of OPTIONS) {
+  let off = 0, n = 0, seen = witness === undefined
   const first = []
   for (let k = 0; k < cases.length; k += every) {
     const c = cases[k]
@@ -95,9 +117,10 @@ for (const [label, opts, declared] of OPTIONS) {
       return { js: one(window.ABCJS), ts: one(window.ABCTS) }
     }, [c.abc, c.tune, opts])
     if (r.js !== r.ts) { off += 1; if (first.length < 3) first.push(c.slug) }
+    if (!seen && witness.test(r.js)) seen = true
   }
-  const flag = off === declared ? '   ' : off > declared ? 'UP ' : 'DOWN'
-  if (off !== declared) bad += 1
+  const flag = !seen ? 'MUTE' : off === declared ? '   ' : off > declared ? 'UP ' : 'DOWN'
+  if (off !== declared || !seen) bad += 1
   console.log(`${flag} ${String(off).padStart(4)} of ${n} (declared ${declared})  ${label}   ${first.join(' ')}`)
 }
 if (bad > 0) {

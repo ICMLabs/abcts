@@ -252,8 +252,6 @@ what `setPaperSize` does is assign styles to the PARENT node
 - ✅ **`responsive: "resize"` WAS UNIMPLEMENTED**, and it is the option a page reaches for
   first: `viewBox` + `preserveAspectRatio` on the SVG with its `width`/`height` REMOVED, and
   `class="abcjs-container"` with a `padding-bottom` ratio on the parent (`svg.js:33-59`).
-  `oneSvgPerLine` and `viewportHorizontal` are still unimplemented — measured, and each is
-  a wrapper of its own.
 - ✅ **AND IT DISCARDS THE SCALE, WHICH abcjs SAYS IN ITS OWN COMMENT** — *"the resizing
   will mess with the scaling, so just don't do it explicitly"*
   (`engraver-controller.js:213-216`). The `%%scale` DIRECTIVE goes with it, not just the
@@ -268,6 +266,53 @@ what `setPaperSize` does is assign styles to the PARENT node
 **Three more surfaces were declared open in that gate with their counts**, all geometry
 INSIDE the SVG rather than option plumbing, and none ever rendered by a gate before:
 `print` 8, `scale` 4 and 2, and `jazzchords` **95 — closed the same day**.
+
+### ✅ AND THE THREE WRAPPER OPTIONS LANDED — `oneSvgPerLine`, `viewportHorizontal`, `viewportVertical`
+
+All three were **unimplemented outright** and are 0 of 685 apiece, `oneSvgPerLine +
+responsive: "resize"` included. Each builds a wrapper the emitted string cannot carry, so
+each is DOM-side beside `sizeContainer`, and none of them exists headless — which is
+abcjs's own behaviour, not a shortcut.
+
+- ✅ **`oneSvgPerLine` — ONE `<svg>` PER TOP-LEVEL `<g>`**, each in an `overflow: hidden`
+  div, with a `viewBox` scrolled to where the section was drawn and an
+  `aria-label`/`<title>` of `Sheet Music for "<title>" section N`
+  (`engraver-controller.js:317-368`). **Every number in it comes from `getBBox()`.**
+  Four rules, and three are not what a reading predicts:
+  - **A SECTION'S HEIGHT INCLUDES THE GAP ABOVE IT** — `box.y - nextTop` belongs to the
+    section BELOW, so the divs tile with no seams, and `nextTop` advances to
+    `box.y + box.height` rather than to the height just written.
+  - **THE WRAPPER'S HEIGHT IS SCALED AND THE SVG'S IS NOT.** At `scale: 0.8` the div reads
+    `47.325px` for an `<svg>` of `59.15625` — the same split `setPaperSize` makes, the CSS
+    transform doing the rest.
+  - **THE WRAPPER'S `style` IS A CONCATENATED STRING**, so it reaches the attribute
+    unserialised: `overflow: hidden;height:55.40625px;`, a space after the first colon and
+    none after the second. Setting the two properties instead normalises it and differs on
+    every wrapper — measured by breaking it on purpose: 86 of 87.
+  - **AND THE `<title>` IS AN HTML ELEMENT INSIDE AN SVG** — `createElementNS` for the
+    `<svg>`, plain `createElement` for the title.
+- ✅ **`viewportHorizontal` / `viewportVertical` — THE HOST'S DIV BECOMES THE VIEWPORT** and
+  the music moves into a `div.abcjs-inner` (`.abcjs-inner.scroll-amount` for the vertical
+  arm) inside it (`abc_tunebook_svg.js:29-47`). abcjs hands the ENGRAVER that inner div, so
+  **everything `setPaperSize` writes lands on the inner one** and the outer carries only its
+  own overflow. They are an `if`/`else if`, not a pair of flags: horizontal wins when both
+  are passed, and nothing warns.
+- ⚠️ **AND THE OUTER'S `parent.style.width = div.style.width` IS USUALLY A NO-OP** —
+  `setPaperSize` writes a `width` only below scale 1, so above it the inner's is `""`. A
+  plain horizontal viewport's outer div carries `overflow: hidden` and NOTHING ELSE. That
+  was verified against abcjs rather than reasoned; a wrong guess is a width on every
+  container.
+- ⚠️ **`oneSvgPerLine + scale 0.8` DIFFERS ON 4, AND THEY ARE THE SAME FOUR** as the plain
+  `scale 0.8` row — established by differencing the two sets, not inferred from a shared
+  first-three. The split inherits that row's non-unit-scale geometry and adds nothing.
+- ⚠️ **THE RESIZE HANDLER'S ARITHMETIC IS REPRODUCED, BUG AND ALL.** `resizeOuter` declares
+  `width` OUTSIDE its loop and subtracts each div's offset from what the last one left, so
+  a second viewport on a page is narrower than the first (`abc_tunebook_svg.js:10-20`); and
+  a div with no `id` is keyed under `"undefined"`. No gate here can see a resize handler,
+  so the only defensible rule is to be abcjs.
+- ⚠️ **THE FIREFOX `viewBox` `+1` IS PORTED; ITS TWO SIBLINGS ARE NOT.** `renderer.firefox`
+  also has arms in `print-stem.js` and `print-line.js` that abcts has never had — a
+  pre-existing gap, now written down.
 
 ### ✅ AND PRINT WENT 8 TO 7, WITH TWO FEATURES AMONG THE ROUNDING
 

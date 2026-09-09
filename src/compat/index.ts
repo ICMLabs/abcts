@@ -276,6 +276,38 @@ export interface AbcjsParams {
    */
   readonly responsive?: string;
   /**
+   * **ONE `<svg>` PER SYSTEM, EACH IN AN `overflow: hidden` DIV OF ITS OWN.**
+   *
+   * `splitSvgIntoLines` walks the top-level `<g>`s of the finished SVG — a line, or the top
+   * matter, or the bottom matter — and moves each into a duplicate of the root, with a
+   * `viewBox` that scrolls to where the section was drawn and an
+   * `aria-label`/`<title>` of `Sheet Music for "<title>" section N`
+   * (`write/engraver-controller.js:307-368`). It runs AFTER `setPaperSize`, so the
+   * container keeps the height the whole score would have had.
+   *
+   * ⚠️ **IT NEEDS A LAYOUT ENGINE** — every section's box comes from `getBBox()`, so this
+   * does nothing headless, exactly as abcjs's does nothing headless.
+   */
+  readonly oneSvgPerLine?: boolean;
+  /**
+   * **THE TARGET BECOMES A VIEWPORT AND THE MUSIC GOES IN A `div.abcjs-inner` INSIDE IT**
+   * (`api/abc_tunebook_svg.js:29-40`). The div the host passed is given `overflow: hidden`
+   * — or `overflow-x: auto; overflow-y: hidden` under {@link scrollHorizontal} — and every
+   * style `setPaperSize` would have put on it lands on the inner div instead. The outer
+   * then takes the inner's WIDTH, which is empty above scale 1 and therefore usually a
+   * no-op.
+   *
+   * ⚠️ **abcjs ALSO REGISTERS THE OUTER DIV FOR A WINDOW-RESIZE HANDLER, BY `id`** — see
+   * `registerResizeViewport`. A div with no `id` is registered under `undefined`, so the
+   * LAST such div on the page wins; that is abcjs's behaviour and it is reproduced.
+   */
+  readonly viewportHorizontal?: boolean;
+  /** {@link viewportHorizontal}'s vertical arm — `div.abcjs-inner.scroll-amount`, and the
+   * outer scrolls vertically (`api/abc_tunebook_svg.js:41-47`). No resize registration. */
+  readonly viewportVertical?: boolean;
+  /** Under {@link viewportHorizontal}, scroll rather than clip. Ignored without it. */
+  readonly scrollHorizontal?: boolean;
+  /**
    * **`%%jazzchords` FROM THE HOST** — chord modifiers and bass notes as small sub- and
    * superscripts. `if (params.jazzchords) this.jazzchords = params.jazzchords`, and the
    * TUNE's own directive overrides it per tune (`engraver-controller.js:69-70`, `:188`);
@@ -1610,9 +1642,29 @@ function renderInto(
     walkSlots(slots, from, result.scores, (element, score) => {
       const tune = render(score, element);
       if (element !== null) {
-        element.innerHTML = tune.svg;
-        restyleScale(element);
-        sizeContainer(element, params.responsive);
+        /**
+         * **THE VIEWPORT WRAPPER IS BUILT BEFORE THE MUSIC GOES IN**, because abcjs hands
+         * the ENGRAVER the inner div (`api/abc_tunebook_svg.js:39`) — so every style
+         * `setPaperSize` assigns lands on the inner one, and `oneSvgPerLine` splits inside
+         * it too. Without either viewport option this is the host's own element and the
+         * three steps below are what they always were.
+         */
+        const paper = openViewport(element, params);
+        paper.innerHTML = tune.svg;
+        restyleScale(paper);
+        sizeContainer(paper, params.responsive);
+        // `engraveTune` splits AFTER `draw`, which is after `setPaperSize` — so the
+        // container already carries the height of the whole score (`:305-310`).
+        if (params.oneSvgPerLine === true)
+          splitSvgIntoLines(
+            paper,
+            score.metadata.titles[0] === undefined
+              ? ""
+              : ariaTitle(score.metadata.titles[0]),
+            params.responsive,
+          );
+        // …and only then does `renderOne` size the outer one (`:53-57`).
+        closeViewport(element, paper);
       }
       return tune;
     }),
@@ -1774,6 +1826,278 @@ function sizeContainer(
   parent["overflow"] = "hidden";
   parent["width"] = scale < 1 ? `${w}px` : "";
   parent["height"] = `${h}px`;
+}
+
+/**
+ * **THE DOM SURFACE `oneSvgPerLine` AND THE VIEWPORTS NEED**, structurally typed like
+ * `StyledElement` beside it — `tsconfig` has no `dom` lib, deliberately.
+ */
+interface SplitElement {
+  innerHTML: string;
+  readonly style?: Record<string, string | undefined>;
+  readonly attributes?: ArrayLike<{ readonly name: string; readonly value: string }>;
+  innerText?: string;
+  querySelector?(s: string): SplitElement | null;
+  querySelectorAll?(s: string): ArrayLike<SplitElement>;
+  getAttribute?(name: string): string | null;
+  setAttribute?(name: string, value: string): void;
+  appendChild?(child: SplitElement): void;
+  removeChild?(child: SplitElement): void;
+  cloneNode?(deep: boolean): SplitElement;
+  getBBox?(): { readonly x: number; readonly y: number; readonly height: number };
+  readonly viewBox?: { readonly baseVal?: { readonly width: number } };
+  readonly id?: string;
+}
+interface SplitDocument {
+  createElement(tag: string): SplitElement;
+  createElementNS(ns: string, tag: string): SplitElement;
+}
+
+/** The document, when there is one — every function below is a no-op without it. */
+const liveDocument = (): SplitDocument | undefined =>
+  (globalThis as { document?: SplitDocument }).document;
+
+/**
+ * **`viewportHorizontal` / `viewportVertical` — THE HOST'S DIV BECOMES THE VIEWPORT AND
+ * THE MUSIC MOVES INTO A `div.abcjs-inner` INSIDE IT** (`api/abc_tunebook_svg.js:29-47`):
+ *
+ *     if (params.viewportHorizontal) {
+ *         div.innerHTML = '<div class="abcjs-inner"></div>';
+ *         if (params.scrollHorizontal) { div.style.overflowX = "auto";
+ *                                        div.style.overflowY = "hidden"; }
+ *         else div.style.overflow = "hidden";
+ *         resizeDivs[div.id] = div;
+ *         div = div.children[0];
+ *     }
+ *
+ * Returns the element the music should go into, which is the host's own when neither
+ * option is set. The overflow goes on BEFORE the render, which is why it precedes
+ * everything `setPaperSize` writes in the serialised attribute — measured, not assumed:
+ * abcjs's outer div reads `overflow: hidden;` and its inner `overflow: hidden;
+ * height: 231.382px;`.
+ *
+ * ⚠️ **THE TWO ARE NOT A PAIR OF FLAGS BUT AN `if`/`else if`** — horizontal wins when both
+ * are passed, and nothing warns.
+ */
+function openViewport(
+  element: { innerHTML: string },
+  params: AbcjsParams,
+): { innerHTML: string } {
+  const horizontal = params.viewportHorizontal === true;
+  if (!horizontal && params.viewportVertical !== true) return element;
+  const host = element as SplitElement;
+  const style = host.style;
+  if (host.querySelector === undefined || style === undefined) return element;
+  element.innerHTML = horizontal
+    ? '<div class="abcjs-inner"></div>'
+    : '<div class="abcjs-inner scroll-amount"></div>';
+  if (horizontal) {
+    if (params.scrollHorizontal === true) {
+      style["overflow-x"] = "auto";
+      style["overflow-y"] = "hidden";
+    } else style["overflow"] = "hidden";
+    registerResizeViewport(host);
+  } else {
+    style["overflow-x"] = "hidden";
+    style["overflow-y"] = "auto";
+  }
+  const inner = host.querySelector(".abcjs-inner");
+  return inner === null ? element : (inner as { innerHTML: string });
+}
+
+/**
+ * **AND THE OUTER DIV TAKES THE INNER'S WIDTH** (`api/abc_tunebook_svg.js:53-57`):
+ *
+ *     if (params.viewportVertical || params.viewportHorizontal) {
+ *         var parent = div.parentNode;
+ *         parent.style.width = div.style.width;
+ *     }
+ *
+ * ⚠️ **WHICH IS USUALLY A NO-OP, AND THAT IS THE POINT.** `setPaperSize` writes a `width`
+ * only below scale 1 (`draw/set-paper-size.js:33-36`); above it the inner's is the empty
+ * string, and assigning `""` removes nothing that was never there. So the outer div of a
+ * plain horizontal viewport carries `overflow: hidden` and NOTHING ELSE — verified against
+ * abcjs rather than reasoned, because a wrong guess here is a width on every container.
+ */
+function closeViewport(
+  element: { innerHTML: string },
+  paper: { innerHTML: string },
+): void {
+  if (paper === element) return;
+  const outer = (element as SplitElement).style;
+  const inner = (paper as SplitElement).style;
+  if (outer === undefined || inner === undefined) return;
+  outer["width"] = inner["width"] ?? "";
+}
+
+/**
+ * **abcjs RESIZES EVERY HORIZONTAL VIEWPORT ON THE WINDOW'S `resize`**
+ * (`api/abc_tunebook_svg.js:9-27`), keyed by the div's `id` so that repeated renders into
+ * the same div register it once:
+ *
+ *     var width = window.innerWidth;
+ *     for (var id in resizeDivs) { var outer = resizeDivs[id];
+ *         var ofs = outer.offsetLeft; width -= ofs * 2;
+ *         outer.style.width = width + "px"; }
+ *
+ * ⚠️ **`width` IS DECLARED OUTSIDE THE LOOP AND EACH DIV'S MARGIN IS SUBTRACTED FROM WHAT
+ * THE LAST ONE LEFT** — with two viewports on a page the second is narrower than the
+ * first by the first's offset. That is abcjs's arithmetic and it is reproduced here
+ * rather than corrected; a divergence in a resize handler is invisible to every gate in
+ * this repo, so the only defensible rule is to be abcjs.
+ *
+ * ⚠️ And a div with no `id` is keyed under the string `"undefined"`, so several
+ * un-`id`ed viewports collapse into one entry. Also abcjs's.
+ */
+const resizeViewports = new Map<string, ResizeViewport>();
+interface ResizeViewport {
+  readonly offsetLeft?: number;
+  readonly style?: Record<string, string | undefined>;
+}
+let resizeListening = false;
+function registerResizeViewport(host: SplitElement): void {
+  const win = (
+    globalThis as {
+      window?: {
+        innerWidth?: number;
+        addEventListener?(type: string, fn: () => void): void;
+      };
+    }
+  ).window;
+  if (win?.addEventListener === undefined) return;
+  resizeViewports.set(String(host.id), host as ResizeViewport);
+  if (resizeListening) return;
+  resizeListening = true;
+  const resizeOuter = (): void => {
+    let width = win.innerWidth ?? 0;
+    for (const outer of resizeViewports.values()) {
+      width -= (outer.offsetLeft ?? 0) * 2;
+      if (outer.style !== undefined) outer.style["width"] = `${width}px`;
+    }
+  };
+  win.addEventListener("resize", resizeOuter);
+  win.addEventListener("orientationChange", resizeOuter);
+}
+
+/**
+ * **`oneSvgPerLine` — ONE `<svg>` PER TOP-LEVEL `<g>`, EACH SCROLLED TO ITS OWN SECTION**
+ * (`write/engraver-controller.js:317-368`). A port of `splitSvgIntoLines`, and every
+ * number in it comes from the LAYOUT ENGINE: a section's box is `getBBox()`, so there is
+ * nothing to do without a document and nothing a headless render could produce.
+ *
+ * The shape, measured from abcjs on a two-line tune before a line of this was written:
+ *
+ *     <div style="overflow: hidden;height:55.40625px;">
+ *       <svg … width="700" aria-label='Sheet Music for "T" section 1'
+ *            height="55.40625" viewBox="0 0 700 55.40625">
+ *         <style>…</style><title>Sheet Music for "T" section 1</title><g>…</g>
+ *
+ * Four rules worth stating, because three of them are not what a reading predicts:
+ *
+ * ⚠️ **A SECTION'S HEIGHT INCLUDES THE GAP ABOVE IT.** `box.y - nextTop` is the margin the
+ * engraver left, and it belongs to the section BELOW it — so the divs tile the score with
+ * no seams, and `nextTop` advances to `box.y + box.height` rather than to the height just
+ * written.
+ *
+ * ⚠️ **THE WRAPPER'S HEIGHT IS SCALED AND THE SVG'S IS NOT.** `height * scale` on the div,
+ * the raw `height` on the `<svg>` and in its `viewBox` — the CSS transform does the rest,
+ * which is the same split `setPaperSize` makes. Verified at `scale: 0.8`: the div reads
+ * `47.325px` for an svg of `59.15625`.
+ *
+ * ⚠️ **THE WRAPPER'S `style` IS A STRING abcjs BUILDS BY CONCATENATION**, so it reaches the
+ * attribute unserialised — `overflow: hidden;height:55.40625px;`, with a space after the
+ * first colon and none after the second. `setAttribute` stores it verbatim; assigning the
+ * two properties instead would produce a normalised string and differ on every wrapper.
+ *
+ * ⚠️ **AND THE `<title>` IS AN HTML ELEMENT INSIDE AN SVG.** abcjs builds the `<svg>` with
+ * `createElementNS` and the `<title>` with plain `createElement`, so the title is in the
+ * HTML namespace. It serialises the same and it is what abcjs does.
+ */
+function splitSvgIntoLines(
+  paper: { innerHTML: string },
+  title: string,
+  responsive: string | undefined,
+): void {
+  const doc = liveDocument();
+  const output = paper as SplitElement;
+  const source = doc === undefined ? null : (output.querySelector?.("svg") ?? null);
+  if (doc === undefined || source === null) return;
+  const sections = output.querySelectorAll?.("svg > g");
+  if (sections === undefined) return;
+  const fullName = title === "" ? "Untitled" : title;
+  const resize = responsive === "resize";
+  // The container's `padding-bottom` ratio was the WHOLE score's; the wrappers carry the
+  // proportions now (`:322-323`).
+  if (resize && output.style !== undefined) output.style["padding-bottom"] = "";
+  const style = source.querySelector?.("style") ?? null;
+  // Under `resize` the width and height attributes are gone — `setResponsiveWidth` took
+  // them — so the width comes off the viewBox instead (`:326`).
+  const width = resize
+    ? (source.viewBox?.baseVal?.width ?? 0)
+    : (source.getAttribute?.("width") ?? "");
+  // The same transform `sizeContainer` reads, and for the same reason: `setScale` is the
+  // one place the resolved scale is written, and `setScale(1)` clears it (`svg.js:71-85`).
+  const scale = Number(
+    /scale\(\s*([0-9.]+)/.exec(source.style?.["transform"] ?? "")?.[1] ?? 1,
+  );
+  const firefox = /Firefox\//.test(
+    (globalThis as { navigator?: { userAgent?: string } }).navigator?.userAgent ?? "",
+  );
+  let nextTop = 0;
+  for (let i = 0; i < sections.length; i += 1) {
+    const section = sections[i];
+    const box = section?.getBBox?.();
+    if (section === undefined || box === undefined) continue;
+    const gapBetweenLines = box.y - nextTop;
+    const height = box.height + gapBetweenLines;
+    const wrapper = doc.createElement("div");
+    let divStyles = "overflow: hidden;";
+    if (!resize) divStyles += `height:${height * scale}px;`;
+    wrapper.setAttribute?.("style", divStyles);
+    const svg = duplicateSvg(doc, source);
+    const fullTitle = `Sheet Music for "${fullName}" section ${i + 1}`;
+    svg.setAttribute?.("aria-label", fullTitle);
+    if (!resize) svg.setAttribute?.("height", String(height));
+    // `position: absolute` was `setResponsiveWidth`'s, and it stacked every section on the
+    // first; the wrappers do the stacking now (`:339-340`).
+    if (resize && svg.style !== undefined) svg.style["position"] = "";
+    // "TODO-PER: Hack! Not sure why this is needed." — abcjs's own note (`:342`). The two
+    // other `renderer.firefox` arms, in `print-stem` and `print-line`, are unported.
+    const viewBoxHeight = firefox ? height + 1 : height;
+    svg.setAttribute?.("viewBox", `0 ${nextTop} ${width} ${viewBoxHeight}`);
+    if (style !== null) {
+      const cloned = style.cloneNode?.(true);
+      if (cloned !== undefined) svg.appendChild?.(cloned);
+    }
+    const titleEl = doc.createElement("title");
+    titleEl.innerText = fullTitle;
+    svg.appendChild?.(titleEl);
+    // ⚠️ **THIS MOVES THE SECTION**, which is why `querySelectorAll`'s static list matters
+    // and why the source is removed only at the end.
+    svg.appendChild?.(section);
+    wrapper.appendChild?.(svg);
+    output.appendChild?.(wrapper);
+    nextTop = box.y + box.height;
+  }
+  output.removeChild?.(source);
+}
+
+/**
+ * `duplicateSvg` (`write/engraver-controller.js:370-379`) — a fresh SVG carrying every
+ * attribute of the original **except `height` and `aria-label`**, which the caller then
+ * sets to this section's own. The two omissions are why a split `<svg>`'s attribute order
+ * is `… width [style] aria-label height viewBox` rather than the source's.
+ */
+function duplicateSvg(doc: SplitDocument, source: SplitElement): SplitElement {
+  const svg = doc.createElementNS("http://www.w3.org/2000/svg", "svg");
+  const attrs = source.attributes;
+  for (let i = 0; i < (attrs?.length ?? 0); i += 1) {
+    const attr = attrs?.[i];
+    if (attr === undefined) continue;
+    if (attr.name !== "height" && attr.name !== "aria-label")
+      svg.setAttribute?.(attr.name, attr.value);
+  }
+  return svg;
 }
 
 /**
