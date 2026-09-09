@@ -1,13 +1,13 @@
-# NEXT AGENT PROMPT — abcts, 2026-09-07
+# NEXT AGENT PROMPT — abcts, 2026-09-08
 
 Paste the block below.
 
 ---
 
 ```
-start here: abcts/Docs/HANDOFF-2026-09-07.md — the mode rule and what enforcing it cost.
-Then HANDOFF-2026-09-06.md: its METHOD section, THE PATTERN section, and THE THREE "DO NOT
-RE-OPEN" ROWS THAT ALL FELL.
+start here: abcts/Docs/HANDOFF-2026-09-08.md — §5 THE QUADRATICS first, then §4 THE METHOD,
+then §6 what was measured and DECLINED. Then HANDOFF-2026-09-07.md for the mode rule, and
+HANDOFF-2026-09-06.md for its METHOD and THE THREE "DO NOT RE-OPEN" ROWS THAT ALL FELL.
 
 Work in /Users/lrettberg/ICMLabs/Code/abcts. Run every command from there — `cd` does not
 persist between tool calls and the workspace ROOT collects every sibling repo's tests.
@@ -19,9 +19,17 @@ and `ABCJS-DEBT.md` has no measured-not-landed entry left.
     zzlive      0 of 685  WebKit AND Chrome — both re-run against a fresh build
     svg-bytes   0 of 691 in-repo, 0 of 356 sibling
     midi-bytes  0 of 691 — 672 byte-exact and NAMED, 19 ruled divergent, OPEN_CEILING 0
-    mode-bytes  11 of 691 — extended vs strict, every one DECLARED (new, 2026-09-07)
+    mode-bytes  11 of 691 — extended vs strict, every one DECLARED
+    zzledger    3 differ, 3 KNOWN — 13 of 16 ponytail predictions held (new)
+    zzscale     8 of 8 shapes LINEAR (new — `npm run scale`)
     warnings    0 of 815 tunes
-    suite       85 files, 2,514 tests, no reds. Keep them all that way.
+    suite       88 files, 2,522 tests, no reds. Keep them all that way.
+
+⭐ AND THE CORPUS CANNOT SEE A QUADRATIC — its largest fixture is a few hundred notes, so an
+O(n²) reads as a flat, diffuse cost and a profiler over it says nothing. `npm run scale`
+measures the SHAPE OF THE CURVE and found FIVE in one sitting, TWO of which had been
+"measured and rejected" hours earlier on corpus evidence that was correct and was the wrong
+instrument. Before rejecting a performance finding, ask what INPUT measured it.
 
 ⚖️ AND THE NEWEST RULE IS THE OWNER'S: extended is byte-identical to strict except for the
 divergences declared in Docs/ABCJS-DIFFERENCES.md. `mode-bytes` opened at 675 of 691,

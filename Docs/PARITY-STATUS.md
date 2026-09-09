@@ -196,7 +196,7 @@ drift several percent between runs.
 
 | | abcjs 6.7.0 | abcts | ratio |
 |---|---|---|---|
-| WebKit, whole corpus (warm) | 249 ms | 302 ms | **1.21x** |
+| WebKit, whole corpus (warm) | 240 ms | 293 ms | **1.22x** |
 | Chrome, whole corpus (warm) | 175 ms | 242 ms | **1.38x** |
 | WebKit, median per file | — | — | **1.00x** |
 | Chrome, median per file | — | — | **1.20x** |
@@ -206,7 +206,7 @@ drift several percent between runs.
 
 | | before the pass | after | abcjs |
 |---|---|---|---|
-| WebKit, whole corpus | 1.62x | **1.32x** | 276 ms vs 365 ms |
+| WebKit, whole corpus | 1.62x | **1.32x** | 247 ms vs 327 ms |
 | Chrome, whole corpus | 1.87x | **1.50x** | 186 ms vs 279 ms |
 | WebKit, median per file | 1.41x | **1.12x** | |
 | Chrome, median per file | 1.63x | **1.29x** | |
