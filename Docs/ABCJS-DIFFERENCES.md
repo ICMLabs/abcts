@@ -265,12 +265,24 @@ what `setPaperSize` does is assign styles to the PARENT node
   it is re-created last — ours came from markup that already had one, which put `viewBox`
   after it.
 
-**Three more surfaces are declared open in that gate, with their counts**, and every one is
-geometry INSIDE the SVG rather than option plumbing: `print` 8, `scale` 4 and 2,
-`jazzchords` 95. None had ever been rendered by a gate either.
+**Three more surfaces were declared open in that gate with their counts**, all geometry
+INSIDE the SVG rather than option plumbing, and none ever rendered by a gate before:
+`print` 8, `scale` 4 and 2, and `jazzchords` **95 — closed the same day**:
 
-⚠️ **AND `13` WAS THE JAZZCHORDS COUNT OVER A 1-IN-8 SAMPLE; THE REAL ONE IS 95.** A sample
-is a lower bound and never a number to declare.
+- ✅ **THE HOST PARAM WAS IGNORED OUTRIGHT.** `{jazzchords: true}` set nothing; only the
+  `%%jazzchords` DIRECTIVE reached the renderer, where abcjs takes the param as the default
+  and lets the tune's own directive override it (`engraver-controller.js:69-70`, `:188`).
+  `D7` drew as plain text where abcjs superscripts the `7`.
+- ✅ **AND THEN TWO MEASUREMENTS READ THE FLAT STRING** where abcjs measures the DRAWN jazz
+  form, whose modifier is a nested tspan at `font-size:0.7em`. The box round `G♭maj7` came
+  out 54px against abcjs's 45; and the LANE PACKING opened a SECOND chord lane where abcjs
+  fits one, which is 18.03px of staff on `visual-transpose-output-01`. The rod had used the
+  jazz form all along — **three sites, one rule, and only one of them had it.**
+  `measuredText` is the single place that answers it now.
+
+⚠️ **AND `13` WAS THE JAZZCHORDS COUNT OVER A 1-IN-8 SAMPLE; THE REAL ONE WAS 95.** A
+sample is a lower bound and never a number to declare — the gate reported `UP` on the first
+full run, which is what a declared count is for.
 
 ---
 

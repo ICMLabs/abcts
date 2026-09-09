@@ -276,6 +276,13 @@ export interface AbcjsParams {
    */
   readonly responsive?: string;
   /**
+   * **`%%jazzchords` FROM THE HOST** — chord modifiers and bass notes as small sub- and
+   * superscripts. `if (params.jazzchords) this.jazzchords = params.jazzchords`, and the
+   * TUNE's own directive overrides it per tune (`engraver-controller.js:69-70`, `:188`);
+   * that directive can only ever turn it ON.
+   */
+  readonly jazzchords?: boolean;
+  /**
    * abcjs adds its `abcjs-*` classes only when asked. Compat emits them either way,
    * because they are the reason to use this entry point; the flag is accepted so that
    * existing calls do not have to change.
@@ -1087,6 +1094,9 @@ function renderInto(
         ...(printing ? { print: true } : {}),
         ...(hostScale === undefined || ignoreScale ? {} : { hostScale }),
         ...(ignoreScale ? { ignoreScale: true } : {}),
+        // …and the host's `{jazzchords: true}`, which the TUNE's own directive overrides —
+        // see `LayoutOptions.jazzChords`.
+        ...(params.jazzchords === true ? { jazzChords: true } : {}),
       });
       return laidOutCache;
     };

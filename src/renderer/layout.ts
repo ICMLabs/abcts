@@ -5989,6 +5989,26 @@ const markWidth = (
   font: Face | TextFont = 'sans',
 ): number => textWidth(text, size, font) + (boxed ? size * ENGRAVE.fontBoxPadding * 4 : 0)
 
+/**
+ * **THE STRING A MARK IS MEASURED AS, WHICH IS NOT ALWAYS THE ONE IT DRAWS.**
+ *
+ * Under `%%jazzchords` a chord's three parts become nested tspans at `font-size:0.7em`
+ * (`add-chord.js`), so the drawn mark is NARROWER and SHORTER than the same characters at
+ * full size, and abcjs measures the drawn form — `getTextSize.calc` builds the same
+ * markup. `\x03` is the separator its own `translateChord` returns.
+ *
+ * ⚠️ **LIVE ONLY**, for the reason the chord builder gives: `goldenTextWidth` scores an
+ * unlisted character at a flat 8, so a `\x03` reaching the headless path would take all
+ * 691 goldens with it.
+ *
+ * ⚠️ **AND THREE SITES MEASURED THE FLAT FORM WHILE THE ROD USED THIS ONE** — measured
+ * 2026-09-09: the box round `G♭maj7` came out 54px against abcjs's 45, and the LANE
+ * PACKING opened a second chord lane where abcjs fits one, which is 18.03px of staff on
+ * `visual-transpose-output-01`.
+ */
+const measuredText = (t: PlacedText): string =>
+  t.jazz === undefined || getTextMeasurer() === null ? t.text : t.jazz.join('\x03')
+
 /** The font a chord symbol or annotation is DRAWN in — see `chordHeightOf`'s ladder. */
 const markFontOf = (t: PlacedText): TextFont => ({
   size: t.size * UNIT_PX,
@@ -6379,7 +6399,16 @@ function noteText(
               // `%%annotationfont Times-Roman` is not sans at all. Same defect the chord
               // ladder named; these are the sites that feed PLACEMENT.
               boxSize: {
-                width: markWidth(line, size, false, fontOfType(SCORE_FONTS, 'gchordfont', size)),
+                // …**AND THE BOX MEASURES THE JAZZ FORM TOO** — `getBBox()` sees the drawn
+                // text, whose modifier is a nested tspan at `font-size:0.7em`, so the box
+                // round `G♭maj7` is 45px wide in abcjs and was 54 here. `measured` is that
+                // string; the ROD above already used it and this one line did not.
+                width: markWidth(
+                  measured,
+                  size,
+                  false,
+                  fontOfType(SCORE_FONTS, 'gchordfont', size),
+                ),
                 height: textHeight(size, line, fontOfType(SCORE_FONTS, 'gchordfont', size)),
               },
             }
@@ -10565,6 +10594,18 @@ export interface LayoutOptions {
    */
   readonly ignoreScale?: boolean
   /**
+   * **`{jazzchords: true}` — THE HOST'S HALF OF `%%jazzchords`.** `if (params.jazzchords)
+   * this.jazzchords = params.jazzchords` at construction, and `setupTune` then lets the
+   * TUNE override it per tune — `if (abcTune.formatting.jazzchords !== undefined)`
+   * (`engraver-controller.js:69-70`, `:188-189`). The directive can only ever assign
+   * `true` (`abc_parse_directive.js:791`), so an OR is that resolution exactly.
+   *
+   * ⚠️ **MEASURED 2026-09-09: the param was ignored, on 95 of 685 fixtures** — the largest
+   * single number `scripts/zzopts.mjs` opened with. `D7` came out as plain text where
+   * abcjs superscripts the `7`, and the chord's WIDTH moved every note after it.
+   */
+  readonly jazzChords?: boolean
+  /**
    * **WHERE THIS TUNE'S PAGE CURSOR STARTS** — 0 for a tune of its own, and the PREVIOUS
    * tune's `endY` when a whole book is stacked into one SVG. `engraveABC` resets the
    * renderer once and then runs `engraveTune` per tune, so `renderer.y` runs CONTINUOUSLY
@@ -12367,7 +12408,7 @@ function layoutScoped(input: Score, options: LayoutOptions = {}): Layout {
    */
   STRICT_TEXT_METRICS = true
   LINE_WEIGHTS = lineWeightsFor(strict)
-  JAZZ_CHORDS = score.jazzChords
+  JAZZ_CHORDS = score.jazzChords || options.jazzChords === true
   KEYWARN = score.keywarn
   SCORE_FONTS = score.fonts
   SCORE_PARTS_BOX = score.partsBox
@@ -17735,8 +17776,7 @@ const chordHeightOf = (t: PlacedText): number => {
    */
   const live = getTextMeasurer()
   if (live !== null) {
-    const text = t.jazz === undefined ? t.text : t.jazz.join('\x03')
-    return textHeight(t.size, text, markFontOf(t)) + box
+    return textHeight(t.size, measuredText(t), markFontOf(t)) + box
   }
   return textHeight(t.size, t.text, 'sans') + (jazzTspans(t) - 1) * t.size * ENGRAVE.textLineStep + box
 }
@@ -18036,7 +18076,7 @@ function aboveLadder<
       // (`relative-element.js:96`), so a CHORD SYMBOL's extent is centred on its anchor
       // and an ANNOTATION's runs rightward from it — which is the same asymmetry their
       // `text-anchor` states. A chord's `x` is its CENTRE here, so the half comes off.
-      const width = markWidth(t.text, t.size, t.box === true)
+      const width = markWidth(measuredText(t), t.size, t.box === true, markFontOf(t))
       const left = t.dataName === 'chord' ? t.x - width / 2 : t.x
       const right = left + width
       const lane = rightMost.findIndex((edge) => edge < left)
@@ -18525,7 +18565,7 @@ function anchorChordsBelow<
       for (const t of [...el.texts.filter(isBelow)].reverse()) {
         any = true
         const left = t.x
-        const right = left + markWidth(t.text, t.size, t.box === true)
+        const right = left + markWidth(measuredText(t), t.size, t.box === true, markFontOf(t))
         const lane = rightMost.findIndex((edge) => edge < left)
         if (lane >= 0) {
           rightMost[lane] = right

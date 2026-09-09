@@ -16,10 +16,16 @@
  *
  *     print        8 — a title at font-size 27 against our 31, among others
  *     scale 0.8    4 · scale 1.5   2 — a non-unit scale
- *     jazzchords  95 — the chord-symbol shapes, by far the biggest of the three
  *
- * Take one and the counts arbitrate. `13` was the count over a 1-in-8 SAMPLE and reads as
- * 95 over the whole corpus — **a sample is a lower bound, never a number to declare.**
+ * ✅ **`jazzchords` OPENED AT 95 AND CLOSED THE SAME DAY**, in three steps: the host param
+ * was ignored outright (the DIRECTIVE was the only way in), and then two measurements read
+ * the FLAT chord string where abcjs measures the drawn jazz form — the box round `G♭maj7`
+ * at 54px against 45, and the LANE PACKING, which opened a second chord lane where abcjs
+ * fits one. `measuredText` is the one place that answers it now.
+ *
+ * Take one of the rest and the counts arbitrate. ⚠️ `13` was the jazzchords count over a
+ * 1-in-8 SAMPLE and it was 95 over the whole corpus — **a sample is a lower bound, never a
+ * number to declare.**
  *
  *   PW=/tmp/gp/pw/node_modules/playwright-core node scripts/zzopts.mjs
  */
@@ -55,7 +61,7 @@ const OPTIONS = [
   ['scale 0.8', { scale: 0.8 }, 4],
   ['scale 1.5', { scale: 1.5 }, 2],
   ['print', { print: true }, 8],
-  ['jazzchords', { jazzchords: true }, 95],
+  ['jazzchords', { jazzchords: true }, 0],
 ]
 const every = Number(process.argv[2] ?? 1)
 const browser = await webkit.launch()
