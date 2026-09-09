@@ -81,7 +81,10 @@ if (ready.abcjs !== 'function' || ready.abcts !== 'function')
  */
 const KNOWN = new Map([
   ['layout.ts:3564', 'abcjs draws NO flag and colours the mark #ff0000 — its own table names flags.u16nd, which does not exist'],
-  ['parser.ts:365', 'an IMPOSSIBLE key: abcjs consults a table and keeps the key in force; we clamp fifths to +/-7. 48 of 168 key spellings'],
+  // ✅ parser.ts:365 — FIXED 2026-09-08. abcjs's key table is harvested into
+  // `src/core/keys-abcjs.ts` and consulted by `keyFifths`; an unrecognised spelling redraws
+  // the key IN FORCE (`abcjsKeepsKey`); and the cancelling naturals compare the note LETTER
+  // alone, as abcjs does. Header 48 of 168 -> 0, inline 128 of 336 -> 0.
   ['parser.ts:7472', 'a | bar hint in a w: line re-aligns the remaining syllables to the next barline; we drop it'],
   ['lines.ts:1077', 'a melisma is tracked for verse 1 only, so verse 2 loses abcjs literal _'],
 ])

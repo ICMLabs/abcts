@@ -24,20 +24,35 @@ controls, both engines live in one browser, `KNOWN` naming exactly these four. *
 | control | abcjs | abcts |
 |---|---|---|
 | `Q:3/32=60` | no flag, and the mark in `#ff0000` — its own error colour | `flags.u16th`, a normal mark |
-| `K:D#` and 47 other spellings | 3 flats (a TABLE, deliberately "not right") | 7 sharps (fifths, clamped) |
+| ~~`K:D#` and 47 other spellings~~ | ✅ **FIXED 2026-09-08** — see below | |
 | `w:a b\|c d` — a bar hint | `c` on the first note of bar 2, `&nbsp;` on note 3 | `c` on note 3 |
 | a melisma on verse 2 | `e_` | `e` |
 
 **Why written down rather than fixed** — the rule this repo has paid for more than once, *a
 half-understood fix is worth less than a written-down measurement*:
 
-- **The key table.** The mechanism is certain: abcjs has NO arithmetic here, only
-  `relativeMajor` (16 majors × 10 mode spellings) into a 23-entry accidental table carrying
-  five off-spec enharmonics under its own comment *"These SOUND the same as what's written,
-  but they aren't right"*; a name in neither returns `null` and the key in force is KEPT.
-  That last part is proven — `[K:C#lyd]` after `K:D` redraws D's two sharps, after `K:Bb`
-  redraws Bb's two flats. What is **not** pinned is the header seed: a bare `K:Cbmin` gives
-  1 sharp and `K:C#lyd` 5, depending on the MODE and not the root. See `keyFifths`.
+- ✅ **The key table — FIXED, and it turned out to be three defects rather than one.**
+  abcjs's answers for all 231 spellings are harvested into `src/core/keys-abcjs.ts` by
+  RUNNING it, never transcribed, and collapse into 147 `(root, accidental, mode)` groups —
+  every one checked internally consistent at generation time. `keyFifths` consults it;
+  `abcjsKeepsKey` marks the 37 groups abcjs does not recognise, which **redraw the key in
+  force** rather than changing it; and the cancelling naturals compare the note LETTER
+  alone, case-insensitively, as abcjs does. Measured against abcjs 6.7.0 live:
+
+  |  | before | after |
+  |---|---|---|
+  | header spellings | 48 of 168 differ | **0** |
+  | inline `[K:]` changes | 128 of 336 differ | **0** |
+
+  ⚠️ **The "unpinned header seed" was a red herring** — the seed is just the key in force,
+  and in a header there is none, so abcjs's own answer for the bare spelling IS the value.
+  Harvesting it made the question go away rather than answering it.
+
+  ⚠️ **And two of the three only appeared once the one before it was fixed.** Skipping an
+  unrecognised change outright drew NOTHING where abcjs redraws two sharps — *"abcjs
+  ignores it"* and *"abcjs applies the key it already had"* look identical in the model and
+  differ on the page. Then, with that right, 32 of 336 still differed **in nothing but
+  naturals**, which is the letter-only cancellation.
 - **The tempo flag** is larger than its own marker predicted: abcjs colours the whole mark
   red, so reproducing it is an error path and not a missing glyph.
 - **The bar hint** needs barline positions the lyric pass does not have.

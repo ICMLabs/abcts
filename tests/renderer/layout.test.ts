@@ -15,6 +15,7 @@ import {
   defaultClef,
   defaultMode,
   type KeySignature,
+  abcjsKeepsKey,
   keyFifths,
   type Mode,
   rational,
@@ -77,10 +78,30 @@ describe('keyFifths', () => {
     ).toBe(0)
   })
 
-  it('clamps rather than indexing past the seven accidentals', () => {
-    // K:A# is 10 sharps. Seven is as many as a signature can print without doubles.
-    expect(keyFifths(key('a', Accidental.sharp, 'major'))).toBe(7)
-    expect(keyFifths(key('g', Accidental.flat, 'minor'))).toBe(-7)
+  /**
+   * ⚠️ **THIS ROW USED TO ASSERT THE CLAMP, AND THE CLAMP WAS abcts's INVENTION.** It read
+   * "K:A# is 10 sharps; seven is as many as a signature can print without doubles" — true
+   * musically, and not what abcjs does. **abcjs computes nothing here**: it maps the
+   * spelling to a relative major and looks that up in a 23-entry table carrying five
+   * off-spec enharmonics under its own comment *"These SOUND the same as what's written,
+   * but they aren't right"*. `A#` major is **two FLATS** to abcjs.
+   *
+   * The clamp differed from abcjs on **48 of 168 key spellings** and no gate could see it,
+   * because no corpus tune writes an impossible key. Found by writing the control a
+   * `ponytail:` marker predicted nobody would (`scripts/zzledger.mjs`, 2026-09-08).
+   */
+  it("takes abcjs's own answer for a key the circle of fifths cannot reach", () => {
+    // A# major: +10 by arithmetic, TWO FLATS in abcjs's table.
+    expect(keyFifths(key('a', Accidental.sharp, 'major'))).toBe(-2)
+    // Gb minor: -10 by arithmetic. abcjs does not recognise it at all, so the key in force
+    // is kept and the header seed is one sharp — see `abcjsKeepsKey`.
+    expect(keyFifths(key('g', Accidental.flat, 'minor'))).toBe(1)
+    expect(abcjsKeepsKey(key('g', Accidental.flat, 'minor'))).toBe(true)
+    // …and a key the circle CAN reach is untouched: table and arithmetic agree on all of
+    // them, which is what makes the change safe for every tune anyone actually writes.
+    expect(keyFifths(key('d', Accidental.natural, 'major'))).toBe(2)
+    expect(keyFifths(key('e', Accidental.flat, 'major'))).toBe(-3)
+    expect(abcjsKeepsKey(key('d', Accidental.natural, 'major'))).toBe(false)
   })
 })
 

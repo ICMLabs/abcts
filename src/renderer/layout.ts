@@ -1920,7 +1920,13 @@ function layoutKeyChange(
    */
   const stepsFor = (
     key: KeySignature,
-  ): { step: number; name: GlyphName; acc: 'sharp' | 'flat' | 'natural' | 'other' }[] => {
+  ): {
+    step: number
+    name: GlyphName
+    /** The NOTE LETTER, which is the only thing abcjs's cancellation compares — see below. */
+    letter: DiatonicStep
+    acc: 'sharp' | 'flat' | 'natural' | 'other'
+  }[] => {
     const fifths = keyFifths(key)
     const sharp = fifths > 0
     const name: GlyphName = sharp ? 'accidentalSharp' : 'accidentalFlat'
@@ -1946,14 +1952,30 @@ function layoutKeyChange(
       if (at >= 0) written[at] = entry
       else written.push(entry)
     }
-    return written.map(({ step, name: glyph, acc }) => ({ step, name: glyph, acc }))
+    return written.map(({ step, name: glyph, acc, letter }) => ({ step, name: glyph, acc, letter }))
   }
   const outgoing = stepsFor(from)
   const incoming = stepsFor(to)
-  // Compared on step AND GLYPH: a step that was sharp and is now flat is not "kept", it
-  // is cancelled and re-marked — and neither is one that was sharp and is now a quarter.
-  const kept = new Set(incoming.map((entry) => `${entry.step}:${entry.name}`))
-  const cancelled = outgoing.filter((entry) => !kept.has(`${entry.step}:${entry.name}`))
+  /**
+   * ⚠️ **abcjs CANCELS BY LETTER ALONE, CASE-INSENSITIVELY** — and this compared the step
+   * AND THE GLYPH, under a comment reasoning that "a step that was sharp and is now flat is
+   * not kept, it is cancelled and re-marked". Musically that is the better rule. It is not
+   * abcjs's:
+   *
+   *     if (newKey.accidentals[k].note.toLowerCase() === oldKey.accidentals[kk].note.toLowerCase())
+   *       oldKey.accidentals[kk].note = null
+   *
+   * (`abc_parse_key_voice.js:318-326`.) The letter is all it looks at, so a key change where
+   * a letter goes from sharp to FLAT gets no natural at all.
+   *
+   * The two rules agree on every ordinary change and part company on the extreme ones:
+   * `[K:C#]` after `K:Bb` drew two naturals here and none in abcjs. Measured over every
+   * spelling against two keys in force — **32 of 336 inline changes**, and every one of the
+   * 32 differed in NOTHING BUT naturals. `svg-bytes` could not see it because no corpus
+   * tune modulates that far.
+   */
+  const kept = new Set(incoming.map((entry) => entry.letter))
+  const cancelled = outgoing.filter((entry) => !kept.has(entry.letter))
   if (cancelled.length === 0 && incoming.length === 0) return null
 
   const glyphs: PlacedGlyph[] = []

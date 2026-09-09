@@ -25,6 +25,7 @@ import {
   resolveOverlays,
 } from '../core/overlays.js'
 import {
+  abcjsKeepsKey,
   ABC_FONT_DEFAULT_PT,
   type AbcFontType,
   Accidental,
@@ -4965,9 +4966,22 @@ class Parser {
           const midClef = parseClef(value)
           // …and an INLINE change is PITCHED for the field's own clef or for TREBLE, never
           // for the voice's — see `Measure.keyChangeClef`.
+          /**
+           * ⚠️ **A KEY abcjs DOES NOT RECOGNISE STILL CHANGES THE KEY — TO THE ONE ALREADY
+           * IN FORCE.** `transpose.keySignature` returns `multilineVars.key` for any
+           * spelling missing from its table and only `.mode` is overwritten
+           * (`abc_parse_key_voice.js:314-317`), so the assignment happens, an element is
+           * emitted, and the signature it draws is the OLD one. 37 of the 147
+           * (root, accidental, mode) groups are such spellings.
+           *
+           * ✅ PROVEN, and the first attempt got it wrong in an instructive way: skipping
+           * the change outright drew NOTHING at the `[K:]`, where abcjs REDRAWS two sharps
+           * after `K:D` and two flats after `K:Bb`. "abcjs ignores it" and "abcjs applies
+           * the key it already had" look identical in the model and differ on the page.
+           */
           if (hasKeySpec(value))
             builder.voice.setKeyChange(
-              parseKey(value),
+              abcjsKeepsKey(parseKey(value)) ? builder.key : parseKey(value),
               range,
               inline ? (midClef ?? defaultClef) : undefined,
               inline,
@@ -5007,7 +5021,16 @@ class Parser {
         // `K: style=harmonic`, so `multilineVars.key` is never written and stays what it
         // was — `none` at the head of a tune, and the previous key after one. This side
         // reset it to C major, which is a DIFFERENT key that happens to print the same.
-        if (hasKeySpec(value)) builder.key = parseKey(value)
+        /**
+         * …and the same rule for the key the BUILDER carries, **but only once a key is in
+         * force**. `sawKey` is the difference and it is the whole subtlety: an unrecognised
+         * spelling keeps the key in force, and in a HEADER there is none — abcjs assigns
+         * its seed, which is what `keyFifths` reports for these. Guarding the header too
+         * left `K:C#lyd` drawing NOTHING against abcjs's five sharps, which is how the two
+         * cases were told apart.
+         */
+        if (hasKeySpec(value) && !(builder.sawKey && abcjsKeepsKey(parseKey(value))))
+          builder.key = parseKey(value)
         builder.keySourceRange = range
         // `K:C bass` sets the tune's clef; a `V:… clef=` still overrides it per voice.
         builder.clef = clefWith(builder.clef, value)

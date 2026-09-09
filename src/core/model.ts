@@ -9,6 +9,8 @@
  *    that and survives a JSON round-trip.
  */
 
+import { ABCJS_KEYS } from './keys-abcjs.js'
+
 // ─── Compatibility mode ──────────────────────────────────────────────────────
 
 /**
@@ -2124,9 +2126,35 @@ const MODE_FIFTHS: Readonly<Record<Mode, number>> = {
  */
 export function keyFifths(key: KeySignature): number {
   if (key.none) return 0
+  /**
+   * **abcjs's OWN ANSWER WHEREVER IT HAS ONE.** It computes nothing here: `relativeMajor`
+   * maps a spelling to its relative major and `keyAccidentals` looks that up in a 23-entry
+   * table, which carries five off-spec enharmonics under abcjs's own comment *"These SOUND
+   * the same as what's written, but they aren't right"*. Table and arithmetic agree on every
+   * key that is physically possible and part company on the 37 groups that are not — which
+   * was the whole of a 48-of-168-spelling divergence in strict mode. Harvested by RUNNING
+   * abcjs (`scripts/harvest-abcjs-keys.mjs`), never transcribed.
+   */
+  const abcjs = ABCJS_KEYS[abcjsKeyId(key)]
+  if (abcjs !== undefined) return abcjs.fifths
   // Each sharp on the tonic moves it seven places round the circle: C→C# is 0→7.
   const fifths = NATURAL_FIFTHS[key.tonic.step] + 7 * key.tonic.accidental + MODE_FIFTHS[key.mode]
   // Beyond ±7 the signature would need double accidentals. Real ABC does reach K:A#
   // (10 sharps); clamping draws seven rather than indexing off the end of the table.
   return Math.max(-7, Math.min(7, fifths))
+}
+
+/** `Cb|minor` — the shape `ABCJS_KEYS` is keyed by. See `keyFifths`. */
+export function abcjsKeyId(key: KeySignature): string {
+  const acc = key.tonic.accidental === 1 ? '#' : key.tonic.accidental === -1 ? 'b' : ''
+  return `${key.tonic.step.toUpperCase()}${acc}|${key.mode}`
+}
+
+/**
+ * **abcjs DOES NOT RECOGNISE THIS KEY AT ALL**, so `transpose.keySignature` returns the key
+ * IN FORCE and only the mode is overwritten (`abc_parse_key_voice.js:314-317`). In a HEADER
+ * that is the seed `keyFifths` reports; INLINE it means the key does not change at all.
+ */
+export function abcjsKeepsKey(key: KeySignature): boolean {
+  return ABCJS_KEYS[abcjsKeyId(key)]?.keeps === true
 }
