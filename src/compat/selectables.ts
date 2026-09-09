@@ -233,10 +233,12 @@ const REST_PITCH = 7;
  * (`draw/staff-group.js:112`, `draw/voice.js:25-90`), and which is exactly the order the
  * emitter writes `data-index` in.
  *
- * ponytail: only the elements are here. abcjs also wraps the non-music text rows, the voice
- * name, the brace, the endings, the triplets, the curves and the dynamics — every one of
- * them is a `selectTypes`-driven entry and none is reachable with the default, which admits
- * `note` alone. `tests/selection.test.ts` measures what that costs: two of the four cases.
+ * ✅ **ALL OF THEM ARE HERE NOW, AND THE MARKUP WITH THEM** — the marker said only the
+ * elements were, and named the rest: the non-music text rows, the voice name, the brace,
+ * the endings, the triplets, the curves and the dynamics. `scripts/zzselect.mjs` renders
+ * the whole corpus with `selectTypes: true` in both engines and reads 0 of 685; it opened
+ * at 9, all five causes in the MARKUP rather than in the array `tests/selection.test.ts`
+ * compares.
  */
 /**
  * `findSelectableElement(event)` — the entry a CLICK landed on

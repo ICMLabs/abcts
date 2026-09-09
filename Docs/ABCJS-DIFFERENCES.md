@@ -237,6 +237,32 @@ a plain four-note tune — differed on the first run.**
   second staff only, and a meter change on the last line of voice 0 alone, are both
   byte-exact MIDI.
 
+## ✅ THE SELECTABLE SURFACE — a NEW AXIS, opened and closed 2026-09-09
+
+`scripts/zzselect.mjs` is `zzlive` with **`selectTypes: true`**, which is how a host asks
+for click-to-select. abcjs then stamps `selectable="true" tabindex="0" data-index="N"` on
+the element it DREW for each entry, and **none of that markup exists with the default
+`selectTypes`** — so every byte gate in this repo rendered straight past it.
+
+**It opened at 9 of 685 with `zzlive` at zero**, and `tests/selection.test.ts` was green
+through all nine: that gate compares the selectables ARRAY, and every one of these was in
+the MARKUP. Five causes, five different places:
+
+| | |
+|---|---|
+| a CURVE is in the array and its `<path>` was never stamped | `curveToPath` re-extracts `class` and `data-name` from the attribute string and dropped the rest |
+| an element that DREW NOTHING kept its `data-index` | `abcts-endings` tune 3 — the ending label is its own barline — so every entry after it was numbered one high |
+| a BOXED bottom-text row stamped its inner `<text>` | `renderText` returns the GROUP it opened for the box, and `wrapSvgEl` stamps what it returned |
+| the LAST group of the bottom text never closed | `closeIfEnded` looks BACK from the following row, and there was none |
+| a group whose last row is RICH TEXT lost its record | the not-selectable guard belongs to the ROW; the `endGroup` record belongs to the `<g>` |
+
+⚠️ **AND FOUR OF THE FIVE WERE INVISIBLE TO THE ARRAY.** The array had the entry and the
+DOM did not, or the array's index and the DOM's disagreed — which is what a host reads. A
+comparison can only catch what its representation can express, for the second time in this
+repo after the timing gate's geometry columns.
+
+---
+
 ### ⚠️ AND THE FOURTH IS MEASURED, NOT LANDED — `style=` LEAKS BETWEEN VOICES
 
 Declared in `scripts/zzledger.mjs`'s `KNOWN`. **The marker's cause was right and this

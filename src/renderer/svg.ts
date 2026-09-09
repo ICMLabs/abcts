@@ -663,6 +663,19 @@ function curveToPath(
     const klass = / class="[^"]*"/.exec(attr)?.[0] ?? "";
     const name = / data-name="[^"]*"/.exec(attr)?.[0] ?? "";
     /**
+     * ⚠️ **AND THE SELECTABLE SLOT, WHICH THIS DROPPED** — measured 2026-09-09 with
+     * `selectTypes: true`: both engines put the curve in the selectables ARRAY, at the
+     * same index, and abcjs alone stamped the `<path>` —
+     * `selectables.wrapSvgEl({el_type: "slur", startChar, endChar}, el)`
+     * (`draw/tie.js:28`). A host that clicks a slur could not select it here.
+     *
+     * The two lines above pull `class` and `data-name` out of the attribute string and
+     * this branch wrote NOTHING ELSE from it, so the slot the caller put there went out
+     * with the rest. `tests/selection.test.ts` compares the ARRAY and was green through
+     * all of it — the DOM half had no gate at all until `selection-dom`.
+     */
+    const sel = new RegExp(`${SEL_SLOT}`).exec(attr)?.[0] ?? "";
+    /**
      * **A DOTTED CURVE IS THE OUTWARD HALF ALONE, STROKED.** `drawArc`'s other arm writes
      * one cubic and gives it `stroke: foregroundColor`, `fill: "none"` and
      * `stroke-dasharray: "5 5"` (`draw/tie.js:89-95`) — no mirrored return, no `z`. Its
@@ -672,13 +685,13 @@ function curveToPath(
     if (curve.dotted === true) {
       return (
         `<path d="M ${rx1} ${ry1} C ${rc1x} ${rc1y} ${rc2x} ${rc2y} ${rx2} ${ry2}" ` +
-        `stroke="currentColor" fill="none" stroke-dasharray="5 5"${klass}${name}></path>`
+        `stroke="currentColor" fill="none" stroke-dasharray="5 5"${klass}${name}${sel}></path>`
       );
     }
     return (
       `<path d="M ${rx1} ${ry1} C ${rc1x} ${rc1y} ${rc2x} ${rc2y} ${rx2} ${ry2} ` +
       `C ${r(rc2x - t * uy)} ${r(rc2y + t * ux)} ${r(rc1x - t * uy)} ${r(rc1y + t * ux)} ` +
-      `${rx1} ${ry1} z" stroke="none" fill="currentColor"${klass}${name}></path>`
+      `${rx1} ${ry1} z" stroke="none" fill="currentColor"${klass}${name}${sel}></path>`
     );
   }
   const dx = x2 - x1;
@@ -1654,6 +1667,22 @@ export function toSVG(
       return index;
     };
     /**
+     * **AN ELEMENT THAT DREW NOTHING WAS NEVER SELECTABLE** — `Svg.closeGroup` removes any
+     * `<g>` with no children, "because all the elements were invisible"
+     * (`write/svg.js:364-372`), and `Selectables.add` runs on the group abcjs KEEPS. So
+     * the index goes back and the record with it.
+     *
+     * ⚠️ **MEASURED 2026-09-09**: `abcts-endings` tune 3 — `C2|["first"] D2:|`, whose
+     * ending label is its own barline — has two bar elements with no glyph, no line and no
+     * text. Both took an index, neither drew, and every selectable after them was numbered
+     * one high. NINE fixtures of the corpus differ on it, and no gate rendered with
+     * `selectTypes` on until one was built for this.
+     */
+    const unrecord = (): void => {
+      selectableIndex -= 1;
+      options.selectables?.pop();
+    };
+    /**
      * **`nonMusic`'s `wrapSvgEl`, FOR A ROW THAT CARRIES AN `absElemType`.**
      * `{el_type, name, startChar, endChar, text}` (`draw/non-music.js:24-30`, `:38-45`),
      * and `canSelect` reads `el_type` — so with abcjs's DEFAULT `selectTypes` a title is
@@ -1677,9 +1706,17 @@ export function toSVG(
       xy?: { x: string; y: string },
     ): string => {
       const sel = t.selectable;
-      // A RICH ROW IS NOT SELECTABLE — `richText`'s array branch pushes its phrases with
-      // no `absElemType` (`rich-text.js:18-28`).
-      if (sel === undefined || t.phrases !== undefined) return "";
+      /**
+       * A RICH ROW IS NOT SELECTABLE — `richText`'s array branch pushes its phrases with
+       * no `absElemType` (`rich-text.js:18-28`).
+       *
+       * ⚠️ **BUT ITS GROUP STILL IS.** An `endGroup` record belongs to the `<g>`, not to
+       * the row it was stamped on (`draw/non-music.js:38-45`), so a `W:` block whose LAST
+       * line changed font mid-line lost the whole block's selectable — measured 2026-09-09
+       * on `abcjs-visual-misc-06-title-1bold-0-100-reg-the`, whose verse is one rich row.
+       */
+      if (sel === undefined || (t.phrases !== undefined && sel.onGroupClose !== true))
+        return "";
       return recordWrapped(
         "text",
         {
@@ -3162,6 +3199,8 @@ export function toSVG(
            * The same rule already governs `abcjs-meta-top` and the staff-lines group.
            */
           let openedAt = -1;
+          /** Whether this element took a `data-index` — see `unrecord`. */
+          let tookIndex = false;
           /** The class counters this element advances — spent once its children are out. */
           let advance = (): void => {};
           /**
@@ -3250,6 +3289,7 @@ export function toSVG(
              * carry NEITHER attribute; ours carried both, with the child index in them.
              */
             const selectable = canSelectHere(el.type);
+            tookIndex = selectable;
             openedAt = parts.length;
             /**
              * **`!mark!` PAINTS THE GROUP GREEN AND APPENDS ITS CLASS LAST.**
@@ -3877,9 +3917,12 @@ export function toSVG(
              * is a bar with no rule and no glyph, its bracket belonging to the ending on
              * `otherchildren`. `visual-layout-09` has two, one per system.
              */
-            if (openedAt >= 0 && parts.length === openedAt + 1)
+            if (openedAt >= 0 && parts.length === openedAt + 1) {
               parts.length = openedAt;
-            else parts.push("</g>");
+              // …**AND ITS `data-index` GOES BACK WITH IT** — see `unrecord`. This site is
+              // the one the `[1`-at-a-line-start case reaches.
+              if (tookIndex) unrecord();
+            } else parts.push("</g>");
             return;
           }
           /**
@@ -4088,9 +4131,10 @@ export function toSVG(
               // nothing to close
             } else if (openedAt >= 0 && parts.length === openedAt + 1) {
               parts.length = openedAt;
-              // The `data-index` it took is given back too: `Selectables.add` never ran.
-              if (el.type === "note" || el.type === "rest")
-                selectableIndex -= 1;
+              // The `data-index` it took is given back too, and the RECORD with it — see
+              // `unrecord`. This read `if (el.type === "note" || el.type === "rest")` and
+              // left the array's phantom behind in every case.
+              if (tookIndex) unrecord();
             } else {
               parts.push("</g>");
             }
@@ -4265,7 +4309,7 @@ export function toSVG(
         if (here !== undefined && (here.groupId ?? here.groupName) === id) return;
         if (id !== undefined) groupAttrs.set(id, recordText(prev));
       };
-      const block = rowsIn
+      const rendered = rowsIn
         .map((t, rowIndex) => {
           closeIfEnded(rowIndex);
           if (t.nonMusicIndex !== lastNonMusicIndex) {
@@ -4317,20 +4361,38 @@ export function toSVG(
             t.boxRect !== undefined,
             // …and a row that CLOSES a group is not itself selectable; its `endGroup`
             // record is taken by `closeIfEnded` on the pass after it.
-            t.selectable?.onGroupClose === true
+            //
+            // ⚠️ **AND NEITHER IS A BOXED ROW: `renderText` RETURNS THE GROUP IT OPENED**
+            // for one — `if (!alreadyInGroup) elem = renderer.paper.closeGroup()`
+            // (`draw/text.js:81`) — and `wrapSvgEl` stamps whatever it returned. The top
+            // block already put the attributes on the `<g>`; this one wrote them on the
+            // inner `<text>`, which a host cannot select the box with. Measured 2026-09-09
+            // on `visual-options-01-fonts`, whose `%%historyfont … box` gives its four
+            // `description` and `free-text` rows a group each.
+            t.selectable?.onGroupClose === true || t.boxRect !== undefined
               ? ""
               : recordText(t, { x: round2(t.x * PX), y: base }),
           );
           // …and the same group-and-four-rules a boxed row takes anywhere else.
           return t.boxRect === undefined
             ? markup
-            : `<g fill="currentColor" data-name="${t.dataName ?? ""}">` +
+            : `<g fill="currentColor" data-name="${t.dataName ?? ""}"${recordText(t)}>` +
                 `${markup}${boxRulesPath(
                   t.boxRect,
                   t.pageY === undefined ? t.y * PX + oy : t.pageY * PX,
                   t.size * PX,
                 )}</g>`;
-        })
+        });
+      /**
+       * ⚠️ **AND THE LAST GROUP CLOSES TOO.** `closeIfEnded` looks BACK from each row, so a
+       * block that ends the bottom text was never looked back at: its `endGroup` record was
+       * never taken and the `<g>` went out unstamped. Measured 2026-09-09 —
+       * `abcts-directives-2` tune 3 and `abcts-tempo-rung` tune 3 end in a `W:` block, and
+       * `visual-options-01-fonts` has one FOLLOWED by the description rows, which is why it
+       * was right there and wrong in the other two.
+       */
+      closeIfEnded(rowsIn.length);
+      const block = rendered
         .map((markup, i) => {
           const row = (doc.bottomText ?? [])[i];
           const name = row?.groupName;

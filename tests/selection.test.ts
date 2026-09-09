@@ -159,6 +159,12 @@ describe("engraver.selectables", () => {
    * Every row of this gate agrees, so the statement is ALL OF THEM rather than a floor —
    * see the note on the other five, which had rotted by 48 to 844 rows between them. This
    * one had not, and it is written the same way so it cannot start.
+   *
+   * ⚠️ **AND IT COMPARES THE ARRAY, WHICH IS HALF THE SURFACE.** The other half is the
+   * MARKUP — `selectable="true" tabindex="0" data-index="N"` on the element abcjs drew for
+   * each entry — and this gate was green through five defects in it, because nothing here
+   * renders with `selectTypes` on. `scripts/zzselect.mjs` is that half, and it opened at
+   * 9 of 685 with `zzlive` at zero.
    */
   it("agrees on EVERY one of its selectables", () => {
     expect(rows.reduce((t, r) => t + r.agree, 0)).toBe(
