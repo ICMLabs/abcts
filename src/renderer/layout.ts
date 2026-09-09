@@ -373,6 +373,8 @@ export const ENGRAVE = {
    * ponytail: the above lane can reach `partStep` once three annotations stack, and the
    * below lane can reach `lyricStep` at two. No fixture combines them, and the real fix is
    * the skyline pass this whole block is waiting on rather than more hand-picked numbers.
+   * ✅ **MEASURED 2026-09-08: three above AND two below on one note is byte-identical**
+   * (`scripts/zzledger.mjs`). The hand-picked numbers reach further than the note feared.
    */
   annotationAboveStep: 9.0,
   /** 27.8px below the BOTTOM line (step -4) in `stacked-annotations`. */
@@ -3566,6 +3568,14 @@ function layoutTempo(
        * abcjs silently draws no flag there. Not reproduced: it would mean dropping a flag we
        * can draw, and `noteGlyph` never produces that shape anyway. It belongs in
        * `ABCJS-DIFFERENCES.md` if a tune ever writes one.
+       *
+       * ⚠️ **A TUNE NOW WRITES ONE — `Q:3/32=60`, and the divergence is LARGER than the
+       * note predicted** (`scripts/zzledger.mjs`, 2026-09-08). abcjs does not merely omit
+       * the flag: the whole tempo mark comes out as `<text stroke="#ff0000">`, its own
+       * error colour, where we draw `flags.u16th` and a normal mark. Declared in
+       * `ABCJS-DIFFERENCES.md` and gated by the ledger sweep; reproducing it means the
+       * error colour as well as the missing flag, which is a bigger port than "drop a
+       * flag" and is why it is written down rather than guessed at.
        */
       let right = headAdvance
       if (spec.flags > 0) {
@@ -9147,6 +9157,12 @@ function curveIsAbove(
  * and another from the start of the next; that needs the halves laid out separately and
  * is a slice of its own. `vree-ties-across-bars` ties across a BARLINE, which is fine —
  * only a system break drops one.
+ *
+ * ✅ **MEASURED 2026-09-08 AND IT COSTS NOTHING: abcjs DROPS IT TOO.** A slur opening on
+ * system 1 and closing on system 4 is byte-identical in both engines
+ * (`scripts/zzledger.mjs`). Same answer the hairpin got from the other side — abcjs's
+ * `crescendo` and its curve are both per LINE. The prediction stands; the shortcut is
+ * abcjs's behaviour rather than ours.
  */
 function layoutCurves(
   strict: boolean,
@@ -9295,6 +9311,8 @@ function layoutCurves(
        * ponytail: abcjs excludes the HEAD, not the note — a chord where one head closes a
        * slur still contributes its others. Nothing in either corpus writes one; widen this
        * to `tieSteps` if something does.
+       * ✅ **MEASURED 2026-09-08: `(C [Ec]) d e` is byte-identical in both engines**
+       * (`scripts/zzledger.mjs`). The corpus gap is real and the behaviour is not.
        */
       if (a.event.slurEnds > 0) continue
       const heads = a.tieSteps ?? (a.pitchStep === undefined ? [] : [a.pitchStep])
@@ -13416,6 +13434,8 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
     // ponytail: that suppression is not modelled separately. It only shows when SOME voices
     // on a staff declare and others do not, which no corpus tune does — ragtime declares on
     // all three of its bass voices and none of its treble ones.
+    // ✅ MEASURED 2026-09-08: a two-voice staff with `stems=up` on the first and nothing on
+    // the second is byte-identical in both engines (`scripts/zzledger.mjs`).
     const declared = voices[index]?.stemDirection
     if (declared != null) return declared === 'up'
     const staff = voicesOfStaff.find((members) => members.includes(index))
@@ -13467,6 +13487,9 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
    * revive the flag; this filters and asks `some`. The two differ only where one LINE holds
    * two lyric elements with different `vocalPosition`, which needs an inline `[I:vocal …]`
    * mid-line — nothing in either corpus writes one. Make it "the first decides" when one does.
+   * ✅ **MEASURED 2026-09-08: an inline `[I:vocal below]` mid-line is byte-identical in both
+   * engines** (`scripts/zzledger.mjs`). Written rather than assumed, so the row can be read
+   * as closed rather than as a standing risk.
    */
   const sings = (measure: Measure): boolean =>
     measure.events.some(
@@ -19805,6 +19828,7 @@ function anchorBelowStaff<
  * every child except a `chord` (above) or a `lyric` (below) — so an ANNOTATION on the other
  * voice's note would pull abcjs's `closeTop` up to the annotation lane and ours would not.
  * Nothing in either corpus writes one on a colliding note; widen it if something does.
+ * ✅ **MEASURED 2026-09-08: byte-identical in both engines** (`scripts/zzledger.mjs`).
  */
 function fixRestCollisions(
   voices: readonly (readonly LayoutElement[])[],

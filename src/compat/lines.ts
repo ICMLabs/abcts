@@ -1076,6 +1076,14 @@ function noteFields(
      * `(string|null)[]` with nowhere to put a per-verse melisma — the same limitation the
      * DRAWING has, recorded on `Note.lyricMelisma`. No fixture in either corpus holds a
      * syllable in a LATER verse.
+     *
+     * ⚠️ **A CONTROL NOW DOES, AND IT IS A DEFECT** (`scripts/zzledger.mjs`, 2026-09-08).
+     * Two `w:` lines, `a_ b c d` over `e_ f g h`: abcjs draws `e_` on verse 2 and we draw
+     * `e`. Strict's whole contract on a melisma is to print abcjs's literal `_`, so losing
+     * it on every verse but the first is a byte divergence rather than a coverage gap.
+     * Fixing it means a per-verse melisma flag through the model, the parser and the
+     * drawing — the `(string|null)[]` is the blocker and it is three layers wide. Declared
+     * in `ABCJS-DIFFERENCES.md`.
      */
     const entries = [event.lyric, ...event.extraVerses]
       .filter((v): v is string => v !== null)

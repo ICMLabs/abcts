@@ -365,6 +365,12 @@ function parseKeyAccidentals(content: string): KeyAccidental[] {
  * ponytail: the `Unsupported key signature` early return is not reproduced, so a
  * `K:Cbmin clef=x` would report a parameter abcjs never reaches. No corpus tune writes an
  * impossible key with a modifier after it; add the guard when one does.
+ *
+ * ✅ **THE WARNING PREDICTION IS CORRECT AND THE CONTROL FOUND SOMETHING ELSE**
+ * (`scripts/zzledger.mjs`, 2026-09-08). `K:Cbmin clef=bass` raises no warning in EITHER
+ * engine and both take the bass clef — the early return is unreachable for every one of
+ * the 189 key spellings probed, because `standardKey` returns a truthy object rather than
+ * `undefined`. What the control actually caught is the SIGNATURE: see `keyFifths`.
  */
 interface KeyToken {
   type: 'quote' | 'alpha' | 'number' | 'punct'
@@ -5018,6 +5024,8 @@ class Parser {
          * A voice DECLARED after such a `K:` takes the clef's copy in abcjs (`:514-515`),
          * where here it would take its own default; nothing in either corpus writes that
          * pair, and `abcts-ledger-gaps` tune 4 is what named the field at all.
+         * ✅ MEASURED 2026-09-08: `K:C transpose=2` followed by a `V:1` declaration is
+         * byte-identical in both engines (`scripts/zzledger.mjs`).
          */
         const keyShift = /\btranspose=\s*(-?\d+)/.exec(value)
         if (keyShift?.[1] !== undefined)
@@ -6620,7 +6628,10 @@ class Parser {
         extraVerses: [],
         style: 'normal',
         headDurations: mixed ? headDurations : [],
-        microtoneCents: 0, // ponytail: microtones inside a chord when a fixture needs it
+        // ponytail: microtones inside a chord when a fixture needs it.
+        // ✅ MEASURED 2026-09-08: `[^/C^/E]` is byte-identical in both engines
+        // (`scripts/zzledger.mjs`) — abcjs carries no per-pitch cents either.
+        microtoneCents: 0,
         tuplet: null, // set by applyTuplet() on emit
 
         ...noAttachments(), // filled in by emit()
@@ -7472,6 +7483,11 @@ function parseLyricSyllables(
         // ponytail: dropped rather than honoured. Honouring it means re-aligning the
         // remaining syllables to the next barline, which needs the barline positions the
         // lyric pass does not have.
+        // ⚠️ MEASURED 2026-09-08 AND IT IS A DEFECT, not a harmless drop
+        // (`scripts/zzledger.mjs`): `w:a b|c d e f g h` over `CDEF|GABc|` puts abcjs's `c`
+        // on the FIRST NOTE OF BAR 2 and `&nbsp;` on note 3, where ours puts `c` on note 3
+        // — every syllable after a hint is on the wrong note. Declared in
+        // ABCJS-DIFFERENCES.md.
         flush(j, false)
         bufferStart = j + 1
       } else {

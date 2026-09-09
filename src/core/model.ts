@@ -2096,6 +2096,32 @@ const MODE_FIFTHS: Readonly<Record<Mode, number>> = {
  * which is abcMusicKit2's approach and the reason `KeySignature` stores a tonic and a
  * mode instead of an accidental list.
  */
+/**
+ * ⚠️ **MEASURED AND NOT LANDED: 48 OF 168 KEY SPELLINGS DIFFER FROM abcjs** (2026-09-08,
+ * `scripts/zzledger.mjs`). The clamp below is OURS; abcjs does not compute fifths at all.
+ *
+ *     K:D#     abcjs 3 flats     abcts 7 sharps
+ *     K:Cbmin  abcjs 1 sharp     abcts 7 flats
+ *     K:Fb     abcjs 0           abcts 7 flats
+ *
+ * **abcjs CONSULTS TWO TABLES AND HAS NO ARITHMETIC.** `relativeMajor` maps a key+mode
+ * spelling to its relative major through a reverse index of 16 majors x 10 mode spellings,
+ * then `keyAccidentals` looks THAT up in a 23-entry table — which carries five off-spec
+ * enharmonics under abcjs's own comment *"These SOUND the same as what's written, but they
+ * aren't right"* (`A#` 2 flats, `B#` 0, `D#` 3 flats, `E#` 1 flat, `G#` 4 flats). A name in
+ * neither table returns `null`, and `transpose.keySignature`'s `if (!k) return
+ * multilineVars.key` **KEEPS THE KEY IN FORCE** — no warning, no change.
+ *
+ * ✅ That last part is PROVEN rather than read: `[K:C#lyd]` after `K:D` draws D's two
+ * sharps again, after `K:Bb` draws Bb's two flats. Three inline controls, three agreements.
+ * ⚠️ What is NOT pinned is the HEADER seed — a bare `K:Cbmin` gives 1 sharp and a bare
+ * `K:C#lyd` 5 sharps, and the value depends only on the MODE, not the root. Something sets
+ * `multilineVars.key` before the fallback reads it and this has not been instrumented.
+ *
+ * So the mechanism is certain, one edge of it is not, and **a half-understood port is worth
+ * less than a written-down measurement** — the rule this repo has paid for more than once.
+ * Declared in `ABCJS-DIFFERENCES.md` and gated by the ledger sweep.
+ */
 export function keyFifths(key: KeySignature): number {
   if (key.none) return 0
   // Each sharp on the tonic moves it seven places round the circle: C→C# is 0→7.

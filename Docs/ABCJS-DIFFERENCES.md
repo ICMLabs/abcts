@@ -13,6 +13,39 @@ import { parse, render } from 'abcts'      // render(score, { mode: 'abcjs-exten
 
 ---
 
+## ⚠️ FOUR MEASURED, NOT LANDED — found by sweeping the `ponytail:` ledger, 2026-09-08
+
+These are **abcts diverging from abcjs in STRICT mode**, which is a defect rather than a
+divergence: strict has no latitude. Each was found by writing the control a `ponytail:`
+marker predicted nobody would write, and each is gated by `scripts/zzledger.mjs` — 16
+controls, both engines live in one browser, `KNOWN` naming exactly these four. **12 of the
+16 predictions held**; these are the four that did not.
+
+| control | abcjs | abcts |
+|---|---|---|
+| `Q:3/32=60` | no flag, and the mark in `#ff0000` — its own error colour | `flags.u16th`, a normal mark |
+| `K:D#` and 47 other spellings | 3 flats (a TABLE, deliberately "not right") | 7 sharps (fifths, clamped) |
+| `w:a b\|c d` — a bar hint | `c` on the first note of bar 2, `&nbsp;` on note 3 | `c` on note 3 |
+| a melisma on verse 2 | `e_` | `e` |
+
+**Why written down rather than fixed** — the rule this repo has paid for more than once, *a
+half-understood fix is worth less than a written-down measurement*:
+
+- **The key table.** The mechanism is certain: abcjs has NO arithmetic here, only
+  `relativeMajor` (16 majors × 10 mode spellings) into a 23-entry accidental table carrying
+  five off-spec enharmonics under its own comment *"These SOUND the same as what's written,
+  but they aren't right"*; a name in neither returns `null` and the key in force is KEPT.
+  That last part is proven — `[K:C#lyd]` after `K:D` redraws D's two sharps, after `K:Bb`
+  redraws Bb's two flats. What is **not** pinned is the header seed: a bare `K:Cbmin` gives
+  1 sharp and `K:C#lyd` 5, depending on the MODE and not the root. See `keyFifths`.
+- **The tempo flag** is larger than its own marker predicted: abcjs colours the whole mark
+  red, so reproducing it is an error path and not a missing glyph.
+- **The bar hint** needs barline positions the lyric pass does not have.
+- **The melisma** needs a per-verse flag through the model, the parser and the drawing;
+  `extraVerses` is a bare `(string|null)[]` and the blocker is three layers wide.
+
+---
+
 ## ⚖️ AND THIS FILE IS THE WHOLE LIST — EXTENDED IS OTHERWISE BYTE-EQUAL TO STRICT
 
 **Owner's rule, 2026-09-07:** *"extended mode should always be byte compatible with strict,
