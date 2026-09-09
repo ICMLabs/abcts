@@ -18,6 +18,9 @@ persist between tool calls and the workspace ROOT collects every sibling repo's 
     midi-bytes  0 of 691 — 19 ruled divergent
     zzlive      0 of 685  WebKit AND Chrome
     zzselect    0 of 685  WebKit AND Chrome    <- NEW, and it OPENED AT 9
+    zzopts      0 on every plumbing row         <- NEW, and it OPENED AT 685 OF 685
+                …plus three GEOMETRY surfaces declared with counts:
+                print 8 · scale 4 and 2 · jazzchords 95
     zzledger    2 differ, 2 KNOWN — 39 controls (was 16)
     warnings    0 of 815 · zzscale 8 of 8 LINEAR · test:dist 0 of 685 ESM and CJS
 
@@ -53,6 +56,12 @@ between voices was re-derived and the "model change" estimate STANDS.
   ⚠️ A GATE CAN NORMALISE THE DEFECT AWAY — `Array.isArray(r) ? r[0] : r` in the MIDI gate
      hid a wrong return shape in the entry point that gate exists to prove. If a gate needs
      a shim to compare, ask what the shim is hiding.
+  ⚠️ A SAMPLE IS A LOWER BOUND, NEVER A NUMBER TO DECLARE. `jazzchords` was declared at 13
+     from a 1-in-8 reconnaissance and is 95 over the corpus. The gate said `UP` on the first
+     full run, which is what a declared count is for.
+  ⚠️ HALF OF `setPaperSize` IS ON THE PARENT NODE, so a comparison of the SVG alone cannot
+     see it. `zzopts` compares `outerHTML`; every gate before it was blind to a container
+     abcjs styles on every render.
   ⚠️ A FLOOR ROTS. Seven ratchets said "at least the rows it did" and six were slack by 48
      to 844 rows. They read `agree === total` now; write new ones the same way.
   ⚠️ `git stash push` + rebuild + re-run is how you tell a REGRESSION from a PRE-EXISTING
@@ -63,14 +72,17 @@ between voices was re-derived and the "model change" estimate STANDS.
      `mkdir -p /tmp/gp/pw && cd /tmp/gp/pw && npm init -y && npm i playwright-core@1.61`.
   ⚠️ A GATE'S REPORT FILE OUTLIVES ITS RUN. Check the timestamp on `/tmp/abcts-*.txt`.
 
-WHAT TO DO NEXT — ask the owner which, the four surfaces are not equal:
-  1. **`style=` between voices** — the one open ledger defect, and the size is honest.
-  2. **Finish the marker sweep.** ~55 of the 94 are still classified by reading alone, and
-     the 2026-09-09 pass ran 4 defects in 18 controls and then 5 more from one new surface.
-  3. **Another SURFACE.** `zzselect` cost an hour and found five. What else does a host
-     switch on that no gate renders? `%%scale`, print mode, `responsive`, `add_classes`,
-     `oneSvgPerLine`, a non-default `staffwidth`, `jazzchords`, tablature.
-  4. **Package metadata** — `version` is `0.0.0`, no `repository`/`homepage`/`unpkg`, so a
+WHAT TO DO NEXT — ask the owner which; these are NOT equal, and the first three are now
+NAMED NUMBERS rather than guesses:
+  1. **`jazzchords`, 95 of 685** — the largest single number open anywhere in this repo,
+     declared in `zzopts`. One switch, one surface, and nothing has ever rendered it.
+  2. **`print`, 8 of 685** — a title at font-size 27 against our 31 is the first row.
+  3. **A non-unit `scale`, 4 and 2** — geometry inside the SVG, not the option plumbing.
+  4. **`style=` between voices** — the one open ledger defect, and the size is honest.
+  5. **`oneSvgPerLine` / `viewportHorizontal`** — both unimplemented, each a wrapper of its
+     own; `oneSvgPerLine` is an `<svg>` per SYSTEM with its own viewBox and title.
+  6. **Finish the marker sweep.** ~55 of the 94 are still classified by reading alone.
+  7. **Package metadata** — `version` is `0.0.0`, no `repository`/`homepage`/`unpkg`, so a
      CDN cannot resolve the script build. The only thing between the owner and publishing.
 
 Run `npx tsc --noEmit && echo OK` before every commit, keep every gate above green, and
@@ -83,9 +95,9 @@ rather than following the other silently.
 
 ## Why this order
 
-**The METHOD first**, because the three additions to it — the witness, the negative control,
-and "a floor rots" — are what found nine of the seventeen. The state is nine numbers and
-eight of them are zero.
+**The METHOD first**, because the four additions to it — the witness, the negative control,
+"a floor rots", and comparing the CONTAINER — are what found eleven of the nineteen. The
+state is ten numbers and nine of them are zero.
 
 **Then the size pattern**, because it is the argument for re-opening anything this repo has
 written off, and the 2026-09-09 pass is four more instances: cause right, size wrong, twice
