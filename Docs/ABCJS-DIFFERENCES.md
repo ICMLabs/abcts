@@ -128,6 +128,74 @@ half-understood fix is worth less than a written-down measurement*:
   suppresses the literal — so this moves no mode-bytes row. `tests/lyric-verse-melisma.test.ts`
   holds all three layers with the extended row as the negative control.
 
+## ⚠️ THE SECOND LEDGER SWEEP, 2026-09-09 — FOUR MORE, THREE CLOSED
+
+The first sweep wrote controls for 16 of the 97 `ponytail:` markers; the other ~80 were
+classified by READING. This is the second pass over those, with one addition to the method:
+**each control carries a WITNESS — a regex the shape must produce in abcjs's own output —
+so a row that agrees because the feature never rendered reports MUTE rather than "held".**
+It fired four times in eighteen controls, twice on my own witness (a hairpin's element is
+`data-name="dynamics"`, and a notehead's `data-name` is its PITCH, not its glyph).
+
+| control | abcjs | abcts, before |
+|---|---|---|
+| ✅ a `*` in an `s:` line | no lyric at all on the skipped note | an EMPTY one, drawing `&nbsp;` |
+| ✅ `%%voicecolor` with no `V:` written | nothing — the directive is inert | the whole tune coloured |
+| ✅ a MID-TUNE `%%newpage` | costs nothing; the line stands where written | 61.33px taller, line at index 0 |
+| ⚠️ a header `K: style=` over two voices | voice 2 inherits voice 1's style | voice 2 draws plain heads |
+
+- ✅ **`addSymbols` IS NOT `addWords`.** abcjs reads `s:` with a COPY of its `w:` parser —
+  its own TODO says so — and the copy differs in ONE line: the skip branch never pushes the
+  empty `{syllable: "", divider: " "}` onto the element it waits through
+  (`abc_parse.js:378-388` against `:286-300`). So `s:!trill! * !fermata! *` draws TWO lyric
+  elements in abcjs and drew four here. One flag on the line, `symbols`, and the same walk
+  serves both.
+
+- ✅ **`%%voicecolor` READS `multilineVars.currentVoice`, WHICH ONLY A `V:` FIELD SETS**
+  (`abc_parse_directive.js:863-871`). No `V:` in the tune, no colour at all — which is most
+  tunes, and we coloured every one of them. And the voice it means is the LAST `V:` field,
+  a header declaration included, where ours was the voice music was landing in: a colour
+  after a `V:1` / `V:2` pair paints voice 2 in abcjs and painted voice 1 here. See
+  `ScoreBuilder.declaredVoiceId`, which is abcjs's value and deliberately not ours.
+
+  ⚠️ **The marker's own prediction HELD** — a second `%%voicecolor` between two music lines
+  paints both lines in abcjs too, so one colour per voice is the behaviour rather than an
+  approximation of it. **The control that closed a prediction is what found the defect
+  beside it.**
+
+- ✅ **A `%%newpage` COSTS THE `staffSeparation` OF A NON-MUSIC LINE BEFORE THE FIRST
+  STAFF, AND NOTHING ELSE.** `addNewPage` pushes a `{newpage: n}` LINE where the directive
+  stands and nothing in `write/` reads it; the whole cost is `else if (line > 0)
+  renderer.moveY(spacing.staffSeparation)` (`draw/draw.js:46-47`). Measured: a header one
+  makes the page 61.33px taller and a mid-tune one changes nothing, where ours spent the
+  separation for both — and put the line at index 0 in both, `["newpage","staff","staff"]`
+  against abcjs's `["staff","newpage","staff"]`. `Measure.newPageBefore` is where it stands.
+
+### ⚠️ AND THE FOURTH IS MEASURED, NOT LANDED — `style=` LEAKS BETWEEN VOICES
+
+Declared in `scripts/zzledger.mjs`'s `KNOWN`. **The marker's cause was right and this
+re-derivation does not shrink it.**
+
+`this.style` is plain engraver state: `pushCrossLineElems`/`popCrossLineElems` save and
+restore the slurs, the ties, the endings, the COLOUR and the SCALE per voice, and not the
+style (`abstract-engraver.js:92-107`). So the effective style of a voice-line is **the last
+`style` element seen in (line, staff, voice) ENGRAVING order**, and a voice that declares
+none inherits whatever the previous one left. Four shapes, probed:
+
+| | abcjs | abcts |
+|---|---|---|
+| `K:C style=rhythm`, two voices | both voices slashed | voice 1 slashed, voice 2 plain |
+| `V:1 style=x`, `V:2` plain | both voices x | voice 1 x, voice 2 plain |
+| `V:1` plain, `V:2 style=x` | voice 2 x only | **agrees** — the leak runs forward only |
+| one voice, `K:C style=x` | x | **agrees** — the gated case |
+
+Ours resolves the style per voice at PARSE time and stamps it on the event, where the leak
+is a running value in engraving order. Reproducing it means the running value, re-asserted
+at each line head — the model change the marker named, and the third row above says a
+per-voice reading cannot express it.
+
+---
+
 ### ⚠️ AND ONE MEASURED BESIDE IT, NOT LANDED — a tempo FLAG's last ULP
 
 `Q:1/8=60` renders identically in every respect but the flag path's first coordinate:

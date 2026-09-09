@@ -1449,6 +1449,19 @@ export interface Measure {
    */
   readonly textBefore?: readonly FreeTextBlock[]
   /**
+   * **A `%%newpage` WRITTEN BETWEEN THIS SYSTEM AND THE ONE BEFORE IT.**
+   *
+   * `addNewPage` pushes a `{newpage: n}` LINE where the directive stands
+   * (`tune-builder.js:306-308`) and nothing in `write/` reads it, so its whole cost is
+   * the `staffSeparation` that any non-music line BEFORE THE FIRST STAFF spends
+   * (`draw/draw.js:46-47`) — which a mid-tune one does not. It still occupies an index in
+   * `tune.lines`, which is what a host reads, so it is carried here rather than dropped.
+   *
+   * A newpage written before any music is `ScoreMetadata.newPage` instead: that one IS
+   * `lines[0]` and does spend the separation.
+   */
+  readonly newPageBefore?: number
+  /**
    * A barline that OPENS this measure — a leading `|:` or `[|`, which belongs to the
    * measure after it rather than the one before. Distinct from `closingBarline` because
    * both can occur back to back: a line ending `:|` followed by one starting `|:` is two

@@ -964,13 +964,24 @@ describe("`s:` symbol lines", () => {
   });
 
   it("reproduces abcjs under strict, where they come out as LYRIC TEXT", () => {
-    // Not a shortcut — abcjs reads `s:` with its `w:` parser and pushes the tokens onto
-    // `el.lyric` (`parse/abc_parse.js:317-395`); its own TODO at `:325` says as much. A
-    // strict render therefore prints `!trill!` under the staff, delimiters and all.
+    // Not a shortcut — abcjs reads `s:` with a COPY of its `w:` parser and pushes the
+    // tokens onto `el.lyric` (`parse/abc_parse.js:317-395`); its own TODO at `:325` says
+    // as much. A strict render therefore prints `!trill!` under the staff, delimiters and
+    // all.
     expect(events("abcjs-strict").map((e) => e.lyric)).toEqual([
       "!trill!",
-      // A `*` is an EMPTY syllable, not an absent one — see the `w:` tests above.
-      "",
+      /**
+       * ⚠️ **AND THIS ROW READ `""`, WHICH IS THE `w:` RULE AND NOT THE `s:` ONE** —
+       * corrected 2026-09-09 against abcjs 6.7.0's own SVG, which draws TWO lyric elements
+       * for `s:!trill! * !fermata! *` where we drew four.
+       *
+       * `addSymbols` is a copy of `addWords` and differs from it in ONE line: its skip
+       * branch never pushes the empty `{syllable: "", divider: " "}` onto the element it
+       * waits through (`:378-388` against `:286-300`). So a `*` in an `s:` line leaves its
+       * note with NO lyric, where a `*` in a `w:` line leaves an empty one that draws
+       * `&nbsp;`. The comment above assumed the two parsers were the same function.
+       */
+      null,
       "!fermata!",
       "!staccato!",
     ]);

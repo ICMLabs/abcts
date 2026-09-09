@@ -3055,6 +3055,14 @@ const VOICE_FURNITURE = new Set(["style", "stem", "color", "scale"]);
     // read off the same first measure the renderer's own block does (`Measure.textBefore`).
     for (const b of score.voices[0]?.measures[from]?.textBefore ?? [])
       lines.push(textLine(b));
+    // …**AND A MID-TUNE `%%newpage` IS A LINE OF ITS OWN TOO**, at the point it was
+    // written — `addNewPage` pushes it wherever it stands (`tune-builder.js:306-308`).
+    // See `Measure.newPageBefore`; a HEADER one is `score.newPage` and goes out above.
+    const newPageHere = score.voices
+      .map((v) => v.measures[from]?.newPageBefore)
+      .find((n) => n !== undefined);
+    if (newPageHere !== undefined)
+      lines.push({ newpage: newPageHere } as unknown as AbcLine);
     // `%%vskip` — the same first-measure read the renderer's `vskipBeforeSystem` makes.
     const vskip = score.voices
       .map((v) => v.measures[from]?.vskip ?? 0)

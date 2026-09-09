@@ -58,6 +58,41 @@ const CASES = [
     `X:1\nM:4/4\nL:1/4\nK:C clef=treble\nCDEF|\n`],
   ['lines.ts:1077', 'a melisma held across more than one verse',
     `${H}K:C\nCDEF|\nw:a_ b c d\nw:e_ f g h\n`],
+
+  /**
+   * **THE SECOND SWEEP, 2026-09-09** — the ~80 markers the first pass classified by
+   * READING rather than by writing a control. Four of these six were defects.
+   */
+  ['parser.ts:s-line', 'a `*` in an s: line — addSymbols is NOT addWords',
+    `${H}K:C\nCDEF|\ns:!trill! * !fermata! *\n`],
+  ['parser.ts:3868', 'a %%voicecolor with NO voice declared',
+    `${H}%%voicecolor red\nK:C\nCDEF|\n`],
+  ['parser.ts:3868b', 'a %%voicecolor written after the SECOND of two V: declarations',
+    `${H}%%score (1 2)\nV:1\nV:2\n%%voicecolor red\nK:C\nV:1\nCDEF|\nV:2\nGABc|\n`],
+  ['model.ts:1871', 'a MID-TUNE %%newpage, which costs nothing where a header one costs 61.33px',
+    `${H}K:C\nCDEF|\n%%newpage\nGABc|\n`],
+  ['layout-model.ts:682', 'a BOXED multi-row block — rowExtra as one number',
+    `${H}%%historyfont Times-Roman 14 box\nK:C\nCDEF|\nH:first line\nH:second line\n`],
+  ['layout.ts:19683', 'a staff whose ONLY below-dynamic is a hairpin',
+    `${H}K:C\n!<(!C!<)!DEF|\n`],
+  ['layout.ts:1316', 'a line whose SHORTEST note is longer than a quarter',
+    `${H}K:C\nC2D2|E4|\n`],
+  ['layout.ts:8306', 'a curve spanning MORE than two systems',
+    `${H}K:C\n(CDEF|GABc|\ndefg|abc'd'|\nCDEF)|\n`],
+  ['layout.ts:13829', 'unequal-length voices whose last bar is |]',
+    `${H}%%score (1 2)\nV:1\nV:2\nK:C\nV:1\nCDEF|GABc|]\nV:2\nCDEF|]\n`],
+  ['layout.ts:16725', 'a mid-tune T: block of TWO lines',
+    `X:1\nT:First\nM:4/4\nL:1/4\nK:C\nCDEF|\nT:Second\nT:Third\nGABc|\n`],
+  ['layout.ts:18725', 'an ENDING bracket on a staff that also carries a part label',
+    `${H}K:C\nP:A\n|:CDEF|1 GABc:|2 defg|]\n`],
+  ['parser.ts:1120', 'an & overlay on a SHARED staff',
+    `${H}%%score (1 2)\nV:1\nV:2\nK:C\nV:1\nCDEF|\nV:2\nGABc|&EFGA|\n`],
+  ['parser.ts:2615', 'a mid-body V: that changes octave= partway',
+    `${H}V:1 octave=1\nK:C\nCDEF|\nV:1 octave=-1\nGABc|\n`],
+  ['layout.ts:3455', 'an accidental CLUSTER that would need two columns',
+    `${H}K:C\n[^C^D^E]4|\n`],
+  ['parser.ts:4914', 'a header K: style= over TWO voices — the engraver leak',
+    `${H}%%score (1 2)\nV:1\nV:2\nK:C style=rhythm\nV:1\nCDEF|\nV:2\nGABc|\n`],
 ]
 
 const engine = process.env.ENGINE === 'chrome'
@@ -80,6 +115,7 @@ if (ready.abcjs !== 'function' || ready.abcts !== 'function')
  * it is fixed and this goes red if it was not.
  */
 const KNOWN = new Map([
+  ['parser.ts:4914', "abcjs's `this.style` is engraver state that no voice restores, so voice 2 inherits voice 1's; ours is per voice at parse time"],
   // ✅ layout.ts:3564 — FIXED 2026-09-09, and the row was a symptom of a bigger one: the
   // tempo mark has its OWN note table (`tempo-element.js:32-44`) and we were reading it
   // out of `noteGlyph`. `tempoNoteGlyph` is that ladder, `flags.u16nd` and all, and the

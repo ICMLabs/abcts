@@ -1534,7 +1534,16 @@ class VoiceBuilder {
   private noteCounter = 0
   /** The counter value when the current music line began; `w:` lines align from here. */
   private lineNoteStart = 0
-  private readonly lyricLines: { start: number; syllables: Syllable[] }[] = []
+  /**
+   * `symbols` marks a line that came from `s:` rather than `w:`. In STRICT that line is
+   * distributed as a lyric — abcjs prints `!trill!` as a syllable, its own TODO says so —
+   * but by `addSymbols`, which differs from `addWords` in ONE line: its skip branch does
+   * NOT push the empty `{syllable: "", divider: " "}` onto the element it waits through
+   * (`abc_parse.js:378-388` against `:286-300`). So a `*` in an `s:` line leaves its note
+   * with NO lyric where a `*` in a `w:` line leaves an empty one.
+   */
+  private readonly lyricLines: { start: number; syllables: Syllable[]; symbols?: boolean }[] =
+    []
   /** `s:` symbol lines, aligned to notes exactly as `w:` is. Non-strict modes only. */
   private readonly symbolLines: { start: number; syllables: Syllable[] }[] = []
 
@@ -1559,6 +1568,12 @@ class VoiceBuilder {
     } = { every: null, current: 1, firstVoiceId: null },
     /** `%%vskip` waiting for the next line, shared across voices as abcjs shares it. */
     readonly pendingVskip: { value: number | null } = { value: null },
+    /**
+     * `%%newpage` waiting for the next line — the same shape and the same reason.
+     * `addNewPage` pushes a LINE where the directive stands (`tune-builder.js:306-308`),
+     * so one written between two music lines belongs to the SECOND of them.
+     */
+    readonly pendingNewPage: { value: number | null } = { value: null },
   ) {}
 
   /** `%%vskip n` — see `Measure.vskip`. */
@@ -1922,8 +1937,8 @@ class VoiceBuilder {
     this.beginMusicLine()
   }
 
-  addLyricLine(syllables: Syllable[]): void {
-    this.lyricLines.push({ start: this.lineNoteStart, syllables })
+  addLyricLine(syllables: Syllable[], symbols = false): void {
+    this.lyricLines.push({ start: this.lineNoteStart, syllables, ...(symbols ? { symbols } : {}) })
   }
 
   addSymbolLine(syllables: Syllable[]): void {
@@ -1967,7 +1982,7 @@ class VoiceBuilder {
       // THE SAME DISTRIBUTION `w:` GETS, because abcjs's `addSymbols` is a copy of
       // `addWords` — its own comment says so (`abc_parse.js:315`). Without it a `|` in an
       // `s:` line would leave an entry in the queue and shift every symbol after it.
-      this.alignSyllables(line.syllables, line.start, measureOf).forEach((token, at) => {
+      this.alignSyllables(line.syllables, line.start, measureOf, false).forEach((token, at) => {
         if (token.kind !== 'text' || token.text === null) return
         const name = token.text.replace(/^[!+]|[!+]$/g, '')
         if (name === '') return
@@ -2023,6 +2038,12 @@ class VoiceBuilder {
     syllables: readonly Syllable[],
     start: number,
     measureOf: readonly number[],
+    /**
+     * Whether a SKIP leaves an empty syllable behind on the element it waits through.
+     * `addWords` pushes one and `addSymbols` does not — the single line the two differ by.
+     * See `lyricLines`.
+     */
+    fillSkips = true,
   ): Map<number, Syllable> {
     const placed = new Map<number, Syllable>()
     let at = start
@@ -2038,7 +2059,8 @@ class VoiceBuilder {
     for (const syllable of syllables) {
       if (at >= measureOf.length) break
       if (syllable.kind !== 'bar') {
-        placed.set(at, syllable)
+        // A `*` or a `_` in an `s:` line consumes its note and writes nothing on it.
+        if (fillSkips || syllable.kind === 'text') placed.set(at, syllable)
         at += 1
         barAhead = at < measureOf.length && measureOf[at] !== measureOf[at - 1]
         continue
@@ -2049,7 +2071,7 @@ class VoiceBuilder {
       }
       const measure = measureOf[at]
       while (at < measureOf.length && measureOf[at] === measure) {
-        placed.set(at, EMPTY_SYLLABLE)
+        if (fillSkips) placed.set(at, EMPTY_SYLLABLE)
         at += 1
       }
       // The barline that ended the fill is the one this hint consumed.
@@ -2073,7 +2095,12 @@ class VoiceBuilder {
       const verse = verseOfStart.get(line.start) ?? 0
       verseOfStart.set(line.start, verse + 1)
       while (verses.length <= verse) verses.push(new Map())
-      this.alignSyllables(line.syllables, line.start, measureOf).forEach((syllable, at) => {
+      this.alignSyllables(
+        line.syllables,
+        line.start,
+        measureOf,
+        line.symbols !== true,
+      ).forEach((syllable, at) => {
         /**
          * **A `*` IS AN EMPTY SYLLABLE, NOT AN ABSENT ONE — MEASURED, NOT LANDED.**
          *
@@ -2346,6 +2373,14 @@ class VoiceBuilder {
    * slot, because `pushLine` stamps a pending vskip onto whatever LINE comes next and a
    * `%%text` line is one. So this reads whatever is LEFT, which is the staff case.
    */
+  /** `%%newpage` written between two systems — see `Measure.newPageBefore`. */
+  private takeNewPage(startsSystem: boolean): { newPageBefore?: number } {
+    if (!startsSystem || this.pendingNewPage.value === null) return {}
+    const n = this.pendingNewPage.value
+    this.pendingNewPage.value = null
+    return { newPageBefore: n }
+  }
+
   private takeVskip(startsSystem: boolean): { vskip?: number } {
     if (!startsSystem || this.pendingVskip.value === null) return {}
     const n = this.pendingVskip.value
@@ -2429,6 +2464,7 @@ class VoiceBuilder {
           ...this.takeSystemBarNumber(startsSystem),
           ...this.takeTextBefore(startsSystem),
           ...this.takeVskip(startsSystem),
+          ...this.takeNewPage(startsSystem),
         }
       })(),
       closingBarline: barline,
@@ -2557,6 +2593,7 @@ class VoiceBuilder {
           ...this.takeSystemBarNumber(startsSystem),
           ...this.takeTextBefore(startsSystem),
           ...this.takeVskip(startsSystem),
+          ...this.takeNewPage(startsSystem),
         }
       })(),
       closingBarline: null,
@@ -3111,6 +3148,8 @@ class ScoreBuilder {
   readonly pendingTextBefore: { blocks: FreeTextBlock[] } = { blocks: [] }
   /** `%%vskip` waiting for the next line — see `Measure.vskip`. */
   readonly pendingVskip: { value: number | null } = { value: null }
+  /** `%%newpage` written mid-tune — see `Measure.newPageBefore`. */
+  readonly pendingNewPage: { value: number | null } = { value: null }
   /**
    * The tune-level `K: octave=` — abcjs's `multilineVars.octave`, which is GLOBAL and can
    * change mid-tune. A voice that set its own `octave=` ignores it.
@@ -3168,6 +3207,7 @@ class ScoreBuilder {
         this.keyOctave,
         this.barNumbering,
         this.pendingVskip,
+        this.pendingNewPage,
       )
       this.barNumbering.firstVoiceId ??= id
       this.voices.set(id, builder)
@@ -3185,8 +3225,22 @@ class ScoreBuilder {
   private sawMerge = false
 
   /** Header `V:` — creates the voice, and makes the FIRST one declared current. */
+  /**
+   * **abcjs's `multilineVars.currentVoice`, WHICH IS NOT OUR `currentVoiceId`.**
+   *
+   * Every `V:` field sets it — a header DECLARATION as much as a body switch — and nothing
+   * else does, so it is `undefined` for a tune that never writes one. Ours cannot be the
+   * same value: a header `V:1` / `V:2` pair must leave voice 1 current or every note lands
+   * in voice 2 (see `selectVoice`), where abcjs's is voice 2 and its music lands elsewhere.
+   *
+   * Two directives read it, and both do NOTHING when it is unset:
+   * `%%voicecolor` and `%%voicescale` (`abc_parse_directive.js:854-871`).
+   */
+  declaredVoiceId: string | null = null
+
   declareVoice(id: string, merge = false): void {
     const isFirst = this.voices.size === 0
+    this.declaredVoiceId = id
     this.voiceFor(id).explicit = true
     if (isFirst) this.currentVoiceId = id
     this.lastVoiceId = id
@@ -3867,12 +3921,23 @@ class Parser {
      *
      * ponytail: abcjs appends a `color` ELEMENT to the voice stream, so a second
      * `%%voicecolor` mid-tune repaints from there on and `drawVoice` colours the whole LINE
-     * it lands in, retroactively. We hold ONE colour per voice, which is every use in either
-     * corpus. Widen it to a per-line stamp if a fixture ever changes colour mid-tune.
+     * it lands in, retroactively. We hold ONE colour per voice.
+     * ✅ **MEASURED 2026-09-09 AND THE PREDICTION HELD** — a second `%%voicecolor` between
+     * two music lines paints BOTH of them in the new colour in abcjs as well, so one
+     * colour per voice is that behaviour and not an approximation of it.
+     *
+     * ⚠️ **AND THE SAME CONTROL FOUND THE VOICE IT APPLIES TO WAS WRONG.** It is
+     * `multilineVars.currentVoice` — the last `V:` FIELD, header declaration included —
+     * and abcjs does nothing at all when no `V:` has been written, which is most tunes.
+     * We coloured the voice music was landing in, so `%%voicecolor red` with no `V:`
+     * painted a whole tune abcjs leaves black, and a colour written after a `V:1` / `V:2`
+     * pair painted voice 1 where abcjs paints voice 2. See `declaredVoiceId`.
      */
     const voiceColor = /^voicecolor\s+(\S+)\s*$/.exec(body)
     if (voiceColor?.[1] !== undefined) {
-      this.ensureScore(start).voice.color = voiceColor[1]
+      const builder = this.ensureScore(start)
+      if (builder.declaredVoiceId !== null)
+        builder.voiceFor(builder.declaredVoiceId).color = voiceColor[1]
       return
     }
     // ⚠️ **`\s+` MADE A BARE `%%center` UNKNOWN.** abcjs's switch matches on the COMMAND
@@ -4189,8 +4254,23 @@ class Parser {
     if (newPage !== null) {
       // `pgNum.digits === 0 ? -1 : pgNum.value` — a bare `%%newpage` is -1.
       const b = this.ensureScore(start)
-      b.newPage = newPage[1] === undefined ? -1 : Number.parseInt(newPage[1], 10)
-      b.newPageAt = start
+      const page = newPage[1] === undefined ? -1 : Number.parseInt(newPage[1], 10)
+      /**
+       * ⚠️ **AND WHERE IT STANDS IS THE WHOLE OF WHAT IT COSTS.** `addNewPage` pushes a
+       * LINE at that point and nothing in `write/` reads it, so its only effect is the
+       * `staffSeparation` a non-music line BEFORE THE FIRST STAFF spends
+       * (`draw/draw.js:46-47`). Measured 2026-09-09 against abcjs 6.7.0: a header
+       * `%%newpage` makes the page 61.33px taller and a MID-TUNE one changes nothing —
+       * where ours spent the separation for either, and put the line at index 0 in both
+       * (`["newpage","staff","staff"]` against abcjs's `["staff","newpage","staff"]`).
+       * The marker here predicted this shape and said a mid-tune one "would be a line
+       * where it stands"; it is, and `Measure.newPageBefore` is where it stands.
+       */
+      if (b.beganMusic) b.pendingNewPage.value = page
+      else {
+        b.newPage = page
+        b.newPageAt = start
+      }
       return
     }
     // `%%stretchlast` — bare or `true` is 1, `false` is 0, a number 0..1 is itself
@@ -4950,7 +5030,7 @@ class Parser {
         // handing the line to the lyric path, where an `s:` after a `w:` becomes the next
         // verse, which is what abcjs's `el.lyric.push` does. The other modes place them.
         const tokens = this.takeLyricLine(content, start + 2, builder)
-        if (isStrict(this.mode)) builder.voice.addLyricLine(tokens)
+        if (isStrict(this.mode)) builder.voice.addLyricLine(tokens, true)
         else builder.voice.addSymbolLine(tokens)
         return
       }
