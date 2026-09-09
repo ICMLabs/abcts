@@ -85,7 +85,9 @@ const KNOWN = new Map([
   // `src/core/keys-abcjs.ts` and consulted by `keyFifths`; an unrecognised spelling redraws
   // the key IN FORCE (`abcjsKeepsKey`); and the cancelling naturals compare the note LETTER
   // alone, as abcjs does. Header 48 of 168 -> 0, inline 128 of 336 -> 0.
-  ['parser.ts:7472', 'a | bar hint in a w: line re-aligns the remaining syllables to the next barline; we drop it'],
+  // ✅ parser.ts:7472 — FIXED 2026-09-09. The hint is abcjs's `{skip: true, to: 'bar'}`,
+  // consumed by the next BAR element, and every element it waits through takes an EMPTY
+  // syllable (`abc_parse.js:286-313`). Our measures ARE those barlines — `alignSyllables`.
   // ✅ lines.ts:1077 — FIXED 2026-09-09. abcjs reads the divider off EACH verse's own
   // syllable (`abstract-engraver.js:769-774`), so the flag is per verse:
   // `Note.extraVerseMelismaStarts`, set in `applyLyrics`, read by the drawing and by the

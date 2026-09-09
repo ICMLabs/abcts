@@ -13,7 +13,7 @@ import { parse, render } from 'abcts'      // render(score, { mode: 'abcjs-exten
 
 ---
 
-## ⚠️ TWO MEASURED, NOT LANDED — found by sweeping the `ponytail:` ledger, 2026-09-08
+## ⚠️ ONE MEASURED, NOT LANDED — found by sweeping the `ponytail:` ledger, 2026-09-08
 
 These are **abcts diverging from abcjs in STRICT mode**, which is a defect rather than a
 divergence: strict has no latitude. Each was found by writing the control a `ponytail:`
@@ -25,7 +25,7 @@ the 16 predictions held**; these are the four that did not, two of them since cl
 |---|---|---|
 | `Q:3/32=60` | no flag, and the mark in `#ff0000` — its own error colour | `flags.u16th`, a normal mark |
 | ~~`K:D#` and 47 other spellings~~ | ✅ **FIXED 2026-09-08** — see below | |
-| `w:a b\|c d` — a bar hint | `c` on the first note of bar 2, `&nbsp;` on note 3 | `c` on note 3 |
+| ~~`w:a b\|c d` — a bar hint~~ | ✅ **FIXED 2026-09-09** — see below | |
 | ~~a melisma on verse 2~~ | ✅ **FIXED 2026-09-09** — see below | |
 
 **Why written down rather than fixed** — the rule this repo has paid for more than once, *a
@@ -55,7 +55,29 @@ half-understood fix is worth less than a written-down measurement*:
   naturals**, which is the letter-only cancellation.
 - **The tempo flag** is larger than its own marker predicted: abcjs colours the whole mark
   red, so reproducing it is an error path and not a missing glyph.
-- **The bar hint** needs barline positions the lyric pass does not have.
+- ✅ **The bar hint — FIXED, and the barline positions it "does not have" were the
+  measures.** abcjs's distribution loop walks the line's ELEMENTS rather than its notes
+  (`abc_parse.js:286-313`), so the hint is a `{skip: true, to: 'bar'}` consumed by the next
+  BAR element, and — the half no marker predicted — **every element it waits through takes
+  an EMPTY syllable**, `{syllable: "", divider: " "}`, which draws `&nbsp;`. Our measures
+  ARE that element stream: `alignSyllables` walks it with `measureOfNote()`.
+
+  ⚠️ **A BARLINE IS CONSUMED ONCE, BY WHICHEVER HINT IS AT THE HEAD AS THE WALK CROSSES
+  IT**, which is why the four probed shapes differ from "skip to the next measure": a hint
+  written AT a barline blanks nothing, two in a row take two barlines, and a LEADING hint
+  blanks the first measure rather than being free (a line's elements hold the barlines that
+  END its measures). All four probed against abcjs 6.7.0 and held in
+  `tests/corpus/parse.test.ts`.
+
+  ⚠️ **AND ONE EXISTING TEST ASSERTED THE DROP.** *"treats `*` as an EMPTY syllable and `|`
+  as an alignment hint occupying none"* expected `["Do", "", "Mi", "Fa"]` from
+  `w:Do * | Mi Fa`; abcjs answers `["Do", "", "", ""]`. The row was written from the same
+  reading the defect came from, so it agreed with the code and with nothing else.
+
+  ⚠️ **`s:` LINES GET THE SAME WALK**, because abcjs's `addSymbols` is a copy of `addWords`
+  and says so. Without it a `|` in an `s:` line would leave an entry in the queue and shift
+  every symbol after it — the ported-once pattern, caught before it landed rather than
+  after.
 - ✅ **The melisma — FIXED, and the "three layers wide" blocker was the estimate, not the
   cause.** The note was right that the flag had to cross the model, the parser and the
   drawing, and wrong that `extraVerses` had to stop being a `(string|null)[]` first: abcjs

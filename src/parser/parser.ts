@@ -1961,13 +1961,16 @@ class VoiceBuilder {
    */
   private applySymbols(): void {
     if (this.symbolLines.length === 0) return
+    const measureOf = this.measureOfNote()
     const symbols = new Map<number, string[]>()
     for (const line of this.symbolLines) {
-      line.syllables.forEach((token, offset) => {
-        if (token.kind === 'skip' || token.text === null) return
+      // THE SAME DISTRIBUTION `w:` GETS, because abcjs's `addSymbols` is a copy of
+      // `addWords` — its own comment says so (`abc_parse.js:315`). Without it a `|` in an
+      // `s:` line would leave an entry in the queue and shift every symbol after it.
+      this.alignSyllables(line.syllables, line.start, measureOf).forEach((token, at) => {
+        if (token.kind !== 'text' || token.text === null) return
         const name = token.text.replace(/^[!+]|[!+]$/g, '')
         if (name === '') return
-        const at = line.start + offset
         symbols.set(at, [...(symbols.get(at) ?? []), name])
       })
     }
@@ -1990,6 +1993,72 @@ class VoiceBuilder {
   }
 
   /**
+   * **THE MEASURE EACH LYRIC-BEARING EVENT SITS IN** — the barlines abcjs's distribution
+   * loop walks past. Indexed by the same `noteCounter` a `w:` line aligns from, so a
+   * measure with no notes in it simply contributes none.
+   */
+  private measureOfNote(): number[] {
+    const out: number[] = []
+    this.measures.forEach((measure, m) => {
+      for (const event of measure.events) if (event.type !== 'rest') out.push(m)
+    })
+    return out
+  }
+
+  /**
+   * **THE NOTE EACH SYLLABLE OF ONE `w:`/`s:` LINE LANDS ON.**
+   *
+   * abcjs walks the line's ELEMENTS — notes AND BARLINES — with the syllables as a queue
+   * (`abc_parse.js:286-313`), and that is the whole content of the `|` hint: it enters the
+   * queue as `{skip: true, to: 'bar'}`, is consumed by the next BAR element, and every
+   * non-bar element it waits through takes an EMPTY syllable rather than nothing at all:
+   *
+   *     case 'bar': if (el.el_type === 'bar') word_list.shift(); break;
+   *     …
+   *     if (el.el_type !== 'bar') el.lyric.push({syllable: "", divider: " "})
+   *
+   * Our measures ARE those barlines, so `measureOf` is that element stream.
+   */
+  private alignSyllables(
+    syllables: readonly Syllable[],
+    start: number,
+    measureOf: readonly number[],
+  ): Map<number, Syllable> {
+    const placed = new Map<number, Syllable>()
+    let at = start
+    /**
+     * **A BARLINE IS CONSUMED ONCE, BY WHICHEVER HINT IS AT THE HEAD AS THE WALK CROSSES
+     * IT** — which is why this is a flag and not a test on whether `at` begins a measure.
+     * `a b||c` takes TWO barlines: the first hint is shifted off at the bar, and the
+     * second then waits through the whole of the next measure for the one after it.
+     * At the START of a line it is false: a line's element array holds the barlines that
+     * END its measures, so a leading hint waits for the first of those.
+     */
+    let barAhead = false
+    for (const syllable of syllables) {
+      if (at >= measureOf.length) break
+      if (syllable.kind !== 'bar') {
+        placed.set(at, syllable)
+        at += 1
+        barAhead = at < measureOf.length && measureOf[at] !== measureOf[at - 1]
+        continue
+      }
+      if (barAhead) {
+        barAhead = false
+        continue
+      }
+      const measure = measureOf[at]
+      while (at < measureOf.length && measureOf[at] === measure) {
+        placed.set(at, EMPTY_SYLLABLE)
+        at += 1
+      }
+      // The barline that ended the fill is the one this hint consumed.
+      barAhead = false
+    }
+    return placed
+  }
+
+  /**
    * Distribute `w:` syllables onto lyric-bearing events by position.
    *
    * Several `w:` lines after the same music line are successive verses of that line, and
@@ -1997,13 +2066,14 @@ class VoiceBuilder {
    */
   private applyLyrics(): void {
     if (this.lyricLines.length === 0) return
+    const measureOf = this.measureOfNote()
     const verses: Map<number, Syllable>[] = []
     const verseOfStart = new Map<number, number>()
     for (const line of this.lyricLines) {
       const verse = verseOfStart.get(line.start) ?? 0
       verseOfStart.set(line.start, verse + 1)
       while (verses.length <= verse) verses.push(new Map())
-      line.syllables.forEach((syllable, offset) => {
+      this.alignSyllables(line.syllables, line.start, measureOf).forEach((syllable, at) => {
         /**
          * **A `*` IS AN EMPTY SYLLABLE, NOT AN ABSENT ONE — MEASURED, NOT LANDED.**
          *
@@ -2021,7 +2091,7 @@ class VoiceBuilder {
          * `versesHere` by non-empty text — which 19 new empty lyrics would change. One
          * row of the sibling byte table.
          */
-        verses[verse]?.set(line.start + offset, syllable)
+        verses[verse]?.set(at, syllable)
       })
     }
 
@@ -7401,7 +7471,11 @@ function parseFontSpec(spec: string, defaultPt: number = DEFAULT_VOCALFONT_PT): 
  * they differ in what a renderer draws.
  */
 interface Syllable {
-  kind: 'text' | 'skip' | 'melisma'
+  /**
+   * `bar` is a `|` ALIGNMENT HINT, and unlike the other three it occupies no note: it
+   * waits for the next BARLINE. See `alignSyllables`.
+   */
+  kind: 'text' | 'skip' | 'melisma' | 'bar'
   text: string | null
   range: SourceRange | null
   /**
@@ -7427,6 +7501,13 @@ interface Syllable {
    */
   melismaDivider?: boolean
 }
+
+/**
+ * **abcjs's `{syllable: "", divider: " "}`** — the entry a hint's wait pushes onto every
+ * element it passes. Covered by the line, sung as nothing: it draws `&nbsp;`, where a note
+ * the line never reached draws no lyric at all.
+ */
+const EMPTY_SYLLABLE: Syllable = { kind: 'skip', text: null, range: null, font: null }
 
 /**
  * Split a `w:` line into per-note syllables.
@@ -7460,7 +7541,12 @@ function parseLyricSyllables(
     const tokenStart = i
     while (i < text.length && text[i] !== ' ') i++
     const token = text.slice(tokenStart, i)
-    if (token === '|') continue // alignment hint, not a note
+    // …and a standalone `|` is the same hint. `flush` has nothing to flush here, so this
+    // pushes the entry directly rather than falling into the scan below.
+    if (token === '|') {
+      out.push({ kind: 'bar', text: null, range: null, font: null })
+      continue
+    }
 
     // Scan the token: `-` ends a syllable and keeps its hyphen; `_` ends one and emits a
     // hold; `*` ends one and skips a note. All three are SEPARATORS, so an attached one
@@ -7512,18 +7598,17 @@ function parseLyricSyllables(
         out.push({ kind: 'skip', text: null, range: null, font: null })
         bufferStart = j + 1
       } else if (ch === '|') {
-        // A bar hint aligns the line to the next barline and occupies NO note, so unlike
-        // `*` it emits nothing. Attached as often as standalone — `a |rin,` is real
-        // corpus text, and leaving it in the buffer put a pipe inside the syllable.
-        // ponytail: dropped rather than honoured. Honouring it means re-aligning the
-        // remaining syllables to the next barline, which needs the barline positions the
-        // lyric pass does not have.
-        // ⚠️ MEASURED 2026-09-08 AND IT IS A DEFECT, not a harmless drop
-        // (`scripts/zzledger.mjs`): `w:a b|c d e f g h` over `CDEF|GABc|` puts abcjs's `c`
-        // on the FIRST NOTE OF BAR 2 and `&nbsp;` on note 3, where ours puts `c` on note 3
-        // — every syllable after a hint is on the wrong note. Declared in
-        // ABCJS-DIFFERENCES.md.
+        // A bar hint aligns the line to the next barline and occupies NO note. Attached as
+        // often as standalone — `a |rin,` is real corpus text, and leaving it in the
+        // buffer put a pipe inside the syllable.
+        //
+        // ✅ HONOURED SINCE 2026-09-09. It used to be DROPPED, and `scripts/zzledger.mjs`
+        // measured that as a defect: `w:a b|c d e f g h` over `CDEF|GABc|` puts abcjs's
+        // `c` on the FIRST NOTE OF BAR 2 and `&nbsp;` on note 3, where ours put `c` on
+        // note 3 — every syllable after a hint on the wrong note. `alignSyllables` is the
+        // distribution loop that reads it.
         flush(j, false)
+        out.push({ kind: 'bar', text: null, range: null, font: null })
         bufferStart = j + 1
       } else {
         if (buffer === '') bufferStart = j

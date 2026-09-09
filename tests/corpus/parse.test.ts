@@ -481,9 +481,17 @@ describe("lyrics", () => {
    * (`abstract-engraver.js:779-784`, `draw/text.js:44-46`). `null` now means the `w:`
    * lines never covered this note; `''` means they did and gave it nothing.
    */
-  it("treats * as an EMPTY syllable and | as an alignment hint occupying none", () => {
+  /**
+   * ⚠️ **AND THIS ROW ASSERTED THE DROP RATHER THAN THE HINT** — corrected 2026-09-09.
+   * It expected `["Do", "", "Mi", "Fa"]`, on the reading that a `|` occupies no note and
+   * so changes nothing. It occupies no note and it does change something: the hint WAITS
+   * for the next barline, and every element it waits through takes an EMPTY syllable
+   * (`abc_parse.js:286-313`). Probed against abcjs 6.7.0 — `Do`, then three empties, and
+   * `Mi Fa` never reach a note at all, because the bar ends the line's elements.
+   */
+  it("treats * as an EMPTY syllable and | as a wait for the next barline", () => {
     const notes = notesOf("X:1\nL:1/4\nK:C\nCDEF|\nw:Do * | Mi Fa\n");
-    expect(notes.map((n) => n.lyric)).toEqual(["Do", "", "Mi", "Fa"]);
+    expect(notes.map((n) => n.lyric)).toEqual(["Do", "", "", ""]);
     // `*` is nothing sung — NOT a held syllable.
     expect(notes.map((n) => n.lyricMelisma)).toEqual([
       false,
@@ -491,6 +499,50 @@ describe("lyrics", () => {
       false,
       false,
     ]);
+  });
+
+  /**
+   * **THE `|` HINT, THE FOUR SHAPES THAT PIN THE RULE** — every expectation here was
+   * probed against abcjs 6.7.0 (`parseOnly`, reading `el.lyric` per element), never
+   * reasoned from its source alone.
+   *
+   * abcjs walks the line's ELEMENTS with the syllables as a queue, so the hint is a
+   * `{skip: true, to: 'bar'}` consumed by the next BAR element while every element it
+   * waits through takes an empty syllable (`abc_parse.js:286-313`). The four rows are the
+   * four ways that differs from "skip to the next measure": a hint mid-measure blanks the
+   * rest of it, a hint AT a barline blanks nothing, two hints take two barlines, and a
+   * leading hint blanks the first measure rather than being free.
+   */
+  describe("a | alignment hint waits for the next barline", () => {
+    const lyricsOf = (abc: string) => notesOf(abc).map((n) => n.lyric);
+
+    it("blanks the rest of the measure it sits in", () => {
+      expect(lyricsOf("X:1\nL:1/4\nK:C\nCDEF|GABc|\nw:a b|c d e f g h\n")).toEqual([
+        "a", "b", "", "", "c", "d", "e", "f",
+      ]);
+    });
+
+    it("blanks NOTHING when it already sits at a barline", () => {
+      // The barline is consumed by whichever hint is at the head as the walk crosses it,
+      // so a hint written exactly there costs no note at all.
+      expect(lyricsOf("X:1\nL:1/4\nK:C\nCDEF|GABc|\nw:a b c d|e f g h\n")).toEqual([
+        "a", "b", "c", "d", "e", "f", "g", "h",
+      ]);
+    });
+
+    it("takes one barline each, so two in a row skip two measures", () => {
+      expect(lyricsOf("X:1\nL:1/4\nK:C\nCDEF|GABc|defg|\nw:a b||c d\n")).toEqual([
+        "a", "b", "", "", "", "", "", "", "c", "d", null, null,
+      ]);
+    });
+
+    it("blanks the first measure when it opens the line", () => {
+      // A line's elements hold the barlines that END its measures, so there is no bar
+      // before the first note for a leading hint to be consumed by.
+      expect(lyricsOf("X:1\nL:1/4\nK:C\nCDEF|GABc|\nw:|a b c d\n")).toEqual([
+        "", "", "", "", "a", "b", "c", "d",
+      ]);
+    });
   });
 
   it("distinguishes _ (melisma) from * (skip)", () => {
