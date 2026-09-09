@@ -839,9 +839,20 @@ const ours = (key: string): string => {
       );
     const tune = parsedOf.get(slug ?? "")?.[Number(at)];
     if (tune === undefined) return "NO SUCH TUNE";
+    /**
+     * ⚠️ **THIS READ `Array.isArray(r) ? r[0] : r`, AND THAT NORMALISATION HID A DEFECT IN
+     * THE VERY ENTRY POINT THIS GATE EXISTS TO PROVE.** abcjs's object arm is
+     * `return callback(null, source, 0)` — one string (`synth/get-midi-file.js:37-40`) —
+     * and ours returned `[string]`, so a host reading the documented shape got an array.
+     * Written to make the gate work rather than to state the contract; found 2026-09-09
+     * by the NEGATIVE CONTROL of a new harness, where a plain tune differed and no defect
+     * could explain it.
+     *
+     * The shape is asserted here now: an array is a FAILURE, not something to unwrap.
+     */
     const r = synth.getMidiFile(tune, { midiOutputType: "encoded" });
-    const first = Array.isArray(r) ? r[0] : r;
-    return typeof first === "string" ? first : `NOT A STRING: ${typeof first}`;
+    if (Array.isArray(r)) return "AN ARRAY: one tune object yields ONE string";
+    return typeof r === "string" ? r : `NOT A STRING: ${typeof r}`;
   } catch (e) {
     return `THREW: ${e instanceof Error ? e.message : String(e)}`;
   }

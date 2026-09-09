@@ -3940,6 +3940,37 @@ class Parser {
         builder.voiceFor(builder.declaredVoiceId).color = voiceColor[1]
       return
     }
+    /**
+     * **`%%voicescale <float>` — THE SAME DIRECTIVE AS `V:… scale=`, WRITTEN AS A LINE.**
+     *
+     * `multilineVars.currentVoice.scale = voiceScale.floatt` (`abc_parse_directive.js:854-862`)
+     * — the arm directly above `voicecolor`'s and guarded the same way, so it applies to
+     * the last `V:` FIELD and does nothing at all when no `V:` has been written. Same
+     * `Voice.scale` the `V:` modifier sets, so nothing downstream is new.
+     *
+     * ⚠️ **MEASURED 2026-09-09 (`scripts/zzledger.mjs`): it was UNIMPLEMENTED AND WARNED.**
+     * `%%voicescale 1.5` after a `V:1` renders 96.81px tall in abcjs and rendered 94.79
+     * here, and both spellings raised `Unknown directive` — a warning abcjs does not,
+     * which the warnings gate cannot see because no corpus tune writes one.
+     *
+     * abcjs REQUIRES a number and says so: "voicescale requires one float as a parameter".
+     */
+    const voiceScaleDirective = /^voicescale(?:\s+(\S+))?\s*$/.exec(body)
+    if (voiceScaleDirective !== null) {
+      const raw = voiceScaleDirective[1]
+      const value = raw === undefined ? Number.NaN : Number(raw)
+      if (!Number.isFinite(value)) {
+        this.warn(
+          'directive-parameter',
+          'voicescale requires one float as a parameter',
+          sourceRange(start, end),
+        )
+        return
+      }
+      const builder = this.ensureScore(start)
+      if (builder.declaredVoiceId !== null) builder.voiceFor(builder.declaredVoiceId).scale = value
+      return
+    }
     // ⚠️ **`\s+` MADE A BARE `%%center` UNKNOWN.** abcjs's switch matches on the COMMAND
     // alone and hands `restOfString` on whatever it is, so `%%center` with nothing after it
     // is a centred EMPTY line and warns nothing at all. Ours fell through to
@@ -6794,12 +6825,26 @@ class Parser {
         pitches,
         duration,
         notatedDuration: duration,
-        // EVERY head tied is the whole-chord form, which `-` after the bracket writes and
-        // the audio already understands; a PARTIAL set is the per-pitch one.
-        tiedToNext: innerTies.length > 0 && innerTies.every(Boolean),
-        ...(innerTies.some(Boolean) && !innerTies.every(Boolean)
-          ? { tiedPitches: innerTies }
-          : {}),
+        /**
+         * **A `-` INSIDE THE BRACKET IS NEVER THE WHOLE-CHORD FORM, EVEN ON EVERY HEAD.**
+         *
+         * This read `innerTies.every(Boolean)` and collapsed `[C-E-]` into `tiedToNext`,
+         * on the reasonable-looking rule that every head tied is the same thing as the
+         * chord being tied. abcjs keeps two mechanisms apart by WHERE THE MARK IS WRITTEN,
+         * not by how many heads carry one: a mark inside the bracket sets
+         * `multilineVars.inTieChord[position]`, which only the chord loop reads, and one
+         * after it sets `isInTie`, which the next element reads whatever it is
+         * (`abc_parse_music.js:381-386` against `:529-536`).
+         *
+         * Measured 2026-09-09: `[C-E-]C|` sounds C 0.25, E 0.25, C 0.25 in abcjs — the
+         * single note is not a chord, so neither tie closes — where `[CE]-C|` merges. We
+         * sounded C 0.5. See `chordTies` in `src/audio/flatten.ts`.
+         *
+         * `tiedToNext` on a chord is now the after-bracket mark alone, which the tie
+         * handler sets on the element after the fact.
+         */
+        tiedToNext: false,
+        ...(innerTies.some(Boolean) ? { tiedPitches: innerTies } : {}),
         slurStarts: 0,
         slurEnds: 0,
         graceNotes: [],

@@ -968,9 +968,13 @@ export interface Chord {
    * three controls and abcjs's algorithm (`abc_midi_flattener.js:287-325`: per-PITCH
    * duration, the tied head NULLED out of the later element, `element.duration` deleted).
    *
-   * ponytail: the FLATTENER still reads `tiedToNext` alone, so a partly-tied chord
-   * re-articulates every head. No audio gate covers one; give the flattener the same list
-   * when one turns up.
+   * ✅ **THE FLATTENER READS THIS SINCE 2026-08-22, AND SINCE 2026-09-09 IT READS IT THE
+   * WAY abcjs DOES.** A mark INSIDE the bracket is `multilineVars.inTieChord[position]`,
+   * which only the chord loop reads, where a mark AFTER it is `isInTie`, which the next
+   * element reads whatever it is (`abc_parse_music.js:381-386` against `:529-536`). So
+   * this list is positional and waits for the next CHORD however far away, and
+   * `tiedToNext` is the after-bracket mark alone — `[C-E-]` is NOT `[CE]-`, which this
+   * parser used to collapse. See `chordTies` in `src/audio/flatten.ts`.
    */
   readonly tiedPitches?: readonly boolean[]
   /**
@@ -1881,8 +1885,10 @@ export interface Score {
    * `spacing.staffSeparation` that any non-music line standing before the first staff
    * costs (`draw/draw.js`, new in 6.7.0), which is 61.33px.
    *
-   * ponytail: the HEADER position only, which is what `abcts-directives` tune 9 measures.
-   * A mid-tune one would be a line where it stands.
+   * ✅ **THE HEADER POSITION ONLY, AND A MID-TUNE ONE IS `Measure.newPageBefore`** —
+   * closed 2026-09-09. A header one is `lines[0]` and spends the `staffSeparation` a
+   * non-music line before the first staff spends; a mid-tune one spends nothing and is
+   * simply a line where it stands.
    */
   readonly newPage: number | null
   /** Where `%%newpage` was written, so the projection can slot its LINE in source order. */

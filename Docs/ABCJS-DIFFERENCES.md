@@ -171,6 +171,55 @@ It fired four times in eighteen controls, twice on my own witness (a hairpin's e
   separation for both — and put the line at index 0 in both, `["newpage","staff","staff"]`
   against abcjs's `["staff","newpage","staff"]`. `Measure.newPageBefore` is where it stands.
 
+### AND THE SWEEP'S SECOND HALF — the markers no SVG control can reach
+
+`scripts/zzledger.mjs` diffs SVG. The audio markers needed their own harness (both engines
+in one page, `setUpAudio().tracks` and `synth.getMidiFile`), and **its NEGATIVE CONTROL —
+a plain four-note tune — differed on the first run.**
+
+- ✅ **`getMidiFile` ON A TUNE OBJECT RETURNS A STRING, NOT AN ARRAY.**
+  `if (typeof source === "string") return tunebook.renderEngine(…); else return
+  callback(null, source, 0)` (`synth/get-midi-file.js:37-40`). Ours wrapped both arms in an
+  array. ⚠️ **And `tests/midi-bytes.test.ts` normalised it away** — `Array.isArray(r) ?
+  r[0] : r`, written to make the gate work rather than to state the contract — so the gate
+  that exists to prove this entry point could not see the entry point was wrong. It asserts
+  the shape now.
+
+- ✅ **`%%voicescale` WAS UNIMPLEMENTED AND WARNED.** The arm three lines above
+  `%%voicecolor`'s and guarded identically, so it takes the same `declaredVoiceId` and does
+  nothing without a `V:`. `%%voicescale 1.5` after a `V:1` renders 96.81px tall in abcjs and
+  rendered 94.79 here, and BOTH spellings raised `Unknown directive` — a warning abcjs does
+  not raise, invisible to the warnings gate because no corpus tune writes one.
+
+- ✅ **A TIE MARK INSIDE A CHORD IS A DIFFERENT MECHANISM FROM ONE AFTER IT**, and the
+  difference is not how many heads carry one. Inside the bracket sets
+  `multilineVars.inTieChord[<position>]`, read ONLY by the chord loop; after it sets
+  `isInTie`, read by the next element whatever it is (`abc_parse_music.js:381-386` against
+  `:529-536`). Probed through abcjs 6.7.0:
+
+  | | abcjs | abcts, before |
+  |---|---|---|
+  | `[C-E]C\|` | three notes — a single note is not a chord | C 0.5: merged |
+  | `[C-E-]C\|` | the same; every head tied changes nothing | C 0.5 — the parser collapsed it into `[CE]-` |
+  | `[C-E]z[CE]\|` | C 0.5 — a rest does not kill it, where `C-z C` dies | died at the rest |
+  | `[C-E]D[CE]\|` | C 0.5 — nor does an intervening note | died at the note |
+  | `[C-E][EC]\|` | no merge — POSITION 0 is E there | merged by name |
+  | `[CE]-C\|` | C 0.5 — the after-bracket mark does reach a note | agreed |
+
+  `chordTies` in `src/audio/flatten.ts` is the positional table; `tests/chord-tie.test.ts`
+  holds all six rows.
+
+  ⚠️ **AND THE DRAWING OF THE SAME SHAPES IS STILL OPEN, MEASURED AND NOT LANDED.** Four
+  controls differ in the SVG and differed identically before this work, so it is a separate
+  seam rather than a regression: `[CE]-C|` draws abcjs's tie from 76.85 to 159.70 where ours
+  runs 76.85 to 117.27, and `[C-E]C|`, `[C-E-]C|` and `[C-E]z[CE]|` come out 106.24px tall
+  against abcjs's 102.37 — a RESERVE difference, not a curve one. No corpus fixture writes
+  a chord-internal tie, which is why `svg-bytes` reads zero through all four.
+
+  ⚠️ **Two predictions HELD and are now dated rather than standing**: an `&` overlay on the
+  second staff only, and a meter change on the last line of voice 0 alone, are both
+  byte-exact MIDI.
+
 ### ⚠️ AND THE FOURTH IS MEASURED, NOT LANDED — `style=` LEAKS BETWEEN VOICES
 
 Declared in `scripts/zzledger.mjs`'s `KNOWN`. **The marker's cause was right and this

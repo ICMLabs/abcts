@@ -86,3 +86,84 @@ describe("a tie inside a chord", () => {
     ]);
   });
 });
+
+/**
+ * **AND THE MARK'S POSITION IS A DIFFERENT MECHANISM, NOT A SHORTHAND — MEASURED
+ * 2026-09-09.**
+ *
+ * abcjs has two tie states and they are told apart by WHERE THE `-` IS WRITTEN, never by
+ * how many heads carry one:
+ *
+ *   inside the bracket   `multilineVars.inTieChord[<position>]`, read ONLY by the chord
+ *                        loop (`abc_parse_music.js:381-386`)
+ *   after the bracket    `isInTie`, read by the next element whatever it is (`:529-536`)
+ *
+ * So a `[C-E]` waits for the next CHORD, however far away, and stamps `endTie` on whatever
+ * pitch stands at that POSITION; the flattener then merges only if the pitch matches. Every
+ * row below was probed through abcjs 6.7.0 in WebKit, `setUpAudio().tracks`:
+ *
+ *     [C-E]C|        C 0.25, E 0.25, C 0.25   a single note is not a chord: no tie at all
+ *     [C-E-]C|       the same                 EVERY head tied changes nothing
+ *     [C-E]z[CE]|    C 0.5                    a rest does not kill it, where `C-z C` dies
+ *     [C-E]D[CE]|    C 0.5                    nor does an intervening NOTE
+ *     [C-E][EC]|     no merge                 position 0 is E there: the pitch misses
+ *     [C-E][GE]|     no merge                 same, with a pitch in neither chord
+ *     [CE]-C|        C 0.5                    the after-bracket mark DOES reach a note
+ *
+ * We closed it by NAME on the next element, so `[C-E]C|` merged and `[C-E]z[CE]|` died at
+ * the rest — and the parser collapsed `[C-E-]` into the after-bracket form. See
+ * `chordTies` in `src/audio/flatten.ts`.
+ */
+describe("where the tie mark is written decides what can close it", () => {
+  it("does NOT reach a single note from inside the bracket", () => {
+    expect(notes("[C-E]C|")).toEqual([
+      [60, 0, 0.25],
+      [64, 0, 0.25],
+      [60, 0.25, 0.25],
+    ]);
+  });
+
+  it("does not reach one even when EVERY head carries a mark", () => {
+    // The collapse this file's parser used to make: `[C-E-]` is not `[CE]-`.
+    expect(notes("[C-E-]C|")).toEqual([
+      [60, 0, 0.25],
+      [64, 0, 0.25],
+      [60, 0.25, 0.25],
+    ]);
+  });
+
+  it("DOES reach a single note from after the bracket", () => {
+    // The control that keeps the two mechanisms apart: same notes, mark moved.
+    expect(notes("[CE]-C|")).toEqual([
+      [60, 0, 0.5],
+      [64, 0, 0.25],
+    ]);
+  });
+
+  it("survives a rest, a note and a barline to reach the next chord", () => {
+    expect(notes("[C-E]z[CE]|")).toEqual([
+      [60, 0, 0.5],
+      [64, 0, 0.25],
+      [64, 0.5, 0.25],
+    ]);
+    expect(notes("[C-E]D[CE]|")).toEqual([
+      [60, 0, 0.5],
+      [64, 0, 0.25],
+      [62, 0.25, 0.25],
+      [64, 0.5, 0.25],
+    ]);
+  });
+
+  it("closes at the POSITION it opened, so a reordered chord misses", () => {
+    // `[EC]` has E at POSITION 0, where the tie is: the pitch does not match and both
+    // chords sound in full. A name-keyed reading merges here, which is what ours did.
+    // (The heads come out in PITCH order, not source order — both engines, and the MIDI
+    // bytes agree on this tune, which is where that order is observable.)
+    expect(notes("[C-E][EC]|")).toEqual([
+      [60, 0, 0.25],
+      [64, 0, 0.25],
+      [60, 0.25, 0.25],
+      [64, 0.25, 0.25],
+    ]);
+  });
+});

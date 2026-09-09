@@ -1106,6 +1106,29 @@ function sequenceVoice(
   const { durationsOf, positionOf } = writtenTimeline(voice, score.meter)
   /** Open ties, keyed by written pitch, holding the index into `out` that owns them. */
   const ties = new Map<string, number>()
+  /**
+   * **A TIE WRITTEN INSIDE A CHORD IS A DIFFERENT MECHANISM, KEYED BY POSITION.**
+   *
+   * abcjs has two: `isInTie` for a mark after the element, consumed by the NEXT element
+   * whatever it is, and `multilineVars.inTieChord[<position in the chord>]` for a mark
+   * inside one, which **only the chord-parsing loop reads**
+   * (`abc_parse_music.js:381-386` against `:529-536`). So a `[C-E]` waits for the next
+   * CHORD, however far away, and stamps `endTie` on whatever pitch stands at that
+   * POSITION — the flattener then merges only if the pitch actually matches. Probed
+   * against abcjs 6.7.0:
+   *
+   *     [C-E]C|        C 0.25, C 0.25   the single note is not a chord: NO tie at all
+   *     [C-E]z[CE]|    C 0.5            the rest does not kill it, where `C-z C` dies
+   *     [C-E]D[CE]|    C 0.5            nor does an intervening NOTE
+   *     [C-E]|[CE]|    C 0.5            nor a barline
+   *     [C-E][CE]|     C 0.5            the ordinary case
+   *     [C-E][EC]|     C 0.25, no merge POSITION 0 is E there, so the pitch misses
+   *     [C-E][GE]|     C 0.25, no merge same, with a pitch that is in neither
+   *
+   * Ours closed it by NAME on the next element, so it merged into a single note and died
+   * at a rest — the two rows that differ above, found by the second ledger sweep.
+   */
+  const chordTies = new Map<number, { at: number; name: string }>()
   const durations: number[] = []
 
   for (const { measure, take } of resolveRepeats(voice.measures)) {
@@ -1259,25 +1282,44 @@ function sequenceVoice(
          * a head that closes a tie and opens another carries the duration forward, which is
          * the `open as number` arm the note path has.
          */
-        const flags =
-          event.tiedPitches ?? (event.tiedToNext ? event.pitches.map(() => true) : [])
+        // `[CEG]-` — the WHOLE-chord form, which is `isInTie` and closes by name on the
+        // next element. `tiedPitches` is the other mechanism entirely; see `chordTies`.
+        const whole = event.tiedToNext === true
+        const heads = event.tiedPitches ?? []
         for (const [k, head] of event.pitches.entries()) {
           const name = `${head.step}${head.octave}`
           touched.add(name)
           const open = ties.get(name)
           let carried = false
+          /** Where the head this one continues was written, for either mechanism. */
+          let opener = open
           if (open !== undefined) {
-            const item = out[open]
+            carried = true
+            ties.delete(name)
+          }
+          // …**AND THE POSITIONAL ONE IS CONSUMED WHATEVER STANDS HERE**, because abcjs's
+          // parser stamps `endTie` on that position before its flattener ever looks at the
+          // pitch. A miss therefore ends the tie rather than holding it open.
+          const positional = chordTies.get(k)
+          if (positional !== undefined) {
+            chordTies.delete(k)
+            if (!carried && positional.name === name) {
+              carried = true
+              opener = positional.at
+            }
+          }
+          if (carried && opener !== undefined) {
+            const item = out[opener]
             if (item !== undefined) {
               const extra = item.tieExtra ?? new Map<string, number>()
               extra.set(name, (extra.get(name) ?? 0) + dur)
               ;(item as { tieExtra?: Map<string, number> }).tieExtra = extra
             }
             ;(silenced ??= new Set()).add(name)
-            carried = true
-            ties.delete(name)
           }
-          if (flags[k] === true) ties.set(name, carried ? (open as number) : out.length)
+          const at = carried && opener !== undefined ? opener : out.length
+          if (whole) ties.set(name, at)
+          if (heads[k] === true) chordTies.set(k, { at, name })
         }
         // …and a chord EVERY head of which was tied into is silent outright, which is what
         // the whole-event flag already says.

@@ -93,6 +93,10 @@ const CASES = [
     `${H}K:C\n[^C^D^E]4|\n`],
   ['parser.ts:4914', 'a header K: style= over TWO voices — the engraver leak',
     `${H}%%score (1 2)\nV:1\nV:2\nK:C style=rhythm\nV:1\nCDEF|\nV:2\nGABc|\n`],
+  ['directive:voicescale', '%%voicescale — the arm beside %%voicecolor, guarded the same way',
+    `${H}V:1\n%%voicescale 1.5\nK:C\nCDEF|\n`],
+  ['directive:voicescale2', 'a SECOND %%voicescale mid-tune, which abcjs applies FROM THERE',
+    `${H}V:1\n%%voicescale 1.5\nK:C\nCDEF|\n%%voicescale 0.6\nGABc|\n`],
 ]
 
 const engine = process.env.ENGINE === 'chrome'
@@ -115,6 +119,7 @@ if (ready.abcjs !== 'function' || ready.abcts !== 'function')
  * it is fixed and this goes red if it was not.
  */
 const KNOWN = new Map([
+  ['directive:voicescale2', "abcjs appends a `scale` ELEMENT, so the FIRST line keeps 1.5; ours holds one scale per voice and applies the last to both"],
   ['parser.ts:4914', "abcjs's `this.style` is engraver state that no voice restores, so voice 2 inherits voice 1's; ours is per voice at parse time"],
   // ✅ layout.ts:3564 — FIXED 2026-09-09, and the row was a symptom of a bigger one: the
   // tempo mark has its OWN note table (`tempo-element.js:32-44`) and we were reading it

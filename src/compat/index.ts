@@ -1854,10 +1854,23 @@ export const synth = {
    * PORTED AT THE SITE THAT NAMED IT IS NOT A RULE PORTED**, for the third time in this
    * repo after `printStem`'s rounding and the `centerVertically` flag.
    */
+  /**
+   * ⚠️ **AND THE OBJECT ARM RETURNS A BARE VALUE, WHERE THE STRING ARM RETURNS AN ARRAY.**
+   * `if (typeof source === "string") return tunebook.renderEngine(…); else return
+   * callback(null, source, 0)` (`synth/get-midi-file.js:37-40`) — the callback's own
+   * return, one string. Ours wrapped both in an array, so a host reading the documented
+   * shape got `["data:audio/midi,…"]`.
+   *
+   * ⚠️ **AND `tests/midi-bytes.test.ts` NORMALISED IT AWAY** — `Array.isArray(r) ? r[0] :
+   * r`, written to make the gate work rather than to state the contract, so the gate that
+   * exists to prove this entry point could not see the entry point was wrong. Found
+   * 2026-09-09 by the NEGATIVE CONTROL of a new harness: a plain tune differed, which no
+   * defect could explain.
+   */
   getMidiFile(
     source: string | TuneObject | readonly TuneObject[],
     options: MidiFileParams = {},
-  ): (string | Uint8Array)[] {
+  ): string | Uint8Array | (string | Uint8Array)[] {
     /**
      * ⚠️ **A NON-STRING SOURCE IS ONE TUNE, NOT AN ARRAY OF THEM.** abcjs's else arm is
      * `return callback(null, source, 0)` (`synth/get-midi-file.js:40`) — `source` goes
@@ -1879,7 +1892,7 @@ export const synth = {
       typeof source === "string"
         ? (renderEngine((_el, tune) => tune, "*", source, {}) as TuneObject[])
         : one(source);
-    return getMidiFileFor(
+    const files = getMidiFileFor(
       tunes.map((t) => t.score),
       // The MIDI track name, which is the title as a plain string — a RICH title is not one
       // and abcjs's own writer would put `[object Object]` there, so it is skipped instead.
@@ -1888,6 +1901,11 @@ export const synth = {
       ),
       options,
     );
+    // ONE TUNE OBJECT IN, ONE FILE OUT — see the note above. A string source and our own
+    // array extension both keep the array.
+    return typeof source === "string" || Array.isArray(source)
+      ? files
+      : (files[0] as string | Uint8Array);
   },
 };
 
