@@ -105,6 +105,7 @@ describe("parse: simple-c", () => {
       lyricMelisma: false,
       lyricMelismaStart: false,
       extraVerses: [],
+      extraVerseMelismaStarts: [],
       style: "normal",
       microtoneCents: 0,
       tuplet: null,

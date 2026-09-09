@@ -646,6 +646,16 @@ export interface Note {
   readonly lyricMelismaStart: boolean
   /** Verses 2..n, parallel and positional — null where a verse skips this event. */
   readonly extraVerses: readonly (string | null)[]
+  /**
+   * `lyricMelismaStart` for verses 2..n, parallel to `extraVerses`.
+   *
+   * abcjs appends the divider to EVERY verse of a note, not to the first —
+   * `elem.lyric.forEach(ly => lyricStr += ly.syllable + div + "\n")`
+   * (`abstract-engraver.js:769-774`) — so `w:a_ b` over `w:e_ f` prints `e_` on the
+   * second row as well. Tracking the flag on verse 1 alone dropped it, which
+   * `scripts/zzledger.mjs` measured as a strict-mode byte divergence.
+   */
+  readonly extraVerseMelismaStarts: readonly boolean[]
   readonly style: NoteStyle
   /**
    * **THE `!style=x!` DECORATION ALONE**, where `style` is the effective one — the
@@ -1017,6 +1027,16 @@ export interface Chord {
   readonly lyricMelismaStart: boolean
   /** Verses 2..n, parallel and positional — null where a verse skips this event. */
   readonly extraVerses: readonly (string | null)[]
+  /**
+   * `lyricMelismaStart` for verses 2..n, parallel to `extraVerses`.
+   *
+   * abcjs appends the divider to EVERY verse of a note, not to the first —
+   * `elem.lyric.forEach(ly => lyricStr += ly.syllable + div + "\n")`
+   * (`abstract-engraver.js:769-774`) — so `w:a_ b` over `w:e_ f` prints `e_` on the
+   * second row as well. Tracking the flag on verse 1 alone dropped it, which
+   * `scripts/zzledger.mjs` measured as a strict-mode byte divergence.
+   */
+  readonly extraVerseMelismaStarts: readonly boolean[]
   readonly style: NoteStyle
   /**
    * **THE `!style=x!` DECORATION ALONE**, where `style` is the effective one — the

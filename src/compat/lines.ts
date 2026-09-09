@@ -1093,24 +1093,22 @@ function noteFields(
      * (`abc_parse.js:231-241`). So a syllable a `_` HOLDS OVER carries `_`, not a space —
      * and `lyricMelismaStart` is already the flag for "a hold follows this one".
      *
-     * ponytail: verse 1 only, because `lyricMelismaStart` is. `extraVerses` is a bare
-     * `(string|null)[]` with nowhere to put a per-verse melisma — the same limitation the
-     * DRAWING has, recorded on `Note.lyricMelisma`. No fixture in either corpus holds a
-     * syllable in a LATER verse.
+     * ✅ **PER VERSE SINCE 2026-09-09** — `Note.extraVerseMelismaStarts`. It was verse 1
+     * only, and `scripts/zzledger.mjs` measured that as a defect: two `w:` lines, `a_ b c
+     * d` over `e_ f g h`, where abcjs draws `e_` on verse 2 and we drew `e`. abcjs reads
+     * the divider off each verse's OWN syllable, so nothing about it is first-verse.
      *
-     * ⚠️ **A CONTROL NOW DOES, AND IT IS A DEFECT** (`scripts/zzledger.mjs`, 2026-09-08).
-     * Two `w:` lines, `a_ b c d` over `e_ f g h`: abcjs draws `e_` on verse 2 and we draw
-     * `e`. Strict's whole contract on a melisma is to print abcjs's literal `_`, so losing
-     * it on every verse but the first is a byte divergence rather than a coverage gap.
-     * Fixing it means a per-verse melisma flag through the model, the parser and the
-     * drawing — the `(string|null)[]` is the blocker and it is three layers wide. Declared
-     * in `ABCJS-DIFFERENCES.md`.
+     * ⚠️ **AND THE FLAG IS ZIPPED BEFORE THE FILTER, NOT AFTER.** `entries` is DENSE, as
+     * abcjs's `el.lyric` is — a verse that never covered this note contributes nothing —
+     * so an entry's index is not its verse's. Reading the flag by the filtered index puts
+     * verse 1's underscore on verse 2 whenever the first `w:` line skips the note.
      */
+    const starts = [event.lyricMelismaStart, ...event.extraVerseMelismaStarts];
     const entries = [event.lyric, ...event.extraVerses]
-      .filter((v): v is string => v !== null)
-      .map((v, verse) => {
+      .map((v, verse) => ({ v, held: starts[verse] === true }))
+      .filter((e): e is { v: string; held: boolean } => e.v !== null)
+      .map(({ v, held }) => {
         const hyphen = v.endsWith("-");
-        const held = verse === 0 && event.lyricMelismaStart === true;
         return {
           syllable: hyphen ? v.slice(0, -1) : v,
           divider: hyphen ? "-" : held ? "_" : " ",

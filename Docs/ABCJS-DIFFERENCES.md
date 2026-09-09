@@ -13,20 +13,20 @@ import { parse, render } from 'abcts'      // render(score, { mode: 'abcjs-exten
 
 ---
 
-## ⚠️ FOUR MEASURED, NOT LANDED — found by sweeping the `ponytail:` ledger, 2026-09-08
+## ⚠️ TWO MEASURED, NOT LANDED — found by sweeping the `ponytail:` ledger, 2026-09-08
 
 These are **abcts diverging from abcjs in STRICT mode**, which is a defect rather than a
 divergence: strict has no latitude. Each was found by writing the control a `ponytail:`
 marker predicted nobody would write, and each is gated by `scripts/zzledger.mjs` — 16
-controls, both engines live in one browser, `KNOWN` naming exactly these four. **12 of the
-16 predictions held**; these are the four that did not.
+controls, both engines live in one browser, `KNOWN` naming exactly the open ones. **12 of
+the 16 predictions held**; these are the four that did not, two of them since closed.
 
 | control | abcjs | abcts |
 |---|---|---|
 | `Q:3/32=60` | no flag, and the mark in `#ff0000` — its own error colour | `flags.u16th`, a normal mark |
 | ~~`K:D#` and 47 other spellings~~ | ✅ **FIXED 2026-09-08** — see below | |
 | `w:a b\|c d` — a bar hint | `c` on the first note of bar 2, `&nbsp;` on note 3 | `c` on note 3 |
-| a melisma on verse 2 | `e_` | `e` |
+| ~~a melisma on verse 2~~ | ✅ **FIXED 2026-09-09** — see below | |
 
 **Why written down rather than fixed** — the rule this repo has paid for more than once, *a
 half-understood fix is worth less than a written-down measurement*:
@@ -56,8 +56,23 @@ half-understood fix is worth less than a written-down measurement*:
 - **The tempo flag** is larger than its own marker predicted: abcjs colours the whole mark
   red, so reproducing it is an error path and not a missing glyph.
 - **The bar hint** needs barline positions the lyric pass does not have.
-- **The melisma** needs a per-verse flag through the model, the parser and the drawing;
-  `extraVerses` is a bare `(string|null)[]` and the blocker is three layers wide.
+- ✅ **The melisma — FIXED, and the "three layers wide" blocker was the estimate, not the
+  cause.** The note was right that the flag had to cross the model, the parser and the
+  drawing, and wrong that `extraVerses` had to stop being a `(string|null)[]` first: abcjs
+  reads the divider off each verse's OWN syllable
+  (`abstract-engraver.js:769-774`), so one parallel `readonly boolean[]` —
+  `Note.extraVerseMelismaStarts`, filled by the same lookahead verse 1 already used —
+  answers it. Under an hour, and the third standing "measured, not landed" note in a row
+  whose CAUSE was right and whose SIZE was wrong.
+
+  ⚠️ **And it exposed a latent one beside it.** The compat emitter's `lyric` array is
+  DENSE, as abcjs's `el.lyric` is, so an entry's index is not its verse's; reading the
+  flag after the filter would put verse 1's underscore on verse 2 for any note the first
+  `w:` line skips. The zip happens before the filter.
+
+  The underscore stays gated on `ABCJS_GAPS`, exactly as verse 1's is — extended
+  suppresses the literal — so this moves no mode-bytes row. `tests/lyric-verse-melisma.test.ts`
+  holds all three layers with the extended row as the negative control.
 
 ---
 
@@ -462,7 +477,11 @@ for every head in the chord.
 ### A melisma prints its underscore
 
 `_` in a `w:` line means "hold the previous syllable across this note", and engraving draws
-an extension line. abcjs prints the literal `_` character instead.
+an extension line. abcjs prints the literal `_` character instead — **on every verse that
+holds one**, since `addLyric` reads the divider off each verse's own syllable
+(`abstract-engraver.js:769-774`). Extended suppresses the literal on all of them; it
+strokes an extender for verse 1 only, which is a coverage gap in the extender pass rather
+than a second divergence, and costs no bytes against strict.
 
 ### Mid-tune `Q:` is not mid-tune
 

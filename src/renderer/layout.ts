@@ -6583,9 +6583,10 @@ function noteText(
   // font-free fixture in practice.
   //
   // Verse 1 only, because `lyricFont` is per event and `extraVerses` is a bare
-  // (string|null)[] with nowhere to put one — the same limitation melisma has, recorded
-  // on `lyricMelisma` in the model. A `%%vocalfont` between two `w:` lines under the same
-  // music therefore styles verse 1 and not verse 2.
+  // (string|null)[] with nowhere to put one. A `%%vocalfont` between two `w:` lines under
+  // the same music therefore styles verse 1 and not verse 2. The MELISMA used to share
+  // this limitation and no longer does — `extraVerseMelismaStarts` is a parallel array
+  // beside `extraVerses`, and a font could take the same shape.
   //
   // NO LONGER MODE-GATED — CORRECTED 2026-08-05, and the note that used to stand here was
   // wrong. It read: "abcjs stamps `el.fonts` at parse time and never reads `.fonts`
@@ -6683,9 +6684,25 @@ function noteText(
    * where abcjs draws `&nbsp;` then `燕`. abcjs has no such choice to make —
    * `elem.lyric.forEach` walks them in order and skips none.
    */
-  const sungAt = verses.findIndex((v) => v !== null)
-  const later = verses.filter((v, i) => i > sungAt && v !== null) as string[]
-  verses.forEach((raw, index) => {
+  /**
+   * **THE MELISMA `_` BELONGS TO EVERY VERSE THAT HOLDS ONE, NOT TO THE FIRST.**
+   * `elem.lyric.forEach(ly => lyricStr += ly.syllable + div + "\n")`
+   * (`abstract-engraver.js:769-774`) reads the divider off each verse's own syllable, so
+   * `w:a_ b` over `w:e_ f` prints `e_` on the second row. Ours tracked the flag for verse
+   * 1 alone and drew `e` — a strict-mode byte divergence, measured by
+   * `scripts/zzledger.mjs`. Appended HERE, before `later` and before `centred`, because
+   * `addCentered` measures the whole `lyricStr` and the underscore is part of its width.
+   *
+   * `ABCJS_GAPS` gates it exactly as it gates verse 1: extended suppresses the literal
+   * and strokes an extender instead.
+   */
+  const melismaStarts = [event.lyricMelismaStart, ...event.extraVerseMelismaStarts]
+  const printed = verses.map((v, i) =>
+    v !== null && ABCJS_GAPS && melismaStarts[i] === true ? `${v}_` : v,
+  )
+  const sungAt = printed.findIndex((v) => v !== null)
+  const later = printed.filter((v, i) => i > sungAt && v !== null) as string[]
+  printed.forEach((raw, index) => {
     // **`null` IS "NO LYRIC HERE"; `''` IS AN EMPTY SYLLABLE AND STILL DRAWS.** A `*` and
     // the note a `_` holds over both reach `addLyric`, whose `lyricStr` is
     // `"" + div + "\n"` with `div` emptied for a space divider
@@ -6739,7 +6756,6 @@ function noteText(
      */
     const held = raw === '' && event.lyricFont === null
     const heldSize = fontSizeOf('vocalfont')
-    const verse = ABCJS_GAPS && index === 0 && event.lyricMelismaStart ? `${raw}_` : raw
     /**
      * **THE TSPANS ARE `renderText`'S TWO REWRITES OVER THE JOINED VERSES.**
      * `lyricStr` is `syllable + div + "\n"` per verse — every one of them, the empty ones
@@ -6751,11 +6767,11 @@ function noteText(
      * The `/g` is NON-OVERLAPPING, which is why three consecutive blanks space the first
      * and third and not the second. Reproduced by joining rather than by a per-line rule.
      */
-    const lyricLines = `${[verse, ...later].join('\n')}\n`
+    const lyricLines = `${[raw, ...later].join('\n')}\n`
       .replace(/\n\n/g, '\n \n')
       .replace(/^\n/, '\u00A0\n')
       .split('\n')
-    centred(verse, size, 0, index === 0 ? lyricFont : 'serifBold')
+    centred(raw, size, 0, index === 0 ? lyricFont : 'serifBold')
     texts.push({
       text: lyricLines[0] ?? '',
       /**

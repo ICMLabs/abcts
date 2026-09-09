@@ -2040,6 +2040,18 @@ class VoiceBuilder {
           const sy = verse.get(index)
           return sy === undefined ? null : (sy.text ?? '')
         })
+        // …and the melisma lookahead verse 1 gets below, per verse. abcjs's divider is a
+        // field of the SYLLABLE and every verse of a note carries its own
+        // (`abstract-engraver.js:769-774`), so verse 2 prints its `_` too.
+        const extraStarts = verses.slice(1).map((verse) => {
+          const sy = verse.get(index)
+          return (
+            sy !== undefined &&
+            sy.kind !== 'melisma' &&
+            sy.melismaDivider === true &&
+            verse.get(index + 1)?.kind === 'melisma'
+          )
+        })
         // Named rather than read after `index += 1`: the lookahead is deliberate, and
         // spelling it out keeps it from reading as an off-by-one.
         const next = verses[0]?.get(index + 1)
@@ -2053,9 +2065,6 @@ class VoiceBuilder {
           lyric: first === undefined ? null : (first.text ?? ''),
           lyricSourceRange: first?.range ?? null,
           lyricFont: first?.font ?? null,
-          // ponytail: melisma is tracked for verse 1 only. extraVerses is a plain
-          // (string|null)[]; per-verse melismas need it to become a richer type, which
-          // is worth doing when a renderer actually lays out multiple verses.
           lyricMelisma: first?.kind === 'melisma',
           // A run opens on the syllable BEFORE the first hold, so this is the one place
           // with both in view — `verses` is indexed by note position, and the holds are
@@ -2070,6 +2079,7 @@ class VoiceBuilder {
             first.melismaDivider === true &&
             next?.kind === 'melisma',
           extraVerses: extras,
+          extraVerseMelismaStarts: extraStarts,
         }
       }),
     }))
@@ -6311,6 +6321,7 @@ class Parser {
       lyricMelisma: false,
       lyricMelismaStart: false,
       extraVerses: [],
+      extraVerseMelismaStarts: [],
       style: 'normal',
       microtoneCents,
       tuplet: null, // set by applyTuplet() on emit
@@ -6649,6 +6660,7 @@ class Parser {
         lyricMelisma: false,
         lyricMelismaStart: false,
         extraVerses: [],
+        extraVerseMelismaStarts: [],
         style: 'normal',
         headDurations: mixed ? headDurations : [],
         // ponytail: microtones inside a chord when a fixture needs it.
