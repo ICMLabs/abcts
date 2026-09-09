@@ -1190,9 +1190,17 @@ describe('slurs and ties', () => {
     for (const c of resuming) expect(c.x1).toBeGreaterThan(0)
   })
 
-  it('still drops a curve with nowhere to land at all', () => {
-    // A tie on the very last note of the tune has no next note anywhere.
-    expect(curvesOf('GGGG|GGGG-|')).toEqual([])
+  it('runs a curve with nowhere to land out to the end of the line', () => {
+    /**
+     * ⚠️ **THIS ASSERTED `[]` AND THAT WAS A DEFECT** — corrected 2026-09-09 against
+     * abcjs 6.7.0, which draws `GGGG|GGGG-|`'s dangling tie from 384.83 to 425.26.
+     *
+     * A `TieElem` whose `anchor2` is never set keeps it null, and `calcX`'s last arm is
+     * `else this.endX = lineEndX` (`tie-element.js:133-138`) — there is no arm that drops
+     * the curve. The old expectation read the absence as intentional; nothing in abcjs
+     * makes that choice.
+     */
+    expect(curvesOf('GGGG|GGGG-|')).toHaveLength(1)
   })
 })
 

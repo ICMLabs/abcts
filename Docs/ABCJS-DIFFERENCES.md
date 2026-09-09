@@ -209,12 +209,29 @@ a plain four-note tune — differed on the first run.**
   `chordTies` in `src/audio/flatten.ts` is the positional table; `tests/chord-tie.test.ts`
   holds all six rows.
 
-  ⚠️ **AND THE DRAWING OF THE SAME SHAPES IS STILL OPEN, MEASURED AND NOT LANDED.** Four
-  controls differ in the SVG and differed identically before this work, so it is a separate
-  seam rather than a regression: `[CE]-C|` draws abcjs's tie from 76.85 to 159.70 where ours
-  runs 76.85 to 117.27, and `[C-E]C|`, `[C-E-]C|` and `[C-E]z[CE]|` come out 106.24px tall
-  against abcjs's 102.37 — a RESERVE difference, not a curve one. No corpus fixture writes
-  a chord-internal tie, which is why `svg-bytes` reads zero through all four.
+  ✅ **AND THE DRAWING FOLLOWED THE SAME DAY, WHICH IS WHERE THE THIRD RULE WAS.** The
+  four controls that differed in the SVG are byte-identical now, and so are eight more:
+  `tieTargets` in `layout.ts` is the resolver, and it adds what the audio did not need —
+  **a tie nothing closes keeps `anchor2 === null` and `calcX` runs it to `lineEndX`**
+  (`tie-element.js:133-138`), where ours dropped it or tied it to the wrong element.
+
+  ⚠️ **AND THE POSITION IS THE SOURCE'S, WHICH THE ENGRAVER'S SORT MOVES.** `inTieChord` is
+  keyed as the chord is PARSED and `sortPitch` reorders the pitches later
+  (`abstract-engraver.js:391`), carrying each flag with its own pitch object — so
+  `[C-E][EC]` stamps `endTie` on the E, which sorting puts SECOND, and abcjs ties C to E.
+  Resolving by the ascending index ties C to C. `NoteAnchor.tieSrc` is that mapping.
+
+  ⚠️ **AND IT FIXED A REAL FIXTURE, NOT ONLY THE CONTROLS.** `S7-voices` tune 6 — "S7-7
+  Organ Trio" — drew ONE tie where abcjs draws THREE, and is byte-identical now. It has no
+  golden, which is why every byte gate read zero through it; the two missing ties are in
+  the visual baseline as of this change.
+
+  ⚠️ **AND ONE REPO TEST ASSERTED THE DEFECT**: *"still drops a curve with nowhere to land
+  at all"*, on `GGGG|GGGG-|`. abcjs draws that curve from 384.83 to 425.26. There is no arm
+  in `calcX` that drops a tie; the old expectation read an absence as a decision.
+
+  ⚠️ Still open and measured: `[B-eg-b-]|[Begb]|` writes one tie's y as 60.54 against
+  abcjs's 60.53. One hundredth, on one of three ties, and it pre-dates all of this.
 
   ⚠️ **Two predictions HELD and are now dated rather than standing**: an `&` overlay on the
   second staff only, and a meter change on the last line of voice 0 alone, are both

@@ -7554,6 +7554,16 @@ interface NoteAnchor {
    * voice-overlap displacement, both of which move `left`.
    */
   readonly tieHeadDx?: readonly number[]
+  /**
+   * **WHERE EACH ASCENDING HEAD STOOD IN THE SOURCE.**
+   *
+   * abcjs keys `multilineVars.inTieChord` on the chord's position AS PARSED and sorts the
+   * pitches only in the engraver (`sortPitch`, `abstract-engraver.js:391`), which carries
+   * each `startTie`/`endTie` with its own pitch object. So `[C-E][EC]` stamps `endTie` on
+   * the E — position 0 in the source — and the sort then puts it SECOND. A tie resolver
+   * reading the ascending index alone ties C to C where abcjs ties C to E.
+   */
+  readonly tieSrc?: readonly number[]
   /** How far `tiePairs` moved this copy's `left` onto its own head — see `orderShift`. */
   readonly tieHeadShift?: number
   /** Which head of the chord this copy hangs off — see `PlacedCurve.headOrder`. */
@@ -7670,6 +7680,111 @@ function slurEndY(a: NoteAnchor, above: boolean, isStart: boolean): number {
  * (`abstract-engraver.js:874-891`). Same-index is the fallback before that, which is what
  * a chord tied to a chord of the same size wants and what the pitch match already gives.
  */
+/**
+ * **AND WHAT A TIE MAY CLOSE ON DEPENDS ON WHERE ITS `-` WAS WRITTEN** — the two
+ * mechanisms `Chord.tiedPitches` records, resolved here for the drawing exactly as
+ * `chordTies` resolves them for the audio.
+ *
+ * abcjs's parser decides where `endTie` LANDS and its engraver decides which open tie that
+ * closes; neither is a pitch rule:
+ *
+ *   after the bracket   `isInTie`, consumed by the VERY NEXT element — `pitches[0]` of a
+ *                       note, EVERY pitch of a chord, and a REST swallows it and draws
+ *                       nothing (`abc_parse_music.js:404-407`, `:529-536`)
+ *   inside the bracket  `inTieChord[<position>]`, read only by the next CHORD, however far
+ *                       away, at the same POSITION (`:381-386`)
+ *
+ * and then `addSlursAndTies` closes, per arriving head in order, the open tie whose
+ * `anchor1.pitch` MATCHES, falling back to `ties[0]` — the oldest still open — when none
+ * does (`abstract-engraver.js:874-891`). A tie nothing closes keeps `anchor2 === null` and
+ * `calcX` runs it to `lineEndX` (`tie-element.js:133-138`).
+ *
+ * Measured against abcjs 6.7.0, and every row was a divergence:
+ *
+ *     [C-E]C|       tie to the LINE END      we tied it to the C
+ *     [C-E]D[CE]|   spans the D to the chord we tied it to the D
+ *     [C-E]z[CE]|   spans the rest likewise  we ran it to the line end
+ *     [C-E][EC]|    C to E — POSITION 0      we tied C to C
+ *     [CE]-D|       C to D, E to the LINE END we tied both to the D
+ *     [CE]-[GE]|    C to G, E to E           we tied C to E
+ */
+function tieTargets(
+  from: NoteAnchor,
+  anchors: readonly NoteAnchor[],
+  index: number,
+): { readonly from: NoteAnchor; readonly to?: NoteAnchor }[] {
+  const heads = from.tieSteps ?? []
+  const marks = from.tiedHeads
+  /** The heads this element actually opens a tie on, as ASCENDING indices. */
+  const opened =
+    heads.length < 2
+      ? [0]
+      : heads.map((_, k) => k).filter((k) => marks === undefined || marks[k] === true)
+  /** …and the SOURCE positions those sit at, which is what `inTieChord` keys on. */
+  const openedSrc = new Set(opened.map((k) => from.tieSrc?.[k] ?? k))
+  /**
+   * A mark INSIDE the bracket waits for a CHORD; one after it takes the very next element,
+   * rest included — and a rest closes nothing, so the tie runs off the line.
+   */
+  const chordInternal = marks !== undefined
+  let to: NoteAnchor | undefined
+  if (chordInternal) {
+    for (let j = index + 1; j < anchors.length; j += 1)
+      if (anchors[j]?.event.type === 'chord') {
+        to = anchors[j]
+        break
+      }
+  } else {
+    const next = anchors[index + 1]
+    if (next !== undefined && next.event.type !== 'rest') to = next
+  }
+  const headAt = (a: NoteAnchor, step: number, k: number): NoteAnchor => {
+    const dx = a.tieHeadDx?.[k] ?? 0
+    return {
+      ...a,
+      pitchStep: step,
+      pitchY: stepToY(step),
+      left: a.left + dx,
+      right: a.right + dx,
+      // …**BUT THE DRAW ORDER IS STILL THE ELEMENT'S.** See `PlacedCurve.orderShift`.
+      ...(dx === 0 ? {} : { tieHeadShift: dx }),
+      tieHeadIndex: k,
+    }
+  }
+  const sources = opened.map((k) =>
+    heads.length < 2 ? from : headAt(from, heads[k] as number, k),
+  )
+  if (to === undefined) return sources.map((f) => ({ from: f }))
+
+  const toSteps = to.tieSteps ?? []
+  /** Which heads of the target carry abcjs's `endTie`, in the order it walks them. */
+  const arriving =
+    toSteps.length < 2
+      ? // A single note takes `pitches[0]`, and only the after-bracket form reaches one at
+        // all — a chord-internal mark skipped every non-chord to get here.
+        [{ head: to, step: to.pitchStep }]
+      : chordInternal
+        ? // The heads whose SOURCE position an open mark named, walked in the engraver's
+          // ascending order — see `NoteAnchor.tieSrc`.
+          toSteps
+            .map((step, k) => ({ head: headAt(to, step, k), step, src: to.tieSrc?.[k] ?? k }))
+            .filter((h) => openedSrc.has(h.src))
+        : toSteps.map((step, k) => ({ head: headAt(to, step, k), step }))
+
+  const out: { from: NoteAnchor; to?: NoteAnchor }[] = []
+  const free = [...sources]
+  for (const a of arriving) {
+    if (free.length === 0) break
+    const at = free.findIndex((f) => f.pitchStep === a.step)
+    const [f] = free.splice(at >= 0 ? at : 0, 1)
+    if (f !== undefined) out.push({ from: f, to: a.head })
+  }
+  // …and whatever nothing arrived for runs to the end of the line.
+  for (const f of free) out.push({ from: f })
+  // The element's own order, so the markup follows the heads rather than the pairing.
+  return out.sort((x, y) => (x.from.tieHeadIndex ?? 0) - (y.from.tieHeadIndex ?? 0))
+}
+
 function tiePairs(from: NoteAnchor, to: NoteAnchor): [NoteAnchor, NoteAnchor][] {
   const fromSteps = from.tieSteps ?? []
   if (fromSteps.length < 2) return [[from, to]]
@@ -8709,13 +8824,12 @@ function layoutCurves(
      * by nothing.
      */
     if (event.tiedToNext || anchor.tiedHeads?.some(Boolean) === true) {
-      if (anchors[i + 1]?.event.type === 'rest') {
-        emitHalf(anchor, 'out')
-        return
-      }
-      const next = anchors[i + 1]
-      if (next !== undefined)
-        for (const [a, b] of tiePairs(anchor, next))
+      for (const { from: a, to: b } of tieTargets(anchor, anchors, i)) {
+        // Nothing closed it, so it runs to the end of the line — abcjs's null `anchor2`.
+        if (b === undefined) {
+          emitHalf(a, 'out')
+          continue
+        }
           /**
            * ⚠️ **AND A TIE BETWEEN TWO DIFFERENT PITCHES IS DRAWN AS A SLUR.** `isTie` is
            * recomputed at draw time from the two anchors (`draw/tie.js:39-40`), so the
@@ -8724,7 +8838,8 @@ function layoutCurves(
            * ties a C to a D across the barline — is the shape that separates them, and
            * abcjs gives it the slur's own 1.5-pitch lift and `data-name="slur"`.
            */
-          emit(a, b, a.pitchStep === b.pitchStep ? 'tie' : 'slur', 'tie')
+        emit(a, b, a.pitchStep === b.pitchStep ? 'tie' : 'slur', 'tie')
+      }
     }
 
 
@@ -9242,10 +9357,15 @@ function curveReserves(
     // takes — see `Chord.tiedPitches`. `voice.addOther(tie)` runs whatever the tie's
     // extent, so a reserve missing here is a staff 4 pitch short of abcjs's.
     if (anchor.event.tiedToNext || anchor.tiedHeads?.some(Boolean) === true) {
-      // …and a REST takes the close and draws nothing, so the tie runs off the line — see
-      // `layoutCurves`. Its reserve is the one-anchor arm below, not a paired box.
-      const next = anchors[i + 1]?.event.type === 'rest' ? undefined : anchors[i + 1]
-      if (next !== undefined) for (const [a, b] of tiePairs(anchor, next)) add(a, b, 'tie')
+      // …**AND WHAT CLOSES IT IS `tieTargets`' QUESTION, NOT THIS PASS'S** — a rest takes
+      // the close and draws nothing, a mark inside the bracket waits for a CHORD, and
+      // either way an unclosed tie runs off the line and reserves off its ONE anchor.
+      // Reading `anchors[i + 1]` here and the resolver there is how the two passes drift.
+      const pairs = tieTargets(anchor, anchors, i)
+      const closed = pairs.filter(
+        (p): p is { from: NoteAnchor; to: NoteAnchor } => p.to !== undefined,
+      )
+      for (const p of closed) add(p.from, p.to, 'tie')
       /**
        * **…AND A TIE LEAVING THE SYSTEM RESERVES OFF ITS ONE ANCHOR**, the same way an
        * unclosed slur does. abcjs splits such a tie in two and puts BOTH halves on their
@@ -9260,7 +9380,7 @@ function curveReserves(
        * abcjs reports that system's `staff.bottom` as -2 where its VOICE's is -1.0493, and
        * `1 - 3` is exactly the difference. Ours reserved nothing and reported the voice's.
        */
-      else {
+      if (pairs.some((p) => p.to === undefined)) {
         const above = curveIsAbove(anchor, anchor, voicePos, 'tie')
         const y = endAt(anchor, above, true)
         reserves.push(above ? { top: y - three, bottom: y } : { top: y, bottom: y + three })
@@ -11427,11 +11547,17 @@ function layoutMeasure(
               .map((pp, k) => ({
                 step: pitchToStep(pp, clefNow),
                 tied: event.tiedPitches?.[k] ?? false,
+                // …**AND THE SOURCE POSITION, WHICH THE SORT DOES NOT ERASE.** abcjs keys
+                // `inTieChord` on `el.pitches.length` as the chord is PARSED and sorts the
+                // pitches later (`abstract-engraver.js:391`, `sortPitch`), carrying every
+                // flag with its own pitch object. So `[EC]` takes its `endTie` on E, which
+                // sorting moves to index 1. See `NoteAnchor.tieSrc`.
+                src: k,
               }))
               .sort((a, b) => a.step - b.step)
           : first === undefined
             ? []
-            : [{ step: pitchToStep(first, clefNow), tied: false }]
+            : [{ step: pitchToStep(first, clefNow), tied: false, src: 0 }]
       anchors.push({
         system: 0, // filled in when the block is placed into a system
         element: elements.length,
@@ -11464,6 +11590,8 @@ function layoutMeasure(
         ...(event.type === 'chord' && event.tiedPitches !== undefined
           ? { tiedHeads: tieHeads.map((h) => h.tied) }
           : {}),
+        // …and where each ascending head stood in the SOURCE — see `tieHeads` above.
+        ...(event.type === 'chord' ? { tieSrc: tieHeads.map((h) => h.src) } : {}),
         // …and each head's own offset from `left` — see `NoteAnchor.tieHeadDx`. `heads` is
         // ascending, the order `layoutNoteheads` draws them and the order `tieSteps` takes.
         tieHeadDx: headXs.map((x) => x - headMinX),

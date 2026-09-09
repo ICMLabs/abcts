@@ -97,6 +97,28 @@ const CASES = [
     `${H}V:1\n%%voicescale 1.5\nK:C\nCDEF|\n`],
   ['directive:voicescale2', 'a SECOND %%voicescale mid-tune, which abcjs applies FROM THERE',
     `${H}V:1\n%%voicescale 1.5\nK:C\nCDEF|\n%%voicescale 0.6\nGABc|\n`],
+
+  /**
+   * **THE CHORD-TIE LADDER** — where the `-` is written decides what may close the tie,
+   * and an unclosed one runs to the end of the line. Every row was a divergence before
+   * 2026-09-09; `t13`'s 0.01 y rounding is older and still open.
+   */
+  ['tie:internal-note', 'a tie inside a chord cannot close on a single NOTE',
+    `${H}K:C\n[C-E]C|\n`],
+  ['tie:internal-every', 'every head marked inside the bracket is still not the whole-chord form',
+    `${H}K:C\n[C-E-]C|\n`],
+  ['tie:after-note', 'a mark AFTER the bracket does reach a single note',
+    `${H}K:C\n[CE]-C|\n`],
+  ['tie:across-rest', 'a chord-internal tie spans a rest to the next chord',
+    `${H}K:C\n[C-E]z[CE]|\n`],
+  ['tie:across-note', '…and an intervening note',
+    `${H}K:C\n[C-E]D[CE]|\n`],
+  ['tie:by-position', 'it closes at the SOURCE position, which sorting moves',
+    `${H}K:C\n[C-E][EC]|\n`],
+  ['tie:fallback', 'an arriving head with no pitch match closes the OLDEST open tie',
+    `${H}K:C\n[CE]-[GE]|\n`],
+  ['tie:dangling-end', 'a tie on the last note of the tune runs to the end of the line',
+    `${H}K:C\nGGGG|GGGG-|\n`],
 ]
 
 const engine = process.env.ENGINE === 'chrome'
