@@ -155,9 +155,15 @@ describe("engraver.selectables", () => {
     ).toEqual([]);
   });
 
-  /** A floor, not a target: it moves up as the projection grows and never down. */
-  it("agrees on at least the rows it did", () => {
-    expect(rows.reduce((t, r) => t + r.agree, 0)).toBeGreaterThanOrEqual(389);
+  /**
+   * Every row of this gate agrees, so the statement is ALL OF THEM rather than a floor —
+   * see the note on the other five, which had rotted by 48 to 844 rows between them. This
+   * one had not, and it is written the same way so it cannot start.
+   */
+  it("agrees on EVERY one of its selectables", () => {
+    expect(rows.reduce((t, r) => t + r.agree, 0)).toBe(
+      rows.reduce((t, r) => t + r.total, 0),
+    );
   });
 
   /**

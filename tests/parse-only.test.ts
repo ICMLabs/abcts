@@ -109,8 +109,18 @@ describe("parseOnly — the tune that was never engraved", () => {
    * A floor, not a target — it moves up and must never move down. **IT IS NOW THE TOTAL**,
    * so this is an exact gate: any row that regresses anywhere fails here.
    */
-  it("the whole corpus agrees on at least the rows it did", () => {
+  /**
+   * ⚠️ **A FLOOR ROTS, AND EVERY ONE OF THIS REPO'S HAD** — measured 2026-09-09. This gate
+   * asserted 1617 where it agrees on 2461 of 2461, so 844 rows could have
+   * dropped out silently; the six ratchets across the suite were slack by 48 to 844 rows
+   * between them.
+   *
+   * The number is gone. Every row of this gate agrees, so the statement is ALL OF THEM,
+   * which cannot go stale as the corpus grows and cannot be quietly under-set.
+   */
+  it("the whole corpus agrees on EVERY one of its rows", () => {
     const agree = rows.reduce((t, r) => t + r.agree, 0);
-    expect(agree).toBeGreaterThanOrEqual(1617);
+    const total = rows.reduce((t, r) => t + r.total, 0);
+    expect(agree).toBe(total);
   });
 });

@@ -296,9 +296,16 @@ interface TimedElement {
  * counted at BARLINES and **skips a barline standing before any note** ("a bar line that
  * appears at the left of the music"), so a tune opening `|:` numbers from 0 either way.
  *
- * ponytail: the laid-out tree gives abcjs `top`, `height` and `line` here too. Nothing in
- * the time half reads them and nothing in abcjs's own suite asserts them, so they are not
- * carried; adding them is the geometry half's job and it needs an oracle first.
+ * ✅ **CARRIED, AND GATED** — the marker here said `top`, `height` and `line` were not,
+ * "and adding them is the geometry half's job". They are all three, byte-identical to
+ * abcjs's on 3,414 of 3,414 rows (`tests/setupevents.test.ts`), whose own header records
+ * the arc: it opened at 174 differing rows with the TIMING gate at zero, because a
+ * comparison can only catch what its representation can express.
+ *
+ * ⚠️ **AND THAT GATE'S FLOOR WAS THE ONLY NET UNDER THESE THREE COLUMNS** — proven
+ * 2026-09-09 by adding 1 to `top` here: 180 of 180 cases went red on the row count and
+ * both of the file's OTHER assertions stayed green. The floor read 3366 against 3414
+ * agreeing, so 48 rows of that could have gone silently; it is `agree === total` now.
  */
 function voiceElements(voice: Voice, score: Score, tempos: Map<number, Tempo>): TimedElement[] {
   const meter = meterOf(score)

@@ -569,8 +569,16 @@ describe("tune.lines and getElementFromChar", () => {
    * A floor, not a target — it moves up as element types are added and must never move
    * down. The open rows are the seven types the projection does not carry.
    */
-  it("the whole corpus agrees on at least the characters it did", () => {
+  /**
+   * ⚠️ **AND THE FLOOR HAD ROTTED — 606,481 asserted against 607,177 agreeing**, measured
+   * 2026-09-09, so 696 characters could have dropped out silently. The history above is
+   * why: every corpus addition moved the number and the assertion followed only when
+   * someone noticed. The statement is ALL OF THEM now, which cannot go stale.
+   */
+  it("the whole corpus agrees on EVERY one of its characters", () => {
     const agree = table.reduce((t, r) => t + r.agree, 0);
+    const all = table.reduce((t, r) => t + r.total, 0);
+    expect(agree).toBe(all);
     // 251,396 of 256,138 until 2026-08-16, when the sibling repo's edits to two fixtures
     // took both numbers down with them — the FLOOR moves with its corpus, and the
     // exclusions above are what make it comparable at all.
@@ -584,7 +592,6 @@ describe("tune.lines and getElementFromChar", () => {
     // abcjs's own test inputs its harvester had never taken.
     // 592,653 of 592,653 until `abcts-positioning.abc` added eight tunes on 2026-08-23,
     // and 598,213 until `abcts-voice-scale.abc` added twelve more the same day.
-    expect(agree).toBeGreaterThanOrEqual(606481);
   });
 
   /**

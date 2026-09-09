@@ -145,8 +145,18 @@ describe("synth.sequence — the intermediate abcjs plays from", () => {
    * for; the engrave-time fields on a system `%%maxStaves` hides; an invisible rest losing
    * its decorations; `@x,y`'s `rel_position`; and a dotted tie's `startTie: {style}`.
    */
-  it("the whole corpus agrees on at least the rows it did", () => {
+  /**
+   * ⚠️ **A FLOOR ROTS, AND EVERY ONE OF THIS REPO'S HAD** — measured 2026-09-09. This gate
+   * asserted 4795 where it agrees on 5481 of 5481, so 686 rows could have
+   * dropped out silently; the six ratchets across the suite were slack by 48 to 844 rows
+   * between them.
+   *
+   * The number is gone. Every row of this gate agrees, so the statement is ALL OF THEM,
+   * which cannot go stale as the corpus grows and cannot be quietly under-set.
+   */
+  it("the whole corpus agrees on EVERY one of its rows", () => {
     const agree = table.reduce((t, r) => t + r.agree, 0);
-    expect(agree).toBeGreaterThanOrEqual(4795);
+    const total = table.reduce((t, r) => t + r.total, 0);
+    expect(agree).toBe(total);
   });
 });

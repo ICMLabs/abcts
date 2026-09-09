@@ -189,9 +189,19 @@ describe("TimingCallbacks — the cursor's event stream", () => {
    * `position.height`. Both engines PLACE the systems identically; it is what the extent is
    * reported as. A floor, not a target.
    */
-  it("the whole corpus agrees on at least the callbacks it did", () => {
+  /**
+   * ⚠️ **A FLOOR ROTS, AND EVERY ONE OF THIS REPO'S HAD** — measured 2026-09-09. This gate
+   * asserted 4674 where it agrees on 4816 of 4816, so 142 rows could have
+   * dropped out silently; the six ratchets across the suite were slack by 48 to 844 rows
+   * between them.
+   *
+   * The number is gone. Every row of this gate agrees, so the statement is ALL OF THEM,
+   * which cannot go stale as the corpus grows and cannot be quietly under-set.
+   */
+  it("the whole corpus agrees on EVERY one of its callbacks", () => {
     const agree = table.reduce((t, r) => t + r.agree, 0);
-    expect(agree).toBeGreaterThanOrEqual(4674);
+    const total = table.reduce((t, r) => t + r.total, 0);
+    expect(agree).toBe(total);
   });
 
   it("no case differs for any other reason", () => {

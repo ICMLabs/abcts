@@ -168,8 +168,18 @@ describe("tune.deline — abcjs's merged line list", () => {
    * so this is an exact gate and the `PASSING` list above is redundant: any row that
    * regresses anywhere fails here.
    */
-  it("the whole corpus agrees on at least the rows it did", () => {
+  /**
+   * ⚠️ **A FLOOR ROTS, AND EVERY ONE OF THIS REPO'S HAD** — measured 2026-09-09. This gate
+   * asserted 1646 where it agrees on 2456 of 2456, so 810 rows could have
+   * dropped out silently; the six ratchets across the suite were slack by 48 to 844 rows
+   * between them.
+   *
+   * The number is gone. Every row of this gate agrees, so the statement is ALL OF THEM,
+   * which cannot go stale as the corpus grows and cannot be quietly under-set.
+   */
+  it("the whole corpus agrees on EVERY one of its rows", () => {
     const agree = table.reduce((t, r) => t + r.agree, 0);
-    expect(agree).toBeGreaterThanOrEqual(1646);
+    const total = table.reduce((t, r) => t + r.total, 0);
+    expect(agree).toBe(total);
   });
 });
