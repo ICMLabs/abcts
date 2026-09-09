@@ -267,7 +267,32 @@ what `setPaperSize` does is assign styles to the PARENT node
 
 **Three more surfaces were declared open in that gate with their counts**, all geometry
 INSIDE the SVG rather than option plumbing, and none ever rendered by a gate before:
-`print` 8, `scale` 4 and 2, and `jazzchords` **95 — closed the same day**:
+`print` 8, `scale` 4 and 2, and `jazzchords` **95 — closed the same day**.
+
+### ✅ AND PRINT WENT 8 TO 7, WITH TWO FEATURES AMONG THE ROUNDING
+
+- ✅ **`%%header` WAS PARSED AND NEVER DRAWN**, and PRINT IS THE ONLY MODE THAT DRAWS ONE
+  (`top-text.js:7-14`). Three rows — left, centre, right — above the margin, each with
+  `marginTop: -headerTextHeight`, whose probe measures **`"X"`** where every other row in
+  the block measures `"A"`.
+  - ⚠️ **`headerfont` AND `footerfont` ARE THE ONLY TWO FONTS PRINT DIVIDES BY THE SCALE** —
+    `formatting.headerfont.size /= scale` (`renderer.js:84-85`), because they sit OUTSIDE
+    the scaled drawing. `%%headerfont Geneva 15` draws at 27, which is
+    `round((15 / 0.75) * 4/3)`.
+  - ⚠️ **AND IT RESERVES NOTHING**, which abcjs's own comment states: *"whether there is a
+    header or not doesn't change any other positioning"*. Its ROWS still move the cursor
+    (+2.73 on the default font, measured), but its INK is above the margin — counted as
+    ink, the extent grew and the staff dropped 21.8px where abcjs moves it 2.73.
+- ✅ **`%%topspace` DID NOT REPLACE THE PRINT TOP SPACE.** Only print spends that row at
+  all, so no gate had rendered it: `%%topspace 40` puts abcjs's title 23.09px below ours,
+  exactly `40 * 4/3 - 30.24`.
+
+**Six of the seven that remain differ in a LAST DIGIT** — `202.75` against `202.76`,
+`196.3183333333333` against `…33` — the layout-unit round trip again. The seventh is
+`visual-options-01-fonts`, which has several open causes at once and whose own file warns
+that such a fixture cannot rule anything out.
+
+The jazzchords arc:
 
 - ✅ **THE HOST PARAM WAS IGNORED OUTRIGHT.** `{jazzchords: true}` set nothing; only the
   `%%jazzchords` DIRECTIVE reached the renderer, where abcjs takes the param as the default

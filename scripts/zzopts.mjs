@@ -14,8 +14,13 @@
  * The rows that remain are DECLARED below with their counts, and every one is geometry
  * INSIDE the SVG rather than option plumbing — three more surfaces no gate had rendered:
  *
- *     print        8 — a title at font-size 27 against our 31, among others
+ *     print        7 — SIX of them a last-digit float, one a mid-tune `%%text` y
  *     scale 0.8    4 · scale 1.5   2 — a non-unit scale
+ *
+ * ✅ **PRINT OPENED AT 8 AND TWO OF ITS CAUSES WERE FEATURES, NOT ROUNDING.** `%%header`
+ * was parsed and never drawn — print is the only mode that draws one — and `%%topspace`
+ * did not replace the print top space. What is left is six rows differing in a last digit
+ * and one fixture with several open causes at once.
  *
  * ✅ **`jazzchords` OPENED AT 95 AND CLOSED THE SAME DAY**, in three steps: the host param
  * was ignored outright (the DIRECTIVE was the only way in), and then two measurements read
@@ -57,10 +62,10 @@ const OPTIONS = [
   ['responsive resize', { responsive: 'resize' }, 0],
   ['responsive + scale 1.5', { responsive: 'resize', scale: 1.5 }, 0],
   ['responsive + scale 0.7', { responsive: 'resize', scale: 0.7 }, 0],
-  ['print + responsive', { print: true, responsive: 'resize' }, 6],
+  ['print + responsive', { print: true, responsive: 'resize' }, 5],
   ['scale 0.8', { scale: 0.8 }, 4],
   ['scale 1.5', { scale: 1.5 }, 2],
-  ['print', { print: true }, 8],
+  ['print', { print: true }, 7],
   ['jazzchords', { jazzchords: true }, 0],
 ]
 const every = Number(process.argv[2] ?? 1)

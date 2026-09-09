@@ -16351,10 +16351,102 @@ function topTextBlock(
 
   const centre = PAGE_PADDING.left + width / 2
 
+  /**
+   * **`%%header` — THREE ROWS ABOVE THE MARGIN, AND PRINT-ONLY.**
+   *
+   *     if (metaText.header && isPrint) {
+   *       var headerTextHeight = getTextSize.calc("X", "headerfont", …).height;
+   *       addTextIf(rows, {marginLeft: paddingLeft,             text: header.left,   marginTop: -headerTextHeight, …})
+   *       addTextIf(rows, {marginLeft: paddingLeft + width / 2, text: header.center, anchor: 'middle', …})
+   *       addTextIf(rows, {marginLeft: paddingLeft + width,     text: header.right,  anchor: 'end', …})
+   *     }
+   *
+   * (`top-text.js:7-14`.) Its own comment says the negative margin is why it changes no
+   * other y — "this text goes above the margin, so we'll temporarily move up" — but the
+   * THREE rows each advance afterwards, so a one-part header still costs the block one
+   * line minus the probe. Measured 2026-09-09 on `visual-options-01-fonts`: abcjs's title
+   * sits at 125.82 and ours at 122.57, exactly that difference.
+   *
+   * ⚠️ **AND THE PROBE IS `"X"`, NOT `"A"`** — the only place in the block that measures a
+   * different character, and `addTextIf`'s own advance still measures `"A"`.
+   *
+   * The model has carried `%%header`/`%%footer` since the parser did; the layout drew
+   * neither, which no gate could see until the corpus was rendered with `print: true`.
+   */
+  /**
+   * **AND `headerfont` AND `footerfont` ARE THE ONLY TWO FONTS PRINT DIVIDES BY THE
+   * SCALE.** `adjustNonScaledItems` runs `padding.top /= scale` … and then
+   * `formatting.headerfont.size /= scale; formatting.footerfont.size /= scale`
+   * (`renderer.js:79-86`) — they sit OUTSIDE the scaled drawing, so their point size is
+   * pre-divided to come out the same physical size. Measured: `%%headerfont Geneva 15`
+   * draws at 27 in print, which is `round((15 / 0.75) * 4/3)`, where every other font
+   * takes the plain `round(pt * 4/3)`.
+   */
+  const nonScaledSize = (type: AbcFontType): number =>
+    Math.round((((fonts[type]?.size ?? ABC_FONT_DEFAULT_PT[type]) / PRINT_SCALE) * 4) / 3) /
+    UNIT_PX
+
+  const header = metadata.runningHead.header
+  if (PRINT && header !== undefined) {
+    const headerSize = nonScaledSize('headerfont')
+    const headerFont = fontOfType(fonts, 'headerfont', headerSize)
+    const probe = textHeight(headerSize, 'X', headerFont)
+    const parts: readonly [string, number, 'start' | 'middle' | 'end'][] = [
+      [header.left, PAGE_PADDING.left, 'start'],
+      [header.center, PAGE_PADDING.left + width / 2, 'middle'],
+      [header.right, PAGE_PADDING.left + width, 'end'],
+    ]
+    let first = true
+    for (const [text, x, anchor] of parts) {
+      if (text === '') continue
+      // `marginTop: -headerTextHeight` is on all three, and `addTextIf` pushes it as a row
+      // of its own before the text (`add-text-if.js:9-10`).
+      if (first) spend(-probe)
+      first = false
+      addRow(
+        {
+          text,
+          role: 'title',
+          dataName: 'header',
+          font: 'headerfont',
+          x,
+          // …**AND THE BASELINE IS ONE FONT SIZE BELOW THE CURSOR**, as every other row of
+          // this block takes it — `renderText`'s `hash.attr.y += hash.font.size`
+          // (`draw/text.js:30`). Written bare, the header drew exactly one size high.
+          y: y + headerSize,
+          size: headerSize,
+          /**
+           * ⚠️ **AND IT RESERVES NOTHING, BECAUSE IT IS DRAWN ABOVE THE MARGIN.** abcjs's
+           * own comment: *"whether there is a header or not doesn't change any other
+           * positioning, so this doesn't change the Y-coordinate"* — the negative
+           * `marginTop` puts it outside the page's own box. Its INK is above the block's
+           * start, so without this the top-text extent grows by the header's height and
+           * the STAFF drops with it: measured 143.11 → 164.91 where abcjs moves to 145.84,
+           * which is the row NET alone (`+2.73`) and no ink.
+           */
+          reserve: [from, from] as const,
+          bold: fonts.headerfont?.bold === true,
+          italic: fonts.headerfont?.italic === true,
+          anchor,
+          ...faceIn('headerfont'),
+          ...selectableIn('header', metadata.fieldRanges['header'], text),
+        },
+        'headerfont',
+        x,
+      )
+      advanceText(text, headerSize, 0, 'headerfont')
+    }
+  }
+
   // **AND PRINT OPENS THE BLOCK WITH `spacing.top`** — `if (isPrint) this.rows.push({ move:
   // spacing.top })`, ahead of the title and after the `%%header` row
   // (`top-text.js:17-18`). A row of its own, so the page's cursor spends it in its turn.
-  if (PRINT) spend(spaces(ABCJS_PX.printTopSpace))
+  // …**AND `%%topspace` REPLACES IT**, as `%%titlespace` replaces the gap below —
+  // `initVerticalSpace` seeds `spacing.top` and `setPrintSpacing`/the directive overwrite
+  // it (`renderer.js:88-170`). Measured 2026-09-09 on `abcts-text-udef-parts-overlays`
+  // tune 11, whose `%%topspace 40` puts abcjs's title 23.09px below ours — exactly
+  // `40 * 4/3 - 30.24`. Only print spends this row at all, which is why no gate saw it.
+  if (PRINT) spend(SPACING.topspace ?? spaces(ABCJS_PX.printTopSpace))
 
   const titleSize = sizeOf('titlefont')
   /**
