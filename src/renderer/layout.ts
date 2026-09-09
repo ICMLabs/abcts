@@ -1102,6 +1102,52 @@ function splitDots(notated: Rational): { base: Rational; dots: number } | null {
  * which is worse than an absent feature, and the structural gate would never catch it
  * because the staff position is still right.
  */
+/**
+ * **THE TEMPO MARK'S BEAT-UNIT NOTE HAS ITS OWN TABLE, AND IT IS NOT `noteGlyph`'S.**
+ *
+ * `TempoElement.createNote` is a thirteen-arm if-ladder over the raw duration
+ * (`tempo-element.js:32-44`), with its own comment saying why: *"There aren't an infinite
+ * number of note values, but we are passed a float, so just in case something is off
+ * upstream, merge all of the in between points."* A note's shape comes from a floor and a
+ * halving loop instead (`noteGlyph`), and the two AGREE on every duration a musician
+ * writes — 1/32 through 2, dotted included — which is why one table stood in for the other
+ * for months.
+ *
+ * They part on everything else, and the ledger sweep found one of them:
+ *
+ *     Q:3/32   quarter + flags.u16nd + dot     we drew flags.u16th   (the ledger's row)
+ *     Q:1/5    a bare quarter                  we drew a flagged, doubly dotted one
+ *     Q:2/5    a half                          we drew a doubly dotted quarter
+ *     Q:4/1    a dotted breve                  we drew NOTHING — `noteGlyph` returns null
+ *              past the breve, and the mark lost its note entirely
+ *
+ * ⚠️ **AND ONE ARM NAMES A GLYPH THAT DOES NOT EXIST** — `flags.u16nd`, a typo for
+ * `u16th`, which `glyphs.printSymbol` answers `null` for. abcjs then draws its own
+ * missing-glyph marker in its place. See `missingFlag`.
+ */
+function tempoNoteGlyph(notated: Rational): NoteGlyphSpec & { missingFlag?: string } {
+  const d = ratToNumber(notated)
+  const quarter = (flags: number, dots: number) =>
+    ({ head: 'noteheadBlack', stemmed: true, flags, dots }) as const
+  if (d <= 1 / 32) return quarter(3, 0)
+  if (d <= 1 / 16) return quarter(2, 0)
+  // The typo arm. `flags: 2` is what `u16nd` was MEANT to be; `missingFlag` is what abcjs
+  // actually asks its glyph table for, and the emitter draws the marker rather than a flag.
+  if (d <= 3 / 32) return { ...quarter(2, 1), missingFlag: 'flags.u16nd' }
+  if (d <= 1 / 8) return quarter(1, 0)
+  if (d <= 3 / 16) return quarter(1, 1)
+  if (d <= 1 / 4) return quarter(0, 0)
+  if (d <= 3 / 8) return quarter(0, 1)
+  if (d <= 1 / 2) return { head: 'noteheadHalf', stemmed: true, flags: 0, dots: 0 }
+  if (d <= 3 / 4) return { head: 'noteheadHalf', stemmed: true, flags: 0, dots: 1 }
+  // …and a whole and a breve are STEMLESS — `if (note !== "noteheads.whole" && note !==
+  // "noteheads.dbl")` guards the stem (`tempo-element.js:51`).
+  if (d <= 1) return { head: 'noteheadWhole', stemmed: false, flags: 0, dots: 0 }
+  if (d <= 1.5) return { head: 'noteheadWhole', stemmed: false, flags: 0, dots: 1 }
+  if (d <= 2) return { head: 'noteheadDoubleWhole', stemmed: false, flags: 0, dots: 0 }
+  return { head: 'noteheadDoubleWhole', stemmed: false, flags: 0, dots: 1 }
+}
+
 export function noteGlyph(notated: Rational): NoteGlyphSpec | null {
   // A ZERO-LENGTH NOTE IS A STEMLESS QUARTER HEAD, and it has to be tested BEFORE
   // `splitDots`, which rejects a zero numerator as a duration no notehead can write.
@@ -2209,7 +2255,7 @@ function layoutTempo(
     // Measured against abcjs's own SVG on `ragtime-nightingale`, all four to 0.01px: head
     // centre 2.625px above the rate's baseline, stem spanning y 98.52 to 112.09, its left
     // edge at 122.96, and the rate at x 128.56.
-    const spec = tempo.beatUnit === null ? null : noteGlyph(tempo.beatUnit)
+    const spec = tempo.beatUnit === null ? null : tempoNoteGlyph(tempo.beatUnit)
     if (spec !== null) {
       const headAdvance = glyphsFor(strict).advance(spec.head) * ENGRAVE.tempoNoteScale
       const noteY =
@@ -2300,7 +2346,31 @@ function layoutTempo(
        * flag" and is why it is written down rather than guessed at.
        */
       let right = headAdvance
-      if (spec.flags > 0) {
+      /**
+       * **THE GLYPH abcjs ASKS FOR DOES NOT EXIST, SO IT DRAWS ITS OWN MARKER INSTEAD.**
+       * `glyphs.printSymbol` returns `null` for `flags.u16nd` and `printSymbol` then
+       * writes `"no symbol:" + symbol` in `debugfont` — Arial 16, red, underlined — at the
+       * FLAG's x and at `renderer.y`, which is the staff's origin rather than the mark's
+       * own float (`draw/print-symbol.js:41-45`). It takes no width either: the flag is
+       * `addRight`'d with `getSymbolWidth`, which answers 0 for a name the table lacks.
+       */
+      if (spec.missingFlag !== undefined) {
+        const debugSize = spaces(ABCJS_PX.debugFontSize)
+        texts.push({
+          text: `no symbol:${spec.missingFlag}`,
+          debug: true,
+          face: 'Arial',
+          size: debugSize,
+          bold: false,
+          italic: false,
+          anchor: 'start',
+          x: cursor + headAdvance - spaces(ABCJS_PX.flagStemInset),
+          // `params.y` is the staff origin — y 0 here — and our `y` carries abcjs's
+          // `+= hash.font.size` already. Re-set after the mark is floated; see
+          // `anchorAboveStaff`.
+          y: debugSize,
+        })
+      } else if (spec.flags > 0) {
         const flag = FLAG_GLYPHS[Math.min(spec.flags, FLAG_GLYPHS.length - 1)]?.[0]
         if (flag !== undefined) {
           const flagX = cursor + headAdvance - spaces(ABCJS_PX.flagStemInset)
@@ -18123,7 +18193,15 @@ function anchorAboveStaff<
            * `21.435483870967743769`, and the two staves WITHOUT a tempo agreed bit for bit.
            */
           texts: moved.texts.map((t, i) =>
-            i === 0 ? { ...t, reserveTopPitch: tempoPitch } : t,
+            // …**AND THE MISSING-GLYPH MARKER DOES NOT FLOAT WITH THE MARK AT ALL.** It is
+            // drawn at `renderer.y` — the staff's origin, y 0 in this frame — and takes no
+            // rung: it is not part of the mark, it is a note to the developer that a glyph
+            // is missing. See `PlacedText.debug`.
+            t.debug === true
+              ? { ...t, y: t.size }
+              : i === 0
+                ? { ...t, reserveTopPitch: tempoPitch }
+                : t,
           ),
         }
       }

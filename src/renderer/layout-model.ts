@@ -642,6 +642,23 @@ export interface PlacedText {
   readonly font?: AbcFontType
   readonly noClass?: boolean
   /**
+   * **abcjs's MISSING-GLYPH MARKER**, and the one text in the music that is neither a
+   * field nor a directive: `printSymbol` answers `null` for a name its table does not
+   * hold and draws `"no symbol:" + symbol` in its place, `type: "debugfont"` — Arial 16,
+   * `stroke="#ff0000"`, underlined (`draw/print-symbol.js:27`, `:45`, `draw/text.js:32`).
+   *
+   * It is reachable from valid ABC because abcjs's own tempo table names a glyph that
+   * does not exist — see `tempoNoteGlyph`'s `missingFlag` — so reproducing it is part of
+   * strict parity rather than a debugging aid of ours.
+   *
+   * ⚠️ **ITS y IS THE STAFF'S ORIGIN, NOT ITS ELEMENT'S.** `renderText` is handed
+   * `renderer.y`, which `drawStaffGroup` set to `staff.absoluteY` and which no part of the
+   * tempo mark's own placement touches — so the marker stays put while the mark it belongs
+   * to floats above the staff. In our frame that origin is y 0, which is the same fact
+   * `anchorAboveStaff`'s tempo branch already uses for the notehead.
+   */
+  readonly debug?: boolean
+  /**
    * **THE PAGE'S OWN y, FOR A TOP-TEXT ROW** — what abcjs writes, accumulated FORWARD from
    * `padding.top` (`draw/draw.js:14-15`). Our layout frame is the first staff's, and the
    * block is back-fitted above it, so the same point arrives as three terms in a different

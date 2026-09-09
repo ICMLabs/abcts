@@ -80,7 +80,10 @@ if (ready.abcjs !== 'function' || ready.abcts !== 'function')
  * it is fixed and this goes red if it was not.
  */
 const KNOWN = new Map([
-  ['layout.ts:3564', 'abcjs draws NO flag and colours the mark #ff0000 — its own table names flags.u16nd, which does not exist'],
+  // ✅ layout.ts:3564 — FIXED 2026-09-09, and the row was a symptom of a bigger one: the
+  // tempo mark has its OWN note table (`tempo-element.js:32-44`) and we were reading it
+  // out of `noteGlyph`. `tempoNoteGlyph` is that ladder, `flags.u16nd` and all, and the
+  // marker abcjs draws for a glyph its table lacks is `PlacedText.debug`.
   // ✅ parser.ts:365 — FIXED 2026-09-08. abcjs's key table is harvested into
   // `src/core/keys-abcjs.ts` and consulted by `keyFifths`; an unrecognised spelling redraws
   // the key IN FORCE (`abcjsKeepsKey`); and the cancelling naturals compare the note LETTER

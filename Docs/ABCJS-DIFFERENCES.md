@@ -13,7 +13,7 @@ import { parse, render } from 'abcts'      // render(score, { mode: 'abcjs-exten
 
 ---
 
-## ⚠️ ONE MEASURED, NOT LANDED — found by sweeping the `ponytail:` ledger, 2026-09-08
+## ✅ ALL FOUR CLOSED — found by sweeping the `ponytail:` ledger, 2026-09-08
 
 These are **abcts diverging from abcjs in STRICT mode**, which is a defect rather than a
 divergence: strict has no latitude. Each was found by writing the control a `ponytail:`
@@ -23,7 +23,7 @@ the 16 predictions held**; these are the four that did not, two of them since cl
 
 | control | abcjs | abcts |
 |---|---|---|
-| `Q:3/32=60` | no flag, and the mark in `#ff0000` — its own error colour | `flags.u16th`, a normal mark |
+| ~~`Q:3/32=60`~~ | ✅ **FIXED 2026-09-09** — see below | |
 | ~~`K:D#` and 47 other spellings~~ | ✅ **FIXED 2026-09-08** — see below | |
 | ~~`w:a b\|c d` — a bar hint~~ | ✅ **FIXED 2026-09-09** — see below | |
 | ~~a melisma on verse 2~~ | ✅ **FIXED 2026-09-09** — see below | |
@@ -53,8 +53,40 @@ half-understood fix is worth less than a written-down measurement*:
   ignores it"* and *"abcjs applies the key it already had"* look identical in the model and
   differ on the page. Then, with that right, 32 of 336 still differed **in nothing but
   naturals**, which is the letter-only cancellation.
-- **The tempo flag** is larger than its own marker predicted: abcjs colours the whole mark
-  red, so reproducing it is an error path and not a missing glyph.
+- ✅ **The tempo flag — FIXED, and the row was a SYMPTOM.** The marker predicted a missing
+  glyph; the ledger predicted an error path; the defect was neither. **The tempo mark has
+  its own note table** — a thirteen-arm if-ladder over the raw duration
+  (`tempo-element.js:32-44`), with its own comment saying why: *"There aren't an infinite
+  number of note values, but we are passed a float, so just in case something is off
+  upstream, merge all of the in between points."* We were reading the NOTE table
+  (`noteGlyph`, a floor and a halving loop) for it. The two agree on every duration a
+  musician writes, which is how one stood in for the other for months, and part on the
+  rest:
+
+  | | abcjs | abcts, before |
+  |---|---|---|
+  | `Q:3/32` | quarter + `flags.u16nd` + dot | `flags.u16th` — the ledger's row |
+  | `Q:1/5` | a bare quarter | a flagged, DOUBLY DOTTED quarter |
+  | `Q:2/5` | a half | a doubly dotted quarter |
+  | `Q:4/1` | a dotted breve | **nothing** — `noteGlyph` returns null past the breve |
+
+  `tempoNoteGlyph` is that ladder. Four rungs of `tests/tempo-parts.test.ts`, each
+  measured off abcjs 6.7.0.
+
+  ⚠️ **AND `flags.u16nd` IS NOT A GLYPH IN ABCJS EITHER** — a typo for `u16th`, so
+  `glyphs.printSymbol` answers `null` and `printSymbol` draws its MISSING-GLYPH MARKER in
+  place of the flag: `"no symbol:flags.u16nd"` in `debugfont`, which is the unknown-type
+  FALLBACK rather than a font anyone configured — Arial 16, `stroke="#ff0000"`, underlined
+  (`draw/print-symbol.js:41-45`, `draw/text.js:32`,
+  `write/helpers/get-font-and-attr.js:32`). `PlacedText.debug` is that text, and the whole
+  tune is byte-identical to abcjs's.
+
+  ⚠️ **ITS y IS THE STAFF'S ORIGIN, NOT THE MARK'S.** `renderText` is handed `renderer.y`,
+  which `drawStaffGroup` set to `staff.absoluteY` and which the tempo's own float never
+  touches — so the marker sits BELOW the staff it belongs to while the mark floats above
+  it. In our frame that origin is y 0, the same fact `anchorAboveStaff`'s tempo branch
+  already used for the notehead, and the marker is re-pinned there after the mark is
+  moved.
 - ✅ **The bar hint — FIXED, and the barline positions it "does not have" were the
   measures.** abcjs's distribution loop walks the line's ELEMENTS rather than its notes
   (`abc_parse.js:286-313`), so the hint is a `{skip: true, to: 'bar'}` consumed by the next
@@ -95,6 +127,20 @@ half-understood fix is worth less than a written-down measurement*:
   The underscore stays gated on `ABCJS_GAPS`, exactly as verse 1's is — extended
   suppresses the literal — so this moves no mode-bytes row. `tests/lyric-verse-melisma.test.ts`
   holds all three layers with the extended row as the negative control.
+
+### ⚠️ AND ONE MEASURED BESIDE IT, NOT LANDED — a tempo FLAG's last ULP
+
+`Q:1/8=60` renders identically in every respect but the flag path's first coordinate:
+
+    abcjs   <path data-name="flags.u8th" d="M 77.1835 25.341250000000002l …
+    abcts   <path data-name="flags.u8th" d="M 77.18350000000001 25.34125000…
+
+One ULP, on the x alone, and it reaches any tune with a FLAGGED tempo unit (`1/8`, `1/16`,
+`1/32`) — none of which the corpus holds, which is why `svg-bytes` reads zero through it.
+The shape is the one this repo has hit three times: `w * a * b` associating left where
+abcjs forms `a * b` first and multiplies once (see the grace flag's `graceFlagDx`). NOT
+INVESTIGATED past this measurement; the terms to compare are our
+`cursor + headAdvance - spaces(flagStemInset)` against `headx + notehead.w - 0.6`.
 
 ---
 

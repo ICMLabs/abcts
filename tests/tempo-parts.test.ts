@@ -40,18 +40,19 @@
 import { describe, expect, it } from "vitest";
 import { UNIT_PX } from "../src/renderer/abcjs-constants.js";
 import { layout } from "../src/renderer/layout.js";
+import { render } from "../src/renderer/index.js";
 import { parse } from "../src/parser/parser.js";
 
 /**
  * abcjs's glyph names → ours. Six entries, and the whole mapping the gate needs.
  *
- * `flags.u16nd` is deliberately absent: abcjs's own table maps a `3/32` beat unit to it
- * (`tempo-element.js:35`) and NO SUCH GLYPH EXISTS — a typo for `u16th`, so abcjs draws
- * nothing there. Reproducing the typo would mean dropping a flag we can draw; no rung
- * below writes `3/32`, and when one does it should be recorded as an abcjs BUG in
- * `ABCJS-DIFFERENCES.md` rather than silently matched.
+ * `flags.u16nd` is absent because it is not a glyph in ABCJS either: its own table maps a
+ * `3/32` beat unit to that name (`tempo-element.js:35`) and its glyph table has no such
+ * entry, so abcjs draws no flag and its missing-glyph MARKER in place of one. The `3/32`
+ * rung below is that shape, and the marker has a test of its own.
  */
 const ABCJS_GLYPHS: Readonly<Record<string, string>> = {
+  "noteheads.dbl": "noteheadDoubleWhole",
   "noteheads.quarter": "noteheadBlack",
   "noteheads.half": "noteheadHalf",
   "noteheads.whole": "noteheadWhole",
@@ -121,6 +122,35 @@ const LADDER: readonly Rung[] = [
     abcjs: ["dots.dot", "noteheads.half"],
     stem: true,
     rateX: 143.95,
+  },
+  /**
+   * ⚠️ **THE FOUR BELOW ARE WHY THE MARK NEEDS ITS OWN TABLE.** Every rung above is a
+   * duration a musician writes, and on those abcjs's tempo ladder
+   * (`tempo-element.js:32-44`) and our `noteGlyph` AGREE — which is how one stood in for
+   * the other for months. These four are where they part, all measured off abcjs 6.7.0.
+   */
+  // A BREVE PAST THE END OF `noteGlyph`'s TABLE. `chartable.note` runs out one entry past
+  // the breve, so `noteGlyph` returns null and the mark drew NO NOTE AT ALL; the ladder's
+  // last arm has no ceiling.
+  {
+    unit: "4/1",
+    abcjs: ["dots.dot", "noteheads.dbl"],
+    stem: false,
+    rateX: 148.79,
+  },
+  // A DURATION NO NOTE CAN SPELL. The ladder MERGES the in-between points — its own
+  // comment says so — where the halving loop keeps dividing: `1/5` is a bare quarter to
+  // abcjs and was a flagged, DOUBLY DOTTED one to us.
+  { unit: "1/5", abcjs: ["noteheads.quarter"], stem: true, rateX: 137.08 },
+  { unit: "2/5", abcjs: ["noteheads.half"], stem: true, rateX: 137.5 },
+  // AND THE TYPO ARM. abcjs asks for `flags.u16nd`, which is not a glyph, so it draws NO
+  // flag and its missing-glyph marker instead — see the test below. The dot and the head
+  // are all that remain of the mark.
+  {
+    unit: "3/32",
+    abcjs: ["dots.dot", "noteheads.quarter"],
+    stem: true,
+    rateX: 143.53,
   },
 ];
 
@@ -236,4 +266,79 @@ describe("the tempo mark has the same PARTS as abcjs", () => {
       ).toBeLessThan(EPSILON);
     });
   }
+});
+
+/**
+ * **abcjs's MISSING-GLYPH MARKER, WHICH VALID ABC CAN REACH.**
+ *
+ * `Q:3/32` sends abcjs's own tempo table to `flags.u16nd` (`tempo-element.js:35`), a typo
+ * for `u16th` that its glyph table does not hold, so `printSymbol` answers `null` and
+ * draws `"no symbol:" + symbol` in its place — `debugfont`, which is the UNKNOWN-TYPE
+ * fallback rather than a font anyone configured: Arial 16, `stroke="#ff0000"`, underlined
+ * (`draw/print-symbol.js:41-45`, `draw/text.js:32`,
+ * `write/helpers/get-font-and-attr.js:32`).
+ *
+ * Every expectation below is a byte of abcjs 6.7.0's own output for this tune, taken from
+ * WebKit with `staffwidth: 670`.
+ */
+describe("the missing-glyph marker", () => {
+  // `staffSpace` is abcjs's own 7.75 rather than the engine default 8 — held equal, as
+  // every mode and byte comparison in this repo has to be, or every size scales by 8/7.75
+  // and the font-size below reads 16.51613.
+  const svgOf = (abc: string) =>
+    render(parse(abc, { mode: "abcjs-strict" }).scores[0] as never, {
+      mode: "abcjs-strict",
+      classes: "abcjs",
+      systemWidth: 670,
+      staffSpace: 7.75,
+    });
+
+  const MARKER = /<text stroke="#ff0000"[^>]*>(?:<tspan[^>]*>)?no symbol:flags\.u16nd/;
+
+  it("draws abcjs's marker, attribute for attribute, in place of the flag", () => {
+    const svg = svgOf("X:1\nM:4/4\nL:1/4\nQ:3/32=60\nK:C\nCDEF|\n");
+    expect(svg).toContain(
+      '<text stroke="#ff0000" font-size="16" font-style="normal" ' +
+        'font-family="Arial" font-weight="normal" text-decoration="underline" ' +
+        'class="" text-anchor="start"',
+    );
+    expect(svg).toMatch(MARKER);
+    // …and NO flag, which is the other half of what abcjs does with a name it cannot find.
+    expect(svg).not.toContain('data-name="flags.u16');
+  });
+
+  it("draws nothing for a beat unit whose glyph exists", () => {
+    // The negative control. A marker emitted unconditionally would pass the row above.
+    const svg = svgOf("X:1\nM:4/4\nL:1/4\nQ:1/16=60\nK:C\nCDEF|\n");
+    expect(svg).not.toMatch(MARKER);
+    expect(svg).toContain('data-name="flags.u16th"');
+  });
+
+  it("is fixed to the STAFF, not to the mark it belongs to", () => {
+    /**
+     * The marker is handed `renderer.y` — `staff.absoluteY`, which nothing in the tempo's
+     * own placement touches — so it keeps its distance from the STAFF while the mark
+     * floats. Chord symbols raise the above-staff stack: the mark climbs away from the top
+     * line and the marker does not move relative to it.
+     *
+     * Measured against the top line rather than in absolute page y, because raising the
+     * stack pushes the whole staff DOWN the page and the marker rides down with it —
+     * exactly as abcjs's does. Comparing raw y would assert the page layout instead.
+     */
+    const bare = svgOf("X:1\nM:4/4\nL:1/4\nQ:3/32=60\nK:C\nCDEF|\n");
+    const pushed = svgOf(
+      'X:1\nM:4/4\nL:1/4\nQ:3/32=60\nK:C\n"Cmaj7"C"Dm"D"Em"E"F"F|\n',
+    );
+    const num = (m: RegExpExecArray | null) => Number(m?.[1] ?? NaN);
+    const topLine = (svg: string) =>
+      num(/<path d="M [\d.]+ ([\d.]+) L/.exec(svg));
+    const markerGap = (svg: string) =>
+      num(/<text stroke="#ff0000"[^>]*\sy="([\d.]+)"/.exec(svg)) - topLine(svg);
+    const rateGap = (svg: string) =>
+      num(/y="([\d.]+)" data-name="beats"/.exec(svg)) - topLine(svg);
+    expect(markerGap(bare)).toBeGreaterThan(0);
+    expect(markerGap(pushed)).toBeCloseTo(markerGap(bare), 6);
+    // …and the control: the MARK did move, so a marker pinned to it would have too.
+    expect(rateGap(pushed)).toBeLessThan(rateGap(bare) - 1);
+  });
 });

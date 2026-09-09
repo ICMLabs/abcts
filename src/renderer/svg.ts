@@ -981,9 +981,17 @@ export function toSVG(
      * late `class` does (`draw/absolute.js:20-28`).
      */
     selectAttrs = "",
+    /**
+     * `stroke` is `"none"` on every text abcjs draws but one: `printSymbol`'s missing-glyph
+     * marker sets `hash.attr.stroke = "#ff0000"` for `type: 'debugfont'`
+     * (`draw/text.js:32`), whose font also carries the only `text-decoration` in the music
+     * — see `PlacedText.debug`.
+     */
+    stroke = "none",
+    decoration = "none",
   ): string =>
-    `<text stroke="none" font-size="${size}" font-style="${italic ? "italic" : "normal"}" ` +
-    `font-family="${fontFamily(face)}" font-weight="${bold ? "bold" : "normal"}" text-decoration="none" ` +
+    `<text stroke="${stroke}" font-size="${size}" font-style="${italic ? "italic" : "normal"}" ` +
+    `font-family="${fontFamily(face)}" font-weight="${bold ? "bold" : "normal"}" text-decoration="${decoration}" ` +
     `${noClass ? "" : `class="${klass}" `}text-anchor="${anchor}"${middle ? ' dominant-baseline="middle"' : ""}` +
     ` x="${x}" y="${y}"${name ? ` data-name="${name}"` : ""}${selectAttrs}>` +
     `<tspan x="${x}">${body}</tspan>` +
@@ -3325,6 +3333,8 @@ export function toSVG(
             readonly role: PartRole | undefined;
             /** abcjs's own `name`, which is how a tempo's three parts tell each other apart. */
             readonly dataName?: string | undefined;
+            /** The missing-glyph marker, which draws where its GLYPH would have — see below. */
+            readonly debug?: boolean | undefined;
             readonly s: string;
           }[] = [];
           for (const t of el.texts) {
@@ -3474,6 +3484,7 @@ export function toSVG(
             textParts.push({
               role: t.role,
               dataName: t.dataName,
+              debug: t.debug,
               s:
                 abcjs && face !== undefined
                   ? abcjsText(
@@ -3486,7 +3497,12 @@ export function toSVG(
                       t.anchor ?? "start",
                       t.dataName ?? "",
                       body,
-                      /^ class="([^"]*)"/.exec(partAttr)?.[1] ?? "",
+                      // A DEBUG MARKER'S CLASS IS `classes.generate('debug-msg')`, which
+                      // is empty unless `add_classes` asked — and it is never the tempo
+                      // element's own.
+                      t.debug === true
+                        ? ""
+                        : (/^ class="([^"]*)"/.exec(partAttr)?.[1] ?? ""),
                       // A music text can be multi-line too — a LYRIC always is, because
                       // `addLyric` ends every verse with a newline. This was `[]`.
                       (t.extraLines ?? []).map(escapeText),
@@ -3519,6 +3535,10 @@ export function toSVG(
                             },
                           )
                         : "",
+                      // …**AND THE MISSING-GLYPH MARKER'S RED AND ITS UNDERLINE**, which no
+                      // other music text carries — see `PlacedText.debug`.
+                      t.debug === true ? "#ff0000" : "none",
+                      t.debug === true ? "underline" : "none",
                     )
                   : // …AND THE BOX'S OWN SHIFTS APPLY HERE TOO. `boxDx` and `baselineY`
                     // are computed above for BOTH vocabularies and were read by the abcjs
@@ -3696,6 +3716,13 @@ export function toSVG(
           if (abcjs && el.type === "tempo") {
             for (const t of textParts.filter((t) => t.dataName === "pre"))
               parts.push(t.s);
+            /**
+             * **AND THE MISSING-GLYPH MARKER DRAWS WHERE ITS GLYPH WOULD HAVE.**
+             * `printSymbol` writes it in place of the path it could not find
+             * (`draw/print-symbol.js:41-45`), and the only glyph in a tempo mark that can
+             * go missing is the FLAG — abcjs's own first child. See `PlacedText.debug`.
+             */
+            for (const t of textParts.filter((t) => t.debug === true)) parts.push(t.s);
           }
           let openGlyphGroup: string | null = null;
           for (const g of el.glyphs.slice(0, pitchEnd)) {
@@ -3993,7 +4020,8 @@ export function toSVG(
                 // …and a MULTIMEASURE REST'S COUNT, flushed with them above.
                 t.role !== "rest" &&
                 !isChordText(t) &&
-                !(el.type === "tempo" && t.dataName === "pre"),
+                !(el.type === "tempo" && t.dataName === "pre") &&
+                t.debug !== true,
             )) {
               parts.push(t.s);
             }

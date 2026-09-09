@@ -327,10 +327,15 @@ checkpoint and hand off as you go so no context is lost.
 > by `scripts/zzledger.mjs`; the twelve that held now carry a date instead of reading as
 > standing risk. ⚠️ **And the biggest one is not what its marker was about** — `parser.ts:365`
 > predicted a spurious WARNING, the prediction is correct, and the control caught the KEY
-> SIGNATURE instead. ⚖️ **TWO OF THE FOUR HAVE SINCE CLOSED** — the key table on 2026-09-08
-> and the verse-2 melisma on 2026-09-09, both in about an hour, both with the marker's
-> CAUSE right and its SIZE wrong. `zzledger`'s `KNOWN` map is the live list; this paragraph
-> is the session's record.
+> SIGNATURE instead. ⚖️ **ALL FOUR HAVE SINCE CLOSED** — the key table on 2026-09-08, then
+> the verse-2 melisma, the `w:` bar hint and the `Q:3/32` tempo on 2026-09-09, each in
+> about an hour, and every one of the four had the marker's CAUSE right and its SIZE wrong.
+> ⚠️ **AND TWO OF THE FOUR WERE SYMPTOMS OF A WIDER DEFECT**: the bar hint was the whole
+> `w:`-distribution loop (abcjs walks the line's ELEMENTS, barlines included, and blanks
+> what a hint waits through), and the tempo flag was the tempo mark reading the NOTE glyph
+> table instead of its own — which also drew `Q:1/5` and `Q:2/5` wrong and `Q:4/1` not at
+> all. `zzledger`'s `KNOWN` map is the live list and it is now EMPTY; this paragraph is the
+> session's record.
 >
 > ✅ **(4) WAS THE REAL HAZARD AND IT IS 16, NOT 5.** `RenderState` enumerates them and
 > `layout()` saves and restores them. **Proven to do real work**: with the emitter made to

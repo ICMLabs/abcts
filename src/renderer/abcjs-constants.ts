@@ -202,6 +202,15 @@ export const ABCJS_PX = {
    */
   flagStemInset: 0.6,
   /**
+   * **`debugfont`'s SIZE, WHICH IS THE UNKNOWN-TYPE FALLBACK RATHER THAN A DEFAULT.**
+   * `formatting['debugfont']` does not exist, so `getFontAndAttr` takes its else arm —
+   * `{face: "Arial", size: Math.round(12 * 4/3), decoration: "underline", style:
+   * "normal", weight: "normal"}` (`write/helpers/get-font-and-attr.js:32`). 16px, and no
+   * directive can change it. The font the missing-glyph marker is drawn in; see
+   * `PlacedText.debug`.
+   */
+  debugFontSize: 16,
+  /**
    * How far a LONE auxiliary beam reaches from its note — `auxBeamEndX = x ± 5`
    * (`layout/beam.js:220-236`). A flat 5, whichever side it points; the stub's own START
    * is the note's sample point less `flagStemInset` going up, so an up-stem's stub spans
