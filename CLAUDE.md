@@ -315,6 +315,36 @@ checkpoint and hand off as you go so no context is lost.
 > behaviour change, revert it rather than re-record it. `tests/bench.test.ts` holds the
 > before-number. Full reasoning and the ordered plan are in `Docs/CHECKPOINT-2026-08-08d.md`.
 
+> ⚖️ **THAT ORDERED PLAN WAS RUN ON 2026-09-08, AND TWO OF ITS FOUR ITEMS CAME BACK
+> DIFFERENT FROM THE PLAN.** Read this before re-planning any of it.
+>
+> ✅ **(1) THE `ponytail:` LEDGER — done, and it paid.** It had grown **54 → 97 markers**.
+> Sixteen controls were written, one per open prediction, and diffed against abcjs live:
+> **12 held and 4 did not.** The four are abcts diverging from abcjs in STRICT mode — a
+> `Q:3/32` tempo (abcjs draws no flag AND colours the mark `#ff0000`), **48 of 168 KEY
+> SPELLINGS** (abcjs consults two tables and has no arithmetic; we clamp fifths), a `|` bar
+> hint in a `w:` line, and a melisma on verse 2. All four in `ABCJS-DIFFERENCES.md`, gated
+> by `scripts/zzledger.mjs`; the twelve that held now carry a date instead of reading as
+> standing risk. ⚠️ **And the biggest one is not what its marker was about** — `parser.ts:365`
+> predicted a spurious WARNING, the prediction is correct, and the control caught the KEY
+> SIGNATURE instead.
+>
+> ✅ **(4) WAS THE REAL HAZARD AND IT IS 16, NOT 5.** `RenderState` enumerates them and
+> `layout()` saves and restores them. **Proven to do real work**: with the emitter made to
+> read one, removing the wrapper fails `tests/render-state.test.ts` and dropping a SINGLE
+> restored field fails it too. ⚠️ The full threading was measured at **217 references** and
+> DECLINED — it buys readability and no safety, and a 217-site diff through the byte gates
+> for style alone is churn.
+>
+> ⛔ **(2) IS NOT AVAILABLE AS WRITTEN.** Measured with comments stripped: **75% of
+> `layout.ts` is transitively coupled to those sixteen switches**, and the named seams —
+> glyph metrics, the horizontal solve, the vertical lanes, curves, text — ARE that 75%. They
+> cannot be separated without the threading (4) declined. What moved instead is the part
+> with no behaviour at all: the **public data model into `src/renderer/layout-model.ts`**
+> (13 types + `CurveReserve`), 21,660 → 20,346 lines, and types are erased at build so the
+> extraction cannot change a byte. Next clean candidates: `ENGRAVE` (780 lines, ONE local
+> dependency — `textHeight`) and nine glyph/decoration tables (336 lines, none at all).
+
 > 🖥️ **RUN EVERY COMMAND FROM `/Users/lrettberg/ICMLabs/Code/abcts`.** `cd` does not persist
 > between tool calls, and the workspace ROOT has its own vitest reach: run from there and it
 > collects every test in every sibling repo — abcjs's own included — and prints a wall of
