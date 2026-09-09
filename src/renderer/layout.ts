@@ -13183,7 +13183,111 @@ export function expandOverlays(score: Score): Score {
   return { ...score, voices, staves }
 }
 
+/**
+ * **EVERY RENDER-SCOPED SWITCH IN THIS FILE, ENUMERATED ONCE.**
+ *
+ * Sixteen module-level `let`s carry the current render's settings — the page padding, the
+ * print scale, the score's fonts and measurements, the line weights, `ABCJS_GAPS` and the
+ * rest. Each is declared beside the code that reads it with its own reasoning for being a
+ * switch rather than a threaded parameter. That is a defensible local choice with one
+ * global consequence nobody had written down: **a `Layout` outlives the call that made it,
+ * and nothing could say what "the state" even was.**
+ *
+ * ⚠️ **NOT ACADEMIC — IT COST AN HOUR OF PROOF ON 2026-09-07.** Memoising `laidOut()` in
+ * compat means a `layout()` call can be SKIPPED, and `measureWidthsOf` lays the tune out
+ * AGAIN at width 0, so a cached document can be drawn while these sixteen hold another
+ * score's values. Establishing that the emitter cannot notice took reading `svg.ts`'s
+ * imports and confirming `ENGRAVE` and `stepToY` are both constants. With no enumeration
+ * anywhere, that question had no cheap answer. This type is the answer.
+ * `tests/render-state.test.ts` is the same property as a gate.
+ *
+ * ✅ **AND THE SAVE/RESTORE IS PROVEN TO DO REAL WORK, three ways.** With an emitter made
+ * to read `PAGE_PADDING`: without the wrapper the test FAILS, with it the test PASSES —
+ * the restore is what absorbs the leak — and dropping ONE LINE from `restoreRenderState`
+ * fails it too, so every field is defended individually rather than as a block.
+ *
+ * ⚠️ **AND THE FIRST TIME I CHECKED, IT LOOKED UNOBSERVABLE.** The probe computed the
+ * leaked value and never EMITTED it, so all three variants passed and I nearly wrote
+ * "insurance whose failure cannot be seen" into this comment. A probe that does not reach
+ * the output is not a probe — the fifth mute instrument on this branch.
+ *
+ * ⚠️ **AND THE FULL THREADING WAS MEASURED AND DECLINED.** Turning the sixteen into a `ctx`
+ * parameter is **217 references** across ~100 functions in the most byte-sensitive file in
+ * the repo. It buys readability and no safety this does not: module state is per-realm, so
+ * workers each get their own copy. A 217-site diff through the byte gates for style alone
+ * is churn — the same standard the optimisation pass was held to.
+ */
+interface RenderState {
+  percMap: Score['percMap']
+  pagePadding: typeof PAGE_PADDING
+  spacing: typeof SPACING
+  titleLeft: boolean
+  flatBeams: boolean
+  graceSlurs: boolean
+  printScale: number
+  print: boolean
+  pageTop: number
+  strictTextMetrics: boolean
+  abcjsGaps: boolean
+  jazzChords: boolean
+  keywarn: boolean
+  lineWeights: typeof LINE_WEIGHTS
+  scoreFonts: Score['fonts']
+  scorePartsBox: boolean
+}
+
+const captureRenderState = (): RenderState => ({
+  percMap: PERC_MAP,
+  pagePadding: PAGE_PADDING,
+  spacing: SPACING,
+  titleLeft: TITLE_LEFT,
+  flatBeams: FLAT_BEAMS,
+  graceSlurs: GRACE_SLURS,
+  printScale: PRINT_SCALE,
+  print: PRINT,
+  pageTop: PAGE_TOP,
+  strictTextMetrics: STRICT_TEXT_METRICS,
+  abcjsGaps: ABCJS_GAPS,
+  jazzChords: JAZZ_CHORDS,
+  keywarn: KEYWARN,
+  lineWeights: LINE_WEIGHTS,
+  scoreFonts: SCORE_FONTS,
+  scorePartsBox: SCORE_PARTS_BOX,
+})
+
+const restoreRenderState = (s: RenderState): void => {
+  PERC_MAP = s.percMap
+  PAGE_PADDING = s.pagePadding
+  SPACING = s.spacing
+  TITLE_LEFT = s.titleLeft
+  FLAT_BEAMS = s.flatBeams
+  GRACE_SLURS = s.graceSlurs
+  PRINT_SCALE = s.printScale
+  PRINT = s.print
+  PAGE_TOP = s.pageTop
+  STRICT_TEXT_METRICS = s.strictTextMetrics
+  ABCJS_GAPS = s.abcjsGaps
+  JAZZ_CHORDS = s.jazzChords
+  KEYWARN = s.keywarn
+  LINE_WEIGHTS = s.lineWeights
+  SCORE_FONTS = s.scoreFonts
+  SCORE_PARTS_BOX = s.scorePartsBox
+}
+
+/**
+ * Lay a score out. **The render's switches are saved and restored around it** — see
+ * `RenderState` for what they are and for what that does and does not buy.
+ */
 export function layout(input: Score, options: LayoutOptions = {}): Layout {
+  const saved = captureRenderState()
+  try {
+    return layoutScoped(input, options)
+  } finally {
+    restoreRenderState(saved)
+  }
+}
+
+function layoutScoped(input: Score, options: LayoutOptions = {}): Layout {
   const score = expandOverlays(input)
   // `%%staffwidth` names the same quantity as the host's `staffwidth` param; the
   // DIRECTIVE wins, because it is the tune saying how wide it wants to be.
