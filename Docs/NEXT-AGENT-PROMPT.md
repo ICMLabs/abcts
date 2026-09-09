@@ -19,8 +19,9 @@ persist between tool calls and the workspace ROOT collects every sibling repo's 
     zzlive      0 of 685  WebKit AND Chrome
     zzselect    0 of 685  WebKit AND Chrome    <- NEW, and it OPENED AT 9
     zzopts      0 on every plumbing row         <- NEW, and it OPENED AT 685 OF 685
-                …plus three GEOMETRY surfaces declared with counts:
-                print 8 · scale 4 and 2 · jazzchords 95
+                jazzchords 0 — it opened at 95 and closed the same day
+                print 7 · print+responsive 5 · scale 4 and 2, all DECLARED
+                (SIX of the print seven differ in a LAST DIGIT alone)
     zzledger    2 differ, 2 KNOWN — 39 controls (was 16)
     warnings    0 of 815 · zzscale 8 of 8 LINEAR · test:dist 0 of 685 ESM and CJS
 
@@ -72,18 +73,23 @@ between voices was re-derived and the "model change" estimate STANDS.
      `mkdir -p /tmp/gp/pw && cd /tmp/gp/pw && npm init -y && npm i playwright-core@1.61`.
   ⚠️ A GATE'S REPORT FILE OUTLIVES ITS RUN. Check the timestamp on `/tmp/abcts-*.txt`.
 
-WHAT TO DO NEXT — ask the owner which; these are NOT equal, and the first three are now
-NAMED NUMBERS rather than guesses:
-  1. **`jazzchords`, 95 of 685** — the largest single number open anywhere in this repo,
-     declared in `zzopts`. One switch, one surface, and nothing has ever rendered it.
-  2. **`print`, 8 of 685** — a title at font-size 27 against our 31 is the first row.
-  3. **A non-unit `scale`, 4 and 2** — geometry inside the SVG, not the option plumbing.
-  4. **`style=` between voices** — the one open ledger defect, and the size is honest.
-  5. **`oneSvgPerLine` / `viewportHorizontal`** — both unimplemented, each a wrapper of its
-     own; `oneSvgPerLine` is an `<svg>` per SYSTEM with its own viewBox and title.
-  6. **Finish the marker sweep.** ~55 of the 94 are still classified by reading alone.
-  7. **Package metadata** — `version` is `0.0.0`, no `repository`/`homepage`/`unpkg`, so a
+WHAT TO DO NEXT — ask the owner which; these are NOT equal:
+  1. **`oneSvgPerLine` / `viewportHorizontal`** — both UNIMPLEMENTED, measured, each a
+     wrapper of its own: an `abcjs-inner` div for the one, an `<svg>` per SYSTEM with its
+     own viewBox and a `Sheet Music for "<title>" section N` title for the other. The
+     biggest remaining FEATURE gap in the compat surface.
+  2. **A non-unit `scale`, 4 and 2 in `zzopts`** — geometry inside the SVG.
+  3. **`style=` between voices** — the one open ledger defect, and the size is honest.
+  4. **The LAYOUT-UNIT ULP.** It is now SIX of the seven open `print` rows and both flag
+     rows before them: `spaces(x)` then `× UNIT_PX` is not `x`. Architectural, and the
+     largest single class of open rows left anywhere.
+  5. **Finish the marker sweep.** ~55 of the 94 are still classified by reading alone.
+  6. **Package metadata** — `version` is `0.0.0`, no `repository`/`homepage`/`unpkg`, so a
      CDN cannot resolve the script build. The only thing between the owner and publishing.
+  7. **ANOTHER SURFACE.** Two were built on 2026-09-09 and found ten defects between them.
+     What else does a host switch on that no gate renders? `add_classes` beyond the 111
+     sibling goldens, `wrap`/`staffwidth` combinations, tablature options, `format`
+     overrides, a `%%` file header applied to a whole book.
 
 Run `npx tsc --noEmit && echo OK` before every commit, keep every gate above green, and
 commit and push after every landing. Never --force. OMIT Co-Authored-By trailers here —
@@ -96,8 +102,8 @@ rather than following the other silently.
 ## Why this order
 
 **The METHOD first**, because the four additions to it — the witness, the negative control,
-"a floor rots", and comparing the CONTAINER — are what found eleven of the nineteen. The
-state is ten numbers and nine of them are zero.
+"a floor rots", and comparing the CONTAINER — are what found thirteen of the twenty-four.
+The state is eleven numbers and nine of them are zero.
 
 **Then the size pattern**, because it is the argument for re-opening anything this repo has
 written off, and the 2026-09-09 pass is four more instances: cause right, size wrong, twice
