@@ -46,8 +46,7 @@ const encode = (str: string): string =>
  */
 const directiveBody = (diagnostic: Diagnostic, abc: string): string => {
   const at = diagnostic.range?.start ?? 0;
-  let start = 0;
-  for (let i = 0; i < at; i += 1) if (abc[i] === "\n") start = i + 1;
+  const start = lineStartAt(abc, at);
   let end = abc.indexOf("\n", start);
   if (end < 0) end = abc.length;
   return abc.slice(start, end).replace(/^%%/, "");
@@ -55,6 +54,53 @@ const directiveBody = (diagnostic: Diagnostic, abc: string): string => {
 
 const UNDERLINE =
   '<span style="text-decoration:underline;font-size:1.3em;font-weight:bold;">';
+
+/**
+ * **THE START OF THE LINE AN OFFSET FALLS ON, WITHOUT WALKING TO IT.**
+ *
+ * ⚠️ **THIS WAS THIRTEEN COPIES OF `for (let i = 0; i < at; i += 1) if (abc[i] === '\\n')
+ * start = i + 1`, PLUS `lineAt` — a scan from the start of the source PER WARNING**, so
+ * turning W warnings into abcjs's strings was O(W x N). Measured on a tune of `!trill!` and
+ * `!staccato!` on every note: **85% of the whole render**, and the per-note cost grew
+ * 1.16x, 1.21x, 1.39x, 1.71x, 1.91x, 4.21x across doublings — 734us a note at 16k notes,
+ * twelve seconds for one tune. Textbook quadratic, and invisible to every gate here because
+ * the corpus's tunes are small and a profiler on small inputs shows a flat cost.
+ *
+ * The line starts are computed ONCE and searched. `warningsOf` is called once per tune with
+ * the same source, so a one-entry cache keyed on the string is the whole memo — and being
+ * one entry it cannot grow, which a `Map` keyed by source text would.
+ */
+let cachedSource: string | null = null;
+let cachedStarts: number[] = [];
+
+const lineStarts = (abc: string): number[] => {
+  if (cachedSource === abc) return cachedStarts;
+  const starts = [0];
+  for (let i = 0; i < abc.length; i += 1) if (abc[i] === "\n") starts.push(i + 1);
+  cachedSource = abc;
+  cachedStarts = starts;
+  return starts;
+};
+
+/** How many line starts are at or before `offset` — the 1-based line number. */
+const lineNumberAt = (abc: string, offset: number): number => {
+  const starts = lineStarts(abc);
+  let lo = 0;
+  let hi = starts.length - 1;
+  while (lo < hi) {
+    const mid = (lo + hi + 1) >> 1;
+    if ((starts[mid] as number) <= offset) lo = mid;
+    else hi = mid - 1;
+  }
+  return lo + 1;
+};
+
+/**
+ * The offset the line containing `offset` begins at — exactly what the thirteen scans
+ * computed, including their behaviour before the first newline (0).
+ */
+const lineStartAt = (abc: string, offset: number): number =>
+  lineStarts(abc)[lineNumberAt(abc, offset) - 1] as number;
 
 /** `warn(str, line, col_num)` — the string, given the text it points into. */
 export const abcjsWarning = (
@@ -88,14 +134,12 @@ const lineAt = (
   offset: number,
   base: number,
 ): { index: number; start: number } => {
-  let index = 1;
-  let start = base;
-  for (let i = base; i < offset && i < abc.length; i += 1)
-    if (abc[i] === "\n") {
-      index += 1;
-      start = i + 1;
-    }
-  return { index, start };
+  // The same walk as before, as a subtraction of two binary searches — see `lineStarts`.
+  // `Math.max(base, …)` is what preserved the old loop's behaviour before the first
+  // newline after `base`: it started `start` AT the base, not at the line's own beginning.
+  const capped = Math.min(offset, abc.length);
+  const index = lineNumberAt(abc, capped) - lineNumberAt(abc, base) + 1;
+  return { index, start: Math.max(base, lineStartAt(abc, capped)) };
 };
 
 const lineTextAt = (abc: string, start: number): string => {
@@ -203,8 +247,7 @@ const AS_ABCJS: Record<
    */
   "unknown-character": (diagnostic, abc) => {
     const at = diagnostic.range?.start ?? 0;
-    let start = 0;
-    for (let i = 0; i < at; i += 1) if (abc[i] === "\n") start = i + 1;
+    const start = lineStartAt(abc, at);
     return { message: "Unknown character ignored", column: at - start };
   },
   /**
@@ -214,8 +257,7 @@ const AS_ABCJS: Record<
   "unknown-decoration": (diagnostic, abc) => {
     const name = /: (.*)$/.exec(diagnostic.message)?.[1];
     const at = diagnostic.range?.start ?? 0;
-    let start = 0;
-    for (let i = 0; i < at; i += 1) if (abc[i] === "\n") start = i + 1;
+    const start = lineStartAt(abc, at);
     return name === undefined
       ? null
       : { message: `Unknown decoration: ${name}`, column: at - start };
@@ -228,8 +270,7 @@ const AS_ABCJS: Record<
   "grace-rest": (diagnostic, abc) => {
     const c = /'(.)'/.exec(diagnostic.message)?.[1];
     const at = diagnostic.range?.start ?? 0;
-    let start = 0;
-    for (let i = 0; i < at; i += 1) if (abc[i] === "\n") start = i + 1;
+    const start = lineStartAt(abc, at);
     return c === undefined
       ? null
       : {
@@ -291,14 +332,12 @@ const AS_ABCJS: Record<
    */
   "chord-space": (diagnostic, abc) => {
     const at = diagnostic.range?.start ?? 0;
-    let start = 0;
-    for (let i = 0; i < at; i += 1) if (abc[i] === "\n") start = i + 1;
+    const start = lineStartAt(abc, at);
     return { message: "Spaces are not allowed in chords", column: at - start };
   },
   "chord-unterminated": (diagnostic, abc) => {
     const at = diagnostic.range?.start ?? 0;
-    let start = 0;
-    for (let i = 0; i < at; i += 1) if (abc[i] === "\n") start = i + 1;
+    const start = lineStartAt(abc, at);
     return { message: "Expected ']' to end the chords", column: at - start };
   },
   /**
@@ -309,20 +348,17 @@ const AS_ABCJS: Record<
    */
   "unknown-bar-symbol": (diagnostic, abc) => {
     const at = diagnostic.range?.start ?? 0;
-    let start = 0;
-    for (let i = 0; i < at; i += 1) if (abc[i] === "\n") start = i + 1;
+    const start = lineStartAt(abc, at);
     return { message: "Unknown bar symbol", column: at - start };
   },
   "unknown-bar-type": (diagnostic, abc) => {
     const at = diagnostic.range?.start ?? 0;
-    let start = 0;
-    for (let i = 0; i < at; i += 1) if (abc[i] === "\n") start = i + 1;
+    const start = lineStartAt(abc, at);
     return { message: "Unknown bar type", column: at - start };
   },
   "nested-triplet": (diagnostic, abc) => {
     const at = diagnostic.range?.start ?? 0;
-    let start = 0;
-    for (let i = 0; i < at; i += 1) if (abc[i] === "\n") start = i + 1;
+    const start = lineStartAt(abc, at);
     return { message: "Can't nest triplets", column: at - start };
   },
   /**
@@ -332,8 +368,7 @@ const AS_ABCJS: Record<
   "grace-character": (diagnostic, abc) => {
     const c = /'(.)'/.exec(diagnostic.message)?.[1];
     const at = diagnostic.range?.start ?? 0;
-    let start = 0;
-    for (let i = 0; i < at; i += 1) if (abc[i] === "\n") start = i + 1;
+    const start = lineStartAt(abc, at);
     return c === undefined
       ? null
       : {
@@ -377,8 +412,7 @@ const AS_ABCJS: Record<
   }),
   "chord-unterminated-quote": (diagnostic, abc) => {
     const at = diagnostic.range?.start ?? 0;
-    let start = 0;
-    for (let i = 0; i < at; i += 1) if (abc[i] === "\n") start = i + 1;
+    const start = lineStartAt(abc, at);
     return {
       message: "Missing the closing quote while parsing the chord symbol",
       column: at - start,
@@ -391,8 +425,7 @@ const AS_ABCJS: Record<
    */
   "duration-not-representable": (diagnostic, abc) => {
     const at = diagnostic.range?.start ?? 0;
-    let start = 0;
-    for (let i = 0; i < at; i += 1) if (abc[i] === "\n") start = i + 1;
+    const start = lineStartAt(abc, at);
     const text = /duration not representable: (.*)$/s.exec(diagnostic.message)?.[1];
     return text === undefined
       ? null
@@ -404,8 +437,7 @@ const AS_ABCJS: Record<
   /** `letter_to_accent`'s own, at the macro character (`abc_parse_music.js:780`). */
   "unknown-macro": (diagnostic, abc) => {
     const at = diagnostic.range?.start ?? 0;
-    let start = 0;
-    for (let i = 0; i < at; i += 1) if (abc[i] === "\n") start = i + 1;
+    const start = lineStartAt(abc, at);
     const name = /unknown macro: (.*)$/.exec(diagnostic.message)?.[1];
     return name === undefined
       ? null

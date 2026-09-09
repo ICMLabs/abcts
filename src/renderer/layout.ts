@@ -8805,13 +8805,36 @@ function curveReserves(
   }
   const three = 3 * ENGRAVE.spacePerStep
   /** Position in its own beam group, so the mid-beam rules below can be applied. */
+  /**
+   * ⚠️ **THIS FILTERED ALL THE ANCHORS FOR EVERY ANCHOR** — `anchors.filter(b => …)` per
+   * call, so O(n²) in a system's notes AND an array allocated each time. On one long source
+   * line of 16,384 notes it was **49% of the whole render**. Every group's ends are found
+   * once instead; only `first`, `last` and the count are ever asked for.
+   *
+   * Invisible to the corpus, whose systems are a few dozen notes — see
+   * `scripts/zzscale.mjs` for why the shape of the curve is the only instrument that could
+   * have seen it.
+   */
+  const beamEnds = new Map<unknown, { first: NoteAnchor; last: NoteAnchor; count: number }>()
+  for (const b of anchors) {
+    if (b.event.type === 'rest') continue
+    const g = b.event.beamGroup
+    if (g === null) continue
+    const seen = beamEnds.get(g)
+    if (seen === undefined) beamEnds.set(g, { first: b, last: b, count: 1 })
+    else {
+      seen.last = b
+      seen.count += 1
+    }
+  }
+  /** Position in its own beam group, so the mid-beam rules below can be applied. */
   const beamPos = (a: NoteAnchor): 'none' | 'first' | 'last' | 'middle' => {
     const group = a.event.type === 'rest' ? null : a.event.beamGroup
     if (group === null) return 'none'
-    const members = anchors.filter((b) => b.event.type !== 'rest' && b.event.beamGroup === group)
-    if (members.length < 2) return 'none'
-    if (members[0] === a) return 'first'
-    if (members[members.length - 1] === a) return 'last'
+    const ends = beamEnds.get(group)
+    if (ends === undefined || ends.count < 2) return 'none'
+    if (ends.first === a) return 'first'
+    if (ends.last === a) return 'last'
     return 'middle'
   }
   /**
@@ -13370,12 +13393,42 @@ function layoutScoped(input: Score, options: LayoutOptions = {}): Layout {
      * the next pass, and re-applying it would compound.
      */
     const displaced = new Map<number, Map<number, number>>()
+    /**
+     * Slot number by (block, index), per voice — **built on FIRST USE, never eagerly.**
+     *
+     * ⚠️ This was `line.slots.findIndex(…)` per call, inside a solve that lays the line out
+     * up to nine times: O(passes x elements x slots), and **30% of the render of one long
+     * 16,384-note line**.
+     *
+     * ⚠️ **AND AN EAGER MAP WAS MEASURED AND WAS WORSE** — 2026-09-07, building it for every
+     * line took `ragtime-nightingale` from 34.6ms to 40.2ms, because a short line's scan is
+     * cheaper than the map that replaces it. Lazily is what makes it free for the short
+     * lines and O(1) for the long ones; the corpus never reaches the second case, which is
+     * why the first attempt read as a pure regression.
+     */
+    const slotIndex = new Map<number, Map<number, Map<number, number>>>()
+    const slotsOf = (v: number, line: (typeof lines)[number]): Map<number, Map<number, number>> => {
+      const seen = slotIndex.get(v)
+      if (seen !== undefined) return seen
+      const byBlock = new Map<number, Map<number, number>>()
+      line.slots.forEach((slot, k) => {
+        let inner = byBlock.get(slot.block)
+        if (inner === undefined) {
+          inner = new Map<number, number>()
+          byBlock.set(slot.block, inner)
+        }
+        // FIRST wins, as `findIndex` did.
+        if (!inner.has(slot.index)) inner.set(slot.index, k)
+      })
+      slotIndex.set(v, byBlock)
+      return byBlock
+    }
     /** How far element `index` of `block` is displaced in voice `v`, in staff spaces. */
     const displacementOf = (v: number, block: number, index: number): number => {
       const line = lines[v]
       if (line === undefined) return 0
-      const k = line.slots.findIndex((slot) => slot.block === block && slot.index === index)
-      return k < 0 ? 0 : (displaced.get(v)?.get(k) ?? 0)
+      const k = slotsOf(v, line).get(block)?.get(index)
+      return k === undefined ? 0 : (displaced.get(v)?.get(k) ?? 0)
     }
 
     /**

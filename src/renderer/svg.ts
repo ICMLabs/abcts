@@ -821,6 +821,21 @@ export function toSVG(
    * not a bug we refuse to reproduce, so they are no longer mode-split. Measured before the
    * flip: this one flag was 333 of the 675 fixtures on which the two modes disagreed.
    */
+  /**
+   * **HOW MANY OF EACH `data-name` HAVE BEEN DRAWN — a counter, not a scan.**
+   *
+   * ⚠️ This was `for (const d of drawn) if (d.name === name) ordinal += 1` over the WHOLE
+   * `drawn` array, per element: O(n²) in a tune's elements, and `compat` supplies `drawn`
+   * on every render, so every host paid it.
+   *
+   * ⚠️ **AND I MEASURED IT ONCE AND REJECTED IT** — 973ms → 975ms on the 231-file corpus,
+   * and 34.6 → 34.5ms on `ragtime-nightingale`, the largest fixture there. Both true, and
+   * both the wrong instrument: **a quadratic is invisible to a benchmark whose inputs are
+   * all small.** A scaling harness found it at once — 32,768 notes went 45.9 → 18.5 µs a
+   * note, and 65,536 notes now render at the same rate as 4,096, where before the curve was
+   * still bending upward.
+   */
+  const drawnOrdinals = new Map<string, number>();
   const strict = true;
   // …but `<defs>`/`<use>` IS a declared divergence, so it still reads the MODE.
   const optimize =
@@ -3257,8 +3272,8 @@ export function toSVG(
             {
               const drawn = options.drawn;
               if (drawn !== undefined) {
-                let ordinal = 0;
-                for (const d of drawn) if (d.name === name) ordinal += 1;
+                const ordinal = drawnOrdinals.get(name) ?? 0;
+                drawnOrdinals.set(name, ordinal + 1);
                 drawn.push({ name, ordinal, element: el });
               }
             }

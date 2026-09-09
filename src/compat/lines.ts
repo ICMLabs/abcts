@@ -322,7 +322,28 @@ function tile(
   // the line. abcjs does not tile at all — each element's `startChar` is simply where its
   // tokenizer began reading it, and that is right after the previous element on the same
   // line and at the line's own start otherwise. Worth 300 characters on its own.
-  const lineStart = (at: number): number => abc.lastIndexOf("\n", at - 1) + 1;
+  /**
+   * ⚠️ **THE LINE STARTS, ONCE.** This was `abc.lastIndexOf('\n', at - 1) + 1` per element,
+   * which walks backwards to the previous newline — cheap on wrapped music and **O(n²) on a
+   * tune written as ONE long source line**, where every element scans back over all the
+   * music before it. Measured on a single 32,768-note line: the per-note cost grew ~2x per
+   * 4x of input, where every other shape was flat.
+   *
+   * Same technique as `warnings.ts`'s `lineStarts`: build the sorted offsets once, binary
+   * search them. Identical answer, and it cannot depend on how the source is wrapped.
+   */
+  const starts: number[] = [0];
+  for (let i = 0; i < abc.length; i += 1) if (abc[i] === "\n") starts.push(i + 1);
+  const lineStart = (at: number): number => {
+    let lo = 0;
+    let hi = starts.length - 1;
+    while (lo < hi) {
+      const mid = (lo + hi + 1) >> 1;
+      if ((starts[mid] as number) <= at) lo = mid;
+      else hi = mid - 1;
+    }
+    return starts[lo] as number;
+  };
   const opened = elements.map((e, i) => {
     const own = e.startChar ?? 0;
     // **AN INLINE FIELD KEEPS ITS OWN OPENING** — it is bracketed, so the element begins at
@@ -2066,7 +2087,23 @@ function markTuplets(
  */
 const chordEndBeam = (abc: string, e: AbcElement, final: number): boolean | null => {
   const from = e.startChar ?? 0;
-  const close = abc.lastIndexOf("]", (e.endChar ?? 0) - 1);
+  /**
+   * ⚠️ **BOUNDED TO THE ELEMENT'S OWN SPAN, AND THAT IS THE WHOLE FIX.** This was
+   * `abc.lastIndexOf(']', (e.endChar ?? 0) - 1)`, which searches BACKWARDS with no floor —
+   * so for every element that is not a chord, and in a tune with no chords at all that is
+   * every element, it walked back to the start of the file. **O(n²) in a tune's elements**,
+   * and it was 39% of the whole render of a 16,384-note tune.
+   *
+   * The result is unchanged by construction: the next line discards any `]` at or before
+   * `from`, so a match outside the span was never used. `-1` fails that test exactly as a
+   * distant index did.
+   */
+  let close = -1;
+  for (let i = (e.endChar ?? 0) - 1; i > from; i -= 1)
+    if (abc[i] === "]") {
+      close = i;
+      break;
+    }
   if (close <= from) return null;
   let k = close + 1;
   const durFrom = k;

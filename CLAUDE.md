@@ -345,6 +345,35 @@ checkpoint and hand off as you go so no context is lost.
 > extraction cannot change a byte. Next clean candidates: `ENGRAVE` (780 lines, ONE local
 > dependency — `textHeight`) and nine glyph/decoration tables (336 lines, none at all).
 
+> 📈 **AND THE CORPUS IS TOO SMALL TO SEE A QUADRATIC — `npm run scale` IS THE GATE THAT
+> CAN** (2026-09-08). Every comparison here renders 231 fixtures whose largest is a few
+> hundred notes, so an O(n²) shows up as a flat, diffuse cost and a profiler over them says
+> nothing. `scripts/zzscale.mjs` measures the SHAPE OF THE CURVE instead — eight kinds of
+> music at three sizes, asserting the per-note cost does not run away — and it found **FIVE
+> quadratics in one sitting**, three of them worth an order of magnitude:
+>
+>     warnings.ts   13 copies of a scan from the start of the source, PER WARNING   85% of a render
+>     lines.ts      chordEndBeam's lastIndexOf(']') with no floor                   39%
+>     lines.ts      lineStart's lastIndexOf('\n') per element                       O(n²) on ONE long line
+>     layout.ts     beamPos filtering ALL anchors for EVERY anchor                  49%
+>     layout.ts     displacementOf's findIndex, inside a nine-pass solve            30%
+>     svg.ts        the `drawn` ordinal scan                                        the whole tail
+>
+> ⚠️ **TWO OF THOSE I HAD ALREADY MEASURED AND REJECTED** — the `drawn` scan at "973ms →
+> 975ms on the corpus, 34.6 → 34.5ms on ragtime-nightingale", and `displacementOf` at
+> "better on the corpus, WORSE on ragtime". Every number was right and every one was the
+> wrong instrument. **A benchmark whose inputs are all small cannot see a quadratic**, and
+> "measured and rejected" is only as good as the input that measured it.
+>
+> ⚠️ **AND `displacementOf`'s FIX HAD TO BE LAZY.** An eager map really did make
+> `ragtime-nightingale` slower — a short line's scan is cheaper than the map that replaces
+> it. Building it on first use is free for the short lines and O(1) for the long ones.
+>
+> ⚠️ **AND IT IS A SCRIPT, NOT A TEST.** It was `tests/scaling.test.ts` for an hour; inside
+> the 89-file parallel suite a wall-clock measurement measures the MACHINE, and the full run
+> went red on a different file each time and then on this one. A flaky gate is worse than no
+> gate. It sits with `zzlive`, `zzledger` and `zzperf`.
+
 > 🖥️ **RUN EVERY COMMAND FROM `/Users/lrettberg/ICMLabs/Code/abcts`.** `cd` does not persist
 > between tool calls, and the workspace ROOT has its own vitest reach: run from there and it
 > collects every test in every sibling repo — abcjs's own included — and prints a wall of

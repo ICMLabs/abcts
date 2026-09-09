@@ -39,6 +39,7 @@
     "typecheck": "tsc --noEmit",
     "baseline": "ABCTS_SNAPSHOT_RECORD=1 vitest run tests/renderer/baseline.test.ts",
     "parity": "node scripts/parity.mjs",
+    "scale": "npm run build && node scripts/zzscale.mjs",
     "compare": "node scripts/compare.mjs",
     "site": "npm run build && node scripts/zzsite.mjs",
     "glyphs": "node scripts/gen-glyphs.mjs",
