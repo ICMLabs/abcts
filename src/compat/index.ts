@@ -357,6 +357,13 @@ export interface AbcjsParams {
    */
   readonly germanAlphabet?: boolean;
   /**
+   * **`lineThickness` — THICKENS THE STAFF LINES, LEDGERS, BARLINES AND STEMS.** abcjs adds
+   * it to five draw calls and to nothing else, at two different sizes because `printLine`'s
+   * width argument is a HALF and `printStem`'s is WHOLE (`write/renderer.js:42-44`,
+   * `draw/staff.js:14`, `draw/relative.js:61-66`). See `lineWeightsFor`.
+   */
+  readonly lineThickness?: number;
+  /**
    * **THE CALLBACK A CLICK IN THE SCORE CALLS** — `(abcelem, tuneNumber, classes,
    * analysis, drag, ev)`. abcjs pushes it onto `this.listeners`
    * (`engraver-controller.js:61-63`) and `notifySelect` walks them
@@ -1182,6 +1189,7 @@ function renderInto(
         ...(params.jazzchords === true ? { jazzChords: true } : {}),
         // …and `germanAlphabet`, which no directive can ask for — see `GERMAN_CHORDS`.
         ...(params.germanAlphabet === true ? { germanAlphabet: true } : {}),
+        ...(params.lineThickness === undefined ? {} : { lineThickness: params.lineThickness }),
       });
       return laidOutCache;
     };

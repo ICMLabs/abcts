@@ -142,7 +142,12 @@ const OPTIONS = [
    */
   ['add_classes', { add_classes: true }, 17],
   ['accentAbove', { accentAbove: true }, 13],
-  ['lineThickness', { lineThickness: 1.5 }, 665],
+  // ✅ 665 → 14. The term lands on five weights at two sizes — see `lineWeightsFor`.
+  // ⚠️ The 14 that remain are ONE symptom: a TUPLET NUMBER over a beam, whose `y` is out by
+  // 0.09 or 0.18, and the page heights that follow from it. The likely root is that a
+  // thickened stem moves its own FAR EDGE, which is where the beam is anchored — so the
+  // beam's slope shifts and the tuplet rides on it. Measured, not fixed.
+  ['lineThickness', { lineThickness: 1.5 }, 14],
   ['expandToWidest', { expandToWidest: true }, 14],
   ['initialClef', { initialClef: true }, 125],
   ['minPadding', { minPadding: 40 }, 659],

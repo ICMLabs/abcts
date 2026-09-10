@@ -10636,6 +10636,12 @@ export interface LayoutOptions {
   /** `germanAlphabet` — see `GERMAN_CHORDS`. A HOST option; no directive sets it. */
   readonly germanAlphabet?: boolean
   /**
+   * **`lineThickness` — A HOST OPTION THAT THICKENS FIVE LINES AND NOTHING ELSE.** `0`
+   * unless a host sets one (`write/renderer.js:29`, `:42-44`). See `lineWeightsFor` for
+   * why the term is doubled at two of the five.
+   */
+  readonly lineThickness?: number
+  /**
    * **WHERE THIS TUNE'S PAGE CURSOR STARTS** — 0 for a tune of its own, and the PREVIOUS
    * tune's `endY` when a whole book is stacked into one SVG. `engraveABC` resets the
    * renderer once and then runs `engraveTune` per tune, so `renderer.y` runs CONTINUOUSLY
@@ -12440,7 +12446,9 @@ function layoutScoped(input: Score, options: LayoutOptions = {}): Layout {
    * the headless real-metrics path if this is ever declared, and it costs one branch.
    */
   STRICT_TEXT_METRICS = true
-  LINE_WEIGHTS = lineWeightsFor(strict)
+  // …and the host's `lineThickness`, which is ADDED to five of them and at two different
+  // sizes — see `lineWeightsFor`.
+  LINE_WEIGHTS = lineWeightsFor(strict, options.lineThickness ?? 0)
   JAZZ_CHORDS = score.jazzChords || options.jazzChords === true
   GERMAN_CHORDS = options.germanAlphabet === true
   KEYWARN = score.keywarn

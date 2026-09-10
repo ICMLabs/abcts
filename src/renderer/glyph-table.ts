@@ -248,8 +248,45 @@ const ABCJS_WEIGHTS: LineWeights = {
   tieMidpoint: spaces(ABCJS_ARC.thickness),
 }
 
-/** The line weights a render draws with. Strict gets abcjs's; everything else Bravura's. */
-export const lineWeightsFor = (strict: boolean): LineWeights =>
-  strict ? ABCJS_WEIGHTS : BRAVURA_WEIGHTS
+/**
+ * The line weights a render draws with. Strict gets abcjs's; everything else Bravura's.
+ *
+ * **AND THE HOST'S `lineThickness` IS ADDED HERE, WHICH IS THE ONE PLACE IT CAN BE.**
+ * abcjs threads `renderer.lineThickness` — 0 unless a host sets it — into five draw calls,
+ * and **the term is not the same size at all of them**, because the two primitives disagree
+ * about what their width argument means:
+ *
+ *   - `printLine`'s `dy` is a HALF: it draws `y - dy` to `y + dy` (`draw/print-line.js:8-9`).
+ *     A STAFF LINE is `printStaffLine(…, dy + lineThickness)` with `dy` 0.35
+ *     (`draw/staff.js:14`, `:25`) and a LEDGER is `printStaffLine(…, 0.35 + lineThickness)`
+ *     (`draw/relative.js:66`), so both gain **2 × lineThickness**.
+ *   - `printStem`'s `dx` is the WHOLE width, `x` to `x + dx` (`draw/print-stem.js:14`). A
+ *     BARLINE is `params.linewidth + lineThickness` (`draw/relative.js:61`) and a STEM is
+ *     `linewidth > 0 ? linewidth + lineThickness : linewidth - lineThickness` (`:63`), so
+ *     both gain **one** — the stem's branch is a SIGN, not a size: `linewidth` carries the
+ *     stem's direction and the magnitude grows by `lineThickness` either way.
+ *
+ * Nothing else takes it. A BEAM is a filled path rather than a `printStem`, the staff-group
+ * CONNECTOR passes a bare `0.6` (`draw/staff-group.js:143`), and `ledgerExtension` is a
+ * length along the line rather than across it.
+ */
+export const lineWeightsFor = (
+  strict: boolean,
+  lineThickness = 0,
+): LineWeights => {
+  const base = strict ? ABCJS_WEIGHTS : BRAVURA_WEIGHTS
+  if (!(lineThickness > 0)) return base
+  const one = spaces(lineThickness)
+  const two = one * 2
+  return {
+    ...base,
+    staffLine: base.staffLine + two,
+    ledgerLine: base.ledgerLine + two,
+    thinBarline: base.thinBarline + one,
+    thickBarline: base.thickBarline + one,
+    stem: base.stem + one,
+    beamedStem: base.beamedStem + one,
+  }
+}
 
 export { ABCJS as ABCJS_TABLE, BRAVURA as BRAVURA_TABLE }
