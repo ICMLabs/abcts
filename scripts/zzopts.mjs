@@ -149,7 +149,19 @@ const OPTIONS = [
   // beam's slope shifts and the tuplet rides on it. Measured, not fixed.
   ['lineThickness', { lineThickness: 1.5 }, 14],
   ['expandToWidest', { expandToWidest: true }, 14],
-  ['initialClef', { initialClef: true }, 125],
+  // ✅ 125 → 42. The name reads the other way round: `(!this.initialClef || l === 0) &&
+  // createClef(…)` (`creation/abstract-engraver.js:158`), `l` being the LINE index — so it
+  // means the initial clef ONLY. The key signature is outside the guard and still draws on
+  // every line, and a mid-tune `[K: clef=]` is untouched.
+  // ⚠️ The 42 that remain are PAGE HEIGHTS and they differ in BOTH directions — ours 7.75
+  // short on `parse-tie-slur-03-onestaff`, 14.43 tall on `visual-directives-01-incipit-test`
+  // — so it is not one missing reserve. The untested hypothesis is abcjs's
+  // `this.startlimitelem = clef` (`:164`), which is INSIDE `if (clef)`: with the clef gone
+  // the tie limit falls to the key signature, or stays stale when there is none. A
+  // two-line control with a tie across the break did NOT reproduce it — both engines drew
+  // the same height with and without the option — so that control is MUTE and the cause is
+  // still open rather than named.
+  ['initialClef', { initialClef: true }, 42],
   // ✅ 659 → 5. `getExtraWidth(child, pad)` returns `-child.extraw + pad`, so the padding is
   // part of what the element WANTS and the same shortfall test decides whether any of it is
   // spent — an element with slack in front of it costs nothing. `pad` is skipped for

@@ -370,6 +370,13 @@ export interface AbcjsParams {
    */
   readonly minPadding?: number;
   /**
+   * **`initialClef` — THE INITIAL CLEF *ONLY*, AND THE NAME READS THE OTHER WAY ROUND.**
+   * `(!this.initialClef || l === 0) && createClef(…)` (`creation/abstract-engraver.js:158`)
+   * with `l` the LINE index: set it and a staff draws its clef on the first system and on
+   * none after it. The key signature still draws on every line.
+   */
+  readonly initialClef?: boolean;
+  /**
    * **THE CALLBACK A CLICK IN THE SCORE CALLS** — `(abcelem, tuneNumber, classes,
    * analysis, drag, ev)`. abcjs pushes it onto `this.listeners`
    * (`engraver-controller.js:61-63`) and `notifySelect` walks them
@@ -1197,6 +1204,7 @@ function renderInto(
         ...(params.germanAlphabet === true ? { germanAlphabet: true } : {}),
         ...(params.lineThickness === undefined ? {} : { lineThickness: params.lineThickness }),
         ...(params.minPadding === undefined ? {} : { minPadding: params.minPadding }),
+        ...(params.initialClef === true ? { initialClef: true } : {}),
       });
       return laidOutCache;
     };

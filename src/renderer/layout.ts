@@ -5972,6 +5972,16 @@ let GERMAN_CHORDS = false
  * sets one, and no directive can.
  */
 let MIN_PADDING = 0
+/**
+ * **`initialClef` — AND IT MEANS THE INITIAL CLEF *ONLY*.** The name reads the other way
+ * round: `var clef = (!this.initialClef || l === 0) && createClef(…)`
+ * (`creation/abstract-engraver.js:158`), where `l` is the LINE index — so with it set, a
+ * staff draws its clef on line 0 and on no line after it. Measured before it was believed.
+ *
+ * The KEY SIGNATURE is outside the guard and still draws on every line, and a mid-tune
+ * `[K: clef=]` is a different element entirely and is untouched.
+ */
+let INITIAL_CLEF = false
 
 /** `%%keywarn 0` stops a mid-tune `K:` being DRAWN — see `Score.keywarn`. */
 let KEYWARN = true
@@ -10653,6 +10663,8 @@ export interface LayoutOptions {
    * `MIN_PADDING`; `0` unless a host sets one.
    */
   readonly minPadding?: number
+  /** `initialClef` — the initial clef ONLY, on line 0. See `INITIAL_CLEF`. */
+  readonly initialClef?: boolean
   /**
    * **WHERE THIS TUNE'S PAGE CURSOR STARTS** — 0 for a tune of its own, and the PREVIOUS
    * tune's `endY` when a whole book is stacked into one SVG. `engraveABC` resets the
@@ -12290,6 +12302,7 @@ interface RenderState {
   jazzChords: boolean
   germanChords: boolean
   minPadding: number
+  initialClef: boolean
   keywarn: boolean
   lineWeights: typeof LINE_WEIGHTS
   scoreFonts: Score['fonts']
@@ -12311,6 +12324,7 @@ const captureRenderState = (): RenderState => ({
   jazzChords: JAZZ_CHORDS,
     germanChords: GERMAN_CHORDS,
     minPadding: MIN_PADDING,
+    initialClef: INITIAL_CLEF,
   keywarn: KEYWARN,
   lineWeights: LINE_WEIGHTS,
   scoreFonts: SCORE_FONTS,
@@ -12332,6 +12346,7 @@ const restoreRenderState = (s: RenderState): void => {
   JAZZ_CHORDS = s.jazzChords
   GERMAN_CHORDS = s.germanChords
   MIN_PADDING = s.minPadding
+  INITIAL_CLEF = s.initialClef
   KEYWARN = s.keywarn
   LINE_WEIGHTS = s.lineWeights
   SCORE_FONTS = s.scoreFonts
@@ -12484,6 +12499,7 @@ function layoutScoped(input: Score, options: LayoutOptions = {}): Layout {
   GERMAN_CHORDS = options.germanAlphabet === true
   // …in LAYOUT UNITS, since the host states it in pixels — see `MIN_PADDING`.
   MIN_PADDING = spaces(options.minPadding ?? 0)
+  INITIAL_CLEF = options.initialClef === true
   KEYWARN = score.keywarn
   SCORE_FONTS = score.fonts
   SCORE_PARTS_BOX = score.partsBox
@@ -13206,7 +13222,14 @@ function layoutScoped(input: Score, options: LayoutOptions = {}): Layout {
       // (`abc_parse_music.js:296-301`). The parser has already applied abcjs's two guards —
       // first voice, and not the first system; WHICH staff draws it is the caller's, see
       // `systemNumber`.
-      const bare = layoutClef(x, clef, strict)
+      /**
+       * …**AND `initialClef` SUPPRESSES IT ON EVERY LINE BUT THE FIRST** — see
+       * `INITIAL_CLEF`. The bar number goes with it, because abcjs attaches that to the
+       * clef INSIDE `if (clef)` (`abstract-engraver.js:159-162`), so a suppressed clef
+       * takes the number it would have carried.
+       */
+      const bare =
+        INITIAL_CLEF && (lineOfMeasure[from] ?? 0) > 0 ? null : layoutClef(x, clef, strict)
       const clefElement =
         bare === null || systemNumber === undefined
           ? bare
