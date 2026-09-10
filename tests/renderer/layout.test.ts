@@ -1932,6 +1932,57 @@ describe('styled noteheads', () => {
       'noteheadSlashHorizontalEnds',
     ])
   })
+
+  /**
+   * **THE THREE RULES THAT MAKE `style=` A VOICE-LINE PROPERTY AND NOT A VOICE ONE.**
+   * Laddered over ten rungs through abcjs itself (`scripts/zzledger.mjs`'s
+   * `parser.ts:4914` note has the whole list); these are the four that a single-voice
+   * fixture cannot state, so nothing headless could gate them before.
+   *
+   * A slash head is `rhythm`, a black head is `normal`. Both staves are read, in engraving
+   * order, because the whole point is what one voice does to the NEXT one.
+   */
+  describe('style= across voices, in engraving order', () => {
+    const allHeads = (abc: string): string[] =>
+      layout(parse(abc).scores[0] as Score, { systemWidth: 400 })
+        .systems.flatMap((system) => system.staves.flatMap((st) => st.elements))
+        .flatMap((e) => e.glyphs)
+        .filter((g) => g.role === 'notehead')
+        .map((g) => (g.name === 'noteheadSlashHorizontalEnds' ? 'rhythm' : 'normal'))
+    const H = 'X:1\nL:1/4\nM:4/4\n%%score (1 2)\nV:1\nV:2\n'
+
+    it('reads a HEADER K: style= as global, so it reaches every voice', () => {
+      // It was voice state, and reached only the first.
+      expect(allHeads(`${H}K:C style=rhythm\nV:1\nCDEF|\nV:2\nGABc|\n`)).toEqual(
+        Array.from({ length: 8 }, () => 'rhythm'),
+      )
+    })
+
+    it('fixes the line style when the line OPENS, and a V: field opens one', () => {
+      // The `[K:]` is written on the line `V:1` introduces, so it is already too late for
+      // voice 1 — and in force by the time voice 2's line opens.
+      expect(allHeads(`${H}K:C\nV:1\n[K:C style=rhythm]CDEF|\nV:2\nGABc|\n`)).toEqual([
+        'normal', 'normal', 'normal', 'normal',
+        'rhythm', 'rhythm', 'rhythm', 'rhythm',
+      ])
+    })
+
+    it('…while a single-voice tune with no V: DOES take its own line-start [K:]', () => {
+      // The negative control for the rule above: without a `V:` the capture is lazy, so
+      // the field is read first. This is the arm every existing fixture exercises.
+      expect(allHeads('X:1\nL:1/4\nM:4/4\nK:C\n[K:C style=rhythm]CDEF|\n')).toEqual(
+        Array.from({ length: 4 }, () => 'rhythm'),
+      )
+    })
+
+    it('leaks into a voice with no style of its own, as abcjs does', () => {
+      // `pushCrossLineElems` saves the slurs, ties, endings, colour and scale — and not
+      // `this.style`. Voice 2 never asked for a slash head and gets one.
+      expect(allHeads(`X:1\nL:1/4\nM:4/4\n%%score (1 2)\nV:1 style=rhythm\nV:2\nK:C\nV:1\nCDEF|\nV:2\nGABc|\n`)).toEqual(
+        Array.from({ length: 8 }, () => 'rhythm'),
+      )
+    })
+  })
 })
 
 describe('microtonal accidentals', () => {

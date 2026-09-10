@@ -1489,6 +1489,41 @@ class VoiceBuilder {
    */
   noteStyle: NoteStyle = 'normal'
   /**
+   * **`V:… style=` — THE VOICE'S OWN, WHICH BEATS THE GLOBAL ONE.** `startNewLine` reads
+   * `multilineVars.style` and then OVERWRITES it with `multilineVars.currentVoice.style`
+   * where the voice has one (`abc_parse_music.js:1008-1009`, `:1027-1028`).
+   */
+  ownStyle: NoteStyle | null = null
+  /**
+   * **`K:… style=` IS GLOBAL, NOT THIS VOICE'S** — abcjs's `multilineVars.style`, mirrored
+   * onto every voice by `ScoreBuilder.setGlobalStyle` so a `VoiceBuilder` needs no
+   * back-reference. It was read as voice state, so a HEADER `K:C style=rhythm` over two
+   * voices reached only the first: measured, abcjs draws slash heads in BOTH.
+   */
+  globalStyle: NoteStyle | null = null
+  /**
+   * ⚠️ **THE LINE'S STYLE IS FIXED WHEN THE VOICE-LINE OPENS, AND A `V:` FIELD OPENS ONE.**
+   * That is the whole difference between a single-voice tune, where a leading `[K: style=]`
+   * DOES reach its own line, and a multi-voice one, where it does not — measured on ten
+   * rungs through both engines:
+   *
+   *     K:C / [K:C style=rhythm]CDEF|      the line IS rhythm     (no `V:`, capture is lazy)
+   *     V:1 / [K:C style=rhythm]CDEF|      v1 is ROUND, v2 rhythm (`V:1` captured first)
+   *     K:C style=rhythm over V:1 V:2      BOTH voices rhythm
+   *     header rhythm, v1 [K:C style=normal]  v1 rhythm, v2 normal
+   *
+   * abcjs's own mechanism is `createVoice` appending a `style` ELEMENT from `params.style`
+   * as the line opens (`tune-builder.js:971-973`), and `startNewLine` firing lazily unless
+   * a `V:` has already run it.
+   */
+  private lineStyleCaptured = false
+  /**
+   * Whether a `V:` FIELD opened this voice-line, in which case the music line that follows
+   * must not re-open it — the field and the line it introduces are ONE voice-line, and
+   * `beginMusicLine` fires for the second half of it.
+   */
+  private lineOpenedByField = false
+  /**
    * A `>`/`<` mark scales the NEXT event. It lives on the voice, not the scan of one
    * line: a plain line break does not end a measure, so `A>` at the end of one line and
    * `B` at the start of the next are still a broken-rhythm pair. Keeping it line-local
@@ -1788,8 +1823,7 @@ class VoiceBuilder {
      * element appended and not at the line's first character — the same lazy line start
      * `styleForNextLine` is built on. See `Measure.lineStyle`.
      */
-    if (!this.appendedSinceLineStart && this.styleSeen)
-      this.styleAtLineStart = this.noteStyle
+    if (!this.appendedSinceLineStart) this.captureLineStyle()
     this.target.push(event)
     this.appendedSinceLineStart = true
     // Lyrics align to the primary melody only: overlay notes do not advance the counter,
@@ -1822,11 +1856,6 @@ class VoiceBuilder {
    * field written before the first note or bar is still ahead of it. See `noteStyle`.
    */
   private appendedSinceLineStart = false
-  /**
-   * A `style=` that arrived MID-LINE and therefore belongs to the NEXT one. See the `K:`
-   * arm of `applyField`; the mechanism is `meterForNextLine`'s exactly.
-   */
-  private styleForNextLine: NoteStyle | null = null
   /** Has a `style=` been seen AT ALL — abcjs's `if (multilineVars.style)`. */
   private styleSeen = false
   /** The style this line opened with — see `push`. */
@@ -1857,10 +1886,43 @@ class VoiceBuilder {
    * A field at the HEAD of a line still applies to that line, because `startNewLine` has
    * not fired yet — the same lazy-line mechanism as findings 125 and 130.
    */
-  setNoteStyle(style: NoteStyle, inline: boolean): void {
+  /**
+   * `createVoice`'s `if (params.style) appendElement('style', …)` — the value in force as
+   * the voice-line opened, and NOTHING once it has. Idempotent per line.
+   */
+  captureLineStyle(byField = false, inherited: NoteStyle | null = null): NoteStyle | null {
+    if (byField) this.lineOpenedByField = true
+    // …and a line already captured still REPORTS what it captured, so the running value
+    // sees it. A header `V:1 style=rhythm` captures at the field and the body `V:1` opens
+    // the same line again; returning null there left `runningStyle` unset and the leak
+    // never fired.
+    if (this.lineStyleCaptured) return this.styleAtLineStart
+    this.lineStyleCaptured = true
+    const effective = this.ownStyle ?? this.globalStyle
+    this.styleAtLineStart = effective
+    /**
+     * ⚠️ **AND A VOICE-LINE WITH NO STYLE OF ITS OWN INHERITS THE LAST ONE ENGRAVED.**
+     * `this.style` is plain engraver state: `pushCrossLineElems`/`popCrossLineElems` save
+     * and restore the slurs, the ties, the endings, the COLOUR and the SCALE per voice and
+     * NOT the style (`abstract-engraver.js:92-107`), and `reset()` does not clear it
+     * either. So a `V:1 style=rhythm` over a plain `V:2` draws slash heads on BOTH staves —
+     * measured, and the lower staff never asked for them.
+     *
+     * `styleAtLineStart` stays null, because what is inherited is not a `style` ELEMENT and
+     * `tune.lines` must not grow one.
+     */
+    this.noteStyle = effective ?? inherited ?? 'normal'
+    return effective
+  }
+
+  /** `V:… style=` — this voice's own, and it opens the line where one is not open yet. */
+  setVoiceStyle(style: NoteStyle): void {
+    this.ownStyle = style
     this.styleSeen = true
-    if (inline && this.appendedSinceLineStart) this.styleForNextLine = style
-    else this.noteStyle = style
+    if (!this.appendedSinceLineStart) {
+      this.lineStyleCaptured = false
+      this.captureLineStyle()
+    }
   }
 
   beginMusicLine(): void {
@@ -1869,11 +1931,12 @@ class VoiceBuilder {
     this.pendingLineStart = true
     this.wroteSinceLineStart = false
     this.appendedSinceLineStart = false
-    // abcjs's `createVoice` reading `multilineVars.style` — see `setNoteStyle`.
-    if (this.styleForNextLine !== null) {
-      this.noteStyle = this.styleForNextLine
-      this.styleForNextLine = null
-    }
+    // …and the line's style is captured again — see `lineStyleCaptured`. The old
+    // `styleForNextLine` promotion is gone: a mid-line `[K: style=]` now simply updates the
+    // GLOBAL value, which the next voice-line reads when IT opens, which is abcjs's own
+    // mechanism rather than a per-voice deferral of it.
+    if (!this.lineOpenedByField) this.lineStyleCaptured = false
+    this.lineOpenedByField = false
     // …AND THIS IS WHERE A STANDALONE `M:` LANDS — abcjs's `startNewLine` consuming
     // `multilineVars.meter`. See `setMeterForNextLine`. It is promoted AFTER
     // `closeUnterminatedMeasure`, so the measure this line opens gets it and the one it
@@ -3209,6 +3272,11 @@ class ScoreBuilder {
         this.pendingVskip,
         this.pendingNewPage,
       )
+      // …**AND A VOICE CONJURED AFTER THE `K:` STILL SEES THE GLOBAL STYLE** — abcjs reads
+      // `multilineVars.style` at the line's open, so it does not matter when the voice was
+      // made. Mirroring only onto the voices that already existed left a header
+      // `K:C style=rhythm` unread on a tune whose voice is implicit.
+      builder.globalStyle = this.globalStyle
       this.barNumbering.firstVoiceId ??= id
       this.voices.set(id, builder)
     }
@@ -3237,6 +3305,45 @@ class ScoreBuilder {
    * `%%voicecolor` and `%%voicescale` (`abc_parse_directive.js:854-871`).
    */
   declaredVoiceId: string | null = null
+
+  /**
+   * **abcjs's `multilineVars.style` — GLOBAL, and set by `K: style=` alone.** Mirrored onto
+   * every `VoiceBuilder` rather than reached through a back-reference, because a voice
+   * created later must see it too. `V: style=` is the voice's own and beats it — see
+   * `VoiceBuilder.ownStyle`.
+   */
+  private globalStyle: NoteStyle | null = null
+
+  setGlobalStyle(style: NoteStyle): void {
+    this.globalStyle = style
+    for (const v of this.voices.values()) v.globalStyle = style
+  }
+
+  /**
+   * **A `V:` FIELD OPENS THE VOICE-LINE** — see `VoiceBuilder.captureLineStyle`. Without
+   * this a leading `[K: style=]` on the line the field introduces would still reach it,
+   * and abcjs draws that line unstyled.
+   */
+  /**
+   * **THE RUNNING `this.style`** — the last style ELEMENT engraved, which no voice
+   * restores. See `VoiceBuilder.captureLineStyle`.
+   *
+   * ponytail: this follows SOURCE order, which is engraving order for a tune whose voices
+   * are interleaved line by line and for every single-staff tune — not for one written a
+   * whole voice at a time, where abcjs engraves line 1 of every voice before line 2 of the
+   * first. Upgrade path is a post-parse pass over `score.staves` and the `startsSystem`
+   * boundaries, which is where the true (line, staff, voice) order lives.
+   */
+  private runningStyle: NoteStyle | null = null
+
+  captureVoiceLine(v: VoiceBuilder, byField = false): void {
+    const own = v.captureLineStyle(byField, this.runningStyle)
+    if (own !== null) this.runningStyle = own
+  }
+
+  openVoiceLine(id: string): void {
+    this.captureVoiceLine(this.voiceFor(id), true)
+  }
 
   declareVoice(id: string, merge = false): void {
     const isFirst = this.voices.size === 0
@@ -4965,6 +5072,10 @@ class Parser {
           // this line continues the one above it. abcjs's second mechanism — see
           // `VoiceBuilder.inlineVoiceField`, which is NOT the same as `switchedTo`.
           if (inline) builder.voice.inlineVoiceField(this.lineIsContinuation)
+          // **AND THE FIELD OPENS THE VOICE-LINE** — `createVoice` appends its `style`
+          // element here, so a `[K: style=]` written on the line this field introduces is
+          // already too late for it. See `VoiceBuilder.captureLineStyle`.
+          builder.openVoiceLine(id)
           builder.beganMusic = true
         }
         const octave = octaveModifier(value)
@@ -5014,26 +5125,22 @@ class Parser {
          * The same `setNoteStyle` the `K:` arm calls, and NOT inline: the element is
          * appended at the line's head, so it applies to the line the field opens.
          *
-         * ⚠️ **AND IN abcjs IT LEAKS INTO EVERY VOICE ENGRAVED AFTER IT.** `this.style` is
-         * plain engraver state: `pushCrossLineElems`/`popCrossLineElems` save and restore
-         * the slurs, the ties, the endings, the COLOUR and the SCALE per voice, and not the
-         * style (`abstract-engraver.js:92-107`). So a voice with no style of its own
-         * inherits whatever the last one left. Measured on `[V:1]…\n[V:2 style=x]…` over two
-         * lines: voice 2's x heads reach voice 1's SECOND line, and on `V:1 style=x` the
-         * lower staff draws x heads it never asked for.
+         * ✅ **AND IN abcjs IT LEAKS INTO EVERY VOICE ENGRAVED AFTER IT — REPRODUCED
+         * 2026-09-09.** `this.style` is plain engraver state:
+         * `pushCrossLineElems`/`popCrossLineElems` save and restore the slurs, the ties,
+         * the endings, the COLOUR and the SCALE per voice, and not the style
+         * (`abstract-engraver.js:92-107`); `reset()` does not clear it either. So a voice
+         * with no style of its own inherits whatever the last one left, and `V:1 style=x`
+         * draws x heads on the lower staff too.
          *
-         * ponytail: not reproduced. The leak is a running value in (line, staff, voice)
-         * ENGRAVING order, and this parser resolves the style per voice at parse time —
-         * where the source order is the engraving order only for interleaved `[V:…]` lines
-         * and not for a tune written one whole voice at a time. Reproducing it means moving
-         * the style out of `VoiceBuilder` and re-asserting it at each line head, which is
-         * a model change, not a patch. A SINGLE-voice tune is byte-exact in all five
-         * styles, which is what `abcts-voice-style.abc` gates; a multi-voice one is closer
-         * than it was (24654 bytes against abcjs's 25020, from a 20315 baseline) and still
-         * wrong.
+         * The marker here predicted a model change rather than a patch, and it was RIGHT.
+         * Three rules, laddered over TEN rungs through both engines and all ten agreeing:
+         * `K: style=` is GLOBAL where this read it as the voice's; a voice-line's style is
+         * fixed WHEN THE LINE OPENS and a `V:` FIELD opens one; and a line with no style of
+         * its own takes the running value. See `VoiceBuilder.captureLineStyle`.
          */
         const voiceStyle = styleModifier(value)
-        if (voiceStyle !== null) builder.voiceFor(id).setNoteStyle(voiceStyle, false)
+        if (voiceStyle !== null) builder.voiceFor(id).setVoiceStyle(voiceStyle)
         /**
          * **`scale=` AND `cue=` ARE ONE VALUE** — `voiceScale`. `cue=on` is `0.6` and
          * ANYTHING ELSE IS `1` (`abc_parse_key_voice.js:809-815`), so `cue=off` declares a
@@ -5123,8 +5230,15 @@ class Parser {
         // `style=` rides on K: and sets the notehead shape for everything that follows,
         // until the next one — `[K: style=harmonic]`, then `[K: style=normal]` to end it.
         // It is voice state, not a property of the K: field.
+        /**
+         * ⚠️ **AND IT IS GLOBAL, NOT THIS VOICE'S.** `multilineVars.style` is read by every
+         * voice-line that opens after it (`abc_parse_music.js:1008-1009`), so a header
+         * `K:C style=rhythm` over two voices reaches BOTH — measured, and it reached only
+         * the first here. The line it is written in keeps whatever it opened with, which
+         * is why a mid-line one needs no deferral of its own any more.
+         */
         const keyStyle = styleModifier(value)
-        if (keyStyle !== null) builder.voice.setNoteStyle(keyStyle, inline)
+        if (keyStyle !== null) builder.setGlobalStyle(keyStyle)
         /**
          * **THE FIRST `K:` OF A TUNE IS NEVER A KEY CHANGE, WHATEVER STOOD ABOVE IT.**
          * abcjs's guard is `!multilineVars.is_in_header` (`abc_parse_header.js:509`), and
@@ -5547,6 +5661,11 @@ class Parser {
         // Inline `!style=x!` wins for this note; otherwise the voice's standing style
         // from `K: style=` applies.
         const inline = resolveStyle(pending)
+        // **THE LINE'S STYLE IS CAPTURED WHERE IT IS FIRST READ**, not where the event is
+        // pushed: the event is BUILT before `push` runs, so capturing there left the first
+        // note of every line on the previous value and the rest on the new one. See
+        // `VoiceBuilder.captureLineStyle`.
+        builder.captureVoiceLine(voice())
         const style = inline ?? voice().noteStyle
         const attached: Note | Chord = {
           ...scaled,
