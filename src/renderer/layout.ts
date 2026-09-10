@@ -5303,7 +5303,7 @@ function decorationGlyphs(
   for (const name of names) {
     if (ABCJS_GAPS && STRICT_UNDRAWN.has(name)) continue
     const spec = DECORATIONS[name]
-    if (spec?.place !== 'articulation') continue
+    if (spec === undefined || placeOf(spec) !== 'articulation') continue
     closeY =
       closeY === undefined
         ? artAbove
@@ -5395,13 +5395,13 @@ function decorationGlyphs(
     if (ABCJS_GAPS && STRICT_UNDRAWN.has(name)) continue
     const spec = DECORATIONS[name]
     if (spec === undefined) continue // unmapped — counted by the test, never guessed at
-    if (spec.place === 'articulation') continue // already placed, above
+    if (placeOf(spec) === 'articulation') continue // already placed, above
 
     const glyph = spec.above
     const centre = decorationX(headX, headWidth, glyph, table.width(glyph))
     const centreDx = decorationDx(headWidth, glyph, table.width(glyph))
 
-    if (spec.place === 'ornament') {
+    if (placeOf(spec) === 'ornament') {
       const height = heightInPitches(glyph) + ENGRAVE.decorationPadding
       /**
        * **AND THE DECLARED BOX IS STATED IN PITCH.** `thickness: symbolHeightInPitches(symbol)`
@@ -5982,6 +5982,28 @@ let MIN_PADDING = 0
  * `[K: clef=]` is a different element entirely and is untouched.
  */
 let INITIAL_CLEF = false
+/**
+ * **`accentAbove` — AN ACCENT LEAVES THE NOTE AND JOINS THE ORNAMENT LANE.** Two `if`s, one
+ * in each of abcjs's decoration passes: `closeDecoration` skips it —
+ * `(decoration[i] === "accent" && !accentAbove)` (`creation/decoration.js:20`) — and
+ * `stackedDecoration` picks it up, `symbolDecoration("scripts.sforzato", positioning)`
+ * with the ornament's own placement (`:268-273`).
+ *
+ * So the same GLYPH is drawn either way; what changes is which stack it is counted into,
+ * and therefore every lane above the staff.
+ */
+let ACCENT_ABOVE = false
+
+/**
+ * The decoration pass an entry belongs to. `accentAbove` moves the accent from the
+ * articulation pass to the ornament one and changes nothing else — see `ACCENT_ABOVE`.
+ *
+ * **KEYED ON THE GLYPH**, as the accent already is everywhere else here: abcjs
+ * canonicalises `>`, `<` and `emphasis` to `accent` in the PARSER and we keep the source
+ * spelling, so the sforzato is the discriminator that cannot go stale.
+ */
+const placeOf = (spec: { above: GlyphName; place: string }): string =>
+  ACCENT_ABOVE && spec.above === 'articAccentAbove' ? 'ornament' : spec.place
 
 /** `%%keywarn 0` stops a mid-tune `K:` being DRAWN — see `Score.keywarn`. */
 let KEYWARN = true
@@ -10665,6 +10687,8 @@ export interface LayoutOptions {
   readonly minPadding?: number
   /** `initialClef` — the initial clef ONLY, on line 0. See `INITIAL_CLEF`. */
   readonly initialClef?: boolean
+  /** `accentAbove` — the accent joins the ornament lane. See `ACCENT_ABOVE`. */
+  readonly accentAbove?: boolean
   /**
    * **WHERE THIS TUNE'S PAGE CURSOR STARTS** — 0 for a tune of its own, and the PREVIOUS
    * tune's `endY` when a whole book is stacked into one SVG. `engraveABC` resets the
@@ -12303,6 +12327,7 @@ interface RenderState {
   germanChords: boolean
   minPadding: number
   initialClef: boolean
+  accentAbove: boolean
   keywarn: boolean
   lineWeights: typeof LINE_WEIGHTS
   scoreFonts: Score['fonts']
@@ -12325,6 +12350,7 @@ const captureRenderState = (): RenderState => ({
     germanChords: GERMAN_CHORDS,
     minPadding: MIN_PADDING,
     initialClef: INITIAL_CLEF,
+    accentAbove: ACCENT_ABOVE,
   keywarn: KEYWARN,
   lineWeights: LINE_WEIGHTS,
   scoreFonts: SCORE_FONTS,
@@ -12347,6 +12373,7 @@ const restoreRenderState = (s: RenderState): void => {
   GERMAN_CHORDS = s.germanChords
   MIN_PADDING = s.minPadding
   INITIAL_CLEF = s.initialClef
+  ACCENT_ABOVE = s.accentAbove
   KEYWARN = s.keywarn
   LINE_WEIGHTS = s.lineWeights
   SCORE_FONTS = s.scoreFonts
@@ -12500,6 +12527,7 @@ function layoutScoped(input: Score, options: LayoutOptions = {}): Layout {
   // …in LAYOUT UNITS, since the host states it in pixels — see `MIN_PADDING`.
   MIN_PADDING = spaces(options.minPadding ?? 0)
   INITIAL_CLEF = options.initialClef === true
+  ACCENT_ABOVE = options.accentAbove === true
   KEYWARN = score.keywarn
   SCORE_FONTS = score.fonts
   SCORE_PARTS_BOX = score.partsBox

@@ -141,7 +141,11 @@ const OPTIONS = [
    *                          (`creation/decoration.js:20`), which moves every lane with it.
    */
   ['add_classes', { add_classes: true }, 17],
-  ['accentAbove', { accentAbove: true }, 13],
+  // ✅ CLOSED — two `if`s, one in each decoration pass: `closeDecoration` skips the accent
+  // (`creation/decoration.js:20`) and `stackedDecoration` picks it up with the ORNAMENT's
+  // own placement (`:268-273`). The same sforzato is drawn either way; what changes is
+  // which stack counts it, and so every lane above the staff.
+  ['accentAbove', { accentAbove: true }, 0],
   // ✅ 665 → 14. The term lands on five weights at two sizes — see `lineWeightsFor`.
   // ⚠️ The 14 that remain are ONE symptom: a TUPLET NUMBER over a beam, whose `y` is out by
   // 0.09 or 0.18, and the page heights that follow from it. The likely root is that a

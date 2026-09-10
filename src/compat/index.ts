@@ -377,6 +377,12 @@ export interface AbcjsParams {
    */
   readonly initialClef?: boolean;
   /**
+   * **`accentAbove` — AN ACCENT LEAVES THE NOTE AND JOINS THE ORNAMENT LANE.** The same
+   * sforzato is drawn either way; what changes is which stack counts it, and therefore
+   * every lane above the staff (`creation/decoration.js:20`, `:268-273`).
+   */
+  readonly accentAbove?: boolean;
+  /**
    * **THE CALLBACK A CLICK IN THE SCORE CALLS** — `(abcelem, tuneNumber, classes,
    * analysis, drag, ev)`. abcjs pushes it onto `this.listeners`
    * (`engraver-controller.js:61-63`) and `notifySelect` walks them
@@ -1205,6 +1211,7 @@ function renderInto(
         ...(params.lineThickness === undefined ? {} : { lineThickness: params.lineThickness }),
         ...(params.minPadding === undefined ? {} : { minPadding: params.minPadding }),
         ...(params.initialClef === true ? { initialClef: true } : {}),
+        ...(params.accentAbove === true ? { accentAbove: true } : {}),
       });
       return laidOutCache;
     };
