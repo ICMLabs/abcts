@@ -224,6 +224,22 @@ export interface RenderOptions {
    */
   readonly titles?: readonly (string | undefined)[];
   /**
+   * **THE HOST'S `ariaLabel`, AND ITS EMPTY STRING TURNS THE WHOLE BLOCK OFF.**
+   *
+   *     if (renderer.ariaLabel !== '') {
+   *       var text = "Sheet Music"; …
+   *       renderer.paper.setTitle(text);
+   *       var label = renderer.ariaLabel ? renderer.ariaLabel : text;
+   *       renderer.paper.setAttribute("aria-label", label);
+   *     }
+   *
+   * (`draw/set-paper-size.js:9-16`.) So three states, and the middle one is the surprise:
+   * absent gives the default label and `<title>`; a STRING replaces the attribute and
+   * leaves the `<title>` saying `Sheet Music for "…"`; and `''` emits NEITHER the attribute
+   * NOR the `<title>` element at all. Measured in WebKit before it was written.
+   */
+  readonly ariaLabel?: string;
+  /**
    * Force the drawing's width in pixels, rather than fitting the content.
    *
    * abcjs pads its SVG to the requested page width even when the music is narrower —
@@ -4579,11 +4595,20 @@ export function toSVG(
   if (abcjs) {
     return stampDefIds(
       `<svg xmlns:xlink="http://www.w3.org/1999/xlink" role="img" fill="currentColor" ` +
-      `stroke="currentColor" aria-label="Sheet Music${
-        lastTitle === undefined || lastTitle === ""
+      `stroke="currentColor" ${
+        // `ariaLabel: ''` suppresses the attribute outright — see `RenderOptions.ariaLabel`.
+        options.ariaLabel === ""
           ? ""
-          : ` for &quot;${escapeText(lastTitle)}&quot;`
-      }" width="${raw(w)}" height="${raw(printH)}"${printStyle}` +
+          : `aria-label="${
+              options.ariaLabel === undefined
+                ? `Sheet Music${
+                    lastTitle === undefined || lastTitle === ""
+                      ? ""
+                      : ` for &quot;${escapeText(lastTitle)}&quot;`
+                  }`
+                : escapeAttr(options.ariaLabel)
+            }" `
+      }width="${raw(w)}" height="${raw(printH)}"${printStyle}` +
       /**
        * **NO `viewBox`.** abcjs draws in ABSOLUTE PIXELS and writes none; the drawing above
        * is now emitted in pixels too, so there is nothing left for a view transform to do.
@@ -4600,9 +4625,15 @@ export function toSVG(
         .reverse()
         .map(
           (t) =>
-            `<style>${ABCJS_STYLE}</style><title>Sheet Music${
-              t === undefined || t === "" ? "" : ` for "${escapeText(t)}"`
-            }</title>`,
+            `<style>${ABCJS_STYLE}</style>${
+              // …and the `<title>` goes with it, because `setTitle` is INSIDE the same
+              // guard. The `<style>` is not: `insertStyles` runs unconditionally.
+              options.ariaLabel === ""
+                ? ""
+                : `<title>Sheet Music${
+                    t === undefined || t === "" ? "" : ` for "${escapeText(t)}"`
+                  }</title>`
+            }`,
         )
         .join("") +
       (glyphDefs.size === 0

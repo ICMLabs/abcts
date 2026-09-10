@@ -5958,6 +5958,13 @@ let ABCJS_GAPS = true
 
 /** `%%jazzchords` for the current render — same one-place switch, set beside it. */
 let JAZZ_CHORDS = false
+/**
+ * **`germanAlphabet` — H FOR B, AND B FOR B FLAT.** A host option abcjs reads in
+ * `translateChord` (`creation/translate-chord.js:1-10`, `:24-27`), applied to the chord's
+ * ROOT and its `/bass` and to nothing else — the modifier is untouched, so `Bm` becomes
+ * `Hm` and `Bb7` becomes `B7`. It is not a directive and no tune can ask for it.
+ */
+let GERMAN_CHORDS = false
 
 /** `%%keywarn 0` stops a mid-tune `K:` being DRAWN — see `Score.keywarn`. */
 let KEYWARN = true
@@ -6133,10 +6140,31 @@ const annotationOf = (raw: string): Annotation => {
   }
 }
 
+/**
+ * `germanNote` (`creation/translate-chord.js:1-10`) — a five-case SWITCH on the whole
+ * string, not a character substitution, so `Bmaj7`'s root is `B` and becomes `H` while its
+ * modifier is left alone. Both spellings of each accidental are listed because the parser
+ * may hand over either.
+ */
+const germanNote = (note: string): string =>
+  note === 'B#'
+    ? 'H#'
+    : note === 'B♯'
+      ? 'H♯'
+      : note === 'B'
+        ? 'H'
+        : note === 'Bb' || note === 'B♭'
+          ? 'B'
+          : note
+
 const chordParts = (chord: string): readonly [string, string, string] => {
   const m = /^([ABCDEFG][♯♭]?)?([^/]+)?(\/([ABCDEFG][#b♯♭]?))?/.exec(chord)
   if (m === null) return [chord, '', '']
-  return [m[1] ?? '', m[2] ?? '', m[4] === undefined ? '' : `/${m[4]}`]
+  const root = m[1] ?? ''
+  const bass = m[4] ?? ''
+  if (!GERMAN_CHORDS) return [root, m[2] ?? '', bass === '' ? '' : `/${bass}`]
+  const g = germanNote(bass)
+  return [germanNote(root), m[2] ?? '', g === '' ? '' : `/${g}`]
 }
 
 /**
@@ -10605,6 +10633,8 @@ export interface LayoutOptions {
    * abcjs superscripts the `7`, and the chord's WIDTH moved every note after it.
    */
   readonly jazzChords?: boolean
+  /** `germanAlphabet` — see `GERMAN_CHORDS`. A HOST option; no directive sets it. */
+  readonly germanAlphabet?: boolean
   /**
    * **WHERE THIS TUNE'S PAGE CURSOR STARTS** — 0 for a tune of its own, and the PREVIOUS
    * tune's `endY` when a whole book is stacked into one SVG. `engraveABC` resets the
@@ -12224,6 +12254,7 @@ interface RenderState {
   strictTextMetrics: boolean
   abcjsGaps: boolean
   jazzChords: boolean
+  germanChords: boolean
   keywarn: boolean
   lineWeights: typeof LINE_WEIGHTS
   scoreFonts: Score['fonts']
@@ -12243,6 +12274,7 @@ const captureRenderState = (): RenderState => ({
   strictTextMetrics: STRICT_TEXT_METRICS,
   abcjsGaps: ABCJS_GAPS,
   jazzChords: JAZZ_CHORDS,
+    germanChords: GERMAN_CHORDS,
   keywarn: KEYWARN,
   lineWeights: LINE_WEIGHTS,
   scoreFonts: SCORE_FONTS,
@@ -12262,6 +12294,7 @@ const restoreRenderState = (s: RenderState): void => {
   STRICT_TEXT_METRICS = s.strictTextMetrics
   ABCJS_GAPS = s.abcjsGaps
   JAZZ_CHORDS = s.jazzChords
+  GERMAN_CHORDS = s.germanChords
   KEYWARN = s.keywarn
   LINE_WEIGHTS = s.lineWeights
   SCORE_FONTS = s.scoreFonts
@@ -12409,6 +12442,7 @@ function layoutScoped(input: Score, options: LayoutOptions = {}): Layout {
   STRICT_TEXT_METRICS = true
   LINE_WEIGHTS = lineWeightsFor(strict)
   JAZZ_CHORDS = score.jazzChords || options.jazzChords === true
+  GERMAN_CHORDS = options.germanAlphabet === true
   KEYWARN = score.keywarn
   SCORE_FONTS = score.fonts
   SCORE_PARTS_BOX = score.partsBox

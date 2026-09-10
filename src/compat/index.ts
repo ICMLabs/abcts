@@ -342,6 +342,21 @@ export interface AbcjsParams {
    */
   readonly dragging?: boolean;
   /**
+   * **THE ROOT'S `aria-label`, AND `''` TURNS OFF THE `<title>` WITH IT.**
+   * `if (renderer.ariaLabel !== '')` guards the whole accessibility block
+   * (`draw/set-paper-size.js:9-16`), so an empty string emits neither the attribute nor the
+   * `<title>` element — which is how a host suppresses a duplicate announcement when the
+   * score already has a visible heading.
+   */
+  readonly ariaLabel?: string;
+  /**
+   * **`germanAlphabet` — H FOR B, AND B FOR B FLAT, IN CHORD SYMBOLS.** abcjs applies it in
+   * `translateChord` to the chord's ROOT and its `/bass` and to nothing else
+   * (`creation/translate-chord.js:1-10`, `:24-27`), so `Bm` draws as `Hm` and `Bb7` as
+   * `B7`. A host option with no directive spelling.
+   */
+  readonly germanAlphabet?: boolean;
+  /**
    * **THE CALLBACK A CLICK IN THE SCORE CALLS** — `(abcelem, tuneNumber, classes,
    * analysis, drag, ev)`. abcjs pushes it onto `this.listeners`
    * (`engraver-controller.js:61-63`) and `notifySelect` walks them
@@ -1165,6 +1180,8 @@ function renderInto(
         // …and the host's `{jazzchords: true}`, which the TUNE's own directive overrides —
         // see `LayoutOptions.jazzChords`.
         ...(params.jazzchords === true ? { jazzChords: true } : {}),
+        // …and `germanAlphabet`, which no directive can ask for — see `GERMAN_CHORDS`.
+        ...(params.germanAlphabet === true ? { germanAlphabet: true } : {}),
       });
       return laidOutCache;
     };
@@ -1439,6 +1456,7 @@ function renderInto(
           ...(score.metadata.titles[0] === undefined
             ? {}
             : { title: ariaTitle(score.metadata.titles[0]) }),
+          ...(params.ariaLabel === undefined ? {} : { ariaLabel: params.ariaLabel }),
           // NO `pageWidth` HERE. The page is `layout()`'s own ratchet — the staff width plus
           // abcjs's 15px either side (`write/renderer.js:69-72`), raised by any line too stiff
           // to compress to it and REPLACED outright by a `%%staffwidth`, which the host cannot

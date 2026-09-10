@@ -96,6 +96,58 @@ const OPTIONS = [
   ['viewportHorizontal', { viewportHorizontal: true }, 0, /<div class="abcjs-inner" style="overflow: hidden/],
   ['viewportHorizontal + scroll', { viewportHorizontal: true, scrollHorizontal: true }, 0, /overflow: auto hidden/],
   ['viewportVertical', { viewportVertical: true }, 0, /<div class="abcjs-inner scroll-amount"/],
+
+  /**
+   * **THE TEN OPTIONS `EngraverController` READS THAT `AbcjsParams` DOES NOT DECLARE**,
+   * harvested by grepping `params\.` out of `write/engraver-controller.js` rather than by
+   * reading our own type — the same "enumerate the REFERENCE, not the notes" rule that
+   * found sixteen directives in one sweep.
+   *
+   * These rows carry no `witness` regex. They have something better: a row whose option
+   * changes NOTHING IN abcjs'S OWN OUTPUT on any fixture reports **MUTE**, because the
+   * comparison then proves only that two engines both ignored it. See the `moved` check.
+   */
+  // ✅ `ariaLabel` CLOSED — it was 685 of 685, since we always wrote the default label.
+  // Three states and the middle one is the surprise: absent gives the default label and
+  // `<title>`; a STRING replaces only the attribute; and `''` emits NEITHER, because
+  // `if (renderer.ariaLabel !== '')` guards the whole block (`draw/set-paper-size.js:9-16`).
+  ['ariaLabel', { ariaLabel: 'Custom label' }, 0],
+  ['ariaLabel empty', { ariaLabel: '' }, 0],
+  // ✅ `germanAlphabet` CLOSED — `germanNote` is a five-case SWITCH on the whole string
+  // applied to the chord's ROOT and its `/bass` only (`creation/translate-chord.js:1-10`),
+  // so `Bm` draws `Hm`, `Bb7` draws `B7` and the modifier is never touched.
+  ['germanAlphabet', { germanAlphabet: true }, 0],
+
+  /**
+   * ⚠️ **THE SEVEN THAT ARE STILL UNIMPLEMENTED, EACH DECLARED AT ITS MEASURED COUNT.**
+   * Every one is a REAL feature and not a rounding difference — the count is how many
+   * fixtures a host passing it would see drawn differently from abcjs.
+   *
+   *   lineThickness    665 — an ADDITIVE term on four line widths: `dy + lineThickness` on
+   *                          a staff line, `0.35 + …` on a ledger, `linewidth + …` on a bar
+   *                          and `linewidth ± …` on a stem, the sign following the stem's
+   *                          direction (`draw/staff.js:14`, `:25`, `draw/relative.js:61-66`).
+   *   timeBasedLayout  669 — a SECOND layout algorithm, `layout/layout-in-grid.js`, which
+   *                          spaces by TIME rather than by the spring solve. The largest.
+   *   minPadding       659 — extra room to the left of every note and bar in the solve
+   *                          (`layout/voice-elements.js:34`, `:110-115`).
+   *   initialClef      125 — reprints the clef at the head of the tune.
+   *   wrap+staffwidth   60 — re-lining is implemented (`compat/wrap.ts`) and no gate had
+   *                          ever rendered its OUTPUT beside abcjs's.
+   *   add_classes       17 — the class scheme itself is gated by 111 sibling goldens; these
+   *                          are the rows those goldens do not reach.
+   *   expandToWidest    14 — a line stiffer than the page widens the page to fit it.
+   *   accentAbove       13 — an `accent` joins the ABOVE stack instead of the below one
+   *                          (`creation/decoration.js:20`), which moves every lane with it.
+   */
+  ['add_classes', { add_classes: true }, 17],
+  ['accentAbove', { accentAbove: true }, 13],
+  ['lineThickness', { lineThickness: 1.5 }, 665],
+  ['expandToWidest', { expandToWidest: true }, 14],
+  ['initialClef', { initialClef: true }, 125],
+  ['minPadding', { minPadding: 40 }, 659],
+  ['timeBasedLayout', { timeBasedLayout: { minPadding: 20 } }, 669],
+  ['wrap + staffwidth', { wrap: { minSpacing: 1.8, maxSpacing: 2.7, preferredMeasuresPerLine: 4 }, staffwidth: 400 }, 60],
 ]
 const every = Number(process.argv[2] ?? 1)
 const browser = await webkit.launch()
@@ -105,29 +157,38 @@ await page.addScriptTag({ content: readFileSync(join(repo, cfg.abcjsRef, 'dist',
 await page.addScriptTag({ content: readFileSync(join(repo, 'dist', 'abcts-browser.global.js'), 'utf-8') })
 let bad = 0
 for (const [label, opts, declared, witness] of OPTIONS) {
-  let off = 0, n = 0, seen = witness === undefined
+  let off = 0, n = 0, seen = witness === undefined, moved = false
   const first = []
   for (let k = 0; k < cases.length; k += every) {
     const c = cases[k]
     if (SKIP.has(c.slug)) continue
     n += 1
-    const r = await page.evaluate(([abc, tune, opts]) => {
-      const one = (API) => {
+    const r = await page.evaluate(([abc, tune, opts, needBase]) => {
+      const one = (API, o) => {
         try {
           const d = document.createElement('div'); document.body.appendChild(d)
           d.style.position = 'absolute'; d.style.visibility = 'hidden'
-          API.renderAbc([d], abc, { staffwidth: 670, startingTune: tune, ...opts })
+          API.renderAbc([d], abc, { staffwidth: 670, startingTune: tune, ...o })
           const s = d.outerHTML
           d.remove(); return s
         } catch (e) { return 'THREW: ' + e.message }
       }
-      return { js: one(window.ABCJS), ts: one(window.ABCTS) }
-    }, [c.abc, c.tune, opts])
+      // The baseline is rendered only until the option has been SHOWN to do something —
+      // once `moved` is true it costs a third of the run for nothing.
+      return {
+        js: one(window.ABCJS, opts), ts: one(window.ABCTS, opts),
+        base: needBase ? one(window.ABCJS, {}) : null,
+      }
+    }, [c.abc, c.tune, opts, !moved])
     if (r.js !== r.ts) { off += 1; if (first.length < 3) first.push(c.slug) }
+    if (!moved && r.base !== null && r.js !== r.base) moved = true
     if (!seen && witness.test(r.js)) seen = true
   }
-  const flag = !seen ? 'MUTE' : off === declared ? '   ' : off > declared ? 'UP ' : 'DOWN'
-  if (off !== declared || !seen) bad += 1
+  // ⚠️ An option that moves NOTHING in abcjs cannot arbitrate anything — see the block
+  // above. The baseline row is exempt, since it IS the baseline.
+  const flag = !seen || (!moved && label !== 'baseline') ? 'MUTE'
+    : off === declared ? '   ' : off > declared ? 'UP ' : 'DOWN'
+  if (off !== declared || flag === 'MUTE') bad += 1
   console.log(`${flag} ${String(off).padStart(4)} of ${n} (declared ${declared})  ${label}   ${first.join(' ')}`)
 }
 if (bad > 0) {
