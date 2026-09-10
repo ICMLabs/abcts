@@ -1,11 +1,11 @@
-# NEXT AGENT PROMPT — abcts, 2026-09-09d
+# NEXT AGENT PROMPT — abcts, 2026-09-09e
 
 Paste the block below.
 
 ---
 
 ```
-start here: abcts/Docs/HANDOFF-2026-09-09d.md — §THE METHOD first, then §WHAT IS OPEN. Then
+start here: abcts/Docs/HANDOFF-2026-09-09e.md — then -09-09d.md — §THE METHOD first, then §WHAT IS OPEN. Then
 -09-09c.md, -09-09b.md and -09-09.md for the witness, the negative control and "a floor
 rots", HANDOFF-2026-09-08.md for THE QUADRATICS and the scaling gate, and
 HANDOFF-2026-09-07.md for the MODE RULE.
@@ -35,6 +35,12 @@ persist between tool calls and the workspace ROOT collects every sibling repo's 
      and for anything DOM-side render both engines in a real browser instead.
   5. Only then write code, and let the gate arbitrate.
 
+⭐⭐ AN OPTION'S NAME IS NOT ITS BEHAVIOUR — LADDER IT. `initialClef` SUPPRESSES the clef on
+every line but the first; `lineThickness` lands at TWO different sizes because `printLine`'s
+width argument is a half and `printStem`'s is whole; `minPadding` is part of what the
+element WANTS rather than a gap added after it. Three of the six closed this session were
+not what they read as.
+
 ⭐⭐ ENUMERATE THE REFERENCE, NOT YOUR OWN TYPE. `grep -oE "params\.[a-zA-Z_]+"` over
 `write/engraver-controller.js` says abcjs reads TWENTY-TWO host options; `AbcjsParams`
 declared twelve, and NINE of the ten missing ones opened a `zzopts` row. The same rule found
@@ -63,29 +69,34 @@ corpus.
   ⚠️ A GATE'S REPORT FILE OUTLIVES ITS RUN. Check the timestamp on `/tmp/abcts-*.txt`.
 
 WHAT TO DO NEXT — ask the owner which; these are NOT equal:
-  1. **`lineThickness` — 665 of 685.** ⭐ The best ratio of size to value on the board: an
-     ADDITIVE term on four line widths, and the only subtlety is that the mapping is NOT
-     uniform — a staff line and a ledger take it as a HALF-thickness (`draw/staff.js:14`,
-     `:25`, `draw/relative.js:66`) while a bar and a stem take it WHOLE, the stem's sign
-     following its direction (`:61-63`). `ABCJS_LINE_PX` already documents the term it does
-     not carry.
-  2. **`minPadding` — 659.** Extra room left of every note and bar in the solve;
-     `getExtraWidth` adds it for a `note` or `bar` only and `layoutOneItem` skips anything
-     still fixed to the left edge (`layout/voice-elements.js:34`, `:110-115`).
-  3. **`timeBasedLayout` — 669.** A SECOND layout algorithm (`layout/layout-in-grid.js`),
-     spacing by TIME rather than by the spring solve. The largest item in the repo; take it
-     only as its own arc.
-  4. **`wrap` + `staffwidth` — 60.** Re-lining is implemented and gated on its own numbers,
-     and its rendered OUTPUT had never been compared to abcjs's. The 60 may be one cause.
-  5. **`initialClef` 125 · `add_classes` 17 · `expandToWidest` 14 · `accentAbove` 13.**
-     The small ones; `accentAbove` is one `if` in `creation/decoration.js:20` that moves a
-     whole lane.
-  6. **ANOTHER SURFACE.** Four were built across 2026-09-09 and found twenty-odd defects.
-     Still unrendered by any gate: the SYNTH controller's DOM, `%%` file headers over a whole
-     book, tablature options, `chordGrid`, `showDebug`.
-  7. **PUBLISH.** Metadata is in, the npm name `abcts` is FREE, the CLI works. A decision,
-     not a defect — including whether to drop the 20.7 MB of sourcemaps from the tarball.
-  8. **`npm run lint`** — 1,021 pre-existing errors, only as ITS OWN commit.
+  1. **`wrap` + `staffwidth` — 60, AND UNDIAGNOSED.** ⭐ The best value left: re-lining IS
+     implemented (`compat/wrap.ts`) and gated on its own numbers, and no gate had ever
+     compared its rendered OUTPUT to abcjs's until this row existed. Nobody has looked at
+     what the 60 are, so the first hour is a diff, not a port — and it may be one cause.
+  2. **`initialClef` — 42.** PAGE HEIGHTS in BOTH directions (ours 7.75 short on one
+     fixture, 14.43 tall on another), so not one missing reserve. Untested hypothesis:
+     `this.startlimitelem = clef` (`abstract-engraver.js:164`) is inside `if (clef)`, so a
+     suppressed clef leaves the tie limit on the key signature or stale. ⚠️ The control
+     written for it is MUTE — read the gate comment before re-deriving.
+  3. **`add_classes` — 17, and TWO ARE NAMED** with their exact markup in the gate comment:
+     the `unalignedWords` and `part-order` GROUPS draw with no class. The strings are
+     already in the layout. ⚠️ The obvious fix — fall back to the `startGroup` row's
+     `klass` — moves NOTHING, so find the site that actually opens those two groups first
+     (the part-order one writes `fill` before `data-name`).
+  4. **`lineThickness` — 14.** One symptom: a tuplet number over a beam, `y` out by 0.09 or
+     0.18. Likely a thickened stem moving its own FAR EDGE, where the beam is anchored.
+  5. **`expandToWidest` — 14.** abcjs re-runs the WHOLE line loop when a line widens the
+     page (`i = -1`, `layout/layout.js:26-29`) and rebuilds the top text at `maxWidth`.
+     ⚠️ NOT ATTEMPTED ON PURPOSE: our system loop is one ~1700-line `spans.map` with outer
+     accumulators, so re-entrancy is a refactor with real regression risk. Size it before
+     starting.
+  6. **`timeBasedLayout` — 669.** A SECOND layout algorithm (`layout/layout-in-grid.js`).
+     The largest item in the repo; its own arc.
+  7. **ANOTHER SURFACE.** Still unrendered by any gate: the SYNTH controller's DOM, `%%`
+     file headers over a whole book, tablature options, `chordGrid`, `showDebug`.
+  8. **PUBLISH.** Metadata is in, the npm name `abcts` is FREE, the CLI works. A decision,
+     not a defect — including the 20.7 MB of sourcemaps in the tarball.
+  9. **`npm run lint`** — 1,021 pre-existing errors, only as ITS OWN commit.
 
 Run `npx tsc --noEmit && echo OK` before every commit, keep every gate above green, and
 commit and push after every landing. Never --force. OMIT Co-Authored-By trailers here —
@@ -103,8 +114,8 @@ over abcjs's controller, and nine of them were real. The question that follows i
 asking of everything else here — what other list in this repo was written rather than
 measured?
 
-**Then `lineThickness`**, because it is 665 of 685 fixtures for four additive terms, and the
-only thing to get right is which of them are halves.
+**Then `wrap` + `staffwidth`**, because it is the only open row nobody has diagnosed yet —
+every other one has had its residue named. An hour of diffing may make it one cause.
 
 **Then the traps**, because the two that repeated this session were both about a measurement
 that looked conclusive: a sample that called three live rows MUTE, and a deliberate break
