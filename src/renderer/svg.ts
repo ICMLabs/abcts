@@ -93,6 +93,29 @@ export interface SelectableRecord {
   /** The laid-out element, when the record came from one. */
   readonly element?: LayoutElement;
   /**
+   * **`Selectables.add`'s FOURTH ARGUMENT, AND ONLY `drawAbsolute` PASSES ONE.** Three
+   * call sites hand it down (`draw/absolute.js:55`, `:62`, `:65`); every one of the ten
+   * `wrapSvgEl` sites — a text row, a voice name, a brace, an ending, a triplet, a curve,
+   * a glissando, both dynamics — calls `this.add(absEl, el, false)` with no fourth
+   * argument at all (`draw/selectables.js:47-56`). So it is present on exactly the
+   * `"element"` records and absent from the rest, and `Selectables.add` guards on
+   * `!== undefined` rather than writing a null.
+   *
+   * A host reads it off the click's `analysis` — it is what turns a click's y into a
+   * PITCH, which is the whole reason a drag can be reported in steps.
+   *
+   *     { top: startY, zero: renderer.y, height: params.height * spacing.STEP }
+   *
+   * (`draw/staff-group.js:112-116`.) `startY` is the page cursor at the START of the
+   * staff GROUP, before the first staff's `moveY` — so every staff of a system reports
+   * the same `top` and `height` and its own `zero`.
+   */
+  readonly staffPos?: {
+    readonly top: number;
+    readonly zero: number;
+    readonly height: number;
+  };
+  /**
    * The whole `abcelem` for a record with NO laid-out element behind it — abcjs's
    * `wrapSvgEl` argument, which for a text row is
    * `{el_type, name, startChar, endChar, text}` (`draw/non-music.js:24-30`). It is built
@@ -1656,13 +1679,22 @@ export function toSVG(
       options.selectTypes === undefined
         ? ` selectable="false" data-index="${index}"`
         : ` selectable="true" tabindex="0" data-index="${index}"`;
+    /**
+     * The staff being drawn, for `SelectableRecord.staffPos`. A mutable cursor rather than
+     * a threaded argument because that is what `renderer.y` is in abcjs — and because the
+     * one consumer, `record`, is called from inside the same staff loop that sets it.
+     */
+    let staffPosHere: SelectableRecord["staffPos"];
     const record = (
       index: number,
       kind: SelectableRecord["kind"],
       element?: LayoutElement,
     ): number => {
       options.selectables?.push(
-        element === undefined ? { index, kind } : { index, kind, element },
+        element === undefined
+          ? { index, kind }
+          : // ⚠️ **ONLY AN `"element"` RECORD GETS ONE** — see `SelectableRecord.staffPos`.
+            { index, kind, element, ...(staffPosHere === undefined ? {} : { staffPos: staffPosHere }) },
       );
       return index;
     };
@@ -1779,6 +1811,10 @@ export function toSVG(
       // The system's own origin, flattened into every coordinate under it.
       // **THE PAGE'S CURSOR, NOT A SUM OF OFFSETS** — see `LayoutStaff.absoluteY`.
       if (abcjs) oy = (system.absoluteY ?? system.originY + OY) * PX;
+      // `drawStaffGroup`'s `startY`, taken ONCE per group and shared by every staff in it
+      // — see `SelectableRecord.staffPos`. Computed whatever the mode, because the record
+      // is pushed whatever the mode.
+      const systemTopPx = (system.absoluteY ?? system.originY + OY) * PX;
       /**
        * **THE TOP TEXT COMES FIRST IN ABCJS'S BODY**, before any staff and before the braces
        * — `nonMusic()` runs the whole header block and only then does `drawStaffGroup` start
@@ -2063,6 +2099,13 @@ export function toSVG(
               ENGRAVE.spacePerStep * ABCJS_PITCH.bottomLine * PX;
         // …and the staff's, on top of it. Reset per staff, since `staff.originY` is relative.
         if (abcjs) oy = staff.absoluteY * PX;
+        // `drawVoice`'s fifth argument — the `zero` is THIS staff's origin while the other
+        // two belong to the group (`draw/staff-group.js:112-116`).
+        staffPosHere = {
+          top: systemTopPx,
+          zero: staff.absoluteY * PX,
+          height: system.heightPitch * ENGRAVE.spacePerStep * PX,
+        };
         let staffGroup = "";
         // CORRECTED, by the byte table: abcjs DOES group the staff lines, with or without
         // `add_classes` — `…</path></g><g fill="currentColor" stroke="none" data-name=

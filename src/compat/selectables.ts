@@ -59,6 +59,17 @@ export interface Selectable {
   };
   readonly svgEl: SelectableAttrs;
   readonly isDraggable: boolean;
+  /**
+   * **PRESENT ON AN ELEMENT AND ABSENT FROM EVERYTHING ELSE** — `Selectables.add` writes
+   * it only when its fourth argument is given, and the ten `wrapSvgEl` sites give none
+   * (`draw/selectables.js:25-26`, `:47-56`). A click's `analysis` carries it through, so
+   * a host can turn a y into a pitch. See `SelectableRecord.staffPos`.
+   */
+  readonly staffPos?: {
+    readonly top: number;
+    readonly zero: number;
+    readonly height: number;
+  };
 }
 
 /**
@@ -791,6 +802,7 @@ export function selectablesOf(
        * apart, and only one of them says `rest`.
        */
       isDraggable: element.type === "note",
+      ...(record.staffPos === undefined ? {} : { staffPos: record.staffPos }),
     });
   }
   return out;

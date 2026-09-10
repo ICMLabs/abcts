@@ -406,7 +406,55 @@ function tile(
      * digit and a note follows directly, so `(3B2` keeps its opening.
      */
     const NOTE_START = /[A-Ga-gzxZ[\^_=]/;
-    let j = at;
+    /**
+     * ⚠️ **AND THE RUN IS LOOKED FOR AFTER THE GATHER, NOT ONLY AT THE HEAD OF IT.**
+     * `parseMusic`'s inner loop takes chord symbols, annotations, decorations and a grace
+     * group TOGETHER and then breaks on the `(` (`abc_parse_music.js:200-250`), so a slur
+     * that abandons its iteration can sit behind any number of them — and everything
+     * before it is orphaned just the same.
+     *
+     * This walk used to start at the element's own opening and stop at the first character
+     * that was not `(`, whitespace or `.`, so `"C"({ge}CD)` never reached the slur at all
+     * and the note kept the chord symbol abcjs leaves to nobody. Measured on a ladder
+     * through both engines, where the six that restart all did so at the character AFTER
+     * the run:
+     *
+     *     "C"({ge}CD)|     abcjs opens at 4, the `{`   — a grace
+     *     "C"("^a"CD)|     abcjs opens at 4, the `"`   — …and it is not about graces
+     *     "C"(!p!CD)|      abcjs opens at 4, the `!`
+     *     "C"(({ge}CD))|   abcjs opens at 5            — the whole `(`-run is consumed
+     *     "C"(3{ge}CDE|    abcjs opens at 5            — a TRIPLET spec counts as one
+     *     "C"( {ge}CD)|    abcjs opens at 5            — and whitespace inside it
+     *     "C"(3CDE|        abcjs opens at 0            — followed by a NOTE: no restart
+     *     "C"{ge}(CD)|     abcjs opens at 0            — likewise
+     *
+     * The first pass skips nothing when the element opens on the run itself, which is
+     * every shape this walk handled before, so those are untouched.
+     *
+     * Found by `zzclick`: a click hands the host the `abcelem` ITSELF, so a `startChar` is
+     * visible there and in no markup gate.
+     */
+    // The element's own CLOSE — the walk may cross its opening (a slur behind a chord
+    // symbol is past it) but never its end.
+    const reach = e.endChar ?? own;
+    let cursor = at;
+    let start = at;
+    for (;;) {
+    let j = cursor;
+    // The gather — a run of `"…"`, `!…!`, `+…+`, `{…}` and whitespace, which abcjs's inner
+    // loop consumes into the SAME iteration before it ever sees a `(`.
+    for (;;) {
+      const c = abc[j];
+      if (c === " " || c === "\t") {
+        j += 1;
+        continue;
+      }
+      const close = c === '"' ? '"' : c === "!" ? "!" : c === "+" ? "+" : c === "{" ? "}" : null;
+      if (close === null) break;
+      const end = abc.indexOf(close, j + 1);
+      if (end < 0 || end >= reach) break;
+      j = end + 1;
+    }
     let sawSlur = false;
     let triplet = false;
     /**
@@ -469,7 +517,13 @@ function tile(
       if (abc[j] === "(") sawSlur = true;
       j += 1;
     }
-    let start = sawSlur && !triplet && j <= own && !NOTE_START.test(abc[j] ?? "") ? j : at;
+    const restarted =
+      sawSlur && !triplet && j <= reach && !NOTE_START.test(abc[j] ?? "");
+    if (!restarted || j <= cursor) break;
+    start = j;
+    cursor = j;
+    if (j >= reach) break;
+    }
     /**
      * **AND A PARSE FAILURE OWNS NO CHARACTERS.** `startI` is taken at the TOP of each
      * `parseMusic` iteration, so an iteration that reads something and appends NOTHING
@@ -490,7 +544,6 @@ function tile(
      * read eleven characters earlier, and our opening walked back to the first of them.
      * Measured on `frere-jacques`, whose `U:t`/`U:u`/`U:v` make its own prose parse that way.
      */
-    const reach = e.endChar ?? own;
     for (const r of unreadable)
       if (r.end > start && r.start < reach) start = Math.max(start, r.end);
     return abc[start] === "&" ? start + 1 : start;
@@ -500,6 +553,7 @@ function tile(
   });
   return elements as AbcElement[];
 }
+
 
 /**
  * **AN ELEMENT OPENS AT THE FIRST THING WRITTEN FOR IT**, which is what abcjs's own

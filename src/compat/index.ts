@@ -135,6 +135,7 @@ const PITCH_STEP_PX = STAFF_SPACE_PX / 2;
 const PAGE_MARGIN_PX = 15;
 import { layout, type MetaTextRow, type PlacedText } from "../renderer/layout.js";
 import { type DrawnElement, type SelectableRecord, toSVG } from "../renderer/svg.js";
+import { setupSelection } from "./interactive.js";
 import { createDomTextMeasurer, setTextMeasurer } from "../renderer/text-measure.js";
 import {
   type HighlightPaper,
@@ -329,6 +330,33 @@ export interface AbcjsParams {
    * `currentColor` is emitted whatever this says.
    */
   readonly foregroundColor?: string;
+  /**
+   * **TURNS A CLICK INTO A DRAG.** With it every `selectable="true"` element becomes a tab
+   * stop with `keydown`/`keyup`/`focus` handlers, the arrow keys move a note by
+   * `spacing.STEP` and report a `step` to the listener, and a mouse drag does the same
+   * (`write/interactive/selection.js:6-17`, `:291-311`).
+   *
+   * ⚠️ **THE KEYBOARD HALF NEEDS A `selectTypes` TOO** — without one abcjs marks every
+   * selectable `selectable="false"` and the `tabindex` loop matches nothing. The MOUSE
+   * half works either way.
+   */
+  readonly dragging?: boolean;
+  /**
+   * **THE CALLBACK A CLICK IN THE SCORE CALLS** — `(abcelem, tuneNumber, classes,
+   * analysis, drag, ev)`. abcjs pushes it onto `this.listeners`
+   * (`engraver-controller.js:61-63`) and `notifySelect` walks them
+   * (`interactive/selection.js:350-358`).
+   *
+   * ⚠️ **THE SECOND-ARGUMENT FORM IS A DIFFERENT OPTION.** `renderAbc`'s old
+   * three-parameter signature reads `engraverParams.listener.highlight` and copies it HERE
+   * (`api/abc_tunebook_svg.js:94-99`), which is why a `listener` in the second argument and
+   * a `clickListener` in the first mean the same thing.
+   */
+  readonly clickListener?: (...args: unknown[]) => void;
+  /** What a selected element is painted (`interactive/highlight.js` defaults to `#ff0000`). */
+  readonly selectionColor?: string;
+  /** What a DRAGGING element is painted; falls back to {@link selectionColor}. */
+  readonly dragColor?: string;
   /**
    * abcjs's `visualTranspose` — every pitch moved AT PARSE TIME, key signature and
    * spelling with it. The same thing `%%visualTranspose n` does, and abcjs's own test
@@ -927,6 +955,14 @@ export function renderAbc(
  * apart, so a `parseOnly` tune carried every field the engraver stamps and every rename it
  * makes. See `tests/parse-only.test.ts`.
  */
+/**
+ * **`engraver.svgs` — THE ARRAY `setupSelection` BINDS TO**, one entry normally and one per
+ * SYSTEM under `oneSvgPerLine` (`engraver-controller.js:307-312`). Held beside the tune
+ * rather than on it, because the tune object's shape is a gated surface and this is the
+ * engraver's own field.
+ */
+const engraverSvgs = new WeakMap<object, readonly unknown[]>();
+
 function renderInto(
   target: Target | readonly Target[],
   abc: string,
@@ -1616,8 +1652,13 @@ function renderInto(
       get engraver(): {
         selectables: readonly Selectable[];
         rangeHighlight: (start: number, end: number) => void;
+        svgs: readonly unknown[];
       } {
-        return { selectables: selectables(), rangeHighlight: highlight };
+        return {
+          selectables: selectables(),
+          rangeHighlight: highlight,
+          svgs: engraverSvgs.get(this as object) ?? [],
+        };
       },
       getSelectableArray: () => selectables(),
       findSelectableElement: (target: unknown) =>
@@ -1665,6 +1706,27 @@ function renderInto(
           );
         // …and only then does `renderOne` size the outer one (`:53-57`).
         closeViewport(element, paper);
+        /**
+         * **AND THE LISTENERS GO ON LAST, WHICH IS WHERE abcjs PUTS THEM** —
+         * `setupSelection(this, this.svgs)` is the final statement of `engraveTune`, after
+         * the split and after everything `draw` wrote (`engraver-controller.js:311`). It
+         * needs the LIVE nodes, so it cannot run before the markup is injected.
+         */
+        engraverSvgs.set(
+          tune as object,
+          setupSelection(
+          paper as unknown as Parameters<typeof setupSelection>[0],
+          tune.getSelectableArray(),
+          {
+            ...(params.dragging === undefined ? {} : { dragging: params.dragging }),
+            ...(params.selectionColor === undefined ? {} : { selectionColor: params.selectionColor }),
+            ...(params.dragColor === undefined ? {} : { dragColor: params.dragColor }),
+            ...(params.clickListener === undefined ? {} : { clickListener: params.clickListener }),
+            ...(hostScale === undefined ? {} : { scale: hostScale }),
+            ...(params.foregroundColor === undefined ? {} : { foregroundColor: params.foregroundColor }),
+            },
+          ),
+        );
       }
       return tune;
     }),
