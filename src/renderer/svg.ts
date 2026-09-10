@@ -4525,8 +4525,22 @@ export function toSVG(
    * read as an identity.
    */
   const scaleUp = printScale > 1
-  // …and the WIDTH takes the same asymmetry — see `printH`.
-  const w = scaleUp ? wRaw * printScale : wRaw
+  /**
+   * …and the WIDTH takes the same asymmetry — see `printH`.
+   *
+   * ⚠️ **AND THE TWO OPERATIONS DO NOT CANCEL, WHICH IS THE WHOLE POINT.** `(x * 0.75) /
+   * 0.75` is not `x` in binary floating point, and abcjs writes exactly that expression:
+   * `w` is multiplied by the scale at `set-paper-size.js:2` and `setSize` is handed
+   * `w / scale` at `:37`. This read `wRaw` — the algebraic identity — and was one ULP out
+   * on the root `width` of every print page whose sum is not exactly representable.
+   * `printH` beside it already took the round trip, which is why the HEIGHT agreed and the
+   * width did not.
+   *
+   * Measured rather than reasoned: applying `x * 0.75 / 0.75` to OUR value reproduces
+   * abcjs's byte for byte — `196.31833333333333` to `196.3183333333333` and
+   * `238.7183333333333` to `238.71833333333333`, in opposite directions.
+   */
+  const w = scaleUp ? wRaw * printScale : (wRaw * printScale) / printScale
   const printH =
     lastDoc.print === true
       ? Math.max(h * printScale, ABCJS_PX.printMinHeight) / printScale

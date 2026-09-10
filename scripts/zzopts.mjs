@@ -14,9 +14,16 @@
  * The rows that remain are DECLARED below with their counts, and every one is geometry
  * INSIDE the SVG rather than option plumbing — three more surfaces no gate had rendered:
  *
- *     print        7 — SIX of them a last-digit float, one a mid-tune `%%text` y
- *     scale 0.8    4 · scale 1.5   2 — a non-unit scale, and `oneSvgPerLine + scale 0.8`
- *                  inherits the SAME FOUR
+ *     print        5 · scale 0.8   1 · scale 1.5   2
+ *
+ * ✅ **AND THE SCALE ROUND TRIP CLOSED EIGHT OF THOSE ROWS IN ONE EXPRESSION.**
+ * `setPaperSize` multiplies `w` by the scale and then hands `setSize` `w / scale`
+ * (`draw/set-paper-size.js:2`, `:37`) — and `(x * 0.75) / 0.75` is NOT `x`. The emitter
+ * had written the algebraic identity, so the root `width` of every page below scale 1 was
+ * one ULP out whenever the sum was not exactly representable. print 7 → 5, `scale 0.8`
+ * 4 → 1, `oneSvgPerLine + scale 0.8` 4 → 1. The three that remain each have their own
+ * cause: a jazzchord box on a whole-pixel rounding boundary, a tempo glyph's x, and one
+ * input sum an ULP apart.
  *
  * ✅ **`oneSvgPerLine` AND THE TWO VIEWPORTS LANDED 2026-09-09** and are 0 of 685 apiece,
  * `oneSvgPerLine + resize` included. All three were unimplemented outright.
@@ -74,9 +81,9 @@ const OPTIONS = [
   ['responsive + scale 1.5', { responsive: 'resize', scale: 1.5 }, 0],
   ['responsive + scale 0.7', { responsive: 'resize', scale: 0.7 }, 0],
   ['print + responsive', { print: true, responsive: 'resize' }, 5],
-  ['scale 0.8', { scale: 0.8 }, 4],
+  ['scale 0.8', { scale: 0.8 }, 1],
   ['scale 1.5', { scale: 1.5 }, 2],
-  ['print', { print: true }, 7],
+  ['print', { print: true }, 5],
   ['jazzchords', { jazzchords: true }, 0],
   // The witness for the split is the SECOND section: a one-`<g>` tune would produce
   // `section 1` from a split that never split anything.
@@ -85,7 +92,7 @@ const OPTIONS = [
   // 4, and they are the SAME FOUR FIXTURES as the plain `scale 0.8` row above — measured
   // by differencing the two sets, not inferred from a shared first-three. The split adds
   // nothing; it is inheriting the non-unit-scale geometry that row already declares.
-  ['oneSvgPerLine + scale 0.8', { oneSvgPerLine: true, scale: 0.8 }, 4, /<div style="overflow: hidden;height:/],
+  ['oneSvgPerLine + scale 0.8', { oneSvgPerLine: true, scale: 0.8 }, 1, /<div style="overflow: hidden;height:/],
   ['viewportHorizontal', { viewportHorizontal: true }, 0, /<div class="abcjs-inner" style="overflow: hidden/],
   ['viewportHorizontal + scroll', { viewportHorizontal: true, scrollHorizontal: true }, 0, /overflow: auto hidden/],
   ['viewportVertical', { viewportVertical: true }, 0, /<div class="abcjs-inner scroll-amount"/],
