@@ -267,6 +267,44 @@ what `setPaperSize` does is assign styles to the PARENT node
 INSIDE the SVG rather than option plumbing, and none ever rendered by a gate before:
 `print` 8, `scale` 4 and 2, and `jazzchords` **95 — closed the same day**.
 
+## ✅ `style=` IS A VOICE-LINE PROPERTY, NOT A VOICE ONE — the last ledger defect
+
+`zzledger`'s `parser.ts:4914` reported **STALE** on its own once the change landed. The
+`ponytail:` marker at the site predicted a MODEL CHANGE rather than a patch and **the size
+was right**, which is worth as much as a wrong one being caught: three rules, none of which
+a single-voice fixture can state, so every gate in the repo was green over all three.
+
+Laddered over TEN rungs through both engines, reading each notehead's path length — a slash
+is ~33-57 characters, a round head ~377-389:
+
+1. **`K: style=` IS GLOBAL.** abcjs's `multilineVars.style`, read by every voice-line that
+   opens after it (`abc_parse_music.js:1008-1009`); a `V: style=` is the voice's own and
+   beats it (`:1027-1028`). It was read here as the CURRENT voice's, so a header
+   `K:C style=rhythm` over two voices reached only the first.
+2. **A VOICE-LINE'S STYLE IS FIXED WHEN THE LINE OPENS, AND A `V:` FIELD OPENS ONE.** This is
+   the whole difference between a single-voice tune, where a leading `[K: style=]` DOES reach
+   its own line, and a multi-voice one, where it does not — `createVoice` appends the `style`
+   element as the line opens (`tune-builder.js:971-973`) and `startNewLine` fires lazily
+   unless a `V:` has already run it. A mid-line `[K:]` therefore updates the global value and
+   the NEXT line to open reads it.
+3. **A VOICE-LINE WITH NO STYLE OF ITS OWN INHERITS THE LAST ONE ENGRAVED.**
+   `pushCrossLineElems`/`popCrossLineElems` save the slurs, the ties, the endings, the COLOUR
+   and the SCALE per voice and **not** `this.style` (`abstract-engraver.js:92-107`), and
+   `reset()` does not clear it either. `V:1 style=rhythm` draws slash heads on the lower
+   staff too.
+
+⚠️ **THE RUNNING VALUE FOLLOWS SOURCE ORDER**, which is engraving order for interleaved
+voices and for every single-staff tune, and not for a tune written a whole voice at a time.
+Marked at `ScoreBuilder.runningStyle` with the upgrade path — a post-parse pass over
+`score.staves` and the `startsSystem` boundaries, where the true (line, staff, voice) order
+lives.
+
+⚠️ **AND TWO INTERMEDIATE SHAPES WERE WRONG, BOTH NAMED BY THE LADDER IN ONE RUN.** Capturing
+in `push` left the FIRST note of every line on the old value, because the event is BUILT
+before it is pushed; and `beginMusicLine` wiped the capture a `V:` field had just made. A
+third — a voice conjured after the `K:` never seeing the global style — was caught by the
+SUITE and not the ladder, which is the argument for running both.
+
 ## ✅ THE INTERACTIVE SURFACE — a THIRD new axis, and the score had been unclickable
 
 `scripts/zzclick.mjs` renders the corpus, dispatches mousedown/mouseup at real points and
