@@ -1,12 +1,34 @@
 {
   "name": "abcts",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Modern TypeScript ABC notation library \u2014 community successor to abcjs",
+  "keywords": [
+    "abc",
+    "abc-notation",
+    "music",
+    "notation",
+    "sheet-music",
+    "score",
+    "svg",
+    "engraving",
+    "midi",
+    "abcjs"
+  ],
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ICMLabs/abcts.git"
+  },
+  "homepage": "https://github.com/ICMLabs/abcts#readme",
+  "bugs": {
+    "url": "https://github.com/ICMLabs/abcts/issues"
+  },
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "unpkg": "./dist/abcts-browser.global.js",
+  "jsdelivr": "./dist/abcts-browser.global.js",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",

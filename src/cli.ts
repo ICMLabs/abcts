@@ -1,3 +1,13 @@
+#!/usr/bin/env node
+/**
+ * ⚠️ **THE SHEBANG IS THE `bin` ENTRY, AND WITHOUT IT THE PACKAGE SHIPS A BROKEN
+ * COMMAND.** `package.json` declares `"bin": {"abcts": "./dist/cli.js"}`, and npm makes
+ * that file executable on install — so a `dist/cli.js` with no `#!` line is handed to the
+ * SHELL. Measured 2026-09-09 rather than reasoned: running the built file directly ran its
+ * first line, `import { render } from './chunk-….js'`, as a shell command and invoked
+ * **ImageMagick's `import`**, which took a screenshot. tsup carries a shebang through from
+ * the entry file, so this line is the whole fix.
+ */
 /**
  * `abcts` — render an ABC file to SVG.
  *
