@@ -150,7 +150,14 @@ const OPTIONS = [
   ['lineThickness', { lineThickness: 1.5 }, 14],
   ['expandToWidest', { expandToWidest: true }, 14],
   ['initialClef', { initialClef: true }, 125],
-  ['minPadding', { minPadding: 40 }, 659],
+  // ✅ 659 → 5. `getExtraWidth(child, pad)` returns `-child.extraw + pad`, so the padding is
+  // part of what the element WANTS and the same shortfall test decides whether any of it is
+  // spent — an element with slack in front of it costs nothing. `pad` is skipped for
+  // anything still fixed to the left edge (`voice.durationindex + child.duration > 0`) and
+  // applies to a `note` or a `bar` ONLY, which excludes a rest.
+  // ⚠️ The 5 that remain are a ULP, a 0.01 tuplet y and a 0.03 staff width — the
+  // layout-unit family, not the option.
+  ['minPadding', { minPadding: 40 }, 5],
   ['timeBasedLayout', { timeBasedLayout: { minPadding: 20 } }, 669],
   ['wrap + staffwidth', { wrap: { minSpacing: 1.8, maxSpacing: 2.7, preferredMeasuresPerLine: 4 }, staffwidth: 400 }, 60],
 ]

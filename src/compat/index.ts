@@ -364,6 +364,12 @@ export interface AbcjsParams {
    */
   readonly lineThickness?: number;
   /**
+   * **`minPadding` — EXTRA ROOM TO THE LEFT OF EVERY NOTE AND BARLINE**, in pixels.
+   * `getExtraWidth` pads exactly those two types and skips anything still fixed to the
+   * left edge of its line (`layout/voice-elements.js:34`, `:110-115`).
+   */
+  readonly minPadding?: number;
+  /**
    * **THE CALLBACK A CLICK IN THE SCORE CALLS** — `(abcelem, tuneNumber, classes,
    * analysis, drag, ev)`. abcjs pushes it onto `this.listeners`
    * (`engraver-controller.js:61-63`) and `notifySelect` walks them
@@ -1190,6 +1196,7 @@ function renderInto(
         // …and `germanAlphabet`, which no directive can ask for — see `GERMAN_CHORDS`.
         ...(params.germanAlphabet === true ? { germanAlphabet: true } : {}),
         ...(params.lineThickness === undefined ? {} : { lineThickness: params.lineThickness }),
+        ...(params.minPadding === undefined ? {} : { minPadding: params.minPadding }),
       });
       return laidOutCache;
     };

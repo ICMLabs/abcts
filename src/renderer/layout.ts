@@ -5965,6 +5965,13 @@ let JAZZ_CHORDS = false
  * `Hm` and `Bb7` becomes `B7`. It is not a directive and no tune can ask for it.
  */
 let GERMAN_CHORDS = false
+/**
+ * **`minPadding` — ROOM TO THE LEFT OF EVERY NOTE AND BAR, IN LAYOUT UNITS.** A host option
+ * abcjs threads into the solve as `getExtraWidth`'s second argument
+ * (`layout/layout.js:71`, `layout/voice-elements.js:34`, `:110-115`). `0` unless a host
+ * sets one, and no directive can.
+ */
+let MIN_PADDING = 0
 
 /** `%%keywarn 0` stops a mid-tune `K:` being DRAWN — see `Score.keywarn`. */
 let KEYWARN = true
@@ -10642,6 +10649,11 @@ export interface LayoutOptions {
    */
   readonly lineThickness?: number
   /**
+   * **`minPadding` — EXTRA ROOM TO THE LEFT OF EVERY NOTE AND BAR**, in pixels. See
+   * `MIN_PADDING`; `0` unless a host sets one.
+   */
+  readonly minPadding?: number
+  /**
    * **WHERE THIS TUNE'S PAGE CURSOR STARTS** — 0 for a tune of its own, and the PREVIOUS
    * tune's `endY` when a whole book is stacked into one SVG. `engraveABC` resets the
    * renderer once and then runs `engraveTune` per tune, so `renderer.y` runs CONTINUOUSLY
@@ -10769,6 +10781,14 @@ interface Advance {
   readonly left: number
   /** A barline gets no left clearance when it follows a part label or a tempo mark. */
   readonly kind: 'bar' | 'part' | 'other'
+  /**
+   * **WHETHER THE HOST'S `minPadding` APPLIES TO THIS ELEMENT.** `getExtraWidth` pads a
+   * `note` or a `bar` and NOTHING else (`layout/voice-elements.js:110-115`) — and its test
+   * is the ABSELEM's type, which says `rest` for a rest, so a rest is not padded either.
+   * `kind` cannot answer it: a rest, a clef and a note are all `other` there, because that
+   * field exists for the part-label exception.
+   */
+  readonly padded?: boolean
   /**
    * What a SOUNDING note needs for the voice-overlap rule, and null for everything else —
    * rests included, since abcjs tests `!child.abcelem.rest`.
@@ -11048,7 +11068,12 @@ function layoutMeasure(
     /** `getMinWidth` alone, when the caller built `rod` as `width + gap` — see `Advance.width`. */
     width?: number,
   ): void => {
-    advances.push({ rod, gap, duration: 0, left, kind, ...(width === undefined ? {} : { width }) })
+    advances.push({
+      rod, gap, duration: 0, left, kind,
+      // …and a BAR is one of the two things `minPadding` pads — see `Advance.padded`.
+      ...(kind === 'bar' ? { padded: true } : {}),
+      ...(width === undefined ? {} : { width }),
+    })
   }
   const beams = new Map<number, StemInfo[]>()
   const anchors: NoteAnchor[] = []
@@ -11757,6 +11782,9 @@ function layoutMeasure(
       duration,
       left: el.left ?? 0,
       kind: 'other',
+      // A NOTE is padded and a REST is not — the same `el.type` split the overlap rule
+      // reads one line up. See `Advance.padded`.
+      ...(el.type === 'note' ? { padded: true } : {}),
       note:
         firstHead === undefined || el.staffSteps.length === 0
           ? null
@@ -12261,6 +12289,7 @@ interface RenderState {
   abcjsGaps: boolean
   jazzChords: boolean
   germanChords: boolean
+  minPadding: number
   keywarn: boolean
   lineWeights: typeof LINE_WEIGHTS
   scoreFonts: Score['fonts']
@@ -12281,6 +12310,7 @@ const captureRenderState = (): RenderState => ({
   abcjsGaps: ABCJS_GAPS,
   jazzChords: JAZZ_CHORDS,
     germanChords: GERMAN_CHORDS,
+    minPadding: MIN_PADDING,
   keywarn: KEYWARN,
   lineWeights: LINE_WEIGHTS,
   scoreFonts: SCORE_FONTS,
@@ -12301,6 +12331,7 @@ const restoreRenderState = (s: RenderState): void => {
   ABCJS_GAPS = s.abcjsGaps
   JAZZ_CHORDS = s.jazzChords
   GERMAN_CHORDS = s.germanChords
+  MIN_PADDING = s.minPadding
   KEYWARN = s.keywarn
   LINE_WEIGHTS = s.lineWeights
   SCORE_FONTS = s.scoreFonts
@@ -12451,6 +12482,8 @@ function layoutScoped(input: Score, options: LayoutOptions = {}): Layout {
   LINE_WEIGHTS = lineWeightsFor(strict, options.lineThickness ?? 0)
   JAZZ_CHORDS = score.jazzChords || options.jazzChords === true
   GERMAN_CHORDS = options.germanAlphabet === true
+  // …in LAYOUT UNITS, since the host states it in pixels — see `MIN_PADDING`.
+  MIN_PADDING = spaces(options.minPadding ?? 0)
   KEYWARN = score.keywarn
   SCORE_FONTS = score.fonts
   SCORE_PARTS_BOX = score.partsBox
@@ -13877,8 +13910,27 @@ function layoutScoped(input: Score, options: LayoutOptions = {}): Layout {
           // and costs nothing. abcjs's one exception: a barline straight after a part
           // label does not shift, because the label has no width of its own to clear.
           const room = x - (minx[v] ?? 0)
+          /**
+           * **AND THE HOST'S `minPadding` IS PART OF WHAT THE ELEMENT WANTS**, not a gap
+           * added afterwards: `getExtraWidth(child, pad)` returns `-child.extraw + pad`
+           * and the SAME shortfall test decides whether any of it is spent
+           * (`layout/voice-elements.js:57-60`, `:110-115`). So an element with slack
+           * already in front of it costs nothing, exactly as its left ink does.
+           *
+           * ⚠️ **AND IT IS SKIPPED FOR ANYTHING STILL FIXED TO THE LEFT EDGE** —
+           * `voice.durationindex + child.duration > 0` (`:34`), abcjs's own comment. A
+           * line's opening barline has no duration and no duration behind it, so it takes
+           * none; the first NOTE does, because its own duration makes the sum positive.
+           */
+          const pad =
+            MIN_PADDING > 0 &&
+            item.padded === true &&
+            (durationIndex[v] ?? 0) + item.duration > 0
+              ? MIN_PADDING
+              : 0
+          const wants = item.left + pad
           const shifts = k === 0 || item.kind !== 'bar' || lines[v]?.items[k - 1]?.kind !== 'part'
-          if (shifts && room < item.left) {
+          if (shifts && room < wants) {
             // Everything already placed at this time slot moves with the cursor —
             // abcjs's `shiftRight`, which carries each voice's own expectations along.
             /**
@@ -13896,7 +13948,7 @@ function layoutScoped(input: Score, options: LayoutOptions = {}): Layout {
              * slot and put two of its measure widths one ULP apart, in opposite directions
              * with the section total exact.
              */
-            const placed = x + (item.left - room)
+            const placed = x + (wants - room)
             const dx = placed - x
             x = placed
             for (const w of done) {
