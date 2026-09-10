@@ -267,6 +267,65 @@ what `setPaperSize` does is assign styles to the PARENT node
 INSIDE the SVG rather than option plumbing, and none ever rendered by a gate before:
 `print` 8, `scale` 4 and 2, and `jazzchords` **95 — closed the same day**.
 
+## ✅ THE INTERACTIVE SURFACE — a THIRD new axis, and the score had been unclickable
+
+`scripts/zzclick.mjs` renders the corpus, dispatches mousedown/mouseup at real points and
+compares **what the host is told** — the callback's six arguments — as well as what the DOM
+looks like afterwards. Every other gate here compares MARKUP; `zzselect` proves the
+selectable array and its attributes are abcjs's, and nothing proved that CLICKING one did
+anything at all.
+
+**IT OPENED AT EVERY CASE.** `setupSelection` (`write/interactive/selection.js`, 424 lines)
+was unported, so abcts attached **no DOM event listeners at all**: `clickListener` was never
+called, and `ABCJS.Editor` installs one of its own, so its score-to-caret direction was dead.
+It is 1 of 685 on all three rows now, and that one is declared.
+
+- ✅ **THE JOIN IS `data-index`, WHICH IS THE JOIN abcjs USES TOO.** Its `svgEl` is the live
+  node because it draws through a DOM; ours is a synthetic attribute bag, so each selectable
+  is bound once after injection by the very attribute `Selectables.add` writes — and
+  `findElementInHistory` matches on `dataset.index` rather than on identity.
+- ⚠️ **`selectable="false"` IS A TRUTHY STRING.** `getTarget` walks up until
+  `getAttribute("selectable")` is truthy, and with no `selectTypes` every selectable carries
+  the literal `"false"` — so the walk STOPS there and a default render is fully clickable.
+  Reading that attribute as a boolean makes the common case unclickable.
+- ⚠️ **THE HIGHLIGHT COMES BEFORE THE NOTIFY**, so the `classes` string a host receives
+  already contains `abcjs-note_selected` — which on a render with no `add_classes` is the
+  only class there is.
+- ⚠️ **`abcjs-dragging-in-progress` IS ADDED AND NEVER REMOVED, WITH A LEADING SPACE.**
+  `mouseDown` adds it to `renderer.paper`; `mouseUp` removes it from `renderer.svg` — two
+  different fields, and the renderer has no `svg`, so the guard is false. The leading space
+  is `getClassSet` splitting a missing attribute into `[""]`. Both reproduced.
+- ⚠️ **A TEMPO IS REGISTERED AS A SELECTABLE AND IS NEVER PAINTED.** `drawAbsolute`'s
+  `isTempo` arm is alone in not running `params.elemset.push(g)` (`draw/absolute.js:52-56`),
+  so `highlight` walks an empty list. **The rule was already in this repo** —
+  `range-highlight.ts` ports it and says so — and porting it a second time is the point.
+- ⚠️ **THE UP ARROW DOES NOT SET `dragMechanism` AND THE DOWN ARROW DOES**
+  (`selection.js:93-115`). Reproduced; it looks like an oversight and it is abcjs's.
+- ⚠️ **ONE FIXTURE IS DECLARED, AND IT IS A LAYOUT DIFFERENCE.**
+  `abcts-ledger-gaps-3-tune3` reports `staffPos.top` 155.45 / `height` 60.932 against
+  abcjs's 142.757 / 73.625 — `zero` is EXACT and `top + height` is EXACT, so the staff
+  origin and the group's bottom both agree and only the SPLIT is ours. The 12.693px is the
+  inter-system separation CLAMP: abcjs folds it into `staff.top`, which `startY` is measured
+  back from, and our layout spends it in the system advance. It moves no ink.
+
+### ✅ AND AN OPEN SLUR NOT FOLLOWED BY A NOTE ORPHANS EVERYTHING BEFORE IT
+
+Found by `zzclick`, because a click hands the host the `abcelem` ITSELF — a `startChar` is
+visible there and in no markup gate. `parseMusic` retakes `startI` every iteration; its
+inner loop gathers chord symbols, annotations, decorations and a grace group TOGETHER, and
+a `(` is consumed further down by `letter_to_open_slurs_and_triplets`. When `getCoreNote` is
+then asked to read a `{`, `"` or `!` it reads nothing, the iteration appends nothing, and
+the next one opens at that character. Measured on a twelve-rung ladder through both engines:
+
+    "C"({ge}CD)|     abcjs opens at 4, the `{`     "C"("^a"CD)|     at 4 — not about graces
+    "C"(!p!CD)|      at 4, the `!`                 "C"(({ge}CD))|   at 5 — the whole run
+    "C"(3{ge}CDE|    at 5 — a TRIPLET counts       "C"( {ge}CD)|    at 5 — whitespace too
+    "C"(3CDE|        at 0 — a NOTE follows         "C"{ge}(CD)|     at 0 — likewise
+
+The rule was already half-implemented and could only fire when the element OPENED on the
+run, so `"C"({ge}CD)` never reached the slur at all. **Ten of the twelve rungs already
+agreed**, which is why nothing had named it.
+
 ### ✅ AND THE THREE WRAPPER OPTIONS LANDED — `oneSvgPerLine`, `viewportHorizontal`, `viewportVertical`
 
 All three were **unimplemented outright** and are 0 of 685 apiece, `oneSvgPerLine +
