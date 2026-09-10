@@ -195,6 +195,24 @@ const OPTIONS = [
   // layout-unit family, not the option.
   ['minPadding', { minPadding: 40 }, 5],
   ['timeBasedLayout', { timeBasedLayout: { minPadding: 20 } }, 669],
+  /**
+   * ⚠️ **60, AND THEY SPLIT TWO WAYS — MEASURED, NOT GUESSED.** Counting staff lines in each
+   * engine over the whole corpus: **11 of the 60 draw a DIFFERENT NUMBER OF LINES** and the
+   * other 49 are geometry inside the same structure. We under-split every time
+   * (`visual-tablature-17-stretchlast` js=5 ts=2, `visual-options-01-fonts` js=4 ts=2).
+   *
+   * ⭐ **AND THE WRAP'S DECISION IS NOT THE DEFECT.** `tune.lineBreaks` is byte-identical to
+   * abcjs's on the failing tunes — `|:CDEF|1GABc:|3cdef|]` gives BOTH engines
+   * `[{start:0,end:10},{start:11,end:16}]` — and abcjs then draws two lines where
+   * `applyLineBreaks` gives us one. So the search is right and its ANSWER is not applied on
+   * a tune whose break falls at a repeat ending. Start at `applyLineBreaks`'s
+   * `breaks.includes(i - from - 1)`, not at `calcLineWraps`.
+   *
+   * ✅ A THIRD defect was found on the way and is FIXED — `tune.lines` was projected from
+   * the PARSED score where `wrapLines` rewrites it (`parse/wrap_lines.js:13`), so a host
+   * that wrapped and then read `tune.lines` got the unwrapped structure. Invisible to every
+   * gate here, because the DRAWING was already right. `tests/wrap.test.ts` holds it now.
+   */
   ['wrap + staffwidth', { wrap: { minSpacing: 1.8, maxSpacing: 2.7, preferredMeasuresPerLine: 4 }, staffwidth: 400 }, 60],
 ]
 const every = Number(process.argv[2] ?? 1)

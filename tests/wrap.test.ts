@@ -199,3 +199,49 @@ describe("renderAbc({wrap}) — the explanation and the line breaks", () => {
     ).toEqual([]);
   });
 });
+
+/**
+ * **`wrapLines` REWRITES `tune.lines`, AND NO SVG GATE CAN SEE THAT.**
+ * `tune.lines = addLineBreaks(lines, linesBreakElements, barNumbers)`
+ * (`parse/wrap_lines.js:13`) — a host that asked for a wrap and then reads `tune.lines`
+ * gets the RE-LINED structure. Measured against abcjs: an eight-bar tune under
+ * `{wrap, staffwidth: 400}` DRAWS three lines in both engines while `tune.lines` reported
+ * three in abcjs and ONE here. The drawing was already right, which is why every byte and
+ * pixel gate was quiet, and `tune.lines`'s own corpus is at 100% because nothing in it
+ * wraps.
+ *
+ * The invariant asserted here is abcjs's own: every `line` a `lineBreaks` row names is a
+ * staff line of `tune.lines`.
+ */
+describe("renderAbc({wrap}) — tune.lines is the RE-LINED structure", () => {
+  // ⚠️ **NOT `"*"`** — that is a HEADLESS slot and abcjs's guard is
+  // `if (!removeDiv && params.wrap && params.staffwidth)` (`api/abc_tunebook_svg.js:119`),
+  // so a wrap does NOTHING there and the row list comes back empty. A stub target with an
+  // `innerHTML` is what the rest of this file uses, for the same reason.
+  const wrapped = (abc: string) =>
+    renderAbc({ innerHTML: "" }, abc, {
+      staffwidth: 400,
+      wrap: { minSpacing: 1.8, maxSpacing: 2.7, preferredMeasuresPerLine: 4 },
+    })[0];
+
+  it("reports one staff line per line the wrap decided", () => {
+    const tune = wrapped("X:1\nL:1/4\nK:C\nCDEF|GABc|cdef|gabc'|CDEF|GABc|cdef|gabc'|\n");
+    const breaks = tune?.lineBreaks ?? [];
+    expect(breaks.length).toBeGreaterThan(1);
+    const targets = new Set(breaks.map((b) => b.line));
+    const staffLines = (tune?.lines ?? []).filter(
+      (l) => (l as { staff?: unknown }).staff !== undefined,
+    );
+    expect(staffLines.length).toBe(targets.size);
+  });
+
+  it("leaves an unwrapped tune's lines exactly as they were", () => {
+    // The negative control: `drawnScore()` IS the parsed score when no wrap applies, so
+    // this path must be untouched — which is what makes the change above safe.
+    const tune = wrapped("X:1\nL:1/4\nK:C\nCDEF|\n");
+    const staffLines = (tune?.lines ?? []).filter(
+      (l) => (l as { staff?: unknown }).staff !== undefined,
+    );
+    expect(staffLines.length).toBe(1);
+  });
+});

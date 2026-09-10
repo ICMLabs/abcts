@@ -1220,7 +1220,21 @@ function renderInto(
       byRange: ReadonlyMap<number, AbcElement>;
     } => {
       if (eventIndex === null) {
-        const p = projectionOf(score, abc, engraved);
+        /**
+         * ⚠️ **AND IT IS THE WRAPPED SCORE, BECAUSE `wrapLines` REWRITES `tune.lines`.**
+         * `tune.lines = addLineBreaks(lines, linesBreakElements, barNumbers)`
+         * (`parse/wrap_lines.js:13`) — a host that asked for a `wrap` and then reads
+         * `tune.lines` gets the RE-LINED structure, not the one it parsed as.
+         *
+         * Measured: an eight-bar tune under `{wrap, staffwidth: 400}` DRAWS three lines in
+         * both engines while `tune.lines` reported three in abcjs and ONE here. No SVG gate
+         * could see it — the drawing was already right — and `tune.lines` is at 100% of its
+         * own corpus because nothing there wraps.
+         *
+         * `drawnScore()` IS `score` whenever no wrap applies, so every other render is
+         * untouched by this.
+         */
+        const p = projectionOf(drawnScore(), abc, engraved);
         lineCache = p.lines;
         blockOf = p.blockOf;
         eventIndex = { byEvent: p.byEvent, byRange: p.byRange };
