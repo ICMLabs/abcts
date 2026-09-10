@@ -140,6 +140,26 @@ const OPTIONS = [
    *   accentAbove       13 — an `accent` joins the ABOVE stack instead of the below one
    *                          (`creation/decoration.js:20`), which moves every lane with it.
    */
+  /**
+   * ⚠️ **17, AND TWO OF THEM ARE NAMED.** The class scheme itself is gated by 111 sibling
+   * goldens; these are the rows those goldens do not reach, and they are GROUP classes on
+   * the top- and bottom-text blocks:
+   *
+   *     abcjs  <g class="abcjs-extra-text abcjs-unaligned-words" …>
+   *     abcts  <g data-name="unalignedWords">
+   *     abcjs  <g class="abcjs-part-order" fill="currentColor" …>
+   *     abcts  <g fill="currentColor" data-name="part-order">
+   *
+   * `addMultiLine` pushes `{ startGroup, klass, name }` (`bottom-text.js:48`, `:86`) and
+   * `BottomText` builds the klass as `'abcjs-extra-text ' + klass`; `TopText` uses
+   * `'abcjs-part-order'` (`top-text.js:74-75`). The layout already carries both strings.
+   *
+   * ⚠️ **AND THE OBVIOUS FIX IS NOT THE FIX.** The emitter reads `row.groupClass` when it
+   * opens a group and an explicit `startGroup` row carries `klass`; making it fall back to
+   * `klass` changed NOTHING, so these two groups are opened somewhere else — the
+   * part-order one writes `fill` BEFORE `data-name`, which the `startGroup` path does not.
+   * Find that site first.
+   */
   ['add_classes', { add_classes: true }, 17],
   // ✅ CLOSED — two `if`s, one in each decoration pass: `closeDecoration` skips the accent
   // (`creation/decoration.js:20`) and `stackedDecoration` picks it up with the ORNAMENT's
