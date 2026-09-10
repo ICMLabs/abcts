@@ -267,6 +267,31 @@ what `setPaperSize` does is assign styles to the PARENT node
 INSIDE the SVG rather than option plumbing, and none ever rendered by a gate before:
 `print` 8, `scale` 4 and 2, and `jazzchords` **95 — closed the same day**.
 
+## ✅ AND `voiceScale` IS ONE TOO — `zzledger` IS EMPTY
+
+**0 differ, 0 known, 41 controls agree**, for the first time. `voiceScale` reaches the
+engraver as a `scale` ELEMENT that `createVoice` re-asserts at the head of every line
+(`tune-builder.js:990-991`); we held one value per voice and applied the last of them to
+the whole thing, so `%%voicescale 1.5` then `%%voicescale 0.6` drew BOTH lines at 0.6.
+`Measure.lineScale` carries it now, captured where `lineStyle` already was.
+
+- ⚠️ **THE DIRECTIVE REACHES THE LINE IT STANDS IN, WHERE A `[K: style=]` DOES NOT.**
+  `%%voicescale` does two things — sets `currentVoice.scale`, which every later line head
+  re-asserts, AND appends a `scale` element right there (`abc_parse_directive.js:858-860`,
+  `tune-builder.js:329-331`). The style has no immediate element. **That asymmetry is why
+  these are two mechanisms and not one**, and collapsing them left a rung failing each way
+  round.
+- ⚠️ **A `V:` FIELD OPENS ITS LINE AFTER ITS OWN MODIFIERS, NOT BEFORE.** `createVoice`
+  builds `params` once the whole field has been read, so `V:1 scale=1.5` is in time for its
+  own line while a `[K: style=]` on the line below is not.
+- ⚠️ **AND UNLIKE `style` IT DOES NOT LEAK.** `pushCrossLineElems` keeps `scaleByVoice`
+  (`abstract-engraver.js:96`, `:105-106`), so a scaled voice leaves the next one alone —
+  measured, and it is the one rung of the five that agreed from the start.
+- ⚠️ **THE FIRST PROBE WAS MUTE, AND THE REASON WAS ALREADY WRITTEN DOWN.**
+  `getBBox().width` on a notehead reports 9.81px at every scale, because a scaled glyph is
+  CSS-scaled and its path is untouched (`draw/relative.js:68-76`). Five rungs agreed at
+  9.81 and measured nothing; `getBoundingClientRect` is what sees it.
+
 ## ✅ `style=` IS A VOICE-LINE PROPERTY, NOT A VOICE ONE — the last ledger defect
 
 `zzledger`'s `parser.ts:4914` reported **STALE** on its own once the change landed. The
