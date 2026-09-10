@@ -95,6 +95,11 @@ const CASES = [
     `${H}%%score (1 2)\nV:1\nV:2\nK:C style=rhythm\nV:1\nCDEF|\nV:2\nGABc|\n`],
   ['directive:voicescale', '%%voicescale — the arm beside %%voicecolor, guarded the same way',
     `${H}V:1\n%%voicescale 1.5\nK:C\nCDEF|\n`],
+  // ✅ FIXED 2026-09-09 — `voiceScale` is a property of the LINE, not of the voice.
+  // `createVoice` re-asserts it from a `scale` ELEMENT at every line head
+  // (`tune-builder.js:990-991`) and `%%voicescale` appends one where it stands as well
+  // (`abc_parse_directive.js:858-860`), so the directive reaches the line it is written in
+  // — which a `[K: style=]` in the same position does NOT. See `Measure.lineScale`.
   ['directive:voicescale2', 'a SECOND %%voicescale mid-tune, which abcjs applies FROM THERE',
     `${H}V:1\n%%voicescale 1.5\nK:C\nCDEF|\n%%voicescale 0.6\nGABc|\n`],
 
@@ -141,7 +146,6 @@ if (ready.abcjs !== 'function' || ready.abcts !== 'function')
  * it is fixed and this goes red if it was not.
  */
 const KNOWN = new Map([
-  ['directive:voicescale2', "abcjs appends a `scale` ELEMENT, so the FIRST line keeps 1.5; ours holds one scale per voice and applies the last to both"],
   // ✅ parser.ts:4914 — FIXED 2026-09-09, and the marker's SIZE was right: it took a model
   // change, not a patch. Three rules, laddered over TEN rungs through both engines:
   //   1. `K: style=` is GLOBAL (`multilineVars.style`), not the current voice's — a header

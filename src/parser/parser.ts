@@ -1860,6 +1860,8 @@ class VoiceBuilder {
   private styleSeen = false
   /** The style this line opened with — see `push`. */
   private styleAtLineStart: NoteStyle | null = null
+  /** The voice scale this line opened with — see `captureLineStyle`. */
+  private scaleAtLineStart: number | null = null
   /** The fonts that changed as this line opened — see `ScoreBuilder.runningLineFonts`. */
   private lineFonts: Partial<Record<AbcFontType, LyricFont>> | undefined = undefined
 
@@ -1901,6 +1903,19 @@ class VoiceBuilder {
     const effective = this.ownStyle ?? this.globalStyle
     this.styleAtLineStart = effective
     /**
+     * **AND `voiceScale` IS CAPTURED IN THE SAME BREATH, FOR THE SAME REASON.**
+     * `createVoice` appends a `scale` ELEMENT from `params.scale` at the head of every line
+     * (`tune-builder.js:990-991`), and `%%voicescale` appends one where it stands as well
+     * (`abc_parse_directive.js:858-860`) — a directive line sits BETWEEN music lines, so
+     * both land on a line boundary and the value is a property of the LINE.
+     *
+     * ⚠️ **UNLIKE `style` IT DOES NOT LEAK**: `pushCrossLineElems` keeps `scaleByVoice`
+     * (`abstract-engraver.js:96`, `:105-106`), so there is no inherited value here.
+     * Measured: two voices, one scaled, and the other draws at 9.81px where the scaled one
+     * draws at 14.71.
+     */
+    this.scaleAtLineStart = this.scale
+    /**
      * ⚠️ **AND A VOICE-LINE WITH NO STYLE OF ITS OWN INHERITS THE LAST ONE ENGRAVED.**
      * `this.style` is plain engraver state: `pushCrossLineElems`/`popCrossLineElems` save
      * and restore the slurs, the ties, the endings, the COLOUR and the SCALE per voice and
@@ -1913,6 +1928,21 @@ class VoiceBuilder {
      */
     this.noteStyle = effective ?? inherited ?? 'normal'
     return effective
+  }
+
+  /**
+   * **`%%voicescale` / `V:… scale=` — AND THE DIRECTIVE REACHES THE LINE IT STANDS IN.**
+   * abcjs does two things with it: `multilineVars.currentVoice.scale = value`, which every
+   * later line head re-asserts, AND `tuneBuilder.changeVoiceScale(value)`, which appends a
+   * `scale` ELEMENT right there (`abc_parse_directive.js:858-860`,
+   * `tune-builder.js:329-331`). A `%%voicescale` written between a `V:` field and its music
+   * therefore scales THAT line, where a `[K: style=]` in the same position does not scale
+   * anything — the style has no immediate element, and that asymmetry is the whole reason
+   * these are two methods and not one.
+   */
+  setVoiceScale(value: number): void {
+    this.scale = value
+    if (!this.appendedSinceLineStart) this.scaleAtLineStart = value
   }
 
   /** `V:… style=` — this voice's own, and it opens the line where one is not open yet. */
@@ -2518,6 +2548,9 @@ class VoiceBuilder {
         this.takeOctave()
         return {
           startsSystem,
+          ...(startsSystem && this.scaleAtLineStart !== null
+            ? { lineScale: this.scaleAtLineStart }
+            : {}),
           ...(startsSystem && this.styleAtLineStart !== null
             ? { lineStyle: this.styleAtLineStart }
             : {}),
@@ -2647,6 +2680,9 @@ class VoiceBuilder {
         this.takeOctave()
         return {
           startsSystem,
+          ...(startsSystem && this.scaleAtLineStart !== null
+            ? { lineScale: this.scaleAtLineStart }
+            : {}),
           ...(startsSystem && this.styleAtLineStart !== null
             ? { lineStyle: this.styleAtLineStart }
             : {}),
@@ -4075,7 +4111,8 @@ class Parser {
         return
       }
       const builder = this.ensureScore(start)
-      if (builder.declaredVoiceId !== null) builder.voiceFor(builder.declaredVoiceId).scale = value
+      if (builder.declaredVoiceId !== null)
+        builder.voiceFor(builder.declaredVoiceId).setVoiceScale(value)
       return
     }
     // ⚠️ **`\s+` MADE A BARE `%%center` UNKNOWN.** abcjs's switch matches on the COMMAND
@@ -5072,10 +5109,6 @@ class Parser {
           // this line continues the one above it. abcjs's second mechanism — see
           // `VoiceBuilder.inlineVoiceField`, which is NOT the same as `switchedTo`.
           if (inline) builder.voice.inlineVoiceField(this.lineIsContinuation)
-          // **AND THE FIELD OPENS THE VOICE-LINE** — `createVoice` appends its `style`
-          // element here, so a `[K: style=]` written on the line this field introduces is
-          // already too late for it. See `VoiceBuilder.captureLineStyle`.
-          builder.openVoiceLine(id)
           builder.beganMusic = true
         }
         const octave = octaveModifier(value)
@@ -5149,13 +5182,22 @@ class Parser {
          */
         const voiceScale = /(?:^|\s)scale=([\d.]+)/i.exec(value)?.[1]
         if (voiceScale !== undefined && Number.isFinite(Number(voiceScale)))
-          builder.voiceFor(id).scale = Number(voiceScale)
+          builder.voiceFor(id).setVoiceScale(Number(voiceScale))
         const cue = /(?:^|\s)cue=(\S+)/i.exec(value)?.[1]
-        if (cue !== undefined) builder.voiceFor(id).scale = cue === 'on' ? 0.6 : 1
+        if (cue !== undefined) builder.voiceFor(id).setVoiceScale(cue === 'on' ? 0.6 : 1)
         const name = voiceLabel(value, ['name', 'nm'])
         if (name !== undefined) builder.voiceFor(id).name = name
         const subname = voiceLabel(value, ['subname', 'sname', 'snm'])
         if (subname !== undefined) builder.voiceFor(id).subname = subname
+        /**
+         * **AND THE FIELD OPENS THE VOICE-LINE — AFTER ITS OWN MODIFIERS, NOT BEFORE.**
+         * `createVoice` appends the `style` and `scale` elements from `params`, which is
+         * built once the whole field has been read (`tune-builder.js:965-991`). So a
+         * `[K: style=]` on the line this field introduces is already too late for it —
+         * while the field's OWN `style=`/`scale=` are in time. Opening first read
+         * `V:1 scale=1.5`'s line as unscaled.
+         */
+        if (builder.bodyStarted) builder.openVoiceLine(id)
         return
       }
       case 's': {

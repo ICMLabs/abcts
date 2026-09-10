@@ -1504,6 +1504,17 @@ export interface Measure {
    */
   readonly lineStyle?: NoteStyle
   /**
+   * **THE VOICE SCALE THIS LINE OPENED WITH** — abcjs's `scale` element, appended at the
+   * head of every line by `createVoice` and again wherever `%%voicescale` stands
+   * (`tune-builder.js:990-991`, `abc_parse_directive.js:858-860`). Present only on a
+   * measure that STARTS a system, and only once a scale has been declared at all.
+   *
+   * It is per LINE and not per voice: `%%voicescale 1.5` then `%%voicescale 0.6` on the
+   * next line draws the first line at 1.5 — measured, where a single per-voice value drew
+   * both at 0.6.
+   */
+  readonly lineScale?: number
+  /**
    * The changing fonts that DIFFER from the line above — abcjs's `setLineFont`, which
    * hangs them on the line's staff (`tune-builder.js:948-962`) for `deline` to unshift
    * back into the voices as `font` elements. Keyed by abcjs's own type name.

@@ -12660,6 +12660,37 @@ function layoutScoped(input: Score, options: LayoutOptions = {}): Layout {
     }
   }
   /**
+   * **THE VOICE SCALE IN FORCE ON ONE LINE** — abcjs's `voiceScale`, which `createVoice`
+   * re-asserts at the head of every line from a `scale` ELEMENT and which `%%voicescale`
+   * can change between lines (`tune-builder.js:990-991`,
+   * `abc_parse_directive.js:858-860`). See `Measure.lineScale`.
+   *
+   * A line with no `lineScale` of its own keeps the last one — the value is carried by the
+   * voice across the break (`scaleByVoice`), unlike `style`, which is not. Falls back to
+   * the voice's own declared scale so a tune that never re-lines is unchanged.
+   */
+  const lineScaleCache = new Map<string, number>()
+  const scaleOfLine = (voiceIndex: number, line: number): number => {
+    const key = `${voiceIndex}:${line}`
+    const hit = lineScaleCache.get(key)
+    if (hit !== undefined) return hit
+    /**
+     * ⚠️ **AND A LINE BEFORE THE FIRST DECLARATION IS UNSCALED, NOT SCALED BY WHAT COMES
+     * LATER.** Seeding this with the voice's own `scale` — its FINAL value — drew the line
+     * above a `%%voicescale` at the scale that directive would set. Measured: abcjs draws
+     * `CDEF|` at 9.81px and `GABc|` after `%%voicescale 1.5` at 14.71.
+     */
+    let value = 1
+    const measures = voices[voiceIndex]?.measures ?? []
+    for (let i = 0; i < measures.length; i++) {
+      if ((lineOfMeasure[i] ?? 0) > line) break
+      const declared = measures[i]?.lineScale
+      if (declared !== undefined) value = declared
+    }
+    lineScaleCache.set(key, value)
+    return value
+  }
+  /**
    * **IS THIS SYSTEM THE FIRST ONE OF ITS ORIGINAL SOURCE LINE?** — which is what the VOICE
    * NAME is keyed on, and is `systemIndex === 0` for every tune that was not re-lined.
    *
@@ -13034,9 +13065,10 @@ function layoutScoped(input: Score, options: LayoutOptions = {}): Layout {
         // `layoutEvent`'s rest-pitch note.
         (voices[voiceIndex]?.id ?? '').includes('$') &&
           !layerSingsOn(voiceIndex, lineOfMeasure[measureIndex] ?? 0),
-        // `V:… scale=` / `cue=` — abcjs's `voiceScale`, restored per voice by
-        // `scaleByVoice` and therefore constant for the whole of this one. See `Voice.scale`.
-        voices[voiceIndex]?.scale ?? 1,
+        // `V:… scale=` / `cue=` / `%%voicescale` — abcjs's `voiceScale`. Restored per voice
+        // by `scaleByVoice`, so it does not leak between voices — but it is a property of
+        // the LINE, not of the voice: see `Measure.lineScale`.
+        scaleOfLine(voiceIndex, lineOfMeasure[measureIndex] ?? 0),
       )
       if (measure.keyChange !== null) keyInForce = measure.keyChange
       if (measure.meterChange != null) meterInForce = measure.meterChange
@@ -14713,7 +14745,7 @@ function layoutScoped(input: Score, options: LayoutOptions = {}): Layout {
         beamGroup += 1
         // The group's LAST element — see `PlacedLine.beamAt`.
         const beamAt = Math.max(...group.map((m) => m.element))
-        for (const b of layoutBeam(group, elements, voices[voiceIndex]?.scale ?? 1))
+        for (const b of layoutBeam(group, elements, scaleOfLine(voiceIndex, systemIndex)))
           beams.push({ ...b, group: beamGroup, beamAt })
       }
 

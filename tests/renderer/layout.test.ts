@@ -1975,6 +1975,26 @@ describe('styled noteheads', () => {
       )
     })
 
+    it('scales PER LINE, because %%voicescale can change between them', () => {
+      // `voiceScale` is a `scale` ELEMENT re-asserted at every line head, so two
+      // directives give two scales. A single per-voice value drew both lines at the last
+      // one. Read off the glyph's own scale, since a scaled glyph is CSS-scaled and its
+      // path is untouched.
+      const scalesOf = (abc: string): number[] =>
+        layout(parse(abc).scores[0] as Score, { systemWidth: 400 })
+          .systems.flatMap((system) => system.staves.flatMap((st) => st.elements))
+          .flatMap((e) => e.glyphs)
+          .filter((g) => g.role === 'notehead')
+          .map((g) => g.scale ?? 1)
+      expect(
+        scalesOf('X:1\nL:1/4\nM:4/4\nV:1\n%%voicescale 1.5\nK:C\nCDEF|\n%%voicescale 0.6\nGABc|\n'),
+      ).toEqual([1.5, 1.5, 1.5, 1.5, 0.6, 0.6, 0.6, 0.6])
+      // …and a line BEFORE the first directive is unscaled, not scaled by what comes later.
+      expect(
+        scalesOf('X:1\nL:1/4\nM:4/4\nV:1\nK:C\nCDEF|\n%%voicescale 1.5\nGABc|\n'),
+      ).toEqual([1, 1, 1, 1, 1.5, 1.5, 1.5, 1.5])
+    })
+
     it('leaks into a voice with no style of its own, as abcjs does', () => {
       // `pushCrossLineElems` saves the slurs, ties, endings, colour and scale — and not
       // `this.style`. Voice 2 never asked for a slash head and gets one.
