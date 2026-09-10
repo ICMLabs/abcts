@@ -142,7 +142,31 @@ if (ready.abcjs !== 'function' || ready.abcts !== 'function')
  */
 const KNOWN = new Map([
   ['directive:voicescale2', "abcjs appends a `scale` ELEMENT, so the FIRST line keeps 1.5; ours holds one scale per voice and applies the last to both"],
-  ['parser.ts:4914', "abcjs's `this.style` is engraver state that no voice restores, so voice 2 inherits voice 1's; ours is per voice at parse time"],
+  /**
+   * ⚠️ **RE-MEASURED 2026-09-09 ON A FIVE-RUNG LADDER, AND IT IS STRANGER THAN "VOICE 2
+   * INHERITS VOICE 1'S".** `this.style` is engraver state set by a `style` ELEMENT
+   * (`abstract-engraver.js:359-363`); `pushCrossLineElems` saves slurs, ties, endings,
+   * `voiceScale` and `voiceColor` and NOT it, and `reset()` does not clear it either
+   * (`:61-100`). So it runs in (line, staff, voice) ENGRAVING order and is never restored.
+   * Reading each notehead's path length — a slash is ~33-57 characters, a round head
+   * ~377-389 — over `%%score (1 2)`:
+   *
+   *     header `K:C style=rhythm`        BOTH voices rhythm, from the first note
+   *     v1 line-start `[K:C style=..]`   v1's OWN notes stay round; v2's are rhythm
+   *     v2 line-start `[K:C style=..]`   NOTHING on that line changes at all
+   *     …and a second line              every voice of it is rhythm, v1 included
+   *     v1 line-start then mid-bar
+   *       `[K:C style=normal]`           all eight round — the cancel wins first
+   *
+   * **A LINE-START `[K:]` DOES NOT REACH ITS OWN VOICE'S NOTES**, which is
+   * `appendStartingElement` putting it on the STAFF rather than in the voice stream, and
+   * it persists into every later voice and line. A HEADER one applies to everything.
+   *
+   * Ours is per voice at parse time, so it cannot express any of the three. The fix is a
+   * resolve in engraving order, which is the model change the marker predicted — and the
+   * SIZE STANDS, re-derived twice now.
+   */
+  ['parser.ts:4914', "abcjs's `this.style` is engraver state that no voice restores; a line-start `[K:]` skips its OWN voice and then applies to every later voice and line — five rungs measured, and a per-voice model cannot express it"],
   // ✅ layout.ts:3564 — FIXED 2026-09-09, and the row was a symptom of a bigger one: the
   // tempo mark has its OWN note table (`tempo-element.js:32-44`) and we were reading it
   // out of `noteGlyph`. `tempoNoteGlyph` is that ladder, `flags.u16nd` and all, and the
