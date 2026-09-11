@@ -753,13 +753,33 @@ export function applyLineBreaks(
      * The ratchet in `tests/wrap.test.ts` is what caught it.
      */
     let current = 1;
+    /**
+     * **THE HEAD NUMBER OF THE DELINED LINE WE ARE IN — WHICH IS A SECTION, NOT A SOURCE
+     * LINE.** `addLineBreaks` runs over `tune.deline({lineBreaks: false})`, so its `ogLine`
+     * is a DELINED line: contiguous music merges into one and only a non-music row starts
+     * another. The keys-copy loop then takes that line's `barNumber` — the parser's, moved
+     * there by `tune-builder.js:139-144` — and overwrites the wrap's running value with it,
+     * for every output line cut from it.
+     *
+     * ⭐ **WHICH IS WHY THE SOURCE-LINE READING WAS WRONG AND MEASURED WRONG.** Instrumented
+     * on both sides: `piano-300`'s source lines each carry a head (4, 6, 8, 10, 12) and its
+     * WRAPPED heads still follow the counter — because deline merges them into one line
+     * whose barNumber is the first line's, which is absent. `visual-options-01-fonts`'s
+     * `%%text` blocks that merge, so its `ogLine` 4 keeps the 3 it carries and both output
+     * lines cut from it read 3. A section is our name for the same run.
+     */
+    const sectionHeadAt = new Map<number, number | undefined>();
+    for (const start of sectionStarts)
+      sectionHeadAt.set(start, voice.measures[start]?.systemBarNumber);
+    let sectionHead: number | undefined;
     const renumbered = measures.map((m, i) => {
+      if (sectionHeadAt.has(i)) sectionHead = sectionHeadAt.get(i);
       const endsSystem = i + 1 >= measures.length || measures[i + 1]?.startsSystem === true;
       const next: Measure = { ...m };
       // The head number is the counter as the line OPENS, before its own bars are counted.
       const opensSystem = m.startsSystem === true;
       if (opensSystem && (i > 0 || droppedMeter))
-        (next as { systemBarNumber?: number }).systemBarNumber = current;
+        (next as { systemBarNumber?: number }).systemBarNumber = sectionHead ?? current;
       else delete (next as { systemBarNumber?: number }).systemBarNumber;
       // An opening barline is a bar ELEMENT and takes a number like any other — it is
       // never the line's last element, so it never loses one. See `Measure.openingBarNumber`.

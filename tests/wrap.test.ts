@@ -702,3 +702,56 @@ describe("renderAbc({wrap}) — a wrapped head key is carried, not in force", ()
     expect(accidentals(HEAD, false)).toBe("sharp sharp sharp nat nat nat flat flat");
   });
 });
+
+/**
+ * **A WRAPPED SYSTEM'S HEAD NUMBER COMES FROM THE DELINED LINE, NOT THE SOURCE LINE.**
+ *
+ * `addLineBreaks` runs over `tune.deline({lineBreaks: false})`, so its `ogLine` is a
+ * DELINED line: contiguous music merges into one and only a non-music row starts another.
+ * Its keys-copy loop then overwrites the wrap's running counter with that line's own
+ * `barNumber` — the parser's, moved there by `tune-builder.js:139-144` when a line ends on
+ * a numbered barline — for every output line cut from it.
+ *
+ * ⚠️ **THE SOURCE-LINE READING OF THIS IS WRONG, AND WAS MEASURED WRONG.** Instrumented on
+ * both sides: `piano-300`'s source lines each carry a head (4, 6, 8, 10, 12) and its
+ * wrapped heads still follow the COUNTER, because deline merges them into one line whose
+ * `barNumber` is the first line's — absent. A `%%text` blocks that merge, and then the
+ * head does carry. The two rows below are exactly that pair.
+ */
+describe("renderAbc({wrap}) — the head number is the DELINED line's", () => {
+  const heads = (abc: string, staffwidth = 400): string => {
+    const host = { innerHTML: "" } as { innerHTML: string };
+    renderAbc(host, abc, {
+      staffwidth,
+      wrap: { minSpacing: 1.8, maxSpacing: 2.7, preferredMeasuresPerLine: 4 },
+    });
+    return [...host.innerHTML.matchAll(/data-name="bar-number"[^>]*>(?:<tspan[^>]*>)?([^<]*)/g)]
+      .map((m) => m[1])
+      .join(" ");
+  };
+
+  // Contiguous music: deline merges it, the merged line carries no number, and the heads
+  // are the wrap's own counter.
+  // ⚠️ This short case is NOT what catches the source-line reading — restoring that port
+  // leaves this row green and reddens the `piano-300` RATCHET above instead, which is
+  // longer and has five systems cut from one delined line. Said here because a reader
+  // would otherwise take this row for the guard against it.
+  it("uses the counter when the music is contiguous", () => {
+    const abc =
+      "X:1\nT:t\nM:4/4\nL:1/16\n%%staves {(RH) (LH)}\n%%barnumbers -1\n" +
+      "V:RH clef=treble\nV:LH clef=bass\nK:C\n" +
+      "[V: RH]c4 f4 e8| fede g8 e4|g16|\n[V: LH] E,12 F,4| z4 G,F,A,G, z4 G,F,A,G, | G,16| \n";
+    expect(heads(abc, 300)).toBe("2 3");
+  });
+
+  // ⭐ A `%%text` between the music blocks the merge, so the second delined line keeps the
+  // number the parser hung on it and BOTH output lines cut from it repeat it.
+  it("uses the delined line's own number when a %%text splits the music", () => {
+    const abc =
+      "X:1\nT:t\n%%measurenb 1\nM:4/4\nL:1/4\nK:C\n" +
+      "abca|abca|\n%%text between\nabca|abca|abca|abca|\n";
+    // ⭐ The repeated `3` is the point — it is the delined line's own head, taken by the
+    // keys-copy loop, where the counter would have said 5. Read off abcjs.
+    expect(heads(abc)).toBe("2 3 4 3 6");
+  });
+});

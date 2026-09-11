@@ -219,7 +219,7 @@ const OPTIONS = [
   ['minPadding', { minPadding: 40 }, 5],
   ['timeBasedLayout', { timeBasedLayout: { minPadding: 20 } }, 669],
   /**
-   * ⚠️ **32, AND THE LINE-STRUCTURE HALF IS CLOSED.** Counting staff lines in each engine
+   * ⚠️ **31, AND THE LINE-STRUCTURE HALF IS CLOSED.** Counting staff lines in each engine
    * over the whole corpus: **ELEVEN fixtures drew a different NUMBER OF LINES and now NONE
    * does.** The two the line-count probe still reports are abcjs THROWING — see below.
    *
@@ -357,7 +357,18 @@ const OPTIONS = [
    *    page height (1196.1352500000003 both)**; the count does not move because ONE number
    *    VALUE still differs.
    *
-   *    ⚠️ **THE RESIDUAL IS ONE NUMBER VALUE, AND IT IS NOW HALF-EXPLAINED.** abcjs renders
+   * ✅ **AND THE HEAD NUMBER COMES FROM THE DELINED LINE — 32 → 31, `options-01` CLOSED.**
+   *    `addLineBreaks` runs over `tune.deline({lineBreaks: false})`, so `ogLine` is a
+   *    DELINED line: contiguous music merges into one and only a non-music row starts
+   *    another. Its keys-copy loop overwrites the wrap's counter with that line's own
+   *    `barNumber` for every output line cut from it. A SECTION is our name for the run.
+   *    ⭐ Two instrumented runs settled it and the first reading was wrong: `piano-300`'s
+   *    SOURCE lines each carry a head (4, 6, 8, 10, 12) and its wrapped heads still follow
+   *    the counter, because deline merges them into one line whose `barNumber` is the
+   *    first line's — absent. `%%text` blocks that merge, which is why `options-01` repeats
+   *    its 3. The paragraph below is kept as the record of how it was found.
+   *
+   *    ⚠️ **THE RESIDUAL WAS ONE NUMBER VALUE, AND THIS IS HOW IT WAS EXPLAINED.** abcjs renders
    *    heads `1, 3, 3, 3` while its counter plainly reaches 5, which two passes over
    *    `addLineBreaks` could not account for. INSTRUMENTED (abcjs's own `tune.lines`
    *    against its actions list) and the answer is a SECOND WRITE: the keys-copy loop runs
@@ -527,13 +538,13 @@ const OPTIONS = [
    *    4  GEOMETRY ONLY, same element kinds throughout: `synth-flattener-20`,
    *       `text-udef-parts-overlays-tune8` and `-tune46`, `vskip-tune1`.
    *
-   * ⚠️ **AND TWO OF THE 32 ARE abcjs CRASHING, NOT US.** `abcts-vskip` tunes 0 and 2 throw
+   * ⚠️ **AND TWO OF THE 31 ARE abcjs CRASHING, NOT US.** `abcts-vskip` tunes 0 and 2 throw
    * inside abcjs's own `wrapLines` — `undefined is not an object (evaluating 'l[p]')` —
    * because `addLineBreaks` reads `lines[action.ogLine].staff[action.staff]` on a row a
    * `%%vskip` made non-music. We render them. A crash is not output and strict does not
    * reproduce one.
    */
-  ['wrap + staffwidth', { wrap: { minSpacing: 1.8, maxSpacing: 2.7, preferredMeasuresPerLine: 4 }, staffwidth: 400 }, 32],
+  ['wrap + staffwidth', { wrap: { minSpacing: 1.8, maxSpacing: 2.7, preferredMeasuresPerLine: 4 }, staffwidth: 400 }, 31],
 ]
 const every = Number(process.argv[2] ?? 1)
 const browser = await webkit.launch()
