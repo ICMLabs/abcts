@@ -35,8 +35,11 @@ scratch probe last time. Restore before any browser gate:
 ⭐ THE STANDING ORDER, AND THE OWNER HAS SAID IT SIX TIMES: REFERENCE THE ACTUAL abcjs.
   1. READ the named abcjs function.   2. GREP THIS REPO before porting it.
   3. LADDER it, one variable per rung, through BOTH engines.
-  4. INSTRUMENT abcjs when the source is not enough — `/tmp/gp/abcjs` runs without a build,
-     and for anything DOM-side render both engines in a real browser instead.
+  4. INSTRUMENT abcjs when the source is not enough — `/tmp/gp/abcjs` runs without a build
+     (copy `abcjs-6.7.0/src`; it is CommonJS and `require`s straight from node), and for
+     anything DOM-side render both engines in a real browser instead. It EARNED ITS KEEP
+     this session: two passes over `addLineBreaks` could not explain a bar number and one
+     instrumented run found a SECOND WRITE.
   5. Only then write code, and let the gate arbitrate.
 
 ⭐⭐ A RECORDED CAUSE IS A HYPOTHESIS UNTIL SOMETHING MEASURES IT — INCLUDING ONE YOU WROTE
