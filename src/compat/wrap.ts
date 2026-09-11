@@ -722,6 +722,36 @@ export function applyLineBreaks(
      * fixture ever shows one.
      */
     if (score.barNumbersDirective !== true) return { ...voice, measures };
+    /**
+     * ⚠️ **AND THE SOURCE LINE'S OWN HEAD NUMBER OVERWRITES THE WRAP'S.** The keys-copy
+     * loop runs AFTER the assignment and `barNumber` is not in its skip list:
+     *
+     *     outputLines[…].staff[…] = {voices: []};
+     *     if (barNumbers !== undefined && …) …barNumber = currentBarNumber;   // :37-39
+     *     var keys = Object.keys(inputStaff)                                   // :41
+     *     … if (!skip) outputLines[…].staff[…][keys[k]] = inputStaff[keys[k]];
+     *
+     * — the same loop the METER rule comes from, where `meter` IS skipped and this is not.
+     * `inputStaff.barNumber` is the parser's own, put there by `tune-builder.js:139-144`:
+     * a source line ending on a numbered barline moves that number to the NEXT source
+     * line's staff and deletes it from the bar. So every output line cut from that source
+     * line carries it, and the wrap's running value never shows.
+     *
+     * ⭐ **MEASURED, NOT READ.** `visual-options-01-fonts` renders heads `1, 3, 3, 3` while
+     * the counter plainly reaches 5, which two passes over `addLineBreaks` could not
+     * explain. Instrumenting abcjs against its own actions list is what found the second
+     * write: lines 5 and 6 both come from `ogLine` 4, whose source staff carries 3.
+     *
+     * ⚠️ **AND THE OBVIOUS PORT OF IT IS WRONG — TRIED, MEASURED, REVERTED.** Taking the
+     * head from the source line's own `systemBarNumber` when it has one fixes
+     * `visual-options-01-fonts` exactly (`1 2 3 3 5 3` on both sides) and BREAKS
+     * `piano-300`, which wants the counter: abcjs gives it heads `2, 4, 5, 6, 8, 9, …`
+     * and the port repeats `4, 4, 8, 8`. So `inputStaff.barNumber` is present on one and
+     * ABSENT on the other, and our `Measure.systemBarNumber` does not tell them apart —
+     * `tune-builder.js:139-144` moves a line-ending bar's number onto the next music
+     * line's staff, and what decides whether it is there at all is still unmeasured.
+     * The ratchet in `tests/wrap.test.ts` is what caught it.
+     */
     let current = 1;
     const renumbered = measures.map((m, i) => {
       const endsSystem = i + 1 >= measures.length || measures[i + 1]?.startsSystem === true;

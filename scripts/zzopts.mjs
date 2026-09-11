@@ -357,14 +357,28 @@ const OPTIONS = [
    *    page height (1196.1352500000003 both)**; the count does not move because ONE number
    *    VALUE still differs.
    *
-   *    ⚠️ **AND THAT RESIDUAL IS NOT UNDERSTOOD — DO NOT GUESS AT IT.** Measured, abcjs's
-   *    own `tune.lines[].staff[0].barNumber` after the wrap is **1, 3, 3, 3** while its
-   *    counter plainly reaches 5 (`L5 bars=[5,-]`), and the rendered numbers are
-   *    `1 2 3 3 5 3` against our `1 2 3 4 5 6`. A head of 3 followed by a first bar of 5 is
-   *    TWO increments across one assignment, which `addLineBreaks` as written does not
-   *    predict — so the reading is incomplete rather than the port. ⭐ **It needs abcjs
-   *    INSTRUMENTED** (`/tmp/gp/abcjs`, the standing order's step 4) rather than another
-   *    pass over the source; two passes over it produced no explanation.
+   *    ⚠️ **THE RESIDUAL IS ONE NUMBER VALUE, AND IT IS NOW HALF-EXPLAINED.** abcjs renders
+   *    heads `1, 3, 3, 3` while its counter plainly reaches 5, which two passes over
+   *    `addLineBreaks` could not account for. INSTRUMENTED (abcjs's own `tune.lines`
+   *    against its actions list) and the answer is a SECOND WRITE: the keys-copy loop runs
+   *    after the assignment and `barNumber` is NOT in its skip list, where `meter` is —
+   *
+   *        if (barNumbers !== undefined && …) …barNumber = currentBarNumber;   // :37-39
+   *        var keys = Object.keys(inputStaff)                                   // :41
+   *        … if (!skip) outputLines[…].staff[…][keys[k]] = inputStaff[keys[k]];
+   *
+   *    — so `inputStaff.barNumber`, which `tune-builder.js:139-144` put there by moving a
+   *    source line's last bar number onto the next music line's staff, overwrites it.
+   *    Lines 5 and 6 both come from `ogLine` 4, whose source staff carries 3.
+   *
+   *    ⚠️ **AND THE OBVIOUS PORT IS WRONG — TRIED, MEASURED, REVERTED.** Taking the head
+   *    from the source line's own `systemBarNumber` fixes this fixture exactly and BREAKS
+   *    `piano-300`, which wants the counter: abcjs gives it `2, 4, 5, 6, 8, 9, …` and the
+   *    port repeats `4, 4, 8, 8`. So `inputStaff.barNumber` is present on one source line
+   *    and ABSENT on the other, and `Measure.systemBarNumber` does not tell them apart.
+   *    **What decides whether it is there at all is the open question** — instrument
+   *    `tune-builder.js:139` next, not `addLineBreaks`. The `wrap.test.ts` ratchet caught
+   *    the regression, which is what that fixture is in it for.
    *
    *    7  A BAR NUMBER IS LOST. `text:bar-number` is present in abcjs and absent here on
    *       `visual-layout-01`/`-02` (with its `path:box` — a `%%barlabelfont … box` label,
