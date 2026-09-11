@@ -479,3 +479,49 @@ describe("renderAbc({wrap}) — a dissolved break re-emits the staff property", 
     );
   });
 });
+
+/**
+ * **THE TUNE'S TEMPO MARK IS NOT PART OF THE METER RULE.**
+ *
+ * `prefix`'s `withMeter` flag hangs THREE things off "this is the first system": the
+ * clef/key prefix, the header meter, and the tune's TEMPO MARK
+ * (`createABCLine(staff, !hasPrintedTempo ? abcTune.metaText.tempo : null, i)`,
+ * `engraver-controller.js:232`). Narrowing that flag for `Score.wrapDroppedMeter` silently
+ * took the tempo off every wrapped tune with a subtitle.
+ *
+ * ⚠️ **NO GATE CAUGHT IT.** The six fixtures that show it were already differing on other
+ * causes, so `zzopts`'s count never moved, and no golden renders `{wrap}` at all. A rung
+ * caught it — the same shape as the `strict` flag that gated two unrelated behaviours.
+ * The meter is narrowed at its own use site now, and this is the row that says so.
+ */
+describe("renderAbc({wrap}) — the meter rule does not take the tempo with it", () => {
+  const tempoMarks = (abc: string, wrap: boolean): number => {
+    const host = { innerHTML: "" } as { innerHTML: string };
+    renderAbc(host, abc, {
+      staffwidth: 400,
+      ...(wrap
+        ? { wrap: { minSpacing: 1.8, maxSpacing: 2.7, preferredMeasuresPerLine: 4 } }
+        : {}),
+    });
+    return [...host.innerHTML.matchAll(/data-name="tempo"/g)].length;
+  };
+  const WITH_SUB = "X:1\nT:T\nT:Sub\nQ:1/4=120\nM:4/4\nL:1/4\nK:C\nCDEF|GABc|cdef|gabc|CDEF|\n";
+  const PLAIN = "X:1\nT:T\nQ:1/4=120\nM:4/4\nL:1/4\nK:C\nCDEF|GABc|cdef|gabc|CDEF|\n";
+
+  // The row that was broken: a subtitle puts the music off output line 0, which is exactly
+  // when `wrapDroppedMeter` fires — and the tempo must survive it.
+  it("draws the tempo under {wrap} WITH a subtitle", () => {
+    expect(tempoMarks(WITH_SUB, true)).toBe(1);
+  });
+  // The three controls, each of which stayed green while the row above was broken, which
+  // is what says the defect was the FLAG rather than the tempo.
+  it("draws it under {wrap} without a subtitle", () => {
+    expect(tempoMarks(PLAIN, true)).toBe(1);
+  });
+  it("draws it with a subtitle and no wrap", () => {
+    expect(tempoMarks(WITH_SUB, false)).toBe(1);
+  });
+  it("draws it with neither", () => {
+    expect(tempoMarks(PLAIN, false)).toBe(1);
+  });
+});

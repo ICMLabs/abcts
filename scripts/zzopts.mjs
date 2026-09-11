@@ -219,7 +219,7 @@ const OPTIONS = [
   ['minPadding', { minPadding: 40 }, 5],
   ['timeBasedLayout', { timeBasedLayout: { minPadding: 20 } }, 669],
   /**
-   * ⚠️ **42, AND THE LINE-STRUCTURE HALF IS CLOSED.** Counting staff lines in each engine
+   * ⚠️ **41, AND THE LINE-STRUCTURE HALF IS CLOSED.** Counting staff lines in each engine
    * over the whole corpus: **ELEVEN fixtures drew a different NUMBER OF LINES and now NONE
    * does.** The two the line-count probe still reports are abcjs THROWING — see below.
    *
@@ -325,6 +325,14 @@ const OPTIONS = [
    *       `svg-per-line-01`, `tablature-15`. The renumbering half of `wrap_lines.js:78-88`
    *       landed last session; this is its residual.
    *
+   * ✅ **ONE OF THE SIX LOST TEMPOS WAS MINE — 42 → 41.** `prefix`'s `withMeter` flag hangs
+   *    THREE things off "this is the first system": the clef/key prefix, the header meter
+   *    and the tune's TEMPO MARK (`engraver-controller.js:232`). Narrowing it for
+   *    `wrapDroppedMeter` took the tempo off every wrapped tune with a subtitle, and NO
+   *    GATE CAUGHT IT — the fixtures that show it were already differing on other causes,
+   *    so this count never moved. The meter is narrowed at its own use site now. The other
+   *    five still differ for the reason below.
+   *
    *    6  A TEMPO IS LOST — `g:tempo` with its `noteheads.quarter`, `stem` and
    *       `text:beats`/`text:pre`. `createABCLine` hands the tempo to `createABCVoice`
    *       PER LINE, and the re-lined structure is not the one that was handed it.
@@ -345,13 +353,13 @@ const OPTIONS = [
    *    4  GEOMETRY ONLY, same element kinds throughout: `synth-flattener-20`,
    *       `text-udef-parts-overlays-tune8` and `-tune46`, `vskip-tune1`.
    *
-   * ⚠️ **AND TWO OF THE 42 ARE abcjs CRASHING, NOT US.** `abcts-vskip` tunes 0 and 2 throw
+   * ⚠️ **AND TWO OF THE 41 ARE abcjs CRASHING, NOT US.** `abcts-vskip` tunes 0 and 2 throw
    * inside abcjs's own `wrapLines` — `undefined is not an object (evaluating 'l[p]')` —
    * because `addLineBreaks` reads `lines[action.ogLine].staff[action.staff]` on a row a
    * `%%vskip` made non-music. We render them. A crash is not output and strict does not
    * reproduce one.
    */
-  ['wrap + staffwidth', { wrap: { minSpacing: 1.8, maxSpacing: 2.7, preferredMeasuresPerLine: 4 }, staffwidth: 400 }, 42],
+  ['wrap + staffwidth', { wrap: { minSpacing: 1.8, maxSpacing: 2.7, preferredMeasuresPerLine: 4 }, staffwidth: 400 }, 41],
 ]
 const every = Number(process.argv[2] ?? 1)
 const browser = await webkit.launch()

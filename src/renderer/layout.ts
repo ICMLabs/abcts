@@ -13379,7 +13379,11 @@ function layoutScoped(input: Score, options: LayoutOptions = {}): Layout {
               ? firstMeasure?.meterChange
               : firstMeasure.meterChanges[0]?.meter) ?? null)
           : null
-      const prefixMeter = leading ?? (withMeter ? score.meter : null)
+      // …**AND A WRAP THAT PUSHED THE MUSIC OFF OUTPUT LINE 0 TAKES THE METER FROM SYSTEM 0
+      // TOO** — see `Score.wrapDroppedMeter`. Applied HERE and not to `withMeter`, which
+      // the tempo below also reads.
+      const prefixMeter =
+        leading ?? (withMeter && score.wrapDroppedMeter !== true ? score.meter : null)
       if (prefixMeter !== null) {
         push(layoutMeter(x, prefixMeter, strict))
       }
@@ -13720,10 +13724,14 @@ function layoutScoped(input: Score, options: LayoutOptions = {}): Layout {
   let voltaOpenedOnPreviousSystem: number | null = null
   const systems: LayoutSystem[] = spans.map((span, systemIndex) => {
     // …**AND A LINE `%%barsperstaff` CUT OUT PRINTS ONE TOO** — see `Measure.wrappedLine`.
-    // …**AND A WRAP THAT PUSHED THE MUSIC OFF OUTPUT LINE 0 TAKES IT FROM SYSTEM 0 TOO** —
-    // see `Score.wrapDroppedMeter`.
+    //
+    // ⚠️ **THIS FLAG IS NOT ONLY ABOUT THE METER, WHICH IS WHY `wrapDroppedMeter` IS NOT
+    // READ HERE.** `prefix` also hangs the TUNE'S TEMPO MARK on it (`:13402`), so
+    // narrowing it for the wrap silently took the tempo off every tune with a subtitle —
+    // caught by a rung, not by a gate, because the fixtures that show it were already
+    // differing for other reasons. The meter is narrowed at its own use site instead.
     const withMeter =
-      (systemIndex === 0 && score.wrapDroppedMeter !== true) ||
+      systemIndex === 0 ||
       plans.some((p) => p.measures[span.start]?.wrappedLine === true)
 
     /**
