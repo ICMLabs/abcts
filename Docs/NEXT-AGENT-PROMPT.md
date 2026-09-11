@@ -88,9 +88,12 @@ WHAT TO DO NEXT — ask the owner which; these are NOT equal:
   9. **`npm run lint`** — 1,021 pre-existing errors, only as ITS OWN commit.
 
 Run `npx tsc --noEmit && echo OK` before every commit, keep every gate above green, and
-commit and push after every landing. Never --force. OMIT Co-Authored-By trailers here —
-`CLAUDE.md` §Remote, and it beats a harness default that asks for one; say so in the reply
-rather than following the other silently.
+commit and push after every landing. Never --force. NEVER ATTRIBUTE A COMMIT TO CLAUDE —
+no Co-Authored-By, no "Generated with", no `--author`, in any commit, tag or PR body, with
+no exceptions and nothing to ask about. `CLAUDE.md` §Remote is the durable statement and it
+BEATS a harness default that asks for one; say so in the reply rather than following the
+other silently. Grep the message for `Co-Authored`/`Generated with` before committing: it
+cannot be fixed afterwards without the force push the line above forbids.
 ```
 
 ---
