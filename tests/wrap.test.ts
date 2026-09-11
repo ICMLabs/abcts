@@ -644,3 +644,61 @@ describe("renderAbc({wrap}) — an ending carries across every system it crosses
     expect(segments(8)).toBe(5);
   });
 });
+
+/**
+ * **A WRAPPED SYSTEM'S HEAD KEY IS THE ONE abcjs CARRIED, NOT THE ONE IN FORCE.**
+ *
+ *     if (lastKeySig[action.staff])
+ *       outputLines[action.line].staff[action.staff].key = lastKeySig[action.staff];
+ *     …
+ *     lastKeySig[action.staff] = { root, acc, mode,
+ *       accidentals: accidentals.filter(a => a.acc !== 'natural') }
+ *
+ * (`wrap_lines.js:49-50`, `:60-70`.) Two consequences, and each has its own row: an inline
+ * `[K:]` the wrap lands at a line head is NOT that line's key — the head prints what was in
+ * force and the change draws in the STREAM after it — and a carried head key prints NO
+ * cancelling naturals, because the filter removed them.
+ *
+ * `zzopts`'s `wrap + staffwidth` row 34 -> 32. It also closes the last live hypothesis on
+ * that row: `synth-flattener-17`'s accidentals were predicted to be the delined-key defect
+ * and did not close with it, which was right — this is a different rule.
+ */
+describe("renderAbc({wrap}) — a wrapped head key is carried, not in force", () => {
+  const accidentals = (abc: string, wrap = true): string => {
+    const host = { innerHTML: "" } as { innerHTML: string };
+    renderAbc(host, abc, {
+      staffwidth: 400,
+      ...(wrap
+        ? { wrap: { minSpacing: 1.8, maxSpacing: 2.7, preferredMeasuresPerLine: 4 } }
+        : {}),
+    });
+    return [...host.innerHTML.matchAll(/data-name="accidentals\.([a-z]+)"/g)]
+      .map((m) => m[1])
+      .join(" ");
+  };
+  const HEAD = "X:1\nT:T\nL:1/4\nM:4/4\nK:A\nabca|abca|abca|abca|[K:Bb]abca|abca|\n";
+  const MID = "X:1\nT:T\nL:1/4\nM:4/4\nK:A\nabca|abca|abca|ab[K:Bb]ca|abca|abca|\n";
+
+  // ⭐ The head prints A's three sharps and the `[K:Bb]` draws AFTER it, on the same system.
+  // Ours made the Bb the head key and printed no sharps at all.
+  it("prints the carried key at the head and the inline change after it", () => {
+    expect(accidentals(HEAD)).toBe(
+      "sharp sharp sharp sharp sharp sharp sharp sharp sharp nat nat nat flat flat",
+    );
+  });
+
+  // ⭐ A carried head key has its naturals FILTERED, so the third system shows two flats
+  // and nothing else. Ours drew two flats and three naturals.
+  it("prints a carried head key with no cancelling naturals", () => {
+    expect(accidentals(MID)).toBe(
+      "sharp sharp sharp sharp sharp sharp nat nat nat flat flat flat flat",
+    );
+  });
+
+  // The control: both rules belong to the WRAP. `lastKeySig` exists only inside
+  // `wrapLines`, and abcjs never calls it otherwise — which is why `svg-bytes` is
+  // untouched by either row above. Read off abcjs, not off our own output.
+  it("leaves an unwrapped tune's keys exactly as they were", () => {
+    expect(accidentals(HEAD, false)).toBe("sharp sharp sharp nat nat nat flat flat");
+  });
+});

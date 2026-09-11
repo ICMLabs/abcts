@@ -10901,6 +10901,10 @@ const musicStartsAt = (measure: Measure): number =>
 
 const keyChangeLeadsLine = (measure: Measure | undefined): boolean => {
   if (measure === undefined || !measure.startsSystem || measure.keyChange === null) return false
+  // …**AND NOT WHEN A WRAP PUT THIS MEASURE AT A LINE HEAD.** abcjs's head key is the
+  // CARRIED one and the change is an ordinary stream element after it, so the prefix does
+  // not own it and this must not suppress it — see `Measure.wrapLineHeadKey`.
+  if (measure.wrapLineHeadKey !== undefined) return false
   const at = measure.keyChangeSourceRange?.start
   if (at == null) return false
   return at < musicStartsAt(measure)
@@ -13329,8 +13333,15 @@ function layoutScoped(input: Score, options: LayoutOptions = {}): Layout {
       // the naturals for what is being left — which is exactly `impliedNaturals`. Using it
       // whenever the line's key differs from the previous line's gives abcjs's "one line
       // only" for free, because the line after that compares equal.
-      const lineKey = keyAtMeasure[from] ?? score.key
-      const beforeKey = keyBeforeLine[from] ?? score.key
+      /**
+       * …**AND A WRAPPED SYSTEM PRINTS THE KEY abcjs CARRIED, NOT THE ONE IN FORCE** — see
+       * `Measure.wrapLineHeadKey`. It is passed as BOTH the outgoing and the incoming key,
+       * which is how a change with nothing to cancel is stated here, and that is exactly
+       * what `lastKeySig`'s `accidentals.filter(a => a.acc !== 'natural')` leaves.
+       */
+      const wrapHead = voices[voiceIndex]?.measures[from]?.wrapLineHeadKey
+      const lineKey = wrapHead ?? keyAtMeasure[from] ?? score.key
+      const beforeKey = wrapHead ?? keyBeforeLine[from] ?? score.key
       /**
        * **A STANDALONE BODY `K:` POSITIONS ONE STAFF'S SIGNATURE AGAINST THE `K:`-CLEF.**
        * See `Score.firstLineKeyClef`: `appendStartingElement` overwrites

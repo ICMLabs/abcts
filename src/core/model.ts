@@ -1430,6 +1430,33 @@ export interface Measure {
   /** …and the clef. See `wrapInjectedKey`. */
   readonly wrapInjectedClef?: true
   /**
+   * **THE KEY A WRAPPED SYSTEM PRINTS AT ITS HEAD — WHICH IS NOT THE KEY IN FORCE THERE.**
+   *
+   *     if (lastKeySig[action.staff])
+   *       outputLines[action.line].staff[action.staff].key = lastKeySig[action.staff];
+   *     …
+   *     lastKeySig[action.staff] = { root, acc, mode,
+   *       accidentals: accidentals.filter(a => a.acc !== 'natural') }
+   *
+   * (`wrap_lines.js:49-50`, `:60-70`.) `lastKeySig` is taken from the last `key` ELEMENT of
+   * the line just finished, so it reaches the NEXT line — and its naturals are FILTERED
+   * OUT. Two consequences, and each shows on its own rung:
+   *
+   *   - **An inline `[K:]` that the wrap lands at a line head is NOT that line's key.** The
+   *     head prints the key still in force and the change draws in the STREAM after it, so
+   *     abcjs shows three sharps and then a Bb change on the same system. Ours made the Bb
+   *     the head key and printed no sharps at all.
+   *   - **A carried head key prints NO CANCELLING NATURALS**, because the filter removed
+   *     them. Ours drew two flats and three naturals where abcjs draws two flats.
+   *
+   * Both are reproduced by printing THIS key as both the outgoing and the incoming one,
+   * which is how a change with nothing to cancel is already stated here.
+   *
+   * Absent when no wrap ran, and the value is the key in force BEFORE this measure's own
+   * change — see `applyLineBreaks`.
+   */
+  readonly wrapLineHeadKey?: KeySignature
+  /**
    * **abcjs's `ogLine` — WHICH DELINED LINE THIS MEASURE CAME FROM.** Present only where
    * `renderAbc({wrap})` has re-lined the music, and it is the SECTION index rather than the
    * source line's, because `wrapLines` opens with `tune.deline({lineBreaks: false})`

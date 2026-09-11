@@ -1,4 +1,4 @@
-import type { Measure, Score } from "../core/model.js";
+import type { KeySignature, Measure, Score } from "../core/model.js";
 
 import type { AbcLine } from "./lines.js";
 import type { MeasureSection } from "./tune-metrics.js";
@@ -494,6 +494,17 @@ export function applyLineBreaks(
    * reaches the next line's head and not its own. `…Inline !== true` is the test, which is
    * the same split `keyChangeLeadsLine` makes on the drawing side.
    */
+  /**
+   * **THE KEY EACH WRAPPED SYSTEM PRINTS AT ITS HEAD** — abcjs's `lastKeySig`, which is the
+   * key in force BEFORE the opening measure's own change, and which prints with no
+   * cancelling naturals. See `Measure.wrapLineHeadKey`.
+   *
+   * ⚠️ It is not `keyAtMeasure`: an inline `[K:]` the wrap happens to land at a line head
+   * belongs to the STREAM, and the head still shows what was in force before it. Filled in
+   * on the second pass below, once `opensHere` knows which measures open a system.
+   */
+  const headKeys = new Map<number, KeySignature>()
+
   const injects = new Map<number, { key: boolean; meter: boolean; clef: boolean }>()
   {
     const first = score.voices[0]?.measures ?? []
@@ -585,6 +596,19 @@ export function applyLineBreaks(
         bar += 1;
       }
     }
+    /**
+     * …**AND THE HEAD KEY OF EVERY SYSTEM THIS WRAP OPENS** — the key in force BEFORE the
+     * opening measure's own change, which is what abcjs's `lastKeySig` carries. Walked here
+     * because `opensHere` is what says which measures open one. See `headKeys`.
+     */
+    if (vi === 0) {
+      let runKey = score.key;
+      voice.measures.forEach((m, i) => {
+        const opensNow = i === 0 ? m.startsSystem === true : opensHere.has(i);
+        if (opensNow && i > 0) headKeys.set(i, runKey);
+        if (m.keyChange !== null) runKey = m.keyChange;
+      });
+    }
     const measures = voice.measures.map((m, i) => {
       let section = 0;
       for (let k = 0; k < sectionStarts.length; k += 1)
@@ -605,7 +629,13 @@ export function applyLineBreaks(
       // (`wrap_lines.js:41-46`) — where `%%barsperstaff`'s `wrapMusicLines` copies the line
       // WHOLE and carries `staff.meter` with it. Two line-forcing features, two answers,
       // and setting `wrappedLine` here drew a meter on every wrapped system.
-      if (opens) return { ...m, startsSystem: true as const, wrapSourceLine: section };
+      if (opens)
+        return {
+          ...m,
+          startsSystem: true as const,
+          wrapSourceLine: section,
+          ...(vi === 0 && headKeys.has(i) ? { wrapLineHeadKey: headKeys.get(i)! } : {}),
+        };
       // **THIS IS THE DISSOLVED BREAK** — `opens` is false and the measure DID start a
       // system, which is the only branch that can reach here. The line abcjs is merging is
       // this one, so this is where `deline` would have injected its staff property; see

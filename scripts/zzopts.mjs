@@ -219,7 +219,7 @@ const OPTIONS = [
   ['minPadding', { minPadding: 40 }, 5],
   ['timeBasedLayout', { timeBasedLayout: { minPadding: 20 } }, 669],
   /**
-   * ⚠️ **34, AND THE LINE-STRUCTURE HALF IS CLOSED.** Counting staff lines in each engine
+   * ⚠️ **32, AND THE LINE-STRUCTURE HALF IS CLOSED.** Counting staff lines in each engine
    * over the whole corpus: **ELEVEN fixtures drew a different NUMBER OF LINES and now NONE
    * does.** The two the line-count probe still reports are abcjs THROWING — see below.
    *
@@ -469,16 +469,38 @@ const OPTIONS = [
    *       Fixtures: `abcts-model-gaps-tune7` (+1) and `tablature-17-stretchlast` (+4,
    *       which also carries the +4 endings and a 499 / 966 page).
    *
+   * ✅ **A WRAPPED SYSTEM'S HEAD KEY IS THE ONE abcjs CARRIED — 34 → 32.**
+   *
+   *        if (lastKeySig[action.staff])
+   *          outputLines[action.line].staff[action.staff].key = lastKeySig[action.staff];
+   *        …
+   *        lastKeySig[action.staff] = { root, acc, mode,
+   *          accidentals: accidentals.filter(a => a.acc !== 'natural') }
+   *
+   *    (`wrap_lines.js:49-50`, `:60-70`.) `lastKeySig` comes from the last `key` ELEMENT of
+   *    the line just finished, so it reaches the NEXT line, and its naturals are FILTERED.
+   *    Two rules, each on its own rung:
+   *      · an inline `[K:]` the wrap lands at a line head is NOT that line's key — the head
+   *        prints what was in force and the change draws in the STREAM after it. abcjs
+   *        shows three sharps and then the Bb change; ours made Bb the head key and printed
+   *        no sharps at all.
+   *      · a carried head key prints NO cancelling naturals. Ours drew two flats and three
+   *        naturals where abcjs draws two flats.
+   *    Both fall out of passing the carried key as BOTH the outgoing and the incoming one.
+   *    ⚠️ **AND THIS CLOSES THE ROW'S LAST LIVE HYPOTHESIS.** `synth-flattener-17`'s
+   *    accidentals were predicted to be the delined-key defect and did NOT close with it.
+   *    The prediction was wrong and the non-closing was the evidence: it is this rule.
+   *
    *    4  GEOMETRY ONLY, same element kinds throughout: `synth-flattener-20`,
    *       `text-udef-parts-overlays-tune8` and `-tune46`, `vskip-tune1`.
    *
-   * ⚠️ **AND TWO OF THE 34 ARE abcjs CRASHING, NOT US.** `abcts-vskip` tunes 0 and 2 throw
+   * ⚠️ **AND TWO OF THE 32 ARE abcjs CRASHING, NOT US.** `abcts-vskip` tunes 0 and 2 throw
    * inside abcjs's own `wrapLines` — `undefined is not an object (evaluating 'l[p]')` —
    * because `addLineBreaks` reads `lines[action.ogLine].staff[action.staff]` on a row a
    * `%%vskip` made non-music. We render them. A crash is not output and strict does not
    * reproduce one.
    */
-  ['wrap + staffwidth', { wrap: { minSpacing: 1.8, maxSpacing: 2.7, preferredMeasuresPerLine: 4 }, staffwidth: 400 }, 34],
+  ['wrap + staffwidth', { wrap: { minSpacing: 1.8, maxSpacing: 2.7, preferredMeasuresPerLine: 4 }, staffwidth: 400 }, 32],
 ]
 const every = Number(process.argv[2] ?? 1)
 const browser = await webkit.launch()
