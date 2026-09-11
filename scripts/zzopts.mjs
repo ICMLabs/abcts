@@ -219,7 +219,7 @@ const OPTIONS = [
   ['minPadding', { minPadding: 40 }, 5],
   ['timeBasedLayout', { timeBasedLayout: { minPadding: 20 } }, 669],
   /**
-   * ⚠️ **59, AND THE LINE-STRUCTURE HALF IS CLOSED.** Counting staff lines in each engine
+   * ⚠️ **53, AND THE LINE-STRUCTURE HALF IS CLOSED.** Counting staff lines in each engine
    * over the whole corpus: **ELEVEN fixtures drew a different NUMBER OF LINES and now NONE
    * does.** The two the line-count probe still reports are abcjs THROWING — see below.
    *
@@ -236,13 +236,32 @@ const OPTIONS = [
    * is 389.238913 against 389.237975; `flattener-07-metronome`'s rest was 15.87px out and
    * is 2.09.
    *
-   * ⚠️ **AND TWO OF THE 59 ARE abcjs CRASHING, NOT US.** `abcts-vskip` tunes 0 and 2 throw
+   * ✅ **AND THE METER GOES WITH A NON-MUSIC FIRST ROW — 59 → 53.**
+   *
+   *     if (keys[k] === "meter" && action.line !== 0) skip = true;    // wrap_lines.js:43
+   *
+   * ⚠️ **`action.line` IS THE OUTPUT LINE INDEX OVER THE WHOLE TUNE AND IT COUNTS THE
+   * NON-MUSIC ROWS.** `findLineBreaks` advances one `outputLine` for a subtitle, a
+   * `%%text`, a `%%sep` or a `%%newpage` exactly as it does for a staff line
+   * (`wrap_lines.js:150-153`), so a tune opening with a subtitle has its music on line 1
+   * and loses the meter on EVERY system, the FIRST INCLUDED. The line the comment is
+   * attached to reads as though only the reprints go, and this repo had ported it that
+   * way: `i === 0` in `lines.ts` and `systemIndex === 0` in `layout.ts` are the tune's
+   * first MEASURE and first SYSTEM, which is abcjs's line 0 only when nothing precedes it.
+   *
+   * The predicate was built against the REFERENCE rather than against our own type:
+   * `tune.lines.findIndex(l => l.staff) > 0` names 41 fixtures of 685, and
+   * `titles.length > 1 || textAbove.length > 0 || newPage != null` names THE SAME 41, with
+   * no fixture on either side of the disagreement. ⚠️ `newPage` is a NUMBER — `%%newpage 1`
+   * reads back as `1`, and a `=== true` test misses `abcts-directives-tune9` alone.
+   *
+   * ⚠️ **AND TWO OF THE 53 ARE abcjs CRASHING, NOT US.** `abcts-vskip` tunes 0 and 2 throw
    * inside abcjs's own `wrapLines` — `undefined is not an object (evaluating 'l[p]')` —
    * because `addLineBreaks` reads `lines[action.ogLine].staff[action.staff]` on a row a
    * `%%vskip` made non-music. We render them. A crash is not output and strict does not
    * reproduce one.
    */
-  ['wrap + staffwidth', { wrap: { minSpacing: 1.8, maxSpacing: 2.7, preferredMeasuresPerLine: 4 }, staffwidth: 400 }, 59],
+  ['wrap + staffwidth', { wrap: { minSpacing: 1.8, maxSpacing: 2.7, preferredMeasuresPerLine: 4 }, staffwidth: 400 }, 53],
 ]
 const every = Number(process.argv[2] ?? 1)
 const browser = await webkit.launch()

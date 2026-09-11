@@ -13665,8 +13665,10 @@ function layoutScoped(input: Score, options: LayoutOptions = {}): Layout {
   let voltaCarried: { label: string; measure: number } | null = null
   const systems: LayoutSystem[] = spans.map((span, systemIndex) => {
     // …**AND A LINE `%%barsperstaff` CUT OUT PRINTS ONE TOO** — see `Measure.wrappedLine`.
+    // …**AND A WRAP THAT PUSHED THE MUSIC OFF OUTPUT LINE 0 TAKES IT FROM SYSTEM 0 TOO** —
+    // see `Score.wrapDroppedMeter`.
     const withMeter =
-      systemIndex === 0 ||
+      (systemIndex === 0 && score.wrapDroppedMeter !== true) ||
       plans.some((p) => p.measures[span.start]?.wrappedLine === true)
 
     /**

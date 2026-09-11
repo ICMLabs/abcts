@@ -2049,6 +2049,25 @@ export interface Score {
   readonly unreadable?: readonly SourceRange[]
   readonly textAbove: readonly FreeTextBlock[]
   /**
+   * **A WRAP RAN AND THE MUSIC IS NOT ON OUTPUT LINE 0, SO NO LINE PRINTS THE METER.**
+   *
+   * `addLineBreaks` copies every key of the input staff onto each output line except
+   * `voices`, and skips one more:
+   *
+   *     if (keys[k] === "meter" && action.line !== 0) skip = true;      // wrap_lines.js:43
+   *
+   * ⚠️ **AND `action.line` IS THE OUTPUT LINE INDEX OVER THE WHOLE TUNE, COUNTING THE
+   * NON-MUSIC ROWS.** `findLineBreaks` advances one `outputLine` for a subtitle, a
+   * `%%text`, a `%%sep` and a `%%newpage` exactly as it does for a staff line
+   * (`wrap_lines.js:150-153`) — so a tune whose first row is a subtitle has its music on
+   * line 1 and loses the meter on EVERY system, the first included. The name reads as
+   * though it only suppresses the REPRINTS.
+   *
+   * Measured over the corpus under `{wrap, staffwidth: 400}`: 41 of 685 fixtures put the
+   * music off line 0, and `staff.meter` is absent on all 41.
+   */
+  readonly wrapDroppedMeter?: true
+  /**
    * The same standing AFTER the music. As well as being drawn, these make the last music
    * line no longer the LAST line, so abcjs justifies it like any other.
    *

@@ -2732,7 +2732,9 @@ const VOICE_FURNITURE = new Set(["style", "stem", "color", "scale"]);
         const meter =
           // …**AND A LINE `%%barsperstaff` CUT OUT KEEPS THE METER IT WAS COPIED WITH** —
           // see `Measure.wrappedLine`.
-          i === 0 || m.wrappedLine === true
+          // …**AND A WRAP THAT PUSHED THE MUSIC OFF OUTPUT LINE 0 TAKES IT FROM THE FIRST
+          // LINE TOO** — see `Score.wrapDroppedMeter`.
+          (i === 0 && score.wrapDroppedMeter !== true) || m.wrappedLine === true
             ? /**
                * ⚠️ **AND A PENDING HEADER `M:` OVERWRITES WHAT A LEADING `[M:]` SET.**
                * abcjs 6.7.0's inline branch writes

@@ -576,5 +576,20 @@ export function applyLineBreaks(
     });
     return { ...voice, measures: renumbered };
   });
-  return { ...score, voices };
+  /**
+   * **AND A NON-MUSIC ROW BEFORE THE MUSIC COSTS THE WHOLE TUNE ITS METER** — see
+   * `Score.wrapDroppedMeter`. `action.line` counts every output row, so a leading
+   * subtitle, `%%text`, `%%sep` or `%%newpage` puts the first staff line at index 1 and
+   * `if (keys[k] === "meter" && action.line !== 0)` strips it there too.
+   *
+   * ⚠️ **THE SECOND `T:` IS THE ONE THAT COUNTS.** The first title is METATEXT and is not
+   * a line at all; a subtitle is. Checked against abcjs over the whole corpus: this
+   * predicate and `tune.lines.findIndex(l => l.staff) > 0` name the same 41 fixtures of
+   * 685, with no fixture on either side of the disagreement.
+   */
+  const droppedMeter =
+    score.metadata.titles.length > 1 || score.textAbove.length > 0 || score.newPage != null;
+  return droppedMeter
+    ? { ...score, voices, wrapDroppedMeter: true as const }
+    : { ...score, voices };
 }

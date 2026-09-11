@@ -292,3 +292,64 @@ describe("renderAbc({wrap}) — a break is a BAR index, not a measure index", ()
     expect(linesOf("X:1\nL:1/4\nK:C\nCDEF|GABc|cdef|gabc'|CDEF|GABc|cdef|gabc'|\n")).toBe(3);
   });
 });
+
+/**
+ * **A WRAP DROPS THE METER FROM THE WHOLE TUNE WHEN A NON-MUSIC ROW COMES FIRST.**
+ *
+ *     if (keys[k] === "meter" && action.line !== 0) skip = true;      // wrap_lines.js:43
+ *
+ * ⚠️ **`action.line` IS THE OUTPUT LINE INDEX OVER THE WHOLE TUNE AND IT COUNTS THE
+ * NON-MUSIC ROWS.** `findLineBreaks` advances one `outputLine` for a subtitle, a `%%text`,
+ * a `%%sep` or a `%%newpage` exactly as it does for a staff line (`wrap_lines.js:150-153`),
+ * so a tune opening with a subtitle has its music on line 1 and loses the meter on EVERY
+ * system — the first included. The option's name reads as though only the REPRINTS go.
+ *
+ * Measured over the corpus under `{wrap, staffwidth: 400}`: 41 of 685 fixtures put the
+ * music off line 0, and abcjs's `staff.meter` is absent on all 41. `zzopts`'s
+ * `wrap + staffwidth` row 59 -> 53.
+ */
+describe("renderAbc({wrap}) — the meter goes with a non-music first row", () => {
+  const meterOnFirstStaff = (abc: string): string => {
+    const tune = renderAbc({ innerHTML: "" }, abc, {
+      staffwidth: 400,
+      wrap: { minSpacing: 1.8, maxSpacing: 2.7, preferredMeasuresPerLine: 4 },
+    })[0];
+    const line = (tune?.lines ?? []).find(
+      (l) => (l as { staff?: unknown }).staff !== undefined,
+    ) as { staff: { meter?: { type?: string } }[] } | undefined;
+    return line?.staff[0]?.meter?.type ?? "NONE";
+  };
+
+  it("drops it when a SUBTITLE takes output line 0", () => {
+    expect(meterOnFirstStaff("X:1\nT:T\nT:Sub\nM:4/4\nL:1/4\nA4|\nB4|\n")).toBe("NONE");
+  });
+
+  it("drops it when a %%text takes output line 0", () => {
+    expect(meterOnFirstStaff("X:1\nT:T\nM:4/4\nL:1/4\n%%text hi\nA4|\nB4|\n")).toBe("NONE");
+  });
+
+  it("drops it when a %%newpage takes output line 0", () => {
+    // ⚠️ `Score.newPage` is a NUMBER here, not a flag — `%%newpage 1` reads back as `1`,
+    // and a `=== true` test misses this fixture alone out of the corpus's 41.
+    expect(meterOnFirstStaff("X:1\nT:T\n%%newpage 1\nM:4/4\nL:1/4\nA4|\nB4|\n")).toBe("NONE");
+  });
+
+  it("KEEPS it when the music really is output line 0", () => {
+    // The negative control, and the half that was already right: with nothing before the
+    // music abcjs's `action.line` IS 0 and the meter survives. A test that only asserted
+    // "NONE" would pass with the meter deleted outright.
+    expect(meterOnFirstStaff("X:1\nT:T\nM:4/4\nL:1/4\nA4|\nB4|\n")).toBe("specified");
+  });
+
+  it("KEEPS it with a subtitle when NO wrap runs", () => {
+    // The second control: the suppression belongs to `wrapLines` and nothing else. abcjs
+    // never calls it without `wrap`, and `svg-bytes` stays 0 of 691 because of this row.
+    const tune = renderAbc({ innerHTML: "" }, "X:1\nT:T\nT:Sub\nM:4/4\nL:1/4\nA4|\nB4|\n", {
+      staffwidth: 400,
+    })[0];
+    const line = (tune?.lines ?? []).find(
+      (l) => (l as { staff?: unknown }).staff !== undefined,
+    ) as { staff: { meter?: { type?: string } }[] } | undefined;
+    expect(line?.staff[0]?.meter?.type ?? "NONE").toBe("specified");
+  });
+});
