@@ -393,8 +393,21 @@ const OPTIONS = [
    *           it is not a one-liner.
    *           ⚠️ The `voltaOnOpeningBar` exclusion in `layout.ts` is DISPROVED and says so
    *           at the site — abcjs opens such an ending at the previous system's right edge
-   *           exactly as a closing-bar one. Fixing the exclusion alone does nothing while
-   *           the BAR is still on the wrong side.
+   *           exactly as a closing-bar one.
+   *           ⚠️ **AND THE CHEAP FIX WAS TRIED AND IS DISPROVED TWICE OVER.** Letting the
+   *           end-of-system block fire for `voltaOnOpeningBar` and anchoring at
+   *           `solved.width - lineEndInset` gets the STRUCTURE right — four bracket groups
+   *           against abcjs's four, numbers at 414 against 415 — and is still wrong:
+   *           (1) it reddens EIGHT suites, because the rule belongs to the WRAP and not to
+   *           system breaks in general. Without a wrap, abcjs's lines ARE the source lines
+   *           and an `[1` opening one genuinely does belong to it; only `findLineBreaks`'
+   *           slicing puts a break-bar on the line it closes. Any fix must be gated on the
+   *           break having been MADE by the wrap.
+   *           (2) even where it applies, the carried continuation still closes at the
+   *           misplaced bar — 25→54.05 against abcjs's 25→395 — because `opensAfterVolta`
+   *           ends it on the opening bar that is still at the head of the new system.
+   *           So the BAR has to move, and the model needs the trailing slot. Measured,
+   *           reverted; do not re-try the anchor on its own.
    *
    *       (b) ✅ **A SPAN OF MORE THAN TWO SYSTEMS — CLOSED.** The reading was right and the
    *           rung sharpened it. abcjs re-creates a fresh `EndingElem("", null, null)` at
