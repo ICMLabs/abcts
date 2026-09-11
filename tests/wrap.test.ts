@@ -854,3 +854,50 @@ describe("renderAbc({wrap}) — a music line's %%vskip does not survive", () => 
     expect(Number(staffTop(WITH, false)) - Number(staffTop(WITHOUT, false))).toBe(20);
   });
 });
+
+/**
+ * **A CARRIED ENDING IS ADDED AT THE HEAD OF ITS LINE'S VOICE, SO IT DRAWS FIRST.**
+ *
+ * `createABCVoice` makes the continuation before it walks a single element —
+ * `if (this.partstartelem) { this.partstartelem = new EndingElem("", null, null);
+ * voice.addOther(…) }` (`abstract-engraver.js:230-233`) — so it precedes every note on
+ * that line and therefore every note's decoration.
+ *
+ * ⚠️ **OURS KEYED IT ON `lines[0].x1`, WHICH IS ITS CLOSING HOOK.** The OPENING hook is
+ * skipped for a `continued` bracket, so the first line pushed is the right-hand one, and
+ * the bracket sorted after everything. The numbered bracket a few lines above already used
+ * the MIN of its lines; this is the same key.
+ *
+ * Measured on `visual-selection-01`: four elements of 690, same coordinates, pure order —
+ * abcjs writes the ending and THEN the dynamics at 113.82. `zzopts` 28 -> 26.
+ *
+ * ⚠️ The fixture is used rather than a made-up tune because two synthetic shapes did NOT
+ * reproduce it, with the defect deliberately restored. Asserting one of those would have
+ * been a row that passes either way.
+ */
+describe("renderAbc({wrap}) — a carried ending draws before the line's decorations", () => {
+  it("puts the ending group ahead of the dynamics on the line it resumes", () => {
+    const abc = readFileSync(
+      join(
+        import.meta.dirname,
+        "corpus-abcjs",
+        "fixtures",
+        "abcjs-visual-selection-01-selection-test.abc",
+      ),
+      "utf-8",
+    );
+    const host = { innerHTML: "" } as { innerHTML: string };
+    renderAbc(host, abc, {
+      staffwidth: 400,
+      wrap: { minSpacing: 1.8, maxSpacing: 2.7, preferredMeasuresPerLine: 4 },
+    });
+    // The run of interest: the LAST ending group and the dynamics beside it.
+    const order = [...host.innerHTML.matchAll(/data-name="(ending|dynamics)"/g)].map(
+      (m) => m[1],
+    );
+    const lastEnding = order.lastIndexOf("ending");
+    const lastDynamics = order.lastIndexOf("dynamics");
+    expect(lastDynamics).toBeGreaterThan(-1);
+    expect(lastEnding).toBeLessThan(lastDynamics);
+  });
+});

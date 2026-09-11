@@ -219,7 +219,7 @@ const OPTIONS = [
   ['minPadding', { minPadding: 40 }, 5],
   ['timeBasedLayout', { timeBasedLayout: { minPadding: 20 } }, 669],
   /**
-   * ⚠️ **28, AND THE LINE-STRUCTURE HALF IS CLOSED.** Counting staff lines in each engine
+   * ⚠️ **26, AND THE LINE-STRUCTURE HALF IS CLOSED.** Counting staff lines in each engine
    * over the whole corpus: **ELEVEN fixtures drew a different NUMBER OF LINES and now NONE
    * does.** The two the line-count probe still reports are abcjs THROWING — see below.
    *
@@ -557,16 +557,28 @@ const OPTIONS = [
    *    20px HIGHER than ours under wrap. Closed `text-udef-parts-overlays` tunes 8 and 46
    *    and `abcts-vskip-tune1`.
    *
+   * ✅ **AND A CARRIED ENDING DRAWS BEFORE ITS LINE'S DECORATIONS — 28 → 26.**
+   *    `createABCVoice` makes the continuation before it walks a single element
+   *    (`abstract-engraver.js:230-233`), so it precedes every note on that line and
+   *    therefore every note's decoration. Ours keyed the bracket on `lines[0].x1` — which
+   *    for a `continued` half is its CLOSING hook, the opening one being skipped — and so
+   *    sorted it after everything. The numbered bracket a few lines above already used the
+   *    MIN of its lines. Four elements of 690 on `visual-selection-01`, same coordinates,
+   *    pure ORDER; it and `svg-per-line-01` closed.
+   *    ⭐ **FOUND BY DIFFERENCING x POSITIONS RATHER THAN ELEMENT SETS**, which is the
+   *    instrument the row needs now that 19 of its rows draw the same elements at the same
+   *    page height.
+   *
    *    4  GEOMETRY ONLY, same element kinds throughout: `synth-flattener-20`,
    *       `text-udef-parts-overlays-tune8` and `-tune46`, `vskip-tune1`.
    *
-   * ⚠️ **AND TWO OF THE 28 ARE abcjs CRASHING, NOT US.** `abcts-vskip` tunes 0 and 2 throw
+   * ⚠️ **AND TWO OF THE 26 ARE abcjs CRASHING, NOT US.** `abcts-vskip` tunes 0 and 2 throw
    * inside abcjs's own `wrapLines` — `undefined is not an object (evaluating 'l[p]')` —
    * because `addLineBreaks` reads `lines[action.ogLine].staff[action.staff]` on a row a
    * `%%vskip` made non-music. We render them. A crash is not output and strict does not
    * reproduce one.
    */
-  ['wrap + staffwidth', { wrap: { minSpacing: 1.8, maxSpacing: 2.7, preferredMeasuresPerLine: 4 }, staffwidth: 400 }, 28],
+  ['wrap + staffwidth', { wrap: { minSpacing: 1.8, maxSpacing: 2.7, preferredMeasuresPerLine: 4 }, staffwidth: 400 }, 26],
 ]
 const every = Number(process.argv[2] ?? 1)
 const browser = await webkit.launch()

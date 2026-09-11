@@ -2744,7 +2744,25 @@ export function toSVG(
             if (text === undefined) {
               emit("</g>");
               if (into !== null)
-                into.push({ x: lines[0]?.x1 ?? 0, s: sink.join(""), rec });
+                into.push({
+                  /**
+                   * ⚠️ **THE SAME MIN THE NUMBERED BRACKET USES, NOT `lines[0]`.** A carried
+                   * half's FIRST line is its closing HOOK — the opening one is skipped for
+                   * `continued` — so keying on `lines[0].x1` used the bracket's RIGHT end
+                   * and sorted it after everything on the line. abcjs adds the continuation
+                   * at the HEAD of the line's voice, in `createABCVoice`'s
+                   * `if (this.partstartelem)` (`abstract-engraver.js:230-233`), before any
+                   * note and so before any note's decoration — which the min reproduces,
+                   * because a carried bracket starts at `startx + 10`.
+                   *
+                   * Measured on `visual-selection-01`: abcjs writes the ending and THEN the
+                   * dynamics at 113.82; ours wrote the dynamics first. Same coordinates,
+                   * four elements, pure order.
+                   */
+                  x: Math.min(...lines.map((l) => Math.min(TL(l).x1, TL(l).x2))),
+                  s: sink.join(""),
+                  rec,
+                });
               return;
             }
             const face =
