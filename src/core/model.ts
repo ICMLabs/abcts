@@ -1457,6 +1457,29 @@ export interface Measure {
    */
   readonly wrapLineHeadKey?: KeySignature
   /**
+   * **THE WRAP BROKE ON THIS MEASURE'S OPENING BARLINE, SO THAT BARLINE BELONGS TO THE
+   * SYSTEM BEFORE IT.**
+   *
+   * `findLineBreaks` pushes `{start, end: e}` with `e` the BAR ITSELF, so a break-bar is
+   * the LAST element of the line it closes (`wrap_lines.js:132-141`) — and an opening
+   * `|:`, `[|]` or `[1` is a bar element like any other. Measured through `tune.lines` on
+   * `CDEF|GABc|cdef|gabc| / [|]1 CDEF:| / [|]2 GABc|]`:
+   *
+   *     abcjs  L1: note×4 bar(bar_thin) bar(bar_invisible:E1)
+   *     abcts  L1: note×4 bar(bar_thin)
+   *            L2: bar(bar_invisible:E1) note×4 …
+   *
+   * It matters beyond the barline: an ending DECLARED on that bar opens where the bar is,
+   * so abcjs draws the bracket's numbered head at the previous system's right edge and a
+   * bare continuation on the next.
+   *
+   * ⚠️ **AND IT IS A WRAP RULE ONLY.** Without a wrap abcjs's lines ARE the source lines,
+   * so an `[1` that opens one genuinely belongs to it; only `findLineBreaks`' slicing puts
+   * a bar on the line it closes. Anchoring endings this way for every system break reddens
+   * eight suites — see `Docs/ABCJS-DIFFERENCES.md` and the note in `layout.ts`.
+   */
+  readonly openingBarlineTrails?: true
+  /**
    * **abcjs's `ogLine` — WHICH DELINED LINE THIS MEASURE CAME FROM.** Present only where
    * `renderAbc({wrap})` has re-lined the music, and it is the SECTION index rather than the
    * source line's, because `wrapLines` opens with `tune.deline({lineBreaks: false})`

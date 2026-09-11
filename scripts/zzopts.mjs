@@ -416,7 +416,21 @@ const OPTIONS = [
    *       up as one; checking the sources says otherwise, which is the third recorded
    *       cause this session to fall to one measurement.
    *
-   *       (a) **THE BREAK-BAR IS ON THE WRONG SIDE.** `tablature-20-score-1-2` (`[|]1`)
+   *       (a) ✅ **THE BREAK-BAR IS ON THE WRONG SIDE — CLOSED STRUCTURALLY.**
+   *           `Measure.openingBarlineTrails` + `layoutMeasure`'s `trailingBar` +
+   *           `barAnchor(…, 'trailing', …)`. All three ending fixtures now match on element
+   *           COUNT: `layout-09-endings` 136 → 138 of abcjs's 138, `tablature-20` 128 → 130,
+   *           `tablature-17` loses its four missing brackets (its remaining +4 is the
+   *           DECLARED debug marker). ⚠️ **Two offsets remain and the count does not move
+   *           for them**: the numbered head is at 416 against abcjs's 415, and the middle
+   *           continuation closes at 382.5 against 395. Geometry around the trailing bar,
+   *           not structure.
+   *           ⚠️ **AND THE FLAG IS STAMPED ON EVERY PATH, INCLUDING THE TWO THAT RETURN
+   *           EARLY.** Under a wrap EVERY line boundary comes from `findLineBreaks`,
+   *           whether or not it falls where the source already broke — the first attempt
+   *           stamped it only where the wrap MOVED a break and reached exactly one measure
+   *           of six.
+   *           The original reading, kept because it is what the fix is built on: `tablature-20-score-1-2` (`[|]1`)
    *           and `visual-layout-09-endings` (`[1`) declare their endings on OPENING
    *           barlines. MEASURED through `tune.lines` on
    *           `CDEF|GABc|cdef|gabc| / [|]1 CDEF:| / [|]2 GABc|]` under wrap:

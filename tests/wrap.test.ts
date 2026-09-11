@@ -755,3 +755,61 @@ describe("renderAbc({wrap}) — the head number is the DELINED line's", () => {
     expect(heads(abc)).toBe("2 3 4 3 6");
   });
 });
+
+/**
+ * **A WRAP-BROKEN OPENING BARLINE BELONGS TO THE SYSTEM BEFORE IT, AND SO DOES THE ENDING
+ * IT DECLARES.**
+ *
+ * `findLineBreaks` pushes `{start, end: e}` with `e` the BAR ITSELF, so a break-bar is the
+ * last element of the line it CLOSES (`wrap_lines.js:132-141`) — and an opening `|:`,
+ * `[|]` or `[1` is a bar element like any other. Measured through `tune.lines`: abcjs's
+ * line ends `… bar(bar_thin) bar(bar_invisible:E1)` where ours OPENED the next line with
+ * that invisible bar.
+ *
+ * ⚠️ **AND IT IS A WRAP RULE ONLY.** Without a wrap abcjs's lines ARE the source lines, so
+ * an `[1` opening one genuinely belongs to it. An earlier attempt anchored these endings at
+ * the system's right edge for EVERY system break and reddened eight suites; reading the
+ * TRAILING BAR is what keeps it to the wrap, because nothing else produces one.
+ *
+ * `layout-09-endings` 136 -> 138 elements against abcjs's 138, `tablature-20` 128 -> 130,
+ * and `tablature-17` loses its four missing brackets.
+ */
+describe("renderAbc({wrap}) — a wrap-broken opening bar trails, with its ending", () => {
+  /** Each bracket as `y/label` — the x is left out on purpose, see the note below. */
+  const brackets = (abc: string): string[] => {
+    const host = { innerHTML: "" } as { innerHTML: string };
+    renderAbc(host, abc, {
+      staffwidth: 400,
+      wrap: { minSpacing: 1.8, maxSpacing: 2.7, preferredMeasuresPerLine: 4 },
+    });
+    return [...host.innerHTML.matchAll(/<g[^>]*data-name="ending"[^>]*>(.*?)<\/g>/g)].map(
+      (m) => {
+        const y = /M [0-9.]+ ([0-9.]+)/.exec(m[1] ?? "")?.[1] ?? "?";
+        const label = /<tspan[^>]*>([^<]*)<\/tspan>/.exec(m[1] ?? "")?.[1] ?? "";
+        return `${y}/${label}`;
+      },
+    );
+  };
+
+  // ⭐ FOUR brackets, and the numbered `1` is on the FIRST system (y 138.71) where ours
+  // used to open it on the second. The systems and labels are read off abcjs.
+  //
+  // ⚠️ The x is deliberately not asserted: ours is 416 where abcjs is 415, and the middle
+  // continuation closes at 382.5 against 395. Those two offsets are a KNOWN residual — the
+  // structure is what this rule is about, and asserting an x we do not yet match would
+  // make this row a snapshot of our own output instead of a statement about abcjs.
+  it("opens the ending on the system that holds its barline", () => {
+    expect(
+      brackets("X:3\nT:E\nL:1/4\nM:4/4\nK:C\nCDEF|GABc|cdef|gabc|\n[|]1 CDEF:|\n[|]2 GABc|]\n"),
+    ).toEqual(["138.71/1", "232.28/", "232.28/2", "324.61/"]);
+  });
+
+  // The control: an ending whose bar is NOT a break-bar is untouched, which is the shape
+  // every unwrapped tune has and the reason `svg-bytes` stays at 0 of 691.
+  it("leaves an ending inside a system exactly where it was", () => {
+    expect(brackets("X:2\nT:E\nL:1/4\nK:C\n|:CD|1GA:|2ce|]\n")).toEqual([
+      "70.87/1",
+      "70.87/2",
+    ]);
+  });
+});

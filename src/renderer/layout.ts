@@ -10719,6 +10719,8 @@ interface MeasureBlock {
    * pair a repeat ending hangs on. See `LayoutElement.endingStart`.
    */
   readonly openingBarIndex: number | null
+  /** …and the NEXT measure's opening bar when a wrap left it here — see `trailingBar`. */
+  readonly trailingBarIndex: number | null
   /** Note anchors for slur and tie resolution, positioned LOCAL to this block. */
   readonly anchors: readonly NoteAnchor[]
   /**
@@ -11088,6 +11090,13 @@ function layoutMeasure(
    * voice (`abstract-engraver.js:373`, `:96`, `:105-106`). See `Voice.scale`.
    */
   voiceScale = 1,
+  /**
+   * The NEXT measure's opening barline, when a wrap broke ON it and it therefore belongs
+   * to THIS system — see `Measure.openingBarlineTrails`. A break-bar is the last element
+   * of the line it closes, and an opening `|:`, `[|]` or `[1` is a bar element like any
+   * other.
+   */
+  trailingBar: Barline | null = null,
 ): MeasureBlock {
   const elements: LayoutElement[] = []
   /**
@@ -11218,10 +11227,14 @@ function layoutMeasure(
     x += change.width + ENGRAVE.prefixGap
   }
   let openingBarIndex: number | null = null
+  let trailingBarIndex: number | null = null
   const drawOpeningBar = (): void => {
     // An opening `|:` or `[|` prints before the measure it belongs to, and is a SEPARATE
     // barline from the previous measure's closer.
     if (measure.openingBarline === null) return
+    // …**AND NOT WHEN A WRAP LEFT IT ON THE PREVIOUS SYSTEM** — see
+    // `Measure.openingBarlineTrails`. The bar is drawn there, as that system's last element.
+    if (measure.openingBarlineTrails === true) return
     const plain = layoutBar(x, measure.openingBarline, strict, measure.openingBarlineSourceRange ?? undefined)
     // A DECORATION AND A CHORD WRITTEN BEFORE AN OPENING BARLINE BELONG TO IT, the same
     // way they belong to a closing one — abcjs has one bar element and `createBarLine`
@@ -12083,6 +12096,20 @@ function layoutMeasure(
   }
 
   /**
+   * **AND THE NEXT MEASURE'S OPENING BARLINE, WHEN THE WRAP BROKE ON IT** — see
+   * `Measure.openingBarlineTrails`. A break-bar is the LAST element of the line it closes,
+   * and an opening `|:`, `[|]` or `[1` is a bar element like any other, so it is drawn
+   * here rather than at the head of the next system.
+   */
+  if (trailingBar !== null) {
+    const el = layoutBar(x, trailingBar, strict)
+    trailingBarIndex = elements.length
+    elements.push(el)
+    fixed(el.width, 0, 'bar', 0, el.width)
+    x += el.width
+  }
+
+  /**
    * **ANY BARLINE THAT IS NOT A PLAIN THIN `|` ENDS THE ENDING IT SITS IN.**
    *
    *     if (multilineVars.inEnding && bar.type !== 'bar_thin') {
@@ -12115,6 +12142,7 @@ function layoutMeasure(
     spannerSites,
     closingBarIndex,
     openingBarIndex,
+    trailingBarIndex,
     musicWidth,
     volta: measure.volta,
     voltaAtClose: measure.voltaAtClose === true,
@@ -13257,6 +13285,12 @@ function layoutScoped(input: Score, options: LayoutOptions = {}): Layout {
         // by `scaleByVoice`, so it does not leak between voices — but it is a property of
         // the LINE, not of the voice: see `Measure.lineScale`.
         scaleOfLine(voiceIndex, lineOfMeasure[measureIndex] ?? 0),
+        // …and the NEXT measure's opening barline when a wrap broke ON it, which leaves it
+        // the last element of THIS system — see `Measure.openingBarlineTrails`.
+        (() => {
+          const next = (voice?.measures ?? [])[measureIndex + 1]
+          return next?.openingBarlineTrails === true ? (next.openingBarline ?? null) : null
+        })(),
       )
       if (measure.keyChange !== null) keyInForce = measure.keyChange
       if (measure.meterChange != null) meterInForce = measure.meterChange
@@ -14782,12 +14816,17 @@ function layoutScoped(input: Score, options: LayoutOptions = {}): Layout {
        */
       const barAnchor = (
         i: number,
-        bar: 'opening' | 'closing',
+        bar: 'opening' | 'closing' | 'trailing',
         which: 'endingStart' | 'endingEnd',
       ): number | null => {
         const b = plan.blocks[i]
         if (b === undefined) return null
-        const index = bar === 'opening' ? b.openingBarIndex : b.closingBarIndex
+        const index =
+          bar === 'opening'
+            ? b.openingBarIndex
+            : bar === 'trailing'
+              ? b.trailingBarIndex
+              : b.closingBarIndex
         if (index === null) return null
         const el = b.elements[index]
         const offset = el?.[which]
@@ -14830,7 +14869,15 @@ function layoutScoped(input: Score, options: LayoutOptions = {}): Layout {
         if (block !== undefined) {
           // A CARRIED ending closes on this measure's OPENING bar when that bar ends one —
           // see `Block.opensAfterVolta`.
-          if (openVolta?.continued === true && block.opensAfterVolta) {
+          // …**BUT NOT ON A BAR THE WRAP LEFT ON THE PREVIOUS SYSTEM.** That bar is drawn
+          // there and the ending it ends was already closed there; closing again here put
+          // the carried continuation's hook at the line START — 49.05 against abcjs's 395.
+          // See `Measure.openingBarlineTrails`.
+          if (
+            openVolta?.continued === true &&
+            block.opensAfterVolta &&
+            plan.measures[i]?.openingBarlineTrails !== true
+          ) {
             closeVolta(barAnchor(i, 'opening', 'endingEnd') ?? startOf(i), true)
           }
           // A new ending closes whatever was open — `|1 … :|2` runs them back to back.
@@ -15060,10 +15107,22 @@ function layoutScoped(input: Score, options: LayoutOptions = {}): Layout {
         nextBlock !== undefined &&
         nextBlock.volta !== null &&
         nextBlock.voltaAtClose !== true &&
-        nextBlock.voltaOnOpeningBar !== true &&
         span.end > span.start
       ) {
-        const at = barAnchor(span.end - 1, 'closing', 'endingStart')
+        /**
+         * …**AND AN ENDING ON THE NEXT MEASURE'S OWN OPENING BAR OPENS ON THE TRAILING
+         * COPY OF IT**, now that a wrap-broken opening bar is drawn on THIS system — see
+         * `Measure.openingBarlineTrails`. That arm was excluded here with a reason that
+         * was REASONED AND DISPROVED (abcjs opens such an ending at the previous system's
+         * right edge exactly as a closing-bar one), and the cheap fix for it — anchoring
+         * at the system's right edge — reddened eight suites, because it fired on every
+         * system break rather than only on one the WRAP made. Reading the trailing bar is
+         * what makes it wrap-only: nothing else produces one.
+         */
+        const at =
+          nextBlock.voltaOnOpeningBar === true
+            ? barAnchor(span.end - 1, 'trailing', 'endingStart')
+            : barAnchor(span.end - 1, 'closing', 'endingStart')
         if (at !== null) {
           closeVolta(at, true)
           openVolta = {

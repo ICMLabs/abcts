@@ -578,6 +578,12 @@ export function applyLineBreaks(
      * rest — the offset is not the section's, it accumulates measure by measure.
      */
     const opensHere = new Set<number>();
+    /**
+     * …**AND WHICH OF THOSE BROKE ON THE MEASURE'S OWN OPENING BARLINE**, which is the
+     * case where that barline stays with the system BEFORE it — see
+     * `Measure.openingBarlineTrails`.
+     */
+    const trailsHere = new Set<number>();
     for (let sec = 0; sec < sectionStarts.length; sec += 1) {
       const from = sectionStarts[sec] ?? 0;
       const to = sectionStarts[sec + 1] ?? voice.measures.length;
@@ -587,7 +593,10 @@ export function applyLineBreaks(
       let bar = 0;
       for (let k = from; k < to; k += 1) {
         if ((voice.measures[k]?.openingBarline ?? null) !== null) {
-          if (at.has(bar)) opensHere.add(k);
+          if (at.has(bar)) {
+            opensHere.add(k);
+            trailsHere.add(k);
+          }
           bar += 1;
         }
         // Every measure closes with a bar element; the width array's own length is what
@@ -616,13 +625,22 @@ export function applyLineBreaks(
       const from = sectionStarts[section] ?? 0;
       const breaks = lineBreaks[section];
       if (breaks === undefined) return m;
+      /**
+       * ⚠️ **AND THE TRAILING FLAG IS NOT ONLY FOR BREAKS THE WRAP MOVED.** Under a wrap
+       * EVERY line boundary comes from `findLineBreaks`, whether or not it happens to fall
+       * where the source already broke — so a measure that opened a source line and still
+       * opens one has its opening bar on the previous line too. Stamped on every path
+       * below, because the two that return early are exactly the "nothing moved" ones.
+       */
+      const trails = trailsHere.has(i) ? { openingBarlineTrails: true as const } : {};
       // A section's FIRST measure keeps whatever it had — it opens the section, and that
       // is not the wrap's to decide.
-      if (i === from) return { ...m, wrapSourceLine: section };
+      if (i === from) return { ...m, wrapSourceLine: section, ...trails };
       // "These are the zero-based last measure on each line", so the measure AFTER one
       // opens a system and every other measure in the section does not.
       const opens = opensHere.has(i);
-      if (opens === (m.startsSystem === true)) return { ...m, wrapSourceLine: section };
+      if (opens === (m.startsSystem === true))
+        return { ...m, wrapSourceLine: section, ...trails };
       // ⚠️ **AND A WRAPPED LINE DOES NOT REPRINT THE METER, WHERE `%%barsperstaff`'s DOES.**
       // `addLineBreaks` copies every key of the input staff onto the output one EXCEPT
       // `voices`, and `if (keys[k] === "meter" && action.line !== 0) skip = true`
@@ -634,6 +652,7 @@ export function applyLineBreaks(
           ...m,
           startsSystem: true as const,
           wrapSourceLine: section,
+          ...trails,
           ...(vi === 0 && headKeys.has(i) ? { wrapLineHeadKey: headKeys.get(i)! } : {}),
         };
       // **THIS IS THE DISSOLVED BREAK** — `opens` is false and the measure DID start a
