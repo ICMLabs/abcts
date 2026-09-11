@@ -476,6 +476,48 @@ export function applyLineBreaks(
   });
 
   const voices = score.voices.map((voice, vi) => {
+    /**
+     * **A BREAK INDEXES BAR ELEMENTS, NOT MEASURES**, and the two are not the same list.
+     *
+     * `measureWidthsOf` pushes one width per BAR ELEMENT, which is abcjs's own walk
+     * (`engraver-controller.js:167-180`), and `findLineBreaks` counts the same elements
+     * (`wrap_lines.js:132-141`). A measure that OPENS with a barline — a leading `|:`, an
+     * `[1` ending's invisible bar, a `%%score`d tablature staff's `thin` — contributes TWO
+     * elements where an ordinary measure contributes one. Counted over the corpus, the
+     * width array is exactly `measures + openingBarlines` on every fixture checked:
+     *
+     *     |:CDEF|1GABc:|3cdef|]        3 measures, 1 opening   ->  4 widths
+     *     abcts-endings#2              3 measures, 2 openings  ->  5 widths
+     *     visual-tablature-17          5 measures, 5 openings  -> 10 widths
+     *     synth-flattener-46          17 measures, 3 openings  -> 20 widths
+     *
+     * **AND WHICH MEASURE A BREAK OPENS DEPENDS ON WHICH OF THE TWO IT LANDS ON.** A break
+     * at a measure's CLOSING bar opens the NEXT measure; a break at its OPENING bar opens
+     * THAT measure. `visual-tablature-17`'s `[2,4,6,8]` are four opening bars and start
+     * four lines; reading them as measure indices started two.
+     *
+     * ⚠️ Reading this as a single leading offset closed one fixture of eleven and left the
+     * rest — the offset is not the section's, it accumulates measure by measure.
+     */
+    const opensHere = new Set<number>();
+    for (let sec = 0; sec < sectionStarts.length; sec += 1) {
+      const from = sectionStarts[sec] ?? 0;
+      const to = sectionStarts[sec + 1] ?? voice.measures.length;
+      const breaks = lineBreaks[sec];
+      if (breaks === undefined) continue;
+      const at = new Set(breaks);
+      let bar = 0;
+      for (let k = from; k < to; k += 1) {
+        if ((voice.measures[k]?.openingBarline ?? null) !== null) {
+          if (at.has(bar)) opensHere.add(k);
+          bar += 1;
+        }
+        // Every measure closes with a bar element; the width array's own length is what
+        // says so, and it is `measures + openings` on every fixture measured.
+        if (at.has(bar)) opensHere.add(k + 1);
+        bar += 1;
+      }
+    }
     const measures = voice.measures.map((m, i) => {
       let section = 0;
       for (let k = 0; k < sectionStarts.length; k += 1)
@@ -488,7 +530,7 @@ export function applyLineBreaks(
       if (i === from) return { ...m, wrapSourceLine: section };
       // "These are the zero-based last measure on each line", so the measure AFTER one
       // opens a system and every other measure in the section does not.
-      const opens = breaks.includes(i - from - 1);
+      const opens = opensHere.has(i);
       if (opens === (m.startsSystem === true)) return { ...m, wrapSourceLine: section };
       // ⚠️ **AND A WRAPPED LINE DOES NOT REPRINT THE METER, WHERE `%%barsperstaff`'s DOES.**
       // `addLineBreaks` copies every key of the input staff onto the output one EXCEPT

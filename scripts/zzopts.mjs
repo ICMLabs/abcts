@@ -196,24 +196,30 @@ const OPTIONS = [
   ['minPadding', { minPadding: 40 }, 5],
   ['timeBasedLayout', { timeBasedLayout: { minPadding: 20 } }, 669],
   /**
-   * ⚠️ **60, AND THEY SPLIT TWO WAYS — MEASURED, NOT GUESSED.** Counting staff lines in each
-   * engine over the whole corpus: **11 of the 60 draw a DIFFERENT NUMBER OF LINES** and the
-   * other 49 are geometry inside the same structure. We under-split every time
-   * (`visual-tablature-17-stretchlast` js=5 ts=2, `visual-options-01-fonts` js=4 ts=2).
+   * ⚠️ **59, AND THE LINE-STRUCTURE HALF IS CLOSED.** Counting staff lines in each engine
+   * over the whole corpus: **ELEVEN fixtures drew a different NUMBER OF LINES and now NONE
+   * does.** The two the line-count probe still reports are abcjs THROWING — see below.
    *
-   * ⭐ **AND THE WRAP'S DECISION IS NOT THE DEFECT.** `tune.lineBreaks` is byte-identical to
-   * abcjs's on the failing tunes — `|:CDEF|1GABc:|3cdef|]` gives BOTH engines
-   * `[{start:0,end:10},{start:11,end:16}]` — and abcjs then draws two lines where
-   * `applyLineBreaks` gives us one. So the search is right and its ANSWER is not applied on
-   * a tune whose break falls at a repeat ending. Start at `applyLineBreaks`'s
-   * `breaks.includes(i - from - 1)`, not at `calcLineWraps`.
+   * ⭐ **THE WRAP'S DECISION WAS NEVER THE DEFECT.** `tune.lineBreaks` is byte-identical to
+   * abcjs's on every failing tune; the bug was translating a break index back onto the
+   * score. A break indexes BAR ELEMENTS — `getMeasureWidths` reports one width per bar
+   * (`engraver-controller.js:167-180`) and `findLineBreaks` counts the same
+   * (`wrap_lines.js:132-141`) — so a measure that OPENS with a barline contributes TWO
+   * where an ordinary one contributes one, and which measure a break opens depends on
+   * which of the two it lands on. See `applyLineBreaks`.
    *
-   * ✅ A THIRD defect was found on the way and is FIXED — `tune.lines` was projected from
-   * the PARSED score where `wrapLines` rewrites it (`parse/wrap_lines.js:13`), so a host
-   * that wrapped and then read `tune.lines` got the unwrapped structure. Invisible to every
-   * gate here, because the DRAWING was already right. `tests/wrap.test.ts` holds it now.
+   * ⚠️ **THE COUNT ONLY MOVED BY ONE BECAUSE THOSE FIXTURES NOW DIFFER ON GEOMETRY
+   * INSTEAD** — but by far less. `visual-layout-09-endings` was 389.24 against 235.58 and
+   * is 389.238913 against 389.237975; `flattener-07-metronome`'s rest was 15.87px out and
+   * is 2.09.
+   *
+   * ⚠️ **AND TWO OF THE 59 ARE abcjs CRASHING, NOT US.** `abcts-vskip` tunes 0 and 2 throw
+   * inside abcjs's own `wrapLines` — `undefined is not an object (evaluating 'l[p]')` —
+   * because `addLineBreaks` reads `lines[action.ogLine].staff[action.staff]` on a row a
+   * `%%vskip` made non-music. We render them. A crash is not output and strict does not
+   * reproduce one.
    */
-  ['wrap + staffwidth', { wrap: { minSpacing: 1.8, maxSpacing: 2.7, preferredMeasuresPerLine: 4 }, staffwidth: 400 }, 60],
+  ['wrap + staffwidth', { wrap: { minSpacing: 1.8, maxSpacing: 2.7, preferredMeasuresPerLine: 4 }, staffwidth: 400 }, 59],
 ]
 const every = Number(process.argv[2] ?? 1)
 const browser = await webkit.launch()

@@ -245,3 +245,50 @@ describe("renderAbc({wrap}) — tune.lines is the RE-LINED structure", () => {
     expect(staffLines.length).toBe(1);
   });
 });
+
+/**
+ * **A BREAK INDEXES BAR ELEMENTS, NOT MEASURES.**
+ *
+ * `getMeasureWidths` reports one width per BAR ELEMENT (`engraver-controller.js:167-180`)
+ * and `findLineBreaks` counts the same elements (`wrap_lines.js:132-141`), so a measure
+ * that OPENS with a barline — a leading `|:`, an ending's invisible bar — contributes TWO
+ * where an ordinary measure contributes one. Translating a break index straight onto a
+ * measure index under-split every such tune.
+ *
+ * ⚠️ **AND WHICH MEASURE A BREAK OPENS DEPENDS ON WHICH OF THE TWO IT LANDS ON**: a break
+ * at a CLOSING bar opens the next measure, one at an OPENING bar opens that measure.
+ *
+ * Measured against abcjs on the corpus: eleven fixtures drew a different NUMBER OF LINES
+ * and now none does. `tune.lineBreaks` was byte-identical to abcjs's throughout — the
+ * wrap's DECISION was never the defect, only this translation back onto the score.
+ */
+describe("renderAbc({wrap}) — a break is a BAR index, not a measure index", () => {
+  /**
+   * ⚠️ **COUNT `tune.lines`, NOT `tune.lineBreaks`.** The breaks are the wrap's DECISION,
+   * built from the score as PARSED, and they were identical to abcjs's throughout — a
+   * count of them passes with the defect in place and proves nothing. `tune.lines` is the
+   * RE-LINED structure `applyLineBreaks` produced, which is what this is about. Caught by
+   * restoring the old mapping and watching the first form stay green.
+   */
+  const linesOf = (abc: string): number => {
+    const tune = renderAbc({ innerHTML: "" }, abc, {
+      staffwidth: 400,
+      wrap: { minSpacing: 1.8, maxSpacing: 2.7, preferredMeasuresPerLine: 4 },
+    })[0];
+    return (tune?.lines ?? []).filter(
+      (l) => (l as { staff?: unknown }).staff !== undefined,
+    ).length;
+  };
+
+  it("splits a tune that OPENS with a repeat barline", () => {
+    // `|:CDEF|1GABc:|3cdef|]` — three measures, FOUR bar elements, and abcjs answers
+    // `lineBreaks: [[2]]`. Read as a measure index that found nothing and drew one line.
+    expect(linesOf("X:2\nL:1/4\nK:C\n|:CDEF|1GABc:|3cdef|]\n")).toBe(2);
+  });
+
+  it("leaves a tune with no opening barlines exactly where it was", () => {
+    // The negative control: eight ordinary measures, eight bar elements, no offset to get
+    // wrong — this is the shape that passed before the fix and must still.
+    expect(linesOf("X:1\nL:1/4\nK:C\nCDEF|GABc|cdef|gabc'|CDEF|GABc|cdef|gabc'|\n")).toBe(3);
+  });
+});
