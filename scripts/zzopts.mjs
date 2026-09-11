@@ -424,7 +424,17 @@ const OPTIONS = [
    *           ⚠️ `tablature-17` keeps its +4 endings and a 499 / 966 page: that fixture is
    *           dominated by its +4 `g:unsupported`, a different defect wearing the symptom.
    *
-   *    2  **`g:unsupported` + `text:text` — FULLY DIAGNOSED, NOT PORTED.** It is the FOURTH
+   *    2  ⚖️ **`g:unsupported` + `text:text` — DECLARED DIVERGENCE, NOT A DEFECT.** These
+   *       two are abcjs's FOURTH DEBUG MARKER and this engine declines all four (owner,
+   *       2026-09-12) — `Docs/ABCJS-DIFFERENCES.md` has the entry beside `pitch is
+   *       undefined` and `clef=x`. It was BUILT AND MEASURED before it was declined: our
+   *       markup came out byte-identical to abcjs's but for the `y`, which is the
+   *       above-lane its `chordHeightAbove` of 4 reserves. Reverted so the policy is one
+   *       rule rather than case-by-case. **This row will not reach 0 while that holds.**
+   *       The diagnosis is kept below because the MECHANISM is shared with the three
+   *       injections that ARE ported.
+   *
+   *          `g:unsupported` + `text:text` — the mechanism. It is the FOURTH
    *       ARM of the delined staff property above, and abcjs draws its own DEBUG TEXT for
    *       it. `deline` calls `addFontToVoices` for `vocalfont`, `gchordfont`,
    *       `tripletfont` and `annotationfont` (`data/deline-tune.js:41-60`), producing an

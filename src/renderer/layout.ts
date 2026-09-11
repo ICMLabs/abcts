@@ -11515,6 +11515,14 @@ function layoutMeasure(
    * emitted with NO source range, which is what `startChar: -1` means for a host.
    */
   const drawWrapInjected = (): void => {
+    /**
+     * ⚠️ **AND A FONT IS DELIBERATELY NOT RE-EMITTED** — see `Measure.wrapInjectedFonts`
+     * and `Docs/ABCJS-DIFFERENCES.md`. `deline` injects one for `vocalfont`, `gchordfont`
+     * and `tripletfont`, the engraver's switch has no case for it, and abcjs's `default:`
+     * prints the literal red string `element type font` on the score. That is the fourth
+     * abcjs DEBUG MARKER this engine declines, on the same rule as the other three; the
+     * flag is still carried so the decision is visible rather than absent.
+     */
     if (measure.wrapInjectedClef === true) {
       const el = layoutClef(x, measure.clefChange ?? clef, strict)
       if (el !== null) {

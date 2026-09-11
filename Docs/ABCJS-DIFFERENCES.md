@@ -903,6 +903,51 @@ lines at `getSymbolWidth(undefined)`, which makes the rule the bare 4px overhang
 51.05 in both engines). It does not draw the marker, and it does not reserve the lane the
 marker takes.
 
+### A wrapped tune that changes a font prints `element type font` on the score
+
+**The fourth debug marker, and the first that a VALID tune reaches.** When a host passes
+`wrap`, `deline` merges the source lines, and a line whose `vocalfont`, `gchordfont` or
+`tripletfont` differs from the previous one has that font turned into a VOICE ELEMENT and
+unshifted onto the front of the voice (`data/deline-tune.js:41-60`, `addFontToVoices` at
+`:153`):
+
+    function addFontToVoices(font, voices, type) {
+      font.el_type = "font";
+      …
+      voices[i].unshift(font);
+    }
+
+The engraver's element switch has no `case "font"`, so `default:` fires:
+
+    var abselem2 = new AbsoluteElement(elem, 0, 0, 'unsupported', this.tuneNumber);
+    abselem2.addFixed(new RelativeElement("element type " + elem.el_type, 0, 0,
+      undefined, { type: "debug" }));
+
+(`write/creation/abstract-engraver.js:379-382`.) abcjs prints the literal text
+`element type font` in red, underlined Arial 16, and — because the `debug` arm sets
+`chordHeightAbove` to its default height of 4 — reserves a chord lane for it: **19.375px of
+page** on a tune with no chord symbol in it.
+
+    <g fill="currentColor" stroke="none" data-name="unsupported"><text stroke="#ff0000"
+      font-size="16" font-style="normal" font-family="Arial" font-weight="normal"
+      text-decoration="underline" class="" text-anchor="start" x="247.92"
+      y="93.55"><tspan x="247.92">element type font</tspan></text></g>
+
+**abcts declines it, and the lane it reserves, exactly as it declines `pitch is undefined`
+and `clef=x`** (owner, 2026-09-12). It was implemented and measured before it was declined:
+our markup came out byte-identical to the above but for the `y`, which is the above-lane.
+The alternative — reproducing it — would put red debug text on a tune whose ABC is entirely
+valid, and would leave this engine declining three debug strings and drawing a fourth.
+
+⚠️ **`annotationfont` has the same branch in `deline` and fires in NEITHER engine** —
+measured, because abcjs's parser never puts it on the staff. Do not port that arm on the
+strength of the source alone.
+
+*Costs two fixtures of `zzopts`'s `wrap + staffwidth` row: `abcts-model-gaps-tune7` and
+`abcjs-visual-tablature-17-stretchlast`. Everything else about the merge is reproduced —
+the clef, key and meter `deline` injects beside the font are all drawn, with abcjs's
+`startChar: -1`.*
+
 **The short end reaches the same marker.** `note` runs out again past key 7, so a 256th
 (`C/32` under `L:1/8`) is headless too — and there abcjs keeps the STEM, because
 `hasStem = !nostem && durlog <= -1` is still true. abcts draws neither the marker nor that

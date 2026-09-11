@@ -612,6 +612,24 @@ export function applyLineBreaks(
       // `injects` and `Measure.wrapInjectedKey`. Only voice 0 is walked, because the
       // staff's properties are the tune's and not a voice's.
       const owed = vi === 0 ? injects.get(i) : undefined;
+      /**
+       * ⚠️ **AND `deline` HAS A FOURTH ARM WE DELIBERATELY DO NOT PORT.**
+       * `addFontToVoices` injects a `vocalfont`, `gchordfont` or `tripletfont` the same
+       * way (`data/deline-tune.js:41-60`) — `Measure.lineFonts` is already that test — but
+       * the engraver's switch has NO CASE for an `el_type: "font"`, so abcjs's `default:`
+       * prints the literal red string `element type font` on the score
+       * (`abstract-engraver.js:379-382`) and reserves a chord lane for it.
+       *
+       * ⚖️ **That is abcjs's FOURTH debug marker and this engine declines all four**
+       * (owner, 2026-09-12) — see `Docs/ABCJS-DIFFERENCES.md`, where `pitch is undefined`,
+       * `clef=x` and the corrupt MIDI tempo are declined on the same rule. It was built
+       * and measured first: our markup came out byte-identical to abcjs's but for the `y`,
+       * which is the above-lane its `chordHeightAbove` of 4 reserves. Reverted rather than
+       * kept, so the policy is one rule instead of a case-by-case.
+       *
+       * ⚠️ `annotationfont` is the one arm that fires in NEITHER engine, measured — abcjs's
+       * parser never puts it on the staff. Do not port that branch either.
+       */
       return {
         ...m,
         startsSystem: false as const,
