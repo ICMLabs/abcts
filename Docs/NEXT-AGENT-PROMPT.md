@@ -1,4 +1,4 @@
-# NEXT AGENT PROMPT — abcts, 2026-09-12
+# NEXT AGENT PROMPT — abcts, 2026-09-12b
 
 Paste the block below.
 
@@ -19,14 +19,14 @@ scratch probe last time. Restore before any browser gate:
     mkdir -p /tmp/gp/pw && cd /tmp/gp/pw && npm init -y && npm i playwright-core@1.61
 …then `cd` back into the repo — that `cd` resets the shell's CWD for the next call.
 
-    suite       90 files, 2,569 tests, no reds
+    suite       90 files, 2,578 tests, no reds
     svg-bytes   0 of 691 in-repo, 0 of 356 sibling
     mode-bytes  11 of 691 — every one DECLARED
     midi-bytes  0 of 691 — 19 ruled divergent
     zzlive      0 of 685  WebKit AND Chrome        zzselect 0 of 685
     zzclick     1 of 685 DECLARED ×3               zzledger 0 differ, 0 KNOWN, 41 agree
     zzopts      26 rows, every one at its declared count:
-                timeBasedLayout 669 · wrap+staffwidth 41 · initialClef 42 ·
+                timeBasedLayout 669 · wrap+staffwidth 34 · initialClef 42 ·
                 add_classes 16 · expandToWidest 14 · lineThickness 14 ·
                 print 5 · print+responsive 5 · minPadding 5 · scale 2 / 1 / 1
     warnings    0 of 815 · zzscale 8 of 8 LINEAR · test:dist 0 of 685 ESM and CJS
@@ -73,12 +73,16 @@ source told the truth about abcjs and lied about us. Check which MODEL each side
      its run — check the timestamp on `/tmp/abcts-*.txt`.
 
 WHAT TO DO NEXT — ask the owner which; these are NOT equal:
-  1. **`wrap`'s remaining 41 — FULLY DIFFERENCED, six named families.** ⭐ Read `zzopts`'s
-     row comment: it names the abcjs mechanism for each. Biggest first: 7 a LOST BAR NUMBER
-     (`%%barlabelfont … box` reserves 25.64px of page height), 5 a LOST TEMPO, 5 a MISSING
-     ENDING (`tablature-20`'s are `[|]1`, on OPENING barlines — and the exclusion written
-     into `layout.ts` for that arm is DISPROVED, see the comment), 2 `g:unsupported`,
-     4 geometry-only, 2 abcjs CRASHING on `%%vskip`.
+  1. **`wrap`'s remaining 34 — FULLY DIFFERENCED.** ⭐ Read `zzopts`'s row comment: it names
+     the abcjs mechanism for each. **The ENDINGS (5) are the one to take, and the family
+     SPLITS IN TWO** — written up as one, and checking the sources said otherwise:
+     (a) `tablature-20`/`layout-09` declare on OPENING barlines and the BREAK-BAR IS ON THE
+     WRONG SIDE (measured through `tune.lines`; wants a trailing-bar slot, the model cannot
+     hold two trailing bars today); (b) `selection-01`/`svg-per-line-01`/`tablature-17` are
+     `|1` closing-bar endings SPANNING THREE+ SYSTEMS, where abcjs makes a fresh
+     `EndingElem("", null, null)` per line and `voltaCarried` carries once — reading only,
+     NOT yet a rung. Then: 2 `g:unsupported`, `options-01`'s 2 boxes + 2 bar numbers,
+     5 geometry-only, 2 abcjs CRASHING on `%%vskip`.
      ⚠️ And `synth-flattener-17`'s accidentals (+3 sharp, -3 natural, -2 flat) were
      predicted to be the delined-key defect and did NOT close with it — a live hypothesis.
   2. **`add_classes` — 16, and the next one is NAMED.** A `%%sep` SEPARATOR rule is

@@ -368,13 +368,43 @@ const OPTIONS = [
    *       `abcts-tempo-rung-tune2`, `mouse-click-01`, `options-01`, `selection-01`,
    *       `svg-per-line-01`, `tablature-15`.
    *
-   *    5  AN ENDING IS STILL MISSING, and the named one is `tablature-20-score-1-2`,
-   *       whose endings are declared on OPENING barlines (`[|]1`). ⚠️ The exclusion of
-   *       `voltaOnOpeningBar` from the fix above was REASONED AND IS WRONG — abcjs opens
-   *       such an ending at the previous system's right edge too. But our engine also
-   *       DRAWS that `[|]` on the wrong side of the break, so `opensHere` in
-   *       `applyLineBreaks` moves first. `visual-layout-09-endings` (+1), `selection-01`
-   *       (+2), `svg-per-line-01` (+2), `tablature-17` (+4), `tablature-20` (+1).
+   *    5  AN ENDING IS STILL MISSING — **and the family SPLITS IN TWO.** ⚠️ It was written
+   *       up as one; checking the sources says otherwise, which is the third recorded
+   *       cause this session to fall to one measurement.
+   *
+   *       (a) **THE BREAK-BAR IS ON THE WRONG SIDE.** `tablature-20-score-1-2` (`[|]1`)
+   *           and `visual-layout-09-endings` (`[1`) declare their endings on OPENING
+   *           barlines. MEASURED through `tune.lines` on
+   *           `CDEF|GABc|cdef|gabc| / [|]1 CDEF:| / [|]2 GABc|]` under wrap:
+   *
+   *             abcjs  L1: note×4 bar(bar_thin) bar(bar_invisible:E1)
+   *                    L2: note×4 bar(bar_right_repeat) bar(bar_invisible:E2)
+   *             abcts  L1: note×4 bar(bar_thin)
+   *                    L2: bar(bar_invisible:E1) note×4 bar(bar_right_repeat)
+   *
+   *           `findLineBreaks` pushes `{start, end: e}` with `e` the bar itself, so the
+   *           break-bar ENDS the line it closes — and an opening barline is a bar element
+   *           like any other. `opensHere` in `applyLineBreaks` takes it to the new line
+   *           with its measure. ⚠️ **AND THE MODEL CANNOT HOLD IT WHERE abcjs PUTS IT**:
+   *           the previous line would carry TWO trailing bars (`bar_thin` then the
+   *           invisible one) and a `Measure` has one `closingBarline`. It wants a trailing
+   *           slot beside `trailingClef`/`trailingKey`/`trailingMeter`, and then the
+   *           end-of-system volta block above opens on it. That is the shape of the work;
+   *           it is not a one-liner.
+   *           ⚠️ The `voltaOnOpeningBar` exclusion in `layout.ts` is DISPROVED and says so
+   *           at the site — abcjs opens such an ending at the previous system's right edge
+   *           exactly as a closing-bar one. Fixing the exclusion alone does nothing while
+   *           the BAR is still on the wrong side.
+   *
+   *       (b) **A SPAN OF MORE THAN TWO SYSTEMS.** `selection-01` and `svg-per-line-01`
+   *           (+2 each) and `tablature-17` (+4) write `|1` — a CLOSING-bar ending, which
+   *           the fix above already handles — and their missing segments are on LATER
+   *           systems: `selection-01`'s first is at element 742, `M 63.171875 1696.06`.
+   *           abcjs re-creates a fresh `EndingElem("", null, null)` on EVERY line while
+   *           `partstartelem` is open (`createABCVoice`, `abstract-engraver.js:230-233`),
+   *           so an ending crossing three systems draws three segments. `voltaCarried`
+   *           carries once. ⚠️ NOT yet measured to the rung — this is the reading plus the
+   *           element positions, so prove it before porting it.
    *
    *    2  `g:unsupported` + `text:text` — `tablature-17-stretchlast` (+4),
    *       `abcts-model-gaps-tune7` (+1).
