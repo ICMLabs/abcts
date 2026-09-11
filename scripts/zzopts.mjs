@@ -396,15 +396,20 @@ const OPTIONS = [
    *           exactly as a closing-bar one. Fixing the exclusion alone does nothing while
    *           the BAR is still on the wrong side.
    *
-   *       (b) **A SPAN OF MORE THAN TWO SYSTEMS.** `selection-01` and `svg-per-line-01`
-   *           (+2 each) and `tablature-17` (+4) write `|1` — a CLOSING-bar ending, which
-   *           the fix above already handles — and their missing segments are on LATER
-   *           systems: `selection-01`'s first is at element 742, `M 63.171875 1696.06`.
-   *           abcjs re-creates a fresh `EndingElem("", null, null)` on EVERY line while
-   *           `partstartelem` is open (`createABCVoice`, `abstract-engraver.js:230-233`),
-   *           so an ending crossing three systems draws three segments. `voltaCarried`
-   *           carries once. ⚠️ NOT yet measured to the rung — this is the reading plus the
-   *           element positions, so prove it before porting it.
+   *       (b) ✅ **A SPAN OF MORE THAN TWO SYSTEMS — CLOSED.** The reading was right and the
+   *           rung sharpened it. abcjs re-creates a fresh `EndingElem("", null, null)` at
+   *           the head of EVERY line on which `partstartelem` is still open
+   *           (`createABCVoice`, `abstract-engraver.js:230-233`), so there is one segment
+   *           per system CROSSED. Measured on an ending stretched over one, two, three and
+   *           four systems: abcjs's continuations sit at y163, y256, y348 and y440 and ours
+   *           drew only the first. `closeVolta` nulled `voltaCarried` on EVERY continued
+   *           close — and the end-of-system close is one, running right after the carry has
+   *           been set. `hooked` is exactly "the ending really ends here" and spends it now.
+   *           `selection-01` and `svg-per-line-01` lost their missing segments and their
+   *           page heights are EXACT (2382.8494275606845 both) where they differed before;
+   *           both still differ on geometry inside, so this count does not move.
+   *           ⚠️ `tablature-17` keeps its +4 endings and a 499 / 966 page: that fixture is
+   *           dominated by its +4 `g:unsupported`, a different defect wearing the symptom.
    *
    *    2  `g:unsupported` + `text:text` — `tablature-17-stretchlast` (+4),
    *       `abcts-model-gaps-tune7` (+1).

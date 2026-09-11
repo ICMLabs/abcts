@@ -14681,7 +14681,23 @@ function layoutScoped(input: Score, options: LayoutOptions = {}): Layout {
         // …AND THE NUMBER IS `if (params.anchor1)`'s TOO, so a carried half has none.
         // The GROUP still opens either way, which is why the emitter keys on the lines.
         if (openVolta.continued === true) {
-          voltaCarried = null
+          /**
+           * ⚠️ **AND A CARRY IS ONLY SPENT WHEN THE ENDING ACTUALLY ENDS HERE.** This
+           * nulled `voltaCarried` on EVERY continued close, and the end-of-system close is
+           * one — `closeVolta(width, false)` runs after the carry has just been set — so an
+           * ending crossing three systems drew two segments and stopped.
+           *
+           * abcjs re-creates a fresh `EndingElem("", null, null)` at the head of EVERY line
+           * on which `partstartelem` is still open (`createABCVoice`,
+           * `abstract-engraver.js:230-233`), so there is one segment per system crossed,
+           * however many that is. Measured under `{wrap, staffwidth: 400}` on an ending
+           * stretched across two, three and four systems: abcjs draws continuations at
+           * every intervening system (y163, y256, y348, y440) and ours drew one.
+           *
+           * `hooked` is exactly "the ending really ends here", which is the same flag the
+           * closing hook and `rawEnd` already turn on.
+           */
+          if (hooked) voltaCarried = null
           openVolta = null
           return
         }

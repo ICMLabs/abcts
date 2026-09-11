@@ -595,3 +595,52 @@ describe("renderAbc({wrap}) — bar numbers are renumbered from 1", () => {
     expect(nums("")).toBe("");
   });
 });
+
+/**
+ * **AN ENDING DRAWS ONE SEGMENT PER SYSTEM IT CROSSES, NOT TWO IN TOTAL.**
+ *
+ * abcjs re-creates a fresh `EndingElem("", null, null)` at the head of EVERY line on which
+ * `partstartelem` is still open (`createABCVoice`, `abstract-engraver.js:230-233`), so a
+ * bracket stretched over four systems is drawn in four pieces plus its numbered head.
+ *
+ * ⚠️ **OURS SPENT THE CARRY ON THE FIRST CONTINUATION.** `closeVolta` nulled `voltaCarried`
+ * on every continued close — and the end-of-system close is one, running right after the
+ * carry has been set — so the bracket stopped after two systems however far it ran.
+ * `hooked` is exactly "the ending really ends here", and is what spends it now.
+ *
+ * Measured under `{wrap, staffwidth: 400}`: abcjs's continuations sit at y163, y256, y348
+ * and y440 as the span grows, and ours drew only the first.
+ */
+describe("renderAbc({wrap}) — an ending carries across every system it crosses", () => {
+  const B = "CDEF|";
+  const segments = (bars: number): number => {
+    const host = { innerHTML: "" } as { innerHTML: string };
+    renderAbc(
+      host,
+      `X:1\nT:E\nL:1/4\nM:4/4\nK:C\n${B}${B}|1 ${B.repeat(bars)}:|2 ${B}|]\n`,
+      {
+        staffwidth: 400,
+        wrap: { minSpacing: 1.8, maxSpacing: 2.7, preferredMeasuresPerLine: 4 },
+      },
+    );
+    return [...host.innerHTML.matchAll(/data-name="ending"/g)].length;
+  };
+
+  // One system: the `1`, the `2`'s carried opening, and the `2` itself. Unchanged by the
+  // fix — the control, and the shape that passed while the rows below were broken.
+  it("draws three brackets when nothing spans a break", () => {
+    expect(segments(1)).toBe(3);
+  });
+  // Two systems: one continuation. ⚠️ The comment first written here said this row passed
+  // with the defect "because the first carry always worked". Restoring the defect reddens
+  // it too — 3 against 4 — so the carry was already being spent one segment early, not
+  // merely failing to repeat. Corrected from the break rather than left as reasoned.
+  it("draws four when the ending spans two systems", () => {
+    expect(segments(4)).toBe(4);
+  });
+  // ⭐ Three systems: TWO continuations, and this is the row that was red. Every count here
+  // was read off abcjs, not off our own output.
+  it("draws five when it spans three", () => {
+    expect(segments(8)).toBe(5);
+  });
+});
