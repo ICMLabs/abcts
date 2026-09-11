@@ -2867,6 +2867,8 @@ interface Formatting {
   printTempo: boolean | undefined
   jazzChords: boolean
   keywarn: boolean
+  /** See `Score.barNumbersDirective`. */
+  barNumbersDirective?: true
   percMap: Record<string, PercMapEntry>
   drumMap?: Record<string, number>
   midi?: Record<string, readonly (string | number)[]>
@@ -3155,6 +3157,7 @@ class ScoreBuilder {
       printTempo: this.printTempo,
       jazzChords: this.jazzChords,
       keywarn: this.keywarn,
+      ...(this.barNumbersDirective === true ? { barNumbersDirective: true as const } : {}),
       percMap: this.percMap,
       drumMap: this.drumMap,
       midi: this.midi,
@@ -3272,6 +3275,8 @@ class ScoreBuilder {
   }
 
   /** `%%barnumbers` / `%%measurenb` / `%%setbarnb`, shared with every VoiceBuilder. */
+  /** See `Score.barNumbersDirective` — that the directive APPEARED, not what it said. */
+  barNumbersDirective?: true
   readonly barNumbering: { every: number | null; current: number; firstVoiceId: string | null } = {
     every: null,
     current: 1,
@@ -3575,6 +3580,7 @@ class ScoreBuilder {
       partsBox: this.partsBox,
       jazzChords: this.jazzChords,
       keywarn: this.keywarn,
+      ...(this.barNumbersDirective === true ? { barNumbersDirective: true as const } : {}),
       percMap: this.percMap,
       drumMap: this.drumMap,
       midi: this.midi,
@@ -4520,7 +4526,11 @@ class Parser {
     // of one directive (`abc_parse_directive.js:930-933`).
     const barNumbers = /^(?:barnumbers|measurenb)\s+(-?\d+)/.exec(body)
     if (barNumbers?.[1] !== undefined) {
-      this.ensureScore(start).barNumbering.every = Number.parseInt(barNumbers[1], 10)
+      const score = this.ensureScore(start)
+      score.barNumbering.every = Number.parseInt(barNumbers[1], 10)
+      // …**AND THAT IT APPEARED AT ALL IS A SEPARATE FACT**, which is the only thing a
+      // wrap asks — see `Score.barNumbersDirective`.
+      score.barNumbersDirective = true
       return
     }
     // `%%setbarnb N` — set the running count immediately, so the NEXT barline reads N + 1.

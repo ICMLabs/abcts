@@ -525,3 +525,73 @@ describe("renderAbc({wrap}) — the meter rule does not take the tempo with it",
     expect(tempoMarks(PLAIN, false)).toBe(1);
   });
 });
+
+/**
+ * **A WRAP RENUMBERS EVERY BAR FROM 1, LOSING BOTH `%%setbarnb` AND THE FREQUENCY.**
+ *
+ *     if (barNumbers !== undefined && action.staff === 0 && action.line > 0)
+ *       outputLines[action.line].staff[action.staff].barNumber = currentBarNumber;
+ *     …
+ *     if (barNumbers !== undefined && action.staff === 0 && action.voice === 0)
+ *       for (kk = 0; kk < currVoice.length; kk++)
+ *         if (currVoice[kk].el_type === 'bar') {
+ *           currentBarNumber++
+ *           if (kk === currVoice.length-1) delete currVoice[kk].barNumber
+ *           else currVoice[kk].barNumber = currentBarNumber
+ *         }
+ *
+ * (`wrap_lines.js:37-39`, `:78-88`.) `currentBarNumber` opens at 1 and counts BAR
+ * ELEMENTS, and the assignment is unconditional — no `% barNumbers` test survives it.
+ *
+ * ⚠️ **AND THE GATE IS THAT THE DIRECTIVE APPEARED, NOT THAT IT DREW ANYTHING** — see
+ * `Score.barNumbersDirective`. `zzopts`'s `wrap + staffwidth` row 41 -> 34.
+ */
+describe("renderAbc({wrap}) — bar numbers are renumbered from 1", () => {
+  const MUSIC = "CDEF|GABc|cdef|gabc|CDEF|GABc|cdef|gabc|\n";
+  const nums = (head: string, wrap = true): string => {
+    const host = { innerHTML: "" } as { innerHTML: string };
+    renderAbc(host, `X:1\nT:T\n${head}M:4/4\nL:1/4\nK:C\n${MUSIC}`, {
+      staffwidth: 400,
+      ...(wrap
+        ? { wrap: { minSpacing: 1.8, maxSpacing: 2.7, preferredMeasuresPerLine: 4 } }
+        : {}),
+    });
+    return [...host.innerHTML.matchAll(/data-name="bar-number"[^>]*>(?:<tspan[^>]*>)?([^<]*)/g)]
+      .map((m) => m[1])
+      .join(" ");
+  };
+
+  // ⭐ The headline: `%%barnumbers 5` draws every FIFTH bar and `%%setbarnb 24` starts the
+  // count at 24, so unwrapped this tune is `25 30`. A wrap throws both away.
+  it("discards %%setbarnb AND the frequency", () => {
+    expect(nums("%%barnumbers 5\n%%setbarnb 24\n", false)).toBe("25 30");
+    expect(nums("%%barnumbers 5\n%%setbarnb 24\n")).toBe("2 3 4 5 6 7 8");
+  });
+
+  // `%%barnumbers 50` fires on no bar of an eight-bar tune, and `%%barnumbers 0` numbers
+  // the CLEF rather than a barline — both draw nothing unwrapped and every bar wrapped,
+  // which is why "some measure carries a number" is not a usable proxy for the directive.
+  it("renumbers even when the directive itself would draw nothing", () => {
+    expect(nums("%%barnumbers 50\n", false)).toBe("");
+    expect(nums("%%barnumbers 50\n")).toBe("2 3 4 5 6 7 8");
+  });
+
+  // The head number is `action.line > 0` — the output line index that counts the non-music
+  // rows — so a subtitle, which puts the music on line 1, earns the first system one.
+  it("numbers the FIRST system's head when a subtitle precedes the music", () => {
+    expect(nums("T:Sub\n%%barnumbers 1\n")).toBe("1 2 3 4 5 6 7 8");
+  });
+
+  it("does NOT number it when the music really is on output line 0", () => {
+    // The control for the row above, and it is the same output-line index the meter rule
+    // turns on — the first system's head number and the header meter come and go together.
+    expect(nums("%%barnumbers 1\n")).toBe("2 3 4 5 6 7 8");
+  });
+
+  it("renumbers NOTHING when the directive never appeared", () => {
+    // The control for the whole rule: no `%%barnumbers` is `barNumbers === undefined`, and
+    // abcjs's two blocks are both skipped. A rule that renumbered unconditionally would
+    // put a number on every bar of every wrapped tune in the corpus.
+    expect(nums("")).toBe("");
+  });
+});

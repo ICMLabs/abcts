@@ -1973,6 +1973,24 @@ export interface Score {
    * `%%keywarn false` is byte-identical to no directive.
    */
   readonly keywarn: boolean
+  /**
+   * **WHETHER `%%barnumbers` / `%%measurenb` APPEARED AT ALL** — which is a different
+   * question from what it was set to, and the only thing a wrap asks.
+   *
+   *     if (barNumbers !== undefined && …)                       // wrap_lines.js:37, :78
+   *
+   * `wrapLines` is handed `multilineVars.barNumbers`, and on that test alone it RENUMBERS
+   * EVERY BAR from 1 with its own counter and hangs the running value on each output
+   * line's staff. ⚠️ **So a wrapped tune loses both `%%setbarnb` and the FREQUENCY.**
+   * Measured: `%%barnumbers 5` + `%%setbarnb 24` over eight bars draws `25 30` unwrapped
+   * and `1 2 3 4 5 6 7 8` wrapped, in abcjs. `%%barnumbers 50` — which fires on no bar at
+   * all — and `%%barnumbers 0`, which numbers the CLEF rather than a barline, both number
+   * every bar once a wrap runs.
+   *
+   * ⚠️ **WHICH IS WHY "SOME MEASURE CARRIES A NUMBER" IS NOT A USABLE PROXY** and this
+   * field exists: those last two shapes carry none and still renumber.
+   */
+  readonly barNumbersDirective?: true
   readonly jazzChords: boolean
   /**
    * `%%percmap <abc-note> <drum-sound> [<note-head>]` — the NOTEHEAD a written pitch draws

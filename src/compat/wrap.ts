@@ -532,6 +532,16 @@ export function applyLineBreaks(
     })
   }
 
+  /**
+   * **AND A NON-MUSIC ROW BEFORE THE MUSIC COSTS THE WHOLE TUNE ITS METER** — see
+   * `Score.wrapDroppedMeter`. Computed HERE, above the voice walk, because the walk needs
+   * it too: the bar-number head is `action.line > 0`, the same output-line index, and
+   * reading it back off `score` inside the map gets the INPUT score, where the flag has
+   * not been set yet. It read `undefined` on every tune and the head number never drew.
+   */
+  const droppedMeter =
+    score.metadata.titles.length > 1 || score.textAbove.length > 0 || score.newPage != null;
+
   const voices = score.voices.map((voice, vi) => {
     /**
      * **A BREAK INDEXES BAR ELEMENTS, NOT MEASURES**, and the two are not the same list.
@@ -629,18 +639,56 @@ export function applyLineBreaks(
      * — because the counter is the tune's, not the voice's.
      */
     if (vi !== 0) return { ...voice, measures };
+    /**
+     * ⚠️ **AND A WRAP DOES NOT CARRY THE NUMBERS — IT RENUMBERS EVERY BAR FROM 1, LOSING
+     * BOTH `%%setbarnb` AND THE FREQUENCY.**
+     *
+     *     if (barNumbers !== undefined && action.staff === 0 && action.line > 0)
+     *       outputLines[action.line].staff[action.staff].barNumber = currentBarNumber;
+     *     …
+     *     if (barNumbers !== undefined && action.staff === 0 && action.voice === 0)
+     *       for (kk = 0; kk < currVoice.length; kk++)
+     *         if (currVoice[kk].el_type === 'bar') {
+     *           currentBarNumber++
+     *           if (kk === currVoice.length-1) delete currVoice[kk].barNumber
+     *           else currVoice[kk].barNumber = currentBarNumber
+     *         }
+     *
+     * (`wrap_lines.js:37-39`, `:78-88`.) `currentBarNumber` opens at **1** and counts BAR
+     * ELEMENTS, and the assignment is unconditional — no `% barNumbers` test survives the
+     * wrap. Measured against abcjs on eight bars: `%%barnumbers 5` + `%%setbarnb 24` draws
+     * `25 30` unwrapped and `1 2 3 4 5 6 7 8` wrapped.
+     *
+     * ⚠️ **AND THE GATE IS THAT THE DIRECTIVE APPEARED, NOT THAT IT DREW ANYTHING.**
+     * `%%barnumbers 50` fires on no bar of an eight-bar tune and `%%barnumbers 0` numbers
+     * the CLEF rather than a barline; both number every bar once a wrap runs. So "some
+     * measure carries a number" is not a usable proxy — see `Score.barNumbersDirective`.
+     *
+     * ⚠️ **AND THE HEAD NUMBER IS `action.line > 0`, THE OUTPUT LINE INDEX THAT COUNTS THE
+     * NON-MUSIC ROWS** — the same index the meter rule turns on, so the first music system
+     * takes one exactly when `wrapDroppedMeter` is set, and every later one always does.
+     *
+     * ponytail: an OPENING barline takes a number in abcjs and cannot here — the model has
+     * `closingBarNumber` and no opening twin. It still COUNTS, so every drawn number is
+     * right; only a number ON a `|:` is missing. Give `Measure` an `openingBarNumber` if a
+     * fixture ever shows one.
+     */
+    if (score.barNumbersDirective !== true) return { ...voice, measures };
+    let current = 1;
     const renumbered = measures.map((m, i) => {
-      const endsSystem = measures[i + 1]?.startsSystem === true;
-      const opensSystem = m.startsSystem === true && i > 0;
+      const endsSystem = i + 1 >= measures.length || measures[i + 1]?.startsSystem === true;
       const next: Measure = { ...m };
-      if (endsSystem && next.closingBarNumber !== undefined)
-        delete (next as { closingBarNumber?: number }).closingBarNumber;
-      if (opensSystem) {
-        // The number this line opens on — the one the barline before it would have shown.
-        const carried = measures[i - 1]?.closingBarNumber ?? m.systemBarNumber;
-        if (carried !== undefined)
-          (next as { systemBarNumber?: number }).systemBarNumber = carried;
-      }
+      // The head number is the counter as the line OPENS, before its own bars are counted.
+      const opensSystem = m.startsSystem === true;
+      if (opensSystem && (i > 0 || droppedMeter))
+        (next as { systemBarNumber?: number }).systemBarNumber = current;
+      else delete (next as { systemBarNumber?: number }).systemBarNumber;
+      // An opening barline is a bar ELEMENT and advances the counter; it is never the
+      // line's last element, so it never loses a number it cannot carry anyway.
+      if ((m.openingBarline ?? null) !== null) current += 1;
+      current += 1;
+      if (endsSystem) delete (next as { closingBarNumber?: number }).closingBarNumber;
+      else (next as { closingBarNumber?: number }).closingBarNumber = current;
       return next;
     });
     return { ...voice, measures: renumbered };
@@ -656,8 +704,6 @@ export function applyLineBreaks(
    * predicate and `tune.lines.findIndex(l => l.staff) > 0` name the same 41 fixtures of
    * 685, with no fixture on either side of the disagreement.
    */
-  const droppedMeter =
-    score.metadata.titles.length > 1 || score.textAbove.length > 0 || score.newPage != null;
   return droppedMeter
     ? { ...score, voices, wrapDroppedMeter: true as const }
     : { ...score, voices };

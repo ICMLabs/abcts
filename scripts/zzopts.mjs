@@ -219,7 +219,7 @@ const OPTIONS = [
   ['minPadding', { minPadding: 40 }, 5],
   ['timeBasedLayout', { timeBasedLayout: { minPadding: 20 } }, 669],
   /**
-   * ⚠️ **41, AND THE LINE-STRUCTURE HALF IS CLOSED.** Counting staff lines in each engine
+   * ⚠️ **34, AND THE LINE-STRUCTURE HALF IS CLOSED.** Counting staff lines in each engine
    * over the whole corpus: **ELEVEN fixtures drew a different NUMBER OF LINES and now NONE
    * does.** The two the line-count probe still reports are abcjs THROWING — see below.
    *
@@ -318,6 +318,35 @@ const OPTIONS = [
    *       (a second notehead's x), `synth-flattener-17` (+3 sharp, -3 natural, -2 flat —
    *       the missing key signature showing as accidentals), and the bar-x rows.
    *
+   * ✅ **THE BAR NUMBERS — 41 → 34.** Not a lost label: a wrap RENUMBERS EVERY BAR FROM 1
+   *    and throws away both `%%setbarnb` and the frequency.
+   *
+   *        if (barNumbers !== undefined && action.staff === 0 && action.line > 0)
+   *          outputLines[action.line].staff[action.staff].barNumber = currentBarNumber;
+   *        …
+   *        if (barNumbers !== undefined && action.staff === 0 && action.voice === 0)
+   *          for (kk = 0; kk < currVoice.length; kk++)
+   *            if (currVoice[kk].el_type === 'bar') {
+   *              currentBarNumber++
+   *              if (kk === currVoice.length-1) delete currVoice[kk].barNumber
+   *              else currVoice[kk].barNumber = currentBarNumber
+   *            }
+   *
+   *    (`wrap_lines.js:37-39`, `:78-88`.) `currentBarNumber` opens at 1, counts BAR
+   *    ELEMENTS, and the assignment is unconditional — no `% barNumbers` test survives.
+   *    Measured on eight bars: `%%barnumbers 5` + `%%setbarnb 24` draws `25 30` unwrapped
+   *    and `1 2 3 4 5 6 7 8` wrapped.
+   *    ⚠️ **AND THE GATE IS THAT THE DIRECTIVE APPEARED, NOT THAT IT DREW ANYTHING.**
+   *    `%%barnumbers 50` fires on no bar of that tune and `%%barnumbers 0` numbers the
+   *    CLEF rather than a barline; both draw nothing unwrapped and every bar wrapped. So
+   *    "some measure carries a number" is NOT a usable proxy — hence
+   *    `Score.barNumbersDirective`, measured before it was added rather than assumed.
+   *    ⚠️ And the head number is `action.line > 0`, the same output-line index the meter
+   *    rule turns on, so the first system takes one exactly when `wrapDroppedMeter` is set.
+   *    ponytail: an OPENING barline takes a number in abcjs and cannot here — the model has
+   *    `closingBarNumber` and no opening twin. It still COUNTS, so every drawn number is
+   *    right; only a number ON a `|:` is missing.
+   *
    *    7  A BAR NUMBER IS LOST. `text:bar-number` is present in abcjs and absent here on
    *       `visual-layout-01`/`-02` (with its `path:box` — a `%%barlabelfont … box` label,
    *       and the box reserves 25.64px of PAGE HEIGHT), `visual-parsing-10-song` (+2),
@@ -353,13 +382,13 @@ const OPTIONS = [
    *    4  GEOMETRY ONLY, same element kinds throughout: `synth-flattener-20`,
    *       `text-udef-parts-overlays-tune8` and `-tune46`, `vskip-tune1`.
    *
-   * ⚠️ **AND TWO OF THE 41 ARE abcjs CRASHING, NOT US.** `abcts-vskip` tunes 0 and 2 throw
+   * ⚠️ **AND TWO OF THE 34 ARE abcjs CRASHING, NOT US.** `abcts-vskip` tunes 0 and 2 throw
    * inside abcjs's own `wrapLines` — `undefined is not an object (evaluating 'l[p]')` —
    * because `addLineBreaks` reads `lines[action.ogLine].staff[action.staff]` on a row a
    * `%%vskip` made non-music. We render them. A crash is not output and strict does not
    * reproduce one.
    */
-  ['wrap + staffwidth', { wrap: { minSpacing: 1.8, maxSpacing: 2.7, preferredMeasuresPerLine: 4 }, staffwidth: 400 }, 41],
+  ['wrap + staffwidth', { wrap: { minSpacing: 1.8, maxSpacing: 2.7, preferredMeasuresPerLine: 4 }, staffwidth: 400 }, 34],
 ]
 const every = Number(process.argv[2] ?? 1)
 const browser = await webkit.launch()
