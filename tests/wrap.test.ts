@@ -353,3 +353,57 @@ describe("renderAbc({wrap}) — the meter goes with a non-music first row", () =
     expect(line?.staff[0]?.meter?.type ?? "NONE").toBe("specified");
   });
 });
+
+/**
+ * **AN ENDING DECLARED ON THE BARLINE THAT *ENDS* A SYSTEM OPENS ON THAT SYSTEM.**
+ *
+ * abcjs opens the `EndingElem` where it processes the BAR: `elem.startEnding` is read in
+ * `createABCBar` and `voice.addOther(this.partstartelem)` puts it on the voice of the line
+ * being built (`abstract-engraver.js:1034-1042`). A break at that bar leaves it the LAST
+ * element of the line it CLOSES — `findLineBreaks` pushes `{start, end: e}` with `e` the
+ * bar itself (`wrap_lines.js:132-141`) — so the ending opens there, as a hook at the
+ * line's right edge WITH its number, and the next line gets a fresh
+ * `EndingElem("", null, null)` from `createABCVoice`'s `if (this.partstartelem)`
+ * (`:230-233`): no hook, no number.
+ *
+ * Ours drew ONE bracket, numbered, on the wrong system. `zzopts`'s `wrap + staffwidth`
+ * row 53 -> 48.
+ */
+describe("renderAbc({wrap}) — an ending opens on the system holding its barline", () => {
+  /** Every drawn ending bracket, as `x-of-first-hook/label`, in document order. */
+  const endingsOf = (abc: string): string[] => {
+    const host = { innerHTML: "" } as { innerHTML: string };
+    renderAbc(host, abc, {
+      staffwidth: 400,
+      wrap: { minSpacing: 1.8, maxSpacing: 2.7, preferredMeasuresPerLine: 4 },
+    });
+    return [...host.innerHTML.matchAll(/<g[^>]*data-name="ending"[^>]*>(.*?)<\/g>/g)].map(
+      (m) => {
+        const x = /M ([0-9.]+) /.exec(m[1] ?? "")?.[1] ?? "?";
+        const label = /<tspan[^>]*>([^<]*)<\/tspan>/.exec(m[1] ?? "")?.[1] ?? "";
+        return `${x}/${label}`;
+      },
+    );
+  };
+
+  // `|:CDEF|1GABc:|3cdef|]` — three measures, FOUR bar elements, `lineBreaks: [[2]]`, and
+  // the break lands on the `:|` that DECLARES the `3`. abcjs draws THREE brackets: the
+  // `1` closing at the line end, the `3` opening AT it, and its bare continuation.
+  it("opens the 3 at the line's right edge and continues it unnumbered", () => {
+    expect(endingsOf("X:2\nT:E\nL:1/4\nK:C\n|:CDEF|1GABc:|3cdef|]\n")).toEqual([
+      "226.78/1",
+      "415/3",
+      "222.76/",
+    ]);
+  });
+
+  it("leaves an ending that fits on one system exactly where it was", () => {
+    // The negative control: no break falls on the `:|`, so nothing is carried and both
+    // brackets are ordinary numbered ones. This is the shape that passed before the fix.
+    // Both numbers read off abcjs, not off our own output.
+    expect(endingsOf("X:2\nT:E\nL:1/4\nK:C\n|:CD|1GA:|2ce|]\n")).toEqual([
+      "165.9/1",
+      "293.26/2",
+    ]);
+  });
+});

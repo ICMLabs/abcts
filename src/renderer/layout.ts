@@ -13663,6 +13663,13 @@ function layoutScoped(input: Score, options: LayoutOptions = {}): Layout {
    * with `M 58.05 … L 58.05 … M 25 … L 58.05`.
    */
   let voltaCarried: { label: string; measure: number } | null = null
+  /**
+   * **AND WHICH MEASURE'S ENDING THAT CARRY ALREADY OPENED** — the measure that starts the
+   * NEXT system, when its ending was declared on the barline that ended this one. Its own
+   * pass must not open a second bracket: abcjs re-uses the carried `partstartelem` and
+   * never re-reads the bar, which is on the line before. See the end-of-system open.
+   */
+  let voltaOpenedOnPreviousSystem: number | null = null
   const systems: LayoutSystem[] = spans.map((span, systemIndex) => {
     // …**AND A LINE `%%barsperstaff` CUT OUT PRINTS ONE TOO** — see `Measure.wrappedLine`.
     // …**AND A WRAP THAT PUSHED THE MUSIC OFF OUTPUT LINE 0 TAKES IT FROM SYSTEM 0 TOO** —
@@ -14727,7 +14734,8 @@ function layoutScoped(input: Score, options: LayoutOptions = {}): Layout {
             closeVolta(barAnchor(i, 'opening', 'endingEnd') ?? startOf(i), true)
           }
           // A new ending closes whatever was open — `|1 … :|2` runs them back to back.
-          if (block.volta !== null && drawsVoltas) {
+          // …**EXCEPT ONE THE PREVIOUS SYSTEM ALREADY OPENED**, whose bar it holds.
+          if (block.volta !== null && drawsVoltas && voltaOpenedOnPreviousSystem !== i) {
             closeVolta(voltaStartOf(i), true)
             // **THE MEASURE COUNTER IS THE ENDING'S MEASURE WITHIN THE LINE, MINUS ONE**
             // — the count of `"bar"` markers already in `otherchildren`, since the
@@ -14906,9 +14914,53 @@ function layoutScoped(input: Score, options: LayoutOptions = {}): Layout {
        * default (`draw/voice.js:12`, `:82`) — the same off-by-one a curve running off the
        * end already reproduces through `ENGRAVE.lineEndInset`.
        */
+      /**
+       * ⚠️ **AN ENDING DECLARED ON THE BARLINE THAT *ENDS* A SYSTEM OPENS ON THAT SYSTEM,
+       * NOT ON THE ONE ITS MEASURE STARTS.**
+       *
+       * abcjs opens the `EndingElem` where it processes the BAR — `elem.startEnding` is
+       * read in `createABCBar` and `voice.addOther(this.partstartelem)` puts it on the
+       * voice of the line being built (`abstract-engraver.js:1034-1042`). A break at that
+       * bar leaves it as the LAST element of the line it closes (`findLineBreaks` pushes
+       * `{start, end: e}` with `e` the bar itself, `wrap_lines.js:132-141`), so the ending
+       * opens there as a hook at the line's right edge WITH its number, and the next line
+       * gets a fresh `EndingElem("", null, null)` — no hook, no number — from
+       * `createABCVoice`'s `if (this.partstartelem)` (`:230-233`).
+       *
+       * `|:CDEF|1GABc:|3cdef|]` under `{wrap, staffwidth: 400}`: abcjs draws the `3` at
+       * x 415 on system 1 and a bare rule to 222.76 on system 2. Ours drew one bracket,
+       * numbered, on system 2 at 183.71.
+       *
+       * ⚠️ **AND IT IS ONLY THE ARM THAT READS THE PREVIOUS MEASURE'S CLOSER.** An ending
+       * on the measure's OWN opening bar (`voltaOnOpeningBar`) or its own closer
+       * (`voltaAtClose`) is drawn on the new system, because that is where its bar is.
+       * `voltaStartOf`'s three arms are already that distinction.
+       */
+      const nextBlock = plan.blocks[span.end]
+      let opensNextSystemsVolta: number | null = null
+      if (
+        drawsVoltas &&
+        nextBlock !== undefined &&
+        nextBlock.volta !== null &&
+        nextBlock.voltaAtClose !== true &&
+        nextBlock.voltaOnOpeningBar !== true &&
+        span.end > span.start
+      ) {
+        const at = barAnchor(span.end - 1, 'closing', 'endingStart')
+        if (at !== null) {
+          closeVolta(at, true)
+          openVolta = {
+            label: nextBlock.volta,
+            startX: at,
+            measure: Math.max(0, span.end - span.start - 1),
+          }
+          opensNextSystemsVolta = span.end
+        }
+      }
       // …and it RESUMES on the next system — see `voltaCarried`.
       if (openVolta !== null && drawsVoltas) {
         voltaCarried = { label: openVolta.label, measure: openVolta.measure }
+        if (opensNextSystemsVolta !== null) voltaOpenedOnPreviousSystem = opensNextSystemsVolta
       }
       closeVolta(solved.width - ENGRAVE.lineEndInset, false)
 

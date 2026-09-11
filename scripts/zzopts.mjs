@@ -219,7 +219,7 @@ const OPTIONS = [
   ['minPadding', { minPadding: 40 }, 5],
   ['timeBasedLayout', { timeBasedLayout: { minPadding: 20 } }, 669],
   /**
-   * ⚠️ **53, AND THE LINE-STRUCTURE HALF IS CLOSED.** Counting staff lines in each engine
+   * ⚠️ **48, AND THE LINE-STRUCTURE HALF IS CLOSED.** Counting staff lines in each engine
    * over the whole corpus: **ELEVEN fixtures drew a different NUMBER OF LINES and now NONE
    * does.** The two the line-count probe still reports are abcjs THROWING — see below.
    *
@@ -255,13 +255,32 @@ const OPTIONS = [
    * no fixture on either side of the disagreement. ⚠️ `newPage` is a NUMBER — `%%newpage 1`
    * reads back as `1`, and a `=== true` test misses `abcts-directives-tune9` alone.
    *
-   * ⚠️ **AND TWO OF THE 53 ARE abcjs CRASHING, NOT US.** `abcts-vskip` tunes 0 and 2 throw
+   * ✅ **AND AN ENDING DECLARED ON THE BARLINE THAT *ENDS* A SYSTEM OPENS ON THAT SYSTEM —
+   * 53 → 48.** abcjs opens the `EndingElem` where it processes the BAR (`elem.startEnding`
+   * in `createABCBar`, `voice.addOther(this.partstartelem)`,
+   * `abstract-engraver.js:1034-1042`), and a break at that bar leaves it the LAST element
+   * of the line it CLOSES. So the ending opens THERE, as a hook at the line's right edge
+   * WITH its number, and the next line gets a fresh `EndingElem("", null, null)` — no
+   * hook, no number — from `createABCVoice`'s `if (this.partstartelem)` (`:230-233`).
+   * `|:CDEF|1GABc:|3cdef|]` is `226.78/1`, `415/3`, `222.76/` in both engines now; ours
+   * drew ONE bracket, numbered, on the wrong system at 183.71.
+   *
+   * ⚠️ **AND IT IS NOT A WRAP DEFECT — `%%barsperstaff 2` REPRODUCES IT WITH NO WRAP AT
+   * ALL**, on the same tune, and no golden covers that path. Fixed for both.
+   *
+   * ⚠️ **AND `%%barsperstaff` HAS ITS OWN, SEPARATE SPLITTING DEFECT, NOW NAMED.** On that
+   * tune abcjs puts `|:CDEF|` ALONE on line 1 under `%%barsperstaff 2` where we put two
+   * measures — because abcjs counts BAR ELEMENTS there too and `|:CDEF|` is two of them,
+   * exactly the rule this file's wrap comment states. `wrapMusicLines`
+   * (`parser.ts:3556`) counts measures. Untouched: no gate renders it.
+   *
+   * ⚠️ **AND TWO OF THE 48 ARE abcjs CRASHING, NOT US.** `abcts-vskip` tunes 0 and 2 throw
    * inside abcjs's own `wrapLines` — `undefined is not an object (evaluating 'l[p]')` —
    * because `addLineBreaks` reads `lines[action.ogLine].staff[action.staff]` on a row a
    * `%%vskip` made non-music. We render them. A crash is not output and strict does not
    * reproduce one.
    */
-  ['wrap + staffwidth', { wrap: { minSpacing: 1.8, maxSpacing: 2.7, preferredMeasuresPerLine: 4 }, staffwidth: 400 }, 53],
+  ['wrap + staffwidth', { wrap: { minSpacing: 1.8, maxSpacing: 2.7, preferredMeasuresPerLine: 4 }, staffwidth: 400 }, 48],
 ]
 const every = Number(process.argv[2] ?? 1)
 const browser = await webkit.launch()
