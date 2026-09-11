@@ -1,12 +1,13 @@
-# NEXT AGENT PROMPT — abcts, 2026-09-11
+# NEXT AGENT PROMPT — abcts, 2026-09-12
 
 Paste the block below.
 
 ---
 
 ```
-start here: abcts/Docs/HANDOFF-2026-09-11.md — §THE METHOD first, then §WHAT IS OPEN. Then
--09-09e.md for the host-option surface as a whole, -09-09d/c/b.md for the witness, the
+start here: abcts/Docs/HANDOFF-2026-09-12.md — §THE METHOD and §A FLAG DOING TWO JOBS
+first, then §WHAT IS OPEN. Then -09-11.md for the wrap's line structure, -09-09e.md for the
+host-option surface as a whole, -09-09d/c/b.md for the witness, the
 negative control and "a floor rots", HANDOFF-2026-09-08.md for THE QUADRATICS and the
 scaling gate, and HANDOFF-2026-09-07.md for the MODE RULE.
 
@@ -18,14 +19,14 @@ scratch probe last time. Restore before any browser gate:
     mkdir -p /tmp/gp/pw && cd /tmp/gp/pw && npm init -y && npm i playwright-core@1.61
 …then `cd` back into the repo — that `cd` resets the shell's CWD for the next call.
 
-    suite       90 files, 2,556 tests, no reds
+    suite       90 files, 2,569 tests, no reds
     svg-bytes   0 of 691 in-repo, 0 of 356 sibling
     mode-bytes  11 of 691 — every one DECLARED
     midi-bytes  0 of 691 — 19 ruled divergent
     zzlive      0 of 685  WebKit AND Chrome        zzselect 0 of 685
     zzclick     1 of 685 DECLARED ×3               zzledger 0 differ, 0 KNOWN, 41 agree
     zzopts      26 rows, every one at its declared count:
-                timeBasedLayout 669 · wrap+staffwidth 59 · initialClef 42 ·
+                timeBasedLayout 669 · wrap+staffwidth 41 · initialClef 42 ·
                 add_classes 16 · expandToWidest 14 · lineThickness 14 ·
                 print 5 · print+responsive 5 · minPadding 5 · scale 2 / 1 / 1
     warnings    0 of 815 · zzscale 8 of 8 LINEAR · test:dist 0 of 685 ESM and CJS
@@ -38,11 +39,20 @@ scratch probe last time. Restore before any browser gate:
      and for anything DOM-side render both engines in a real browser instead.
   5. Only then write code, and let the gate arbitrate.
 
-⭐⭐ A RECORDED CAUSE IS A HYPOTHESIS UNTIL SOMETHING MEASURES IT. Two of this repo's own
-were overturned last session by one sweep each — `lineThickness`'s note assumed abcjs moved
-the tuplet too (it does not move for ANY value), and the `wrap` row's line-count half turned
-out to have a byte-identical DECISION, so `calcLineWraps` was never the defect. **Before
-implementing what a note says, spend ten minutes proving the note.**
+⭐⭐ A RECORDED CAUSE IS A HYPOTHESIS UNTIL SOMETHING MEASURES IT — INCLUDING ONE YOU WROTE
+AN HOUR AGO. Last session overturned two of this repo's; this one overturned one of its own,
+an hour old: the `voltaOnOpeningBar` exclusion was reasoned, and four rungs disproved it.
+**Before implementing what a note says, spend ten minutes proving the note.**
+
+⭐⭐⭐⭐ WHEN YOU NARROW A SHARED FLAG, GREP ITS USES FIRST. `withMeter` also carried the
+TUNE'S TEMPO MARK, so narrowing it for the wrap took the tempo off every wrapped tune with a
+subtitle — and NO GATE COULD SEE IT: the fixtures that show it were already differing, and
+no golden renders `{wrap}`. A rung written for a different item is what found it.
+
+⭐⭐⭐⭐⭐ EVERY WRAP RULE HAS TWO SURFACES: the drawn ink (`layout.ts`) and `tune.lines`
+(`lines.ts`). Both model rules this session needed both, and the byte gates see only the
+first. And an element with `startChar: -1` sorts to the FRONT of the line and is then
+DROPPED by `hoistLeadingStaffFields` — pin it with `sortAt`.
 
 ⭐⭐⭐ AND A CORRECT READING OF abcjs CAN STILL GIVE THE WRONG PORT. `printStem(x, linewidth
 ± t)` leaves `x` alone, so placing our stem at its base weight looks like the port and reads
@@ -63,11 +73,14 @@ source told the truth about abcjs and lied about us. Check which MODEL each side
      its run — check the timestamp on `/tmp/abcts-*.txt`.
 
 WHAT TO DO NEXT — ask the owner which; these are NOT equal:
-  1. **`wrap`'s remaining 59 — GEOMETRY, and the only undiagnosed row left.** ⭐ The line
-     structure now matches everywhere and the residuals collapsed with it
-     (`visual-layout-09-endings` was 389.24 against 235.58 and is 389.238913 against
-     389.237975). Nobody has looked at what the 59 are, so the first hour is a diff, not a
-     port. ⚠️ Two of them are abcjs CRASHING on `%%vskip` + `wrap`, not us.
+  1. **`wrap`'s remaining 41 — FULLY DIFFERENCED, six named families.** ⭐ Read `zzopts`'s
+     row comment: it names the abcjs mechanism for each. Biggest first: 7 a LOST BAR NUMBER
+     (`%%barlabelfont … box` reserves 25.64px of page height), 5 a LOST TEMPO, 5 a MISSING
+     ENDING (`tablature-20`'s are `[|]1`, on OPENING barlines — and the exclusion written
+     into `layout.ts` for that arm is DISPROVED, see the comment), 2 `g:unsupported`,
+     4 geometry-only, 2 abcjs CRASHING on `%%vskip`.
+     ⚠️ And `synth-flattener-17`'s accidentals (+3 sharp, -3 natural, -2 flat) were
+     predicted to be the delined-key defect and did NOT close with it — a live hypothesis.
   2. **`add_classes` — 16, and the next one is NAMED.** A `%%sep` SEPARATOR rule is
      `abcjs-defined-text abcjs-l2` in abcjs and `abcjs-defined-text` here, while the
      free-text row above it is `abcjs-l1` in BOTH — the counter is right and is not advanced
