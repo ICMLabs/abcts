@@ -1529,6 +1529,40 @@ function voiceElements(
           return e;
         })(),
       );
+    /**
+     * **AND A WRAP THAT DISSOLVED THIS LINE'S BREAK RE-EMITS ITS STAFF PROPERTY**, with
+     * `startChar`/`endChar` of **-1** — see `Measure.wrapInjectedKey`. `deline` unshifts the
+     * merged line's staff clef/key/meter onto the voice (`data/deline-tune.js:126-151`), so
+     * it lands after the warning that carries the source range and before the voice's own
+     * elements: abcjs's shape is `keySignature@26 keySignature@-1`.
+     *
+     * ⚠️ **THIS IS THE SECOND SURFACE, AND IT IS NOT THE ONE THE GATE MEASURES.** The
+     * drawn ink comes from `layout.ts`; this is `tune.lines`, which a HOST reads and no
+     * byte gate renders. The meter rule three commits ago needed both sites too, and
+     * fixing only the ink left the model wrong and silent.
+     */
+    /**
+     * ⚠️ **AND IT NEEDS A `sortAt` ENTRY, BECAUSE `startChar: -1` SORTS TO THE FRONT OF THE
+     * LINE AND IS THEN DROPPED.** `stream` orders `out` by `keyOf`, which falls back to
+     * `startChar`, so a -1 lands ahead of every note; `hoistLeadingStaffFields` then finds
+     * a STAFF_FIELD before the first note or bar, tries to move it to the line above, and
+     * — with nothing above holding music — **drops it**, which that function says in so
+     * many words. The element was in `out` and absent from `tune.lines`, silently.
+     *
+     * So it is pinned just before this measure's first event, in the same
+     * fractional-offset way a `%%MIDI` marker is (`sortAt.set(marker, first - 0.25)`), and
+     * the three fractions keep abcjs's clef-then-key-then-meter order among themselves.
+     */
+    const injectedAt =
+      measure.events[0]?.sourceRange?.start ??
+      measure.closingBarlineSourceRange?.start ??
+      0;
+    const pushInjected = (type: string, fill: object | null, nth: number): void => {
+      const e: AbcElement = { el_type: type, startChar: -1, endChar: -1 };
+      if (fill !== null) Object.assign(e, fill, { el_type: type, startChar: -1, endChar: -1 });
+      sortAt.set(e, injectedAt - 0.3 + nth * 0.05);
+      out.push(e);
+    };
     // …**AND THE FLAG IS THE ONE AT THIS `K:`, NOT THE TUNE'S LAST SETTING** — abcjs tests
     // `multilineVars.keywarn !== false` inside `parseKey` itself. See
     // `Measure.keyChangeKeywarn`.
@@ -1661,6 +1695,15 @@ function voiceElements(
         for (const m of all)
           out.push(withMeter(el(drawnName("timeSignature"), m.range ?? null), m.meter));
     }
+    // …**AND THE WRAP'S INJECTED STAFF PROPERTIES COME AFTER ALL THREE WARNINGS**, in the
+    // order clef, key, meter — `deline` unshifts them meter-first onto the FRONT of the
+    // voice, which reverses to that (`data/deline-tune.js:126-151`). See `pushInjected`.
+    if (measure.wrapInjectedClef === true && measure.clefChange != null)
+      pushInjected("clef", clefElement(measure.clefChange), 0);
+    if (measure.wrapInjectedKey === true && keyNow !== undefined)
+      pushInjected(drawnName("keySignature"), keyElement(keyNow, clefNow ?? defaultClef), 1);
+    if (measure.wrapInjectedMeter === true && measure.meterChange != null)
+      pushInjected(drawnName("timeSignature"), meterElement(measure.meterChange), 2);
     out.push(
       tempoElement(measure.tempoChange, measure.tempoChangeSourceRange, byRange, engraved),
     );

@@ -11499,12 +11499,59 @@ function layoutMeasure(
     elements.push(tempo)
     fixed(0, 0)
   }
+  /**
+   * **AND A WRAP THAT DISSOLVED THIS LINE'S BREAK RE-EMITS ITS STAFF PROPERTY** — see
+   * `Measure.wrapInjectedKey`. `deline` unshifts the merged line's staff key/meter/clef
+   * onto the voice with `startChar: -1`, so it lands AFTER the warning that carries the
+   * source range and BEFORE the voice's own elements: `keySignature@26 keySignature@-1`.
+   *
+   * The unshift order is meter, then key, then clef, each onto the FRONT
+   * (`data/deline-tune.js:126-151`), so the block reads clef, key, meter — which is the
+   * same order the prefix draws them in, and the order abcjs's `clef@26 keySignature@26
+   * clef@-1` shows for a line that changes both.
+   *
+   * The VALUE is whatever is in force here: the warning above has already been drawn from
+   * the same change, so the head value and the in-force value are the same thing. It is
+   * emitted with NO source range, which is what `startChar: -1` means for a host.
+   */
+  const drawWrapInjected = (): void => {
+    if (measure.wrapInjectedClef === true) {
+      const el = layoutClef(x, measure.clefChange ?? clef, strict)
+      if (el !== null) {
+        elements.push(el)
+        fixed(el.width + ENGRAVE.prefixGap, ENGRAVE.prefixGap, 'other', 0, el.width)
+        x += el.width + ENGRAVE.prefixGap
+      }
+    }
+    if (measure.wrapInjectedKey === true) {
+      const now = measure.keyChange ?? keyInForce
+      // A line head states its key rather than cancelling into it — the naturals belong to
+      // the warning, which has already been drawn. Passing the key as its own predecessor
+      // is how this file states a change with nothing to cancel (see `drawKeyChange`).
+      const el = now === null ? null : layoutKeyChange(x, now, now, clef, strict)
+      if (el !== null) {
+        elements.push(el)
+        fixed(el.width + ENGRAVE.prefixGap, ENGRAVE.prefixGap, 'other', 0, el.width)
+        x += el.width + ENGRAVE.prefixGap
+      }
+    }
+    if (measure.wrapInjectedMeter === true) {
+      const now = measure.meterChange ?? meterInForce
+      if (now !== null) {
+        const el = layoutMeter(x, now, strict)
+        elements.push(el)
+        fixed(el.width + ENGRAVE.prefixGap, ENGRAVE.prefixGap, 'other', 0, el.width)
+        x += el.width + ENGRAVE.prefixGap
+      }
+    }
+  }
   if (keyChangeAt < openingBarAt) {
     drawTempoChange()
     drawClefChange()
     drawKeyChange()
     if (!staffMeterHere) drawPart()
     drawMeterChange()
+    drawWrapInjected()
     drawPart()
     drawOpeningBar()
   } else {
@@ -11514,6 +11561,7 @@ function layoutMeasure(
     drawClefChange()
     drawKeyChange()
     drawMeterChange()
+    drawWrapInjected()
     drawPart()
   }
 

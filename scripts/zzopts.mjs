@@ -219,7 +219,7 @@ const OPTIONS = [
   ['minPadding', { minPadding: 40 }, 5],
   ['timeBasedLayout', { timeBasedLayout: { minPadding: 20 } }, 669],
   /**
-   * ⚠️ **48, AND THE LINE-STRUCTURE HALF IS CLOSED.** Counting staff lines in each engine
+   * ⚠️ **42, AND THE LINE-STRUCTURE HALF IS CLOSED.** Counting staff lines in each engine
    * over the whole corpus: **ELEVEN fixtures drew a different NUMBER OF LINES and now NONE
    * does.** The two the line-count probe still reports are abcjs THROWING — see below.
    *
@@ -274,9 +274,21 @@ const OPTIONS = [
    * exactly the rule this file's wrap comment states. `wrapMusicLines`
    * (`parser.ts:3556`) counts measures. Untouched: no gate renders it.
    *
-   * ⚠️ **THE REMAINING 48 ARE DIFFERENCED AND NAMED.** Classified by the kind of element
+   * ⚠️ **THE REMAINING 42 ARE DIFFERENCED AND NAMED** (the 48 as differenced, minus the 16
+   * closed by the row marked ✅ below; the counts in the list are as measured at 48). Classified by the kind of element
    * each engine draws, not by the byte — a set difference of element kinds says an element
    * is MISSING where a byte offset only says the line is spaced differently:
+   *
+   * ✅ **THE DELINED STAFF PROPERTY IS RE-EMITTED — 48 → 42.** Closed; the paragraph below
+   *    is kept because the rule it states is the one the code implements, and both of its
+   *    edge rungs are load-bearing. Two surfaces needed it, as the meter rule did: the
+   *    drawn ink in `layout.ts` AND `tune.lines` in `lines.ts`.
+   *    ⚠️ **AND `startChar: -1` SORTS TO THE FRONT OF THE LINE AND IS THEN DROPPED.**
+   *    `lines.ts`'s `stream` orders by `startChar`, so the injected element landed ahead
+   *    of every note; `hoistLeadingStaffFields` then found a staff field before the first
+   *    note or bar, tried to move it to the line above, and — nothing above holding music
+   *    — DROPPED it, which that function says in so many words. It was in `out` and absent
+   *    from `tune.lines`, silently. A `sortAt` pin is what holds it in place.
    *
    *   16  A DELINED STAFF PROPERTY IS NOT RE-EMITTED. ⭐ The largest, and it is a
    *       MECHANISM, not a value. `deline` runs BEFORE `findLineBreaks`, and when it
@@ -333,13 +345,13 @@ const OPTIONS = [
    *    4  GEOMETRY ONLY, same element kinds throughout: `synth-flattener-20`,
    *       `text-udef-parts-overlays-tune8` and `-tune46`, `vskip-tune1`.
    *
-   * ⚠️ **AND TWO OF THE 48 ARE abcjs CRASHING, NOT US.** `abcts-vskip` tunes 0 and 2 throw
+   * ⚠️ **AND TWO OF THE 42 ARE abcjs CRASHING, NOT US.** `abcts-vskip` tunes 0 and 2 throw
    * inside abcjs's own `wrapLines` — `undefined is not an object (evaluating 'l[p]')` —
    * because `addLineBreaks` reads `lines[action.ogLine].staff[action.staff]` on a row a
    * `%%vskip` made non-music. We render them. A crash is not output and strict does not
    * reproduce one.
    */
-  ['wrap + staffwidth', { wrap: { minSpacing: 1.8, maxSpacing: 2.7, preferredMeasuresPerLine: 4 }, staffwidth: 400 }, 48],
+  ['wrap + staffwidth', { wrap: { minSpacing: 1.8, maxSpacing: 2.7, preferredMeasuresPerLine: 4 }, staffwidth: 400 }, 42],
 ]
 const every = Number(process.argv[2] ?? 1)
 const browser = await webkit.launch()

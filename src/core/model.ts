@@ -1401,6 +1401,35 @@ export interface Measure {
   }[]
   readonly startsSystem: boolean
   /**
+   * **A WRAP DISSOLVED THE SOURCE LINE BREAK HERE, AND THE LINE'S STAFF KEY / METER / CLEF
+   * MUST BE RE-EMITTED AS A VOICE ELEMENT.**
+   *
+   * `deline` runs BEFORE `findLineBreaks`, and merging a line turns that line's STAFF
+   * property into a voice element which it `unshift`s onto the front of the voice with
+   * `startChar: -1` (`data/deline-tune.js:23-39`, `addKeyToVoices` and its two siblings at
+   * `:126-151`). The wrap then dissolves the source break and BOTH survive: the previous
+   * line's trailing WARNING, which carries the source range, and this injected copy, which
+   * carries none. `keySignature@26 keySignature@-1` is the shape.
+   *
+   * ⚠️ **THE GUARD IS `objEqual` AGAINST THE PREVIOUS LINE'S HEAD VALUE, NOT "THIS MEASURE
+   * HAS A CHANGE".** Two rungs settle it and they fall opposite ways:
+   *
+   *     CDEF| / K:C / GABc|        a RESTATED key    -> abcjs injects NOTHING
+   *     CD[K:G]EF| / GABc|         an INLINE change  -> abcjs INJECTS, and the next
+   *                                                     measure has no change at all
+   *
+   * — because `currentKey` tracks the STAFF key alone, so an inline `[K:]` never advances
+   * it and the following line's head differs from it. See `injects` in `wrap.ts`.
+   *
+   * The VALUE is not carried: it is whatever is in force where the element is drawn, which
+   * is the same thing on both routes.
+   */
+  readonly wrapInjectedKey?: true
+  /** …the meter, on the same rule. See `wrapInjectedKey`. */
+  readonly wrapInjectedMeter?: true
+  /** …and the clef. See `wrapInjectedKey`. */
+  readonly wrapInjectedClef?: true
+  /**
    * **abcjs's `ogLine` — WHICH DELINED LINE THIS MEASURE CAME FROM.** Present only where
    * `renderAbc({wrap})` has re-lined the music, and it is the SECTION index rather than the
    * source line's, because `wrapLines` opens with `tune.deline({lineBreaks: false})`

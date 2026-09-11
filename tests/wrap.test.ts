@@ -407,3 +407,75 @@ describe("renderAbc({wrap}) — an ending opens on the system holding its barlin
     ]);
   });
 });
+
+/**
+ * **A DISSOLVED LINE BREAK RE-EMITS THE LINE'S STAFF KEY / METER / CLEF.**
+ *
+ * `deline` runs BEFORE `findLineBreaks`, and merging a line turns that line's STAFF
+ * property into a voice element it `unshift`s onto the front of the voice with
+ * `startChar: -1` (`data/deline-tune.js:23-39`, `addKeyToVoices` and its two siblings at
+ * `:126-151`). The wrap then dissolves the source break and BOTH survive: the previous
+ * line's WARNING, which carries the source range, and this injected copy, which carries
+ * none. abcjs's shape is `keySignature@26 keySignature@-1`.
+ *
+ * ⚠️ **THE GUARD IS `objEqual` AGAINST THE PREVIOUS LINE'S HEAD, NOT "THIS MEASURE HAS A
+ * CHANGE"** — and the two rungs that settle it fall opposite ways. `zzopts`'s
+ * `wrap + staffwidth` row 48 -> 42.
+ */
+describe("renderAbc({wrap}) — a dissolved break re-emits the staff property", () => {
+  /** The line's voice as `el_type@startChar`, which is where `-1` is the whole point. */
+  const voiceOf = (abc: string): string => {
+    const tune = renderAbc({ innerHTML: "" }, abc, {
+      staffwidth: 400,
+      wrap: { minSpacing: 1.8, maxSpacing: 2.7, preferredMeasuresPerLine: 4 },
+    })[0];
+    const line = (tune?.lines ?? []).find(
+      (l) => (l as { staff?: unknown }).staff !== undefined,
+    ) as { staff: { voices: { el_type: string; startChar?: number }[][] }[] } | undefined;
+    return (line?.staff[0]?.voices[0] ?? [])
+      .map((e) => (/key|meter|clef|Sign/i.test(e.el_type) ? `${e.el_type}@${e.startChar}` : e.el_type))
+      .join(" ");
+  };
+
+  it("re-emits a KEY, after the warning that carries the range", () => {
+    expect(voiceOf("X:1\nL:1/4\nM:4/4\nK:C\nCDEF|\nK:G\nGAB^c|\n")).toBe(
+      "note note note note bar keySignature@26 keySignature@-1 note note note note bar",
+    );
+  });
+
+  it("re-emits a METER, and there is no meter warning to precede it", () => {
+    expect(voiceOf("X:1\nL:1/4\nM:4/4\nK:C\nCDEF|\nM:3/4\nGAB|\n")).toBe(
+      "note note note note bar timeSignature@-1 note note note bar",
+    );
+  });
+
+  it("re-emits a CLEF, after both warnings", () => {
+    expect(voiceOf("X:1\nL:1/4\nM:4/4\nK:C\nCDEF|\nK:C clef=bass\nGABc|\n")).toBe(
+      "note note note note bar clef@26 keySignature@26 clef@-1 note note note note bar",
+    );
+  });
+
+  it("re-emits after an INLINE [K:] on the line before, which changes no measure", () => {
+    // ⚠️ The case that disproves "this measure has a change": the second line carries no
+    // `K:` at all. `currentKey` tracks the STAFF key alone, so an inline `[K:]` never
+    // advances it and the following line's head differs from it.
+    expect(voiceOf("X:1\nL:1/4\nM:4/4\nK:C\nCD[K:G]EF|\nGABc|\n")).toBe(
+      "note note keySignature@22 note note bar keySignature@-1 note note note note bar",
+    );
+  });
+
+  it("re-emits NOTHING for a RESTATED key", () => {
+    // The control, and it is the other half of `objEqual`: a `K:C` under `K:C` is a change
+    // this measure carries and abcjs injects nothing for. A rule keyed on "has a change"
+    // passes every row above and fails this one.
+    expect(voiceOf("X:1\nL:1/4\nM:4/4\nK:C\nCDEF|\nK:C\nGABc|\n")).toBe(
+      "note note note note bar keySignature@26 note note note note bar",
+    );
+  });
+
+  it("re-emits NOTHING for a RESTATED meter", () => {
+    expect(voiceOf("X:1\nL:1/4\nM:4/4\nK:C\nCDEF|\nM:4/4\nGABc|\n")).toBe(
+      "note note note note bar note note note note bar",
+    );
+  });
+});

@@ -475,6 +475,63 @@ export function applyLineBreaks(
     if (i > 0 && (m.textBefore?.length ?? 0) > 0) sectionStarts.push(i);
   });
 
+  /**
+   * **WHICH DISSOLVED BREAKS OWE AN INJECTED STAFF PROPERTY** — `deline`'s `objEqual` test,
+   * run over the source lines rather than over abcjs's merged ones. See
+   * `Measure.wrapInjectedKey`.
+   *
+   * abcjs compares each line's STAFF key/meter/clef against a running `currentKey` etc.
+   * that only a staff-level value advances (`data/deline-tune.js:23-39`, `:76-78`), so the
+   * question is whether THIS source line's head differs from the PREVIOUS one's — never
+   * whether this measure carries a change. The two are not the same test in either
+   * direction: a restated `K:C` is a change that injects NOTHING, and an inline `[K:G]` on
+   * the line before injects although the measure has no change at all.
+   *
+   * The VALUE is not computed here. Whatever is in force where the element is drawn is the
+   * head value by construction, and the layout already tracks it.
+   *
+   * ⚠️ A change written AFTER some of its line's music belongs to that line's BODY, so it
+   * reaches the next line's head and not its own. `…Inline !== true` is the test, which is
+   * the same split `keyChangeLeadsLine` makes on the drawing side.
+   */
+  const injects = new Map<number, { key: boolean; meter: boolean; clef: boolean }>()
+  {
+    const first = score.voices[0]?.measures ?? []
+    let runKey = score.key
+    let runMeter = score.meter
+    let runClef = score.clef
+    let headKey = runKey
+    let headMeter = runMeter
+    let headClef = runClef
+    let seenFirstLine = false
+    const same = (a: unknown, b: unknown): boolean => JSON.stringify(a) === JSON.stringify(b)
+    first.forEach((m, i) => {
+      if (m.startsSystem === true) {
+        // This line's HEAD takes a change that LEADS the line; one written after its own
+        // music does not reach it and will reach the next line's instead.
+        const leadKey = m.keyChange !== null && m.keyChangeInline !== true ? m.keyChange : runKey
+        const leadMeter =
+          m.meterChange !== null && m.meterChangeInline !== true ? m.meterChange : runMeter
+        const leadClef =
+          m.clefChange != null && m.clefChangeInline !== true ? m.clefChange : runClef
+        if (seenFirstLine) {
+          injects.set(i, {
+            key: !same(leadKey, headKey),
+            meter: !same(leadMeter, headMeter),
+            clef: !same(leadClef, headClef),
+          })
+        }
+        headKey = leadKey
+        headMeter = leadMeter
+        headClef = leadClef
+        seenFirstLine = true
+      }
+      if (m.keyChange !== null) runKey = m.keyChange
+      if (m.meterChange !== null) runMeter = m.meterChange
+      if (m.clefChange != null) runClef = m.clefChange
+    })
+  }
+
   const voices = score.voices.map((voice, vi) => {
     /**
      * **A BREAK INDEXES BAR ELEMENTS, NOT MEASURES**, and the two are not the same list.
@@ -538,9 +595,21 @@ export function applyLineBreaks(
       // (`wrap_lines.js:41-46`) — where `%%barsperstaff`'s `wrapMusicLines` copies the line
       // WHOLE and carries `staff.meter` with it. Two line-forcing features, two answers,
       // and setting `wrappedLine` here drew a meter on every wrapped system.
-      return opens
-        ? { ...m, startsSystem: true as const, wrapSourceLine: section }
-        : { ...m, startsSystem: false as const, wrapSourceLine: section };
+      if (opens) return { ...m, startsSystem: true as const, wrapSourceLine: section };
+      // **THIS IS THE DISSOLVED BREAK** — `opens` is false and the measure DID start a
+      // system, which is the only branch that can reach here. The line abcjs is merging is
+      // this one, so this is where `deline` would have injected its staff property; see
+      // `injects` and `Measure.wrapInjectedKey`. Only voice 0 is walked, because the
+      // staff's properties are the tune's and not a voice's.
+      const owed = vi === 0 ? injects.get(i) : undefined;
+      return {
+        ...m,
+        startsSystem: false as const,
+        wrapSourceLine: section,
+        ...(owed?.key === true ? { wrapInjectedKey: true as const } : {}),
+        ...(owed?.meter === true ? { wrapInjectedMeter: true as const } : {}),
+        ...(owed?.clef === true ? { wrapInjectedClef: true as const } : {}),
+      };
     });
     /**
      * ⚠️ **AND THE BARLINE THAT ENDS A WRAPPED LINE LOSES ITS NUMBER, WHICH THE NEXT LINE
