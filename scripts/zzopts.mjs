@@ -424,8 +424,40 @@ const OPTIONS = [
    *           ⚠️ `tablature-17` keeps its +4 endings and a 499 / 966 page: that fixture is
    *           dominated by its +4 `g:unsupported`, a different defect wearing the symptom.
    *
-   *    2  `g:unsupported` + `text:text` — `tablature-17-stretchlast` (+4),
-   *       `abcts-model-gaps-tune7` (+1).
+   *    2  **`g:unsupported` + `text:text` — FULLY DIAGNOSED, NOT PORTED.** It is the FOURTH
+   *       ARM of the delined staff property above, and abcjs draws its own DEBUG TEXT for
+   *       it. `deline` calls `addFontToVoices` for `vocalfont`, `gchordfont`,
+   *       `tripletfont` and `annotationfont` (`data/deline-tune.js:41-60`), producing an
+   *       element with `el_type: "font"` — and the engraver's switch has NO CASE for it,
+   *       so `default:` builds an `unsupported` AbsoluteElement holding
+   *       `"element type " + elem.el_type` as a `type: "debug"` child
+   *       (`abstract-engraver.js:379-382`). abcjs literally prints `element type font` on
+   *       the score, red and underlined, and it enters the staff's ink: 19.375px of page.
+   *
+   *           <g fill="currentColor" stroke="none" data-name="unsupported"><text
+   *             stroke="#ff0000" font-size="16" font-style="normal" font-family="Arial"
+   *             font-weight="normal" text-decoration="underline" class=""
+   *             text-anchor="start" x="247.92" y="93.55"><tspan x="247.92">element type
+   *             font</tspan></text></g>
+   *
+   *       ⚠️ **THREE OF THE FOUR FIRE AND `annotationfont` DOES NOT** — measured, both
+   *       engines agree on that one, because abcjs's parser never puts it on the staff.
+   *       Do not port the fourth branch just because the source has it.
+   *       ⚠️ **AND THE FONTS UNSHIFT AHEAD OF THE CLEF, KEY AND METER.** The calls run
+   *       meter, key, clef, then the fonts, each onto the FRONT, so the block reads
+   *       annotationfont, tripletfont, gchordfont, vocalfont, clef, key, meter — the fonts
+   *       come FIRST. `drawWrapInjected` currently emits clef, key, meter; a font arm goes
+   *       ahead of them, and a rung with BOTH a font and a key change is what proves it.
+   *       ✅ What exists already: `Measure.lineFonts` is exactly abcjs's per-line staff
+   *       fonts ("changed since the last line"), so the trigger needs no new detection; and
+   *       `debugfont` is already drawn — Arial 16, `#ff0000`, underlined — by the
+   *       `"no symbol:"` path (`layout.ts`'s `spec.missingFlag`, `svg.ts`'s `t.debug`).
+   *       ⚠️ What does NOT exist: an `unsupported` ELEMENT. `ElementType` in
+   *       `layout-model.ts` has no such member and the emitter has no group for it, and
+   *       that type is PUBLIC — hosts read it. Adding a member is a design decision rather
+   *       than a port, which is why this is recorded and not landed.
+   *       Fixtures: `abcts-model-gaps-tune7` (+1) and `tablature-17-stretchlast` (+4,
+   *       which also carries the +4 endings and a 499 / 966 page).
    *
    *    4  GEOMETRY ONLY, same element kinds throughout: `synth-flattener-20`,
    *       `text-udef-parts-overlays-tune8` and `-tune46`, `vskip-tune1`.
