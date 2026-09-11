@@ -633,14 +633,31 @@ export function applyLineBreaks(
        * below, because the two that return early are exactly the "nothing moved" ones.
        */
       const trails = trailsHere.has(i) ? { openingBarlineTrails: true as const } : {};
+      /**
+       * ⚠️ **AND A MUSIC LINE'S OWN `%%vskip` IS LOST.** `addLineBreaks` builds a FRESH
+       * line — `outputLines[action.line] = {staff: []}` (`wrap_lines.js:33-35`) — and then
+       * copies only the STAFF's keys onto it. `vskip` is a property of the LINE, so
+       * nothing carries it across; a NON-music line keeps its own because that arm assigns
+       * the original object whole (`:89`).
+       *
+       * Measured on `%%text before` / `%%vskip 20` / `CDEF|`: abcjs's staff sits 20px
+       * HIGHER than ours under wrap and the two agree without it. `abcts-vskip-tune1` is
+       * the same at 25.
+       */
+      const noVskip = (out: Measure): Measure => {
+        if (out.vskip === undefined) return out;
+        const copy: Measure = { ...out };
+        delete (copy as { vskip?: number }).vskip;
+        return copy;
+      };
       // A section's FIRST measure keeps whatever it had — it opens the section, and that
       // is not the wrap's to decide.
-      if (i === from) return { ...m, wrapSourceLine: section, ...trails };
+      if (i === from) return noVskip({ ...m, wrapSourceLine: section, ...trails });
       // "These are the zero-based last measure on each line", so the measure AFTER one
       // opens a system and every other measure in the section does not.
       const opens = opensHere.has(i);
       if (opens === (m.startsSystem === true))
-        return { ...m, wrapSourceLine: section, ...trails };
+        return noVskip({ ...m, wrapSourceLine: section, ...trails });
       // ⚠️ **AND A WRAPPED LINE DOES NOT REPRINT THE METER, WHERE `%%barsperstaff`'s DOES.**
       // `addLineBreaks` copies every key of the input staff onto the output one EXCEPT
       // `voices`, and `if (keys[k] === "meter" && action.line !== 0) skip = true`
@@ -648,13 +665,13 @@ export function applyLineBreaks(
       // WHOLE and carries `staff.meter` with it. Two line-forcing features, two answers,
       // and setting `wrappedLine` here drew a meter on every wrapped system.
       if (opens)
-        return {
+        return noVskip({
           ...m,
           startsSystem: true as const,
           wrapSourceLine: section,
           ...trails,
           ...(vi === 0 && headKeys.has(i) ? { wrapLineHeadKey: headKeys.get(i)! } : {}),
-        };
+        });
       // **THIS IS THE DISSOLVED BREAK** — `opens` is false and the measure DID start a
       // system, which is the only branch that can reach here. The line abcjs is merging is
       // this one, so this is where `deline` would have injected its staff property; see
@@ -679,14 +696,14 @@ export function applyLineBreaks(
        * ⚠️ `annotationfont` is the one arm that fires in NEITHER engine, measured — abcjs's
        * parser never puts it on the staff. Do not port that branch either.
        */
-      return {
+      return noVskip({
         ...m,
         startsSystem: false as const,
         wrapSourceLine: section,
         ...(owed?.key === true ? { wrapInjectedKey: true as const } : {}),
         ...(owed?.meter === true ? { wrapInjectedMeter: true as const } : {}),
         ...(owed?.clef === true ? { wrapInjectedClef: true as const } : {}),
-      };
+      });
     });
     /**
      * ⚠️ **AND THE BARLINE THAT ENDS A WRAPPED LINE LOSES ITS NUMBER, WHICH THE NEXT LINE

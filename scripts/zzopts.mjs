@@ -219,7 +219,7 @@ const OPTIONS = [
   ['minPadding', { minPadding: 40 }, 5],
   ['timeBasedLayout', { timeBasedLayout: { minPadding: 20 } }, 669],
   /**
-   * ⚠️ **31, AND THE LINE-STRUCTURE HALF IS CLOSED.** Counting staff lines in each engine
+   * ⚠️ **28, AND THE LINE-STRUCTURE HALF IS CLOSED.** Counting staff lines in each engine
    * over the whole corpus: **ELEVEN fixtures drew a different NUMBER OF LINES and now NONE
    * does.** The two the line-count probe still reports are abcjs THROWING — see below.
    *
@@ -549,16 +549,24 @@ const OPTIONS = [
    *    accidentals were predicted to be the delined-key defect and did NOT close with it.
    *    The prediction was wrong and the non-closing was the evidence: it is this rule.
    *
+   * ✅ **AND A WRAP LOSES A MUSIC LINE'S OWN `%%vskip` — 31 → 28.** `addLineBreaks` builds
+   *    a FRESH line, `outputLines[action.line] = {staff: []}` (`:33-35`), and copies only
+   *    the STAFF's keys onto it; `vskip` is a property of the LINE, so nothing carries it.
+   *    A NON-music line keeps its own, because that arm assigns the original object whole
+   *    (`:89`). Measured on `%%text before` / `%%vskip 20` / `CDEF|`: abcjs's staff sits
+   *    20px HIGHER than ours under wrap. Closed `text-udef-parts-overlays` tunes 8 and 46
+   *    and `abcts-vskip-tune1`.
+   *
    *    4  GEOMETRY ONLY, same element kinds throughout: `synth-flattener-20`,
    *       `text-udef-parts-overlays-tune8` and `-tune46`, `vskip-tune1`.
    *
-   * ⚠️ **AND TWO OF THE 31 ARE abcjs CRASHING, NOT US.** `abcts-vskip` tunes 0 and 2 throw
+   * ⚠️ **AND TWO OF THE 28 ARE abcjs CRASHING, NOT US.** `abcts-vskip` tunes 0 and 2 throw
    * inside abcjs's own `wrapLines` — `undefined is not an object (evaluating 'l[p]')` —
    * because `addLineBreaks` reads `lines[action.ogLine].staff[action.staff]` on a row a
    * `%%vskip` made non-music. We render them. A crash is not output and strict does not
    * reproduce one.
    */
-  ['wrap + staffwidth', { wrap: { minSpacing: 1.8, maxSpacing: 2.7, preferredMeasuresPerLine: 4 }, staffwidth: 400 }, 31],
+  ['wrap + staffwidth', { wrap: { minSpacing: 1.8, maxSpacing: 2.7, preferredMeasuresPerLine: 4 }, staffwidth: 400 }, 28],
 ]
 const every = Number(process.argv[2] ?? 1)
 const browser = await webkit.launch()

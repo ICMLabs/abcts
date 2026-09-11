@@ -813,3 +813,44 @@ describe("renderAbc({wrap}) — a wrap-broken opening bar trails, with its endin
     ]);
   });
 });
+
+/**
+ * **A WRAP LOSES A MUSIC LINE'S OWN `%%vskip`.**
+ *
+ * `addLineBreaks` builds a FRESH line — `outputLines[action.line] = {staff: []}`
+ * (`wrap_lines.js:33-35`) — and then copies only the STAFF's keys onto it. `vskip` is a
+ * property of the LINE, so nothing carries it across. A NON-music line keeps its own,
+ * because that arm assigns the original object whole (`:89`).
+ *
+ * Measured: `%%text before` / `%%vskip 20` / `CDEF|` puts abcjs's staff 20px HIGHER than
+ * ours under wrap and the two agree once it is dropped. `zzopts`'s `wrap + staffwidth` row
+ * 31 -> 28, which is this fixture, its sibling, and `abcts-vskip-tune1` at 25.
+ */
+describe("renderAbc({wrap}) — a music line's %%vskip does not survive", () => {
+  const staffTop = (abc: string, wrap: boolean): string => {
+    const host = { innerHTML: "" } as { innerHTML: string };
+    renderAbc(host, abc, {
+      staffwidth: 400,
+      ...(wrap
+        ? { wrap: { minSpacing: 1.8, maxSpacing: 2.7, preferredMeasuresPerLine: 4 } }
+        : {}),
+    });
+    // The class comes AFTER `d` in the emitted markup, so match the path whole.
+    return /<path d="M [0-9.]+ ([0-9.]+)[^>]*class="abcjs-top-line"/.exec(host.innerHTML)?.[1] ?? "?";
+  };
+  const WITH = "X:9\nT:Text Then Vskip\nL:1/4\nK:C\n%%text before\n%%vskip 20\nCDEF|\n";
+  const WITHOUT = "X:9\nT:Text Then Vskip\nL:1/4\nK:C\n%%text before\nCDEF|\n";
+
+  // ⭐ Under wrap the `%%vskip 20` is gone, so the staff sits where it would with no
+  // directive at all. Both numbers read off abcjs.
+  it("drops it, putting the staff where a tune with no vskip has it", () => {
+    expect(staffTop(WITH, true)).toBe(staffTop(WITHOUT, true));
+  });
+
+  // The control: WITHOUT a wrap the vskip is spent, and the two tunes differ by exactly
+  // the 20 it asks for. A rule that dropped it unconditionally would pass the row above
+  // and fail this one.
+  it("spends it when no wrap runs", () => {
+    expect(Number(staffTop(WITH, false)) - Number(staffTop(WITHOUT, false))).toBe(20);
+  });
+});
