@@ -81,8 +81,9 @@ WHAT TO DO NEXT — ask the owner which; these are NOT equal:
      hold two trailing bars today); (b) `selection-01`/`svg-per-line-01`/`tablature-17` are
      `|1` closing-bar endings SPANNING THREE+ SYSTEMS, where abcjs makes a fresh
      `EndingElem("", null, null)` per line and `voltaCarried` carries once — reading only,
-     NOT yet a rung. Then: 2 `g:unsupported`, `options-01`'s 2 boxes + 2 bar numbers,
-     5 geometry-only, 2 abcjs CRASHING on `%%vskip`.
+     NOT yet a rung. Then: `options-01`'s 2 boxes + 2 bar numbers,
+     5 geometry-only, 2 abcjs CRASHING on `%%vskip`, and 2 DECLARED (abcjs's fourth debug
+     marker, declined 2026-09-12 — the row CANNOT reach 0).
      ⚠️ And `synth-flattener-17`'s accidentals (+3 sharp, -3 natural, -2 flat) were
      predicted to be the delined-key defect and did NOT close with it — a live hypothesis.
   2. **`add_classes` — 16, and the next one is NAMED.** A `%%sep` SEPARATOR rule is
