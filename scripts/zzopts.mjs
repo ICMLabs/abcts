@@ -274,6 +274,65 @@ const OPTIONS = [
    * exactly the rule this file's wrap comment states. `wrapMusicLines`
    * (`parser.ts:3556`) counts measures. Untouched: no gate renders it.
    *
+   * ⚠️ **THE REMAINING 48 ARE DIFFERENCED AND NAMED.** Classified by the kind of element
+   * each engine draws, not by the byte — a set difference of element kinds says an element
+   * is MISSING where a byte offset only says the line is spaced differently:
+   *
+   *   16  A DELINED STAFF PROPERTY IS NOT RE-EMITTED. ⭐ The largest, and it is a
+   *       MECHANISM, not a value. `deline` runs BEFORE `findLineBreaks`, and when it
+   *       merges a line it turns that line's STAFF key/meter/clef/font into a voice
+   *       element and `unshift`s it onto the front of the voice, with `startChar: -1`
+   *       (`data/deline-tune.js:23-39`, `addKeyToVoices`/`addMeterToVoices`/
+   *       `addClefToVoices` at `:126-151`) — guarded by `objEqual` against a running
+   *       `currentKey`/`currentMeter`/`currentClef`, so an unchanged line contributes
+   *       nothing. The wrap then dissolves the source break and BOTH survive: the
+   *       previous line's trailing warning AND the injected staff property.
+   *
+   *       Measured on four one-line rungs, the delined voice of `CDEF| / K:G / GAB^c|`:
+   *
+   *           K: change    abcjs  … bar keySignature keySignature note …   ours ONE
+   *           M: change    abcjs  … bar timeSignature note …               ours NONE
+   *           clef change  abcjs  … bar clef@26 keySignature clef@-1 …     ours no `@-1`
+   *           no change    identical
+   *
+   *       So it is uniform: we drop the injected element in all three, and the `@-1` is
+   *       the discriminator. ⚠️ It is NOT a flag — it is a new element in the stream, and
+   *       the prefix builder that would carry it is the most suppression-dense function
+   *       here (every `drawKeyChange`/`drawMeterChange` guard is separately measured
+   *       against a golden). Do it at the `applyLineBreaks` stage, where abcjs does it.
+   *       ⚠️ And `objEqual` tracks the STAFF key only, so an inline `[K:]` on the previous
+   *       line does NOT advance `currentKey` — measure that arm before porting it.
+   *       Fixtures: the 7 `clef-midmeasure`/`keywarn`/`stafflines-and-modifiers` rows
+   *       (a second notehead's x), `synth-flattener-17` (+3 sharp, -3 natural, -2 flat —
+   *       the missing key signature showing as accidentals), and the bar-x rows.
+   *
+   *    7  A BAR NUMBER IS LOST. `text:bar-number` is present in abcjs and absent here on
+   *       `visual-layout-01`/`-02` (with its `path:box` — a `%%barlabelfont … box` label,
+   *       and the box reserves 25.64px of PAGE HEIGHT), `visual-parsing-10-song` (+2),
+   *       `mouse-click-01`, `options-01` (+3, +3 boxes), `selection-01`,
+   *       `svg-per-line-01`, `tablature-15`. The renumbering half of `wrap_lines.js:78-88`
+   *       landed last session; this is its residual.
+   *
+   *    6  A TEMPO IS LOST — `g:tempo` with its `noteheads.quarter`, `stem` and
+   *       `text:beats`/`text:pre`. `createABCLine` hands the tempo to `createABCVoice`
+   *       PER LINE, and the re-lined structure is not the one that was handed it.
+   *       `abcts-tempo-rung-tune2`, `mouse-click-01`, `options-01`, `selection-01`,
+   *       `svg-per-line-01`, `tablature-15`.
+   *
+   *    5  AN ENDING IS STILL MISSING, and the named one is `tablature-20-score-1-2`,
+   *       whose endings are declared on OPENING barlines (`[|]1`). ⚠️ The exclusion of
+   *       `voltaOnOpeningBar` from the fix above was REASONED AND IS WRONG — abcjs opens
+   *       such an ending at the previous system's right edge too. But our engine also
+   *       DRAWS that `[|]` on the wrong side of the break, so `opensHere` in
+   *       `applyLineBreaks` moves first. `visual-layout-09-endings` (+1), `selection-01`
+   *       (+2), `svg-per-line-01` (+2), `tablature-17` (+4), `tablature-20` (+1).
+   *
+   *    2  `g:unsupported` + `text:text` — `tablature-17-stretchlast` (+4),
+   *       `abcts-model-gaps-tune7` (+1).
+   *
+   *    4  GEOMETRY ONLY, same element kinds throughout: `synth-flattener-20`,
+   *       `text-udef-parts-overlays-tune8` and `-tune46`, `vskip-tune1`.
+   *
    * ⚠️ **AND TWO OF THE 48 ARE abcjs CRASHING, NOT US.** `abcts-vskip` tunes 0 and 2 throw
    * inside abcjs's own `wrapLines` — `undefined is not an object (evaluating 'l[p]')` —
    * because `addLineBreaks` reads `lines[action.ogLine].staff[action.staff]` on a row a

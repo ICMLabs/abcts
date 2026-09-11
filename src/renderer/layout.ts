@@ -14931,10 +14931,27 @@ function layoutScoped(input: Score, options: LayoutOptions = {}): Layout {
        * x 415 on system 1 and a bare rule to 222.76 on system 2. Ours drew one bracket,
        * numbered, on system 2 at 183.71.
        *
-       * ⚠️ **AND IT IS ONLY THE ARM THAT READS THE PREVIOUS MEASURE'S CLOSER.** An ending
-       * on the measure's OWN opening bar (`voltaOnOpeningBar`) or its own closer
-       * (`voltaAtClose`) is drawn on the new system, because that is where its bar is.
-       * `voltaStartOf`'s three arms are already that distinction.
+       * ⚠️ **ONLY THE ARM THAT READS THE PREVIOUS MEASURE'S CLOSER IS HANDLED HERE, AND
+       * THE REASON FIRST WRITTEN DOWN FOR THAT WAS DISPROVED BY MEASURING IT.** The note
+       * said an ending on the measure's OWN opening bar (`voltaOnOpeningBar`) is drawn on
+       * the new system "because that is where its bar is". It is not:
+       *
+       *     X:3 M:4/4 L:1/4 K:C
+       *     CDEF|GABc|cdef|gabc|
+       *     [|]1 CDEF:|
+       *     [|]2 GABc|]
+       *
+       * under `{wrap, staffwidth: 400}` puts abcjs's `1` at x 415 — the RIGHT EDGE of the
+       * previous system — exactly as a closing-bar ending, and its `2` at 415 of the next.
+       * A break AT an opening bar leaves that bar the last element of the line it closes,
+       * the same rule as any other bar element.
+       *
+       * ⚠️ **AND IT IS NOT A ONE-LINE EXTENSION OF THIS BLOCK**, because our engine also
+       * DRAWS that `[|]` at the start of the new system where abcjs draws it at the end of
+       * the old one — ours opens the bracket at 55.05 on system 2. The bar is on the wrong
+       * side of the break before the ending is, so it is the `opensHere` translation in
+       * `applyLineBreaks` that has to move first. Five fixtures still miss an ending and
+       * `abcjs-visual-tablature-20-score-1-2` is the named one: its endings are `[|]1`.
        */
       const nextBlock = plan.blocks[span.end]
       let opensNextSystemsVolta: number | null = null
