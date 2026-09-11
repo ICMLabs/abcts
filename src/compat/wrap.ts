@@ -731,9 +731,12 @@ export function applyLineBreaks(
       if (opensSystem && (i > 0 || droppedMeter))
         (next as { systemBarNumber?: number }).systemBarNumber = current;
       else delete (next as { systemBarNumber?: number }).systemBarNumber;
-      // An opening barline is a bar ELEMENT and advances the counter; it is never the
-      // line's last element, so it never loses a number it cannot carry anyway.
-      if ((m.openingBarline ?? null) !== null) current += 1;
+      // An opening barline is a bar ELEMENT and takes a number like any other — it is
+      // never the line's last element, so it never loses one. See `Measure.openingBarNumber`.
+      if ((m.openingBarline ?? null) !== null) {
+        current += 1;
+        (next as { openingBarNumber?: number }).openingBarNumber = current;
+      } else delete (next as { openingBarNumber?: number }).openingBarNumber;
       current += 1;
       if (endsSystem) delete (next as { closingBarNumber?: number }).closingBarNumber;
       else (next as { closingBarNumber?: number }).closingBarNumber = current;

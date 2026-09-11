@@ -1543,6 +1543,20 @@ export interface Measure {
    */
   readonly closingBarNumber?: number
   /**
+   * **AND THE SAME NUMBER ON AN *OPENING* BARLINE, WHICH ONLY A WRAP PRODUCES.**
+   *
+   * `addLineBreaks` renumbers by walking BAR ELEMENTS — `if (currVoice[kk].el_type ===
+   * 'bar') { currentBarNumber++; … currVoice[kk].barNumber = currentBarNumber }`
+   * (`wrap_lines.js:78-88`) — and an opening `|:` or `|1` is one of them, so it takes a
+   * number like any other. The parser's own `%%barnumbers` path never does: it stamps the
+   * bar that CLOSES a measure (`abc_parse_music.js:296-301`), which is why
+   * `closingBarNumber` was the only field for so long.
+   *
+   * Measured on `visual-options-01-fonts`, whose `%%measurenb 1` and `|1"C"CE…:|` put a
+   * number on the opening bar of the first measure: abcjs draws `1` and `2`, ours drew `1`.
+   */
+  readonly openingBarNumber?: number
+  /**
    * `%%barnumbers 0` — the number printed on this system's CLEF rather than on a barline,
    * which is a different mechanism and not a special case of `closingBarNumber`. abcjs
    * hangs it on the STAFF at `startNewLine` (`abc_parse_music.js:1036`) and

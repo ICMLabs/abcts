@@ -347,6 +347,25 @@ const OPTIONS = [
    *    `closingBarNumber` and no opening twin. It still COUNTS, so every drawn number is
    *    right; only a number ON a `|:` is missing.
    *
+   * ✅ **AND AN OPENING BARLINE TAKES A NUMBER TOO** — `Measure.openingBarNumber`, which
+   *    the `ponytail:` above predicted would be needed "if a fixture ever shows one".
+   *    `visual-options-01-fonts` is that fixture: `%%measurenb 1` with `|1"C"CE…:|` puts a
+   *    number on the opening bar of the first measure. The parser's own `%%barnumbers` path
+   *    never does — it stamps the bar that CLOSES a measure — but `addLineBreaks` walks BAR
+   *    ELEMENTS and an opening `|:` or `|1` is one. That fixture went from +2 `path:box`
+   *    and +2 `text:bar-number` with a differing page to **194 / 194 elements and an EXACT
+   *    page height (1196.1352500000003 both)**; the count does not move because ONE number
+   *    VALUE still differs.
+   *
+   *    ⚠️ **AND THAT RESIDUAL IS NOT UNDERSTOOD — DO NOT GUESS AT IT.** Measured, abcjs's
+   *    own `tune.lines[].staff[0].barNumber` after the wrap is **1, 3, 3, 3** while its
+   *    counter plainly reaches 5 (`L5 bars=[5,-]`), and the rendered numbers are
+   *    `1 2 3 3 5 3` against our `1 2 3 4 5 6`. A head of 3 followed by a first bar of 5 is
+   *    TWO increments across one assignment, which `addLineBreaks` as written does not
+   *    predict — so the reading is incomplete rather than the port. ⭐ **It needs abcjs
+   *    INSTRUMENTED** (`/tmp/gp/abcjs`, the standing order's step 4) rather than another
+   *    pass over the source; two passes over it produced no explanation.
+   *
    *    7  A BAR NUMBER IS LOST. `text:bar-number` is present in abcjs and absent here on
    *       `visual-layout-01`/`-02` (with its `path:box` — a `%%barlabelfont … box` label,
    *       and the box reserves 25.64px of PAGE HEIGHT), `visual-parsing-10-song` (+2),

@@ -11282,10 +11282,19 @@ function layoutMeasure(
             strict,
             barSpan,
           )
-    const bar =
+    const withChords =
       chordTexts.length === 0
         ? withMarks
         : { ...withMarks, texts: [...withMarks.texts, ...chordTexts] }
+    // …**AND AN OPENING BARLINE CAN CARRY A NUMBER TOO**, which only a wrap produces —
+    // see `Measure.openingBarNumber`. The same `barNumberText` the closing bar uses.
+    const bar =
+      measure.openingBarNumber === undefined
+        ? withChords
+        : {
+            ...withChords,
+            texts: [...withChords.texts, barNumberText(measure.openingBarNumber, x)],
+          }
     openingBarIndex = elements.length
     // `addCentered` gives a barline carrying a chord `w = max(w, chordWidth / 2)`, so the
     // width is one max and the `minspacing` is the separate sum below.
