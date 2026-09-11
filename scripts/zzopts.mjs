@@ -141,26 +141,29 @@ const OPTIONS = [
    *                          (`creation/decoration.js:20`), which moves every lane with it.
    */
   /**
-   * ⚠️ **17, AND TWO OF THEM ARE NAMED.** The class scheme itself is gated by 111 sibling
-   * goldens; these are the rows those goldens do not reach, and they are GROUP classes on
-   * the top- and bottom-text blocks:
+   * ⚠️ **16, AND THE CLASS RULES BEHIND THEM ARE NOW THREE.** The scheme itself is gated by
+   * 111 sibling goldens; these are the rows those goldens do not reach.
    *
-   *     abcjs  <g class="abcjs-extra-text abcjs-unaligned-words" …>
-   *     abcts  <g data-name="unalignedWords">
-   *     abcjs  <g class="abcjs-part-order" fill="currentColor" …>
-   *     abcts  <g fill="currentColor" data-name="part-order">
+   * ✅ **A GROUP'S CLASS IS THE `<g>`'s AND AN UNGROUPED ROW'S IS ITS OWN**, and the two
+   * callers differ by one argument: `addMultiLine`'s array branch opens a group with the
+   * klass and hands `richText` a literal `''` (`bottom-text.js:48`, `:57`), which
+   * `if (klass)` leaves UNSET — so the row serialises as the literal `class="undefined"`.
+   * `addSingleLine` has no group and passes its klass through (`:32`), so a `B:` row really
+   * does read `class="abcjs-extra-text abcjs-book"`. `groupName` tells them apart.
+   * ✅ **A BOXED ROW'S GROUP CARRIES THE CLASS**, because `renderText` deletes it from the
+   * text and opens a group for it (`draw/text.js:48-81`) — `partOrder` reads
+   * `<g class="abcjs-part-order" fill="currentColor" …>`.
+   * ✅ **AND A GENERATED CLASS WINS OVER THE FIELD'S OWN**, because `classes.generate`
+   * appends the LINE counter: a `%%text` row is `abcjs-defined-text abcjs-l2`.
    *
-   * `addMultiLine` pushes `{ startGroup, klass, name }` (`bottom-text.js:48`, `:86`) and
-   * `BottomText` builds the klass as `'abcjs-extra-text ' + klass`; `TopText` uses
-   * `'abcjs-part-order'` (`top-text.js:74-75`). The layout already carries both strings.
-   *
-   * ⚠️ **AND THE OBVIOUS FIX IS NOT THE FIX.** The emitter reads `row.groupClass` when it
-   * opens a group and an explicit `startGroup` row carries `klass`; making it fall back to
-   * `klass` changed NOTHING, so these two groups are opened somewhere else — the
-   * part-order one writes `fill` BEFORE `data-name`, which the `startGroup` path does not.
-   * Find that site first.
+   * ⚠️ **THE NEXT ONE IS NAMED AND NOT FIXED**: a `%%sep` SEPARATOR rule is
+   * `abcjs-defined-text abcjs-l2` in abcjs and `abcjs-defined-text` here — the free-text
+   * row immediately above it is `abcjs-l1` in BOTH, so the counter is right and simply is
+   * not advanced for the separator's own line. `visual-mouse-click-01`, byte 2825.
+   * ⚠️ And some of the 16 are not class defects at all: `visual-selection-01` differs on a
+   * NOTEHEAD x, which `add_classes` only revealed by making the bytes before it match.
    */
-  ['add_classes', { add_classes: true }, 17],
+  ['add_classes', { add_classes: true }, 16],
   // ✅ CLOSED — two `if`s, one in each decoration pass: `closeDecoration` skips the accent
   // (`creation/decoration.js:20`) and `stackedDecoration` picks it up with the ORNAMENT's
   // own placement (`:268-273`). The same sforzato is drawn either way; what changes is

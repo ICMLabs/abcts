@@ -17509,6 +17509,11 @@ function bottomTextBlock(
         anchor: 'start',
         ...(groupName === undefined ? {} : { groupName }),
         ...(groupId === undefined ? {} : { groupId }),
+        // …**AND THE GROUP'S CLASS, WHICH THE RICH BRANCH USED TO DROP.** `addMultiLine`
+        // opens `{ startGroup, klass, name }` (`bottom-text.js:48`) and the class belongs
+        // to the `<g>`, not to the rows inside it — a `W:` block whose lines are RICH took
+        // this branch and left its group bare.
+        ...(abcjsClass === undefined ? {} : { groupClass: abcjsClass }),
         phrases: value.map((p) =>
           p.font === null
             ? {

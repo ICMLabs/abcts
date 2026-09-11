@@ -1929,15 +1929,32 @@ export function toSVG(
                     b.t.pageY === undefined ? b.t.y * PX + oy : b.t.pageY * PX,
                   ),
                   b.t.anchor ?? "start",
+                  // ⚠️ **AND A ROW WITH NO ENTRY IN THE TABLE PASSES `undefined`, NOT `""`.**
+                  // `richText` sets the row's class only `if (klass)` — a falsy one leaves
+                  // it UNSET (`elements/rich-text.js:22-23`) — and `openGroup` then writes
+                  // `setAttribute('class', undefined)`, which serialises as the literal
+                  // `class="undefined"`. `richTextLine` already emits that; coercing to `""`
+                  // here turned it back into an empty class under `add_classes` alone,
+                  // which is why the baseline row never saw it.
                   options.addClasses === true && b.t.dataName !== undefined
-                    ? (ABCJS_TEXT_CLASSES[b.t.dataName] ?? "")
+                    ? ABCJS_TEXT_CLASSES[b.t.dataName]
                     : undefined,
                 )
               : b.t.boxRect !== undefined
                 ? // **THE SELECT ATTRIBUTES GO ON WHATEVER `renderText` RETURNED** — the
                   // GROUP for a boxed row, which is why `partOrder`'s golden entry carries
                   // no `x` at all where every other text row does (`draw/text.js:48-81`).
-                  `<g fill="currentColor" data-name="${b.t.dataName ?? ""}"${recordText(b.t)}>` +
+                  // **AND A BOXED ROW'S GROUP CARRIES THE CLASS**, because `renderText`
+                  // DELETES it from the text and opens a group for it
+                  // (`draw/text.js:48-81`) — `openGroup` writes `class` before `fill`, so
+                  // `partOrder` reads `<g class="abcjs-part-order" fill="currentColor" …>`.
+                  `<g${
+                    options.addClasses === true &&
+                    b.t.dataName !== undefined &&
+                    ABCJS_TEXT_CLASSES[b.t.dataName] !== undefined
+                      ? ` class="${ABCJS_TEXT_CLASSES[b.t.dataName]}"`
+                      : ""
+                  } fill="currentColor" data-name="${b.t.dataName ?? ""}"${recordText(b.t)}>` +
                   `${renderRow({ t: stripBox(b.t) })}` +
                   `${boxPath(b.t, b.t.boxRect)}</g>`
                 : abcjsText(
@@ -4384,11 +4401,25 @@ export function toSVG(
               // **THE PAGE'S OWN y WHERE THERE IS ONE** — see `PlacedText.pageY`.
               raw(t.pageY === undefined ? t.y * PX + oy : t.pageY * PX),
               t.anchor ?? "start",
+              /**
+               * ⚠️ **A GROUPED ROW'S CLASS IS THE `<g>`'s, AND AN UNGROUPED ONE'S IS ITS
+               * OWN — THE TWO CALLERS DIFFER BY ONE ARGUMENT.** `addMultiLine`'s array
+               * branch opens a group with the klass and hands `richText` a literal `''`
+               * (`bottom-text.js:48`, `:57`), which `if (klass)` leaves UNSET, so the row
+               * serialises as `class="undefined"`. `addSingleLine` has no group and passes
+               * the klass straight through (`:32`), so a `B:` book row really does read
+               * `class="abcjs-extra-text abcjs-book"`.
+               *
+               * Dropping `groupClass` for BOTH lost the second, and keeping it for both put
+               * the group's class on every row inside it. `groupName` is what tells them
+               * apart.
+               */
               options.addClasses === true && t.dataName !== undefined
-                ? (t.groupClass ??
-                    generatedTextClass(t.dataName) ??
-                    ABCJS_TEXT_CLASSES[t.dataName] ??
-                    "")
+                ? (t.groupName !== undefined
+                    ? (generatedTextClass(t.dataName) ?? ABCJS_TEXT_CLASSES[t.dataName])
+                    : (generatedTextClass(t.dataName) ??
+                      t.groupClass ??
+                      ABCJS_TEXT_CLASSES[t.dataName]))
                 : undefined,
             );
           }
@@ -4409,8 +4440,13 @@ export function toSVG(
             options.addClasses === true &&
               t.dataName !== undefined &&
               t.groupName === undefined
-              ? (t.groupClass ??
-                  generatedTextClass(t.dataName) ??
+              ? // ⚠️ **A GENERATED CLASS WINS OVER THE FIELD'S OWN.** `renderText` runs
+                // `classes.generate` on the row's klass, which appends the LINE counter —
+                // a `%%text` row is `abcjs-defined-text abcjs-l2`, not `abcjs-defined-text`
+                // (`draw/text.js`, `helpers/classes.js`). Reading `groupClass` first
+                // returned the ungenerated stem and dropped the counter.
+                (generatedTextClass(t.dataName) ??
+                  t.groupClass ??
                   ABCJS_TEXT_CLASSES[t.dataName] ??
                   "")
               : "",
