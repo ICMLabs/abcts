@@ -169,11 +169,31 @@ const OPTIONS = [
   // own placement (`:268-273`). The same sforzato is drawn either way; what changes is
   // which stack counts it, and so every lane above the staff.
   ['accentAbove', { accentAbove: true }, 0],
-  // ✅ 665 → 14. The term lands on five weights at two sizes — see `lineWeightsFor`.
-  // ⚠️ The 14 that remain are ONE symptom: a TUPLET NUMBER over a beam, whose `y` is out by
-  // 0.09 or 0.18, and the page heights that follow from it. The likely root is that a
-  // thickened stem moves its own FAR EDGE, which is where the beam is anchored — so the
-  // beam's slope shifts and the tuplet rides on it. Measured, not fixed.
+  /**
+   * ✅ 665 → 14. The term lands on five weights at two sizes — see `lineWeightsFor`.
+   *
+   * ⚠️ **THE 14 THAT REMAIN ARE ONE SYMPTOM AND THE CAUSE IS NOW MEASURED, NOT GUESSED.**
+   * A TUPLET NUMBER over a beam sits at a different `y`. Reduced to one bar —
+   * `X:1 L:1/8 K:C (3ceg|` — and swept over `lineThickness` 0, 0.5, 1.5 and 3:
+   *
+   *     abcjs   89.33   89.33   89.33   89.33      <- it does NOT move, at any value
+   *     abcts   89.33   89.33   87.47   87.53
+   *
+   * **abcjs NEVER MOVES ANYTHING FOR `lineThickness`.** `renderer.lineThickness` is read in
+   * the DRAW functions alone (`draw/staff.js:14`, `:25`, `draw/relative.js:61-66`); the
+   * ENGRAVER never sees it, so it is a drawn width and never a placement. We fold it into
+   * `LINE_WEIGHTS`, which our LAYOUT also reads — so it leaks into where things go.
+   * Bisected: excluding `stem` and `beamedStem` from the thickening fixes the tuplet
+   * exactly, and breaks the drawn stem width, which needs it.
+   *
+   * ⚠️ **AND THE OBVIOUS NARROW FIX IS WRONG — 622 of 685, MEASURED.** Placing the stem at
+   * its BASE weight (abcjs's `printStem(x, linewidth ± t)` leaves `x` alone) does not
+   * transfer: our stem is placed by its CENTRE, and a centre DOES move when the width
+   * grows even though abcjs's `x` does not. The two models differ structurally here.
+   *
+   * So the real fix is to keep `LINE_WEIGHTS` pristine for layout and add the term only
+   * where a thickness is EMITTED — a separation this file cannot make one site at a time.
+   */
   ['lineThickness', { lineThickness: 1.5 }, 14],
   ['expandToWidest', { expandToWidest: true }, 14],
   // ✅ 125 → 42. The name reads the other way round: `(!this.initialClef || l === 0) &&
