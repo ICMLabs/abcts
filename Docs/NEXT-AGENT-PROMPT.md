@@ -1,112 +1,89 @@
-# NEXT AGENT PROMPT — abcts, 2026-09-12b
+# NEXT AGENT PROMPT — abcts, 2026-09-13
 
 Paste the block below.
 
 ---
 
 ```
-start here: abcts/Docs/HANDOFF-2026-09-12.md — §THE METHOD and §A FLAG DOING TWO JOBS
-first, then §WHAT IS OPEN. Then -09-11.md for the wrap's line structure, -09-09e.md for the
-host-option surface as a whole, -09-09d/c/b.md for the witness, the
-negative control and "a floor rots", HANDOFF-2026-09-08.md for THE QUADRATICS and the
-scaling gate, and HANDOFF-2026-09-07.md for the MODE RULE.
+start here: abcts/Docs/HANDOFF-2026-09-13.md — §THE FLOOR first (the wrap row CANNOT reach
+0), then §THE EIGHT NAMED ITEMS, which are already in the order to take them. Then
+HANDOFF-2026-09-12.md for the eleven rules that got the row from 59 to 23 and for A FLAG
+DOING TWO JOBS, and -09-08.md for THE QUADRATICS and the measured-and-declined list.
 
 Work in /Users/lrettberg/ICMLabs/Code/abcts. Run every command from there — `cd` does not
 persist between tool calls and the workspace ROOT collects every sibling repo's tests.
 
-⚠️ FIRST: `/tmp` IS CLEANED BETWEEN SESSIONS and it took the playwright scratchpad AND every
-scratch probe last time. Restore before any browser gate:
+⚠️ FIRST: `/tmp` IS CLEANED BETWEEN SESSIONS. Restore before any browser gate:
     mkdir -p /tmp/gp/pw && cd /tmp/gp/pw && npm init -y && npm i playwright-core@1.61
+…and for instrumenting abcjs (it is CommonJS, no build needed, and it EARNED ITS KEEP):
+    cp -R ../abcMusicKit/Docs/References/abcjs/abcjs-6.7.0/src /tmp/gp/abcjs
 …then `cd` back into the repo — that `cd` resets the shell's CWD for the next call.
 
-    suite       90 files, 2,595 tests, no reds
+    suite       90 files, 2,604 tests, no reds
     svg-bytes   0 of 691 in-repo, 0 of 356 sibling
     mode-bytes  11 of 691 — every one DECLARED
     midi-bytes  0 of 691 — 19 ruled divergent
     zzlive      0 of 685  WebKit AND Chrome        zzselect 0 of 685
     zzclick     1 of 685 DECLARED ×3               zzledger 0 differ, 0 KNOWN, 41 agree
     zzopts      26 rows, every one at its declared count:
-                timeBasedLayout 669 · wrap+staffwidth 24 · initialClef 42 ·
-                add_classes 16 · expandToWidest 14 · lineThickness 14 ·
+                timeBasedLayout 669 · initialClef 42 · wrap+staffwidth 23 · add_classes 16 ·
+                lineThickness 14 · expandToWidest 14 ·
                 print 5 · print+responsive 5 · minPadding 5 · scale 2 / 1 / 1
-    warnings    0 of 815 · zzscale 8 of 8 LINEAR · test:dist 0 of 685 ESM and CJS
-    lint        1,021 errors — PRE-EXISTING, not a gate, do not "fix" under other work
+    warnings    0 of 815 · test:dist 0 of 685 ESM and CJS
+    lint        1,023 errors — PRE-EXISTING, not a gate, do not "fix" under other work
+
+🛑 THE WRAP ROW'S FLOOR IS 19, NOT 0. Two of the 23 are abcjs's FOURTH DEBUG MARKER, which
+the owner DECLINED on 2026-09-12 (this engine already declines three such strings as one
+rule), and two are abcjs CRASHING in its own `wrapLines`. Do not chase 0.
 
 ⭐ THE STANDING ORDER, AND THE OWNER HAS SAID IT SIX TIMES: REFERENCE THE ACTUAL abcjs.
   1. READ the named abcjs function.   2. GREP THIS REPO before porting it.
   3. LADDER it, one variable per rung, through BOTH engines.
-  4. INSTRUMENT abcjs when the source is not enough — `/tmp/gp/abcjs` runs without a build
-     (copy `abcjs-6.7.0/src`; it is CommonJS and `require`s straight from node), and for
-     anything DOM-side render both engines in a real browser instead. It EARNED ITS KEEP
-     this session: two passes over `addLineBreaks` could not explain a bar number and one
-     instrumented run found a SECOND WRITE.
+  4. INSTRUMENT abcjs when the source is not enough — `/tmp/gp/abcjs`, and for anything
+     DOM-side render both engines in a real browser instead.
   5. Only then write code, and let the gate arbitrate.
 
-⭐⭐ A RECORDED CAUSE IS A HYPOTHESIS UNTIL SOMETHING MEASURES IT — INCLUDING ONE YOU WROTE
-AN HOUR AGO. Last session overturned two of this repo's; this one overturned one of its own,
-an hour old: the `voltaOnOpeningBar` exclusion was reasoned, and four rungs disproved it.
-**Before implementing what a note says, spend ten minutes proving the note.**
+⭐⭐ WRITE THE DELIBERATE BREAK FIRST, NOT LAST. Four controls were written for `ponytail:`
+markers last session and THREE WERE MUTE — they agreed with abcjs while a deliberate break
+changed nothing. Two would have been recorded as "measured and correct" without it.
 
-⭐⭐⭐⭐ WHEN YOU NARROW A SHARED FLAG, GREP ITS USES FIRST. `withMeter` also carried the
-TUNE'S TEMPO MARK, so narrowing it for the wrap took the tempo off every wrapped tune with a
-subtitle — and NO GATE COULD SEE IT: the fixtures that show it were already differing, and
-no golden renders `{wrap}`. A rung written for a different item is what found it.
+⭐⭐⭐ A RULE DERIVED UNDER `{wrap}` MUST BE SHOWN NOT TO FIRE WITHOUT IT. The voice-name
+grace shipped ungated and regressed the UNWRAPPED path, and NEITHER GATE COULD SEE IT:
+`svg-bytes` has no fixture of that shape and `zzopts` only renders `{wrap}`.
 
-⭐⭐⭐⭐⭐ EVERY WRAP RULE HAS TWO SURFACES: the drawn ink (`layout.ts`) and `tune.lines`
-(`lines.ts`). Both model rules this session needed both, and the byte gates see only the
-first. And an element with `startChar: -1` sorts to the FRONT of the line and is then
-DROPPED by `hoistLeadingStaffFields` — pin it with `sortAt`.
+⭐⭐⭐⭐ A RECORDED CAUSE IS A HYPOTHESIS — INCLUDING ONE YOU WROTE AN HOUR AGO. Three fell
+last session, two of them written by that session. Items 1, 2 and 3 of the eight each carry
+a DISPROVED fix: read those before porting anything, they are the expensive part.
 
-⭐⭐⭐ AND A CORRECT READING OF abcjs CAN STILL GIVE THE WRONG PORT. `printStem(x, linewidth
-± t)` leaves `x` alone, so placing our stem at its base weight looks like the port and reads
-**622 of 685**: ours is placed by its CENTRE, and a centre moves when the width grows. The
-source told the truth about abcjs and lied about us. Check which MODEL each side uses.
+🔬 TWO INSTRUMENTS, AND THEY SEE DIFFERENT THINGS. Element-KIND counts find a MISSING
+element; an x/y POSITION diff finds ORDER and PLACEMENT where the counts are equal. 19 of
+the 23 now draw the same elements at the same page height, so the kind sweep is nearly
+exhausted and the position diff is the working instrument.
 
-⚠️ TRAPS:
-  ⚠️ A TEST CAN MEASURE THE HALF THAT WAS ALREADY RIGHT — the first wrap test counted
-     `tune.lineBreaks` (the decision, already correct) and passed with the defect restored.
-     RESTORE THE DEFECT AND WATCH IT GO RED before believing a new test.
-  ⚠️ A SHARED FIRST-THREE IS NOT A SHARED SET. Difference the full sets.
-  ⚠️ A SAMPLE IS A LOWER BOUND FOR THE WITNESS AS WELL AS THE COUNT.
-  ⚠️ A `getBBox` CANNOT SEE A GLYPH'S SCALE — it is CSS-scaled and its path untouched.
-  ⚠️ AN ALGEBRAIC IDENTITY IS NOT A FLOATING-POINT ONE — `(x*s)/s`, `x*STEP/STEP`.
-  ⚠️ `selectable="false"` IS A TRUTHY STRING. A floor rots. A repo test can assert the
-     defect. A gate can normalise it away.
-  ⚠️ THE SUITE TIMES OUT UNDER LOAD AND IT IS NOT A DEFECT. A gate's report file outlives
-     its run — check the timestamp on `/tmp/abcts-*.txt`.
+WHAT TO DO NEXT — the eight are ORDERED in the handoff; take them in that order:
+  1. `%%keywarn` under wrap (3 fixtures) — the sharpest diagnosis on the board; the carried
+     head key is "the last key ALLOWED INTO THE STREAM", not the key in force.
+  2. The wrapped head CLEF (1 fixture, 1 of 59 elements) — cause measured; the obvious port
+     breaks FOUR ratcheted cases.
+  3. The ending-room pair (2) — 18.5px, exactly the `|1` label's `textWidth + 10`; the
+     shortfall reading reddens SIX suites.
+  4. The ULP tail (3) — 0 elements moved; arithmetic ORDER, not geometry.
+  5. The sub-0.01 pair (2) — probably closes with item 4.
+  6. The remaining inside-line geometry (6).
+  7. `%%barsperstaff`'s own splitting defect — NAMED, and NO GATE RENDERS IT; build the
+     gate before trusting a fix.
+  8. The voice-name wrapped limit — check `lineOfMeasure` for a SHORT voice, not the grace.
 
-WHAT TO DO NEXT — ask the owner which; these are NOT equal:
-  1. **`wrap`'s remaining 24 — FULLY DIFFERENCED.** ⭐ Read `zzopts`'s row comment: it names
-     the abcjs mechanism for each. **The ENDINGS (5) are the one to take, and the family
-     SPLITS IN TWO** — written up as one, and checking the sources said otherwise:
-     (a) `tablature-20`/`layout-09` declare on OPENING barlines and the BREAK-BAR IS ON THE
-     WRONG SIDE (measured through `tune.lines`; wants a trailing-bar slot, the model cannot
-     hold two trailing bars today); (b) `selection-01`/`svg-per-line-01`/`tablature-17` are
-     `|1` closing-bar endings SPANNING THREE+ SYSTEMS, where abcjs makes a fresh
-     `EndingElem("", null, null)` per line and `voltaCarried` carries once — reading only,
-     NOT yet a rung. Then: `options-01`'s 2 boxes + 2 bar numbers,
-     5 geometry-only, 2 abcjs CRASHING on `%%vskip`, and 2 DECLARED (abcjs's fourth debug
-     marker, declined 2026-09-12 — the row CANNOT reach 0).
-     ⚠️ And `synth-flattener-17`'s accidentals (+3 sharp, -3 natural, -2 flat) were
-     predicted to be the delined-key defect and did NOT close with it — a live hypothesis.
-  2. **`add_classes` — 16, and the next one is NAMED.** A `%%sep` SEPARATOR rule is
-     `abcjs-defined-text abcjs-l2` in abcjs and `abcjs-defined-text` here, while the
-     free-text row above it is `abcjs-l1` in BOTH — the counter is right and is not advanced
-     for the separator's own line. `visual-mouse-click-01`, byte 2825.
-  3. **`initialClef` — 42.** Page heights in BOTH directions. Hypothesis:
-     `this.startlimitelem = clef` is inside `if (clef)`. ⚠️ The control for it is MUTE —
-     read the gate comment before re-deriving.
-  4. **`lineThickness` — 14. CAUSE MEASURED, FIX SCOPED, DO NOT DO IT PIECEMEAL.** Keep
-     `LINE_WEIGHTS` pristine for LAYOUT and add the term only where a thickness is EMITTED.
-     abcjs reads `lineThickness` in the DRAW functions alone.
-  5. **`expandToWidest` — 14.** Needs abcjs's `i = -1` restart. ⚠️ Our system loop is one
-     ~1700-line `spans.map` with outer accumulators; size the re-entrancy before starting.
-  6. **`timeBasedLayout` — 669.** A second layout algorithm. Its own arc.
-  7. **ANOTHER SURFACE.** Still unrendered by any gate: the SYNTH controller's DOM, `%%`
-     file headers over a whole book, tablature options, `chordGrid`, `showDebug`.
-  8. **PUBLISH.** Metadata is in, the npm name `abcts` is FREE, the CLI works. A decision,
-     not a defect — including the 20.7 MB of sourcemaps in the tarball.
-  9. **`npm run lint`** — 1,021 pre-existing errors, only as ITS OWN commit.
+…and the arcs that are NOT on that list: `timeBasedLayout` 669 (a second layout algorithm,
+its own arc), `initialClef` 42 (⚠️ its control is MUTE), `add_classes` 16, `lineThickness`
+14 (cause measured, fix scoped, NOT piecemeal), `expandToWidest` 14 (size the re-entrancy
+first). Also open: `Docs/PONYTAIL-DEBT.md`'s 14 genuinely-open markers — triaged by
+OBSERVABILITY, and 8 of them should be RESTATED AS DECISIONS rather than worked; `npm run
+lint`'s 1,023 pre-existing errors, only as ITS OWN commit; and PUBLISH, which is a decision.
+
+⚖️ AND ONE DECISION IS STILL THE OWNER'S, untouched: `CLAUDE.md` is 2,240 lines with 1,355
+of blockquote narrative duplicating 56 handoffs, loaded in full every session. See
+`Docs/CODEBASE-EVALUATION-2026-09-12.md`. Nothing has been deleted.
 
 Run `npx tsc --noEmit && echo OK` before every commit, keep every gate above green, and
 commit and push after every landing. Never --force. NEVER ATTRIBUTE A COMMIT TO CLAUDE —
@@ -121,14 +98,17 @@ cannot be fixed afterwards without the force push the line above forbids.
 
 ## Why this order
 
-**The METHOD first**, because its two newest entries both cost a wrong turn last session and
-both are cheap to avoid: a recorded cause is a hypothesis until something measures it, and a
-correct reading of abcjs can still give the wrong port when the two models are anchored
-differently.
+**Evidence in hand first, then risk.** Items 1–3 are each diagnosed to the rule AND carry a
+disproved fix, so the expensive half — finding out what does not work — is already paid. An
+agent can start porting within minutes rather than re-deriving.
 
-**Then `wrap`'s 59**, because it is the only open row nobody has diagnosed — every other one
-has had its residue named or its fix scoped. An hour of diffing may make it one cause, as it
-did for the line-count half.
+**Then the cheap ones.** Items 4 and 5 are the same arithmetic family and 5 probably falls
+out of 4; item 6 is six fixtures with the instrument already named.
 
-**Then the traps**, because the one that repeated is about a test rather than a gate: a new
-test that measures the half which was already correct passes with the defect in place.
+**Item 7 is last of the defects because it needs a GATE BUILT FIRST** — nothing renders
+`%%barsperstaff`, so a fix there cannot be trusted, and building the gate is most of the
+work. **Item 8 is last outright** because the obvious change makes the gate WORSE (23 → 25)
+and the real target is one level down in `lineOfMeasure`.
+
+⚠️ **And the floor matters to the ordering**: four of the 23 will never close, so an agent
+working the list top-down should expect to reach 19 and stop, not to reach 0.
