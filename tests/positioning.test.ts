@@ -246,3 +246,71 @@ describe("the layout half", () => {
     expect(svgOf(TUNE)).toContain("M 62.971000000000004 69.92c");
   });
 });
+
+/**
+ * **AN ENDING'S ROOM IS CHARGED TO EXACTLY ONE BARLINE — THE ONE THE VOLTA IS WRITTEN ON.**
+ *
+ *     abselem.minspacing += textWidth + 10;  // Give plenty of room for the ending number.
+ *
+ * (`abstract-engraver.js:1034-1041`) adds it to the single `abselem` being built when the
+ * engraver reads `elem.startEnding`. This model splits that bar two ways — a measure's own
+ * opening barline, or the PREVIOUS measure's closing one — and both sites charged it, which
+ * is the label's `textWidth + 10` too much on every tune that writes the barline
+ * separately. See `voltaOnOwnOpeningBar`.
+ *
+ * Instrumented in abcjs's own `layoutOneItem` on `E8| |1 D8 :|2 C8`: the plain `|` reports
+ * `minsp=10` and the `|1` reports `minsp=28.5` — ONE charge — and the two barlines land 16px
+ * apart where ours put them 34.5 apart, exactly 18.5 = the `1`'s width plus 10.
+ *
+ * ⚠️ **AND IT IS NOT A WRAP DEFECT, though only a wrapped fixture ever showed it.** On one
+ * source line the same tune differs UNWRAPPED, and no golden covers that shape: in every
+ * fixture that writes the barline separately the two bars fall on different systems, where
+ * the gap between them is not drawn. `zzopts` 21 -> 20 on `synth-timing-06`.
+ *
+ * ⚠️ **AND `minspacing` IS A FLOOR, NOT AN ADDITION** — `voice.minx += child.minspacing`
+ * and the next element sits at `max(minx, nextx)` (`layout/voice-elements.js:74-80`), which
+ * is why the same 28.5 costs nothing after the `|1` (the natural gap there is 29.5) and
+ * everything between two adjacent barlines (natural gap 0). Moving it into the LEFT-INK
+ * shortfall instead was measured and reverted by an earlier pass; the shortfall is a
+ * different mechanism and the goldens need this one.
+ */
+describe("an ending's room is charged once", () => {
+  const bars = (abc: string): string => {
+    const host = { innerHTML: "" } as { innerHTML: string };
+    renderAbc(host, abc, { staffwidth: 670 });
+    return [...host.innerHTML.matchAll(/<path d="M ([\d.]+) [^"]*" data-name="bar">/g)]
+      .map((m) => Math.round(Number(m[1]) * 100) / 100)
+      .join(" ");
+  };
+
+  // ⭐ The barline and the `|1` written SEPARATELY, on one line. abcjs: 133.9 and 149.9,
+  // 16 apart — the bar's own `w` of 1, its flat `minspacing` of 10, and the 5 of left
+  // clearance every barline claims. Ours charged the ending's 18.5 here as well and put
+  // the second bar at 168.4.
+  it("does not charge the barline before the volta's own", () => {
+    expect(bars("X:1\nT:t\nK:C\nE8| |1 D8 :|2 C8\n")).toBe("133.9 149.9 270.26 274.26");
+  });
+
+  // ⭐⭐ THE CONTROL, and it is the shape that was always right: with ONE barline doing both
+  // jobs there is no second bar to charge, and the room has to stay on the closing one.
+  // A fix that simply stopped charging the closer would pass the row above and fail this.
+  it("still charges the closing barline when that is where the volta is", () => {
+    expect(bars("X:1\nT:t\nK:C\n|:CDEF|1GABc:|2cdef|]\n")).toBe(
+      "58.05 66.05 255.03 465.52 469.52 677 681",
+    );
+  });
+
+  // …**AND THE SHAPE THAT ALREADY HAD A NAMED DOUBLE CHARGE.** A quoted label's `]` is an
+  // invisible barline that OPENS the next measure, so `C2|["first"] D2` reaches both sites
+  // — the reason `voltaOnOwnOpeningBar`'s test exists at all. It stays single.
+  it("charges a quoted label's invisible opening bar once", () => {
+    expect(bars('X:1\nT:t\nK:C\nC2|["first"] D2|\n')).toBe("91.48 198.34");
+  });
+
+  // …and a BRACKETED `[1` is the same bar in a different spelling.
+  it("reads a bracketed volta the same way", () => {
+    expect(bars("X:1\nT:t\nK:C\n|:CDEF|[1GABc:|[2cdef|]\n")).toBe(
+      "58.05 66.05 255.03 465.52 469.52 677 681",
+    );
+  });
+});

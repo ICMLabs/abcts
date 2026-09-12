@@ -11001,6 +11001,28 @@ const barWidthOf = (kind: Barline, el: LayoutElement, strict: boolean): number =
  * It applies to whichever bar the ending opens on — the measure's own opening barline, or
  * the PREVIOUS measure's closing one when the number follows a `:|`.
  */
+/**
+ * **WHICH BAR AN ENDING'S ROOM IS CHARGED TO — AND IT IS EXACTLY ONE.**
+ *
+ * abcjs adds `minspacing` to the single `abselem` it is building when it reads
+ * `elem.startEnding` (`abstract-engraver.js:1034-1041`), so the room belongs to the bar the
+ * volta was WRITTEN on. This model splits that bar two ways — a measure's own opening
+ * barline, or the previous measure's closing one — and both sites charged it, which is
+ * 18.5px too much on every tune that writes the barline separately.
+ *
+ * `E8| |1 D8 :|2 C8` is that tune. Instrumented in abcjs's own `layoutOneItem`: the plain
+ * `|` reports `minsp=10` and the `|1` reports `minsp=28.5`, one charge, and the two
+ * barlines land 16px apart where ours put them 34.5 apart.
+ *
+ * ⚠️ **AND IT IS NOT A WRAP DEFECT**, though only a wrapped fixture showed it. Written on
+ * ONE source line the same tune differs unwrapped, and no golden covers that shape — the
+ * two barlines fall on different systems in every fixture that has them.
+ */
+const voltaOnOwnOpeningBar = (measure: Measure | undefined): boolean =>
+  measure !== undefined &&
+  measure.voltaSourceRange !== null &&
+  measure.openingBarlineSourceRange?.start === measure.voltaSourceRange.start
+
 const endingRoom = (label: string | null): number => {
   if (label === null || label === '') return 0
   /**
@@ -11342,9 +11364,7 @@ function layoutMeasure(
      * bar it is: the volta's range starts at the barline the digits were read past, which
      * is the same join the projection uses to hang `startEnding`.
      */
-    const openCarriesVolta =
-      measure.voltaSourceRange !== null &&
-      measure.openingBarlineSourceRange?.start === measure.voltaSourceRange.start
+    const openCarriesVolta = voltaOnOwnOpeningBar(measure)
     const openGap = ENGRAVE.prefixGap + (openCarriesVolta ? endingRoom(measure.volta) : 0)
     fixed(
       openW + openGap,
@@ -13370,7 +13390,13 @@ function layoutScoped(input: Score, options: LayoutOptions = {}): Layout {
         // after their bar, which absorbs the 12.13 of accidental ink on the chord that
         // follows; ours had spent that slack on the ending, so the same accidental pushed
         // the shared cursor 12.13 further right. That was the WHOLE of ragtime's dx.
-        voiceIndex === 0 ? ((voice?.measures ?? [])[measureIndex + 1]?.volta ?? null) : null,
+        (() => {
+          if (voiceIndex !== 0) return null
+          const next = (voice?.measures ?? [])[measureIndex + 1]
+          // …**AND NOT WHEN THAT MEASURE'S OWN OPENING BARLINE CARRIES IT.** One bar per
+          // ending — see `voltaOnOwnOpeningBar`.
+          return next === undefined || voltaOnOwnOpeningBar(next) ? null : (next.volta ?? null)
+        })(),
         meterInForce,
         (() => {
           const next = (voice?.measures ?? [])[measureIndex + 1]

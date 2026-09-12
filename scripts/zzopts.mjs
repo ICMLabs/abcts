@@ -669,15 +669,30 @@ const OPTIONS = [
    *    lives — so re-read that rule before adding another, and remember its naturals are
    *    FILTERED by `wrap_lines.js:60-70`.
    *
-   *  ⚠️ **AND THE ENDING-ROOM PAIR: `synth-timing-06` AND `synth-flattener-21`.** On
-   *    `E8| / |1 D8 :|2 C8` the two barlines are 16px apart in abcjs and 34.5 in ours —
-   *    18.5, which is exactly the `|1` label's `textWidth + 10` that `createBarLine` adds
-   *    as `abselem.minspacing`. So abcjs does NOT spend it here and we do.
-   *    ⚠️ **THE OBVIOUS READING IS DISPROVED — TRIED, MEASURED, REVERTED.** `minspacing` is
-   *    spent through a SHORTFALL (`if (er < extraWidth) x += extraWidth - er`), which is
-   *    the `minPadding` lesson, so moving `endingRoom` from the gap into the LEFT-INK term
-   *    looks right and reddens SIX suites including `svg-bytes` — the unwrapped goldens
-   *    need the gap form. Whatever makes the wrapped case differ is NOT the shortfall.
+   * ✅ **AN ENDING'S ROOM IS CHARGED TO EXACTLY ONE BARLINE — 21 → 20.**
+   *    `abselem.minspacing += textWidth + 10` adds it to the SINGLE abselem the engraver is
+   *    building when it reads `elem.startEnding` (`abstract-engraver.js:1034-1041`), so the
+   *    room belongs to the bar the volta was WRITTEN on. This model splits that bar two
+   *    ways — a measure's own opening barline, or the previous measure's closing one — and
+   *    BOTH sites charged it. See `voltaOnOwnOpeningBar`.
+   *    ⭐ **INSTRUMENTED IN abcjs'S OWN `layoutOneItem`**, which is what settled it: on
+   *    `E8| |1 D8 :|2 C8` the plain `|` reports `minsp=10` and the `|1` reports `minsp=28.5`
+   *    — one charge — and the bars land 16 apart where ours put them 34.5 apart.
+   *    ⚠️ **AND THE "DISPROVED" READING WAS BACKWARDS.** The gap form is right and
+   *    `minspacing` IS the floor this file already models — `voice.minx += child.minspacing`
+   *    with the next element at `max(minx, nextx)` (`layout/voice-elements.js:74-80`). It
+   *    costs nothing after the `|1`, where the natural gap is 29.5 against a floor of 28.5,
+   *    and everything between two adjacent barlines, where the natural gap is 0. Nothing
+   *    had to move into the left-ink shortfall; the charge was simply doubled.
+   *    ⚠️ **AND IT WAS NEVER A WRAP DEFECT.** Written on ONE source line the same tune
+   *    differs UNWRAPPED — no golden covers that shape, because in every fixture that
+   *    writes the barline separately the two bars fall on different systems and the gap
+   *    between them is not drawn. The control lives in `positioning.test.ts`, not
+   *    `wrap.test.ts`, and four volta spellings are rendered against abcjs in webkit.
+   *
+   *  ⚠️ **AND `synth-flattener-21` WAS PAIRED WITH IT AND DOES NOT BELONG.** That fixture
+   *    has NO ending anywhere in it — it is `&` overlay voices — and it did not move when
+   *    the ending charge was fixed. Its own difference is still open and undiagnosed.
    *
    * ✅ **AND A STANDALONE `M:` IS DRAWN ONCE, NOT TWICE — 24 → 23.** The header parser's
    *    `M:` arm only fills `multilineVars.meter` for the next `startNewLine`;
@@ -725,13 +740,13 @@ const OPTIONS = [
    *    3  GEOMETRY ONLY, same element kinds throughout:
    *       `text-udef-parts-overlays-tune8` and `-tune46`, `vskip-tune1`.
    *
-   * ⚠️ **AND TWO OF THE 21 ARE abcjs CRASHING, NOT US.** `abcts-vskip` tunes 0 and 2 throw
+   * ⚠️ **AND TWO OF THE 20 ARE abcjs CRASHING, NOT US.** `abcts-vskip` tunes 0 and 2 throw
    * inside abcjs's own `wrapLines` — `undefined is not an object (evaluating 'l[p]')` —
    * because `addLineBreaks` reads `lines[action.ogLine].staff[action.staff]` on a row a
    * `%%vskip` made non-music. We render them. A crash is not output and strict does not
    * reproduce one.
    */
-  ['wrap + staffwidth', { wrap: { minSpacing: 1.8, maxSpacing: 2.7, preferredMeasuresPerLine: 4 }, staffwidth: 400 }, 21],
+  ['wrap + staffwidth', { wrap: { minSpacing: 1.8, maxSpacing: 2.7, preferredMeasuresPerLine: 4 }, staffwidth: 400 }, 20],
 ]
 const every = Number(process.argv[2] ?? 1)
 const browser = await webkit.launch()
