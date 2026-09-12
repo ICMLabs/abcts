@@ -64,10 +64,22 @@ list, and this audit found no new evidence.
 
 ## 4. DELIBERATE DEBT — `Docs/PONYTAIL-DEBT.md`
 
-**63 `ponytail:` markers, 26 with no trigger.** A no-trigger marker names a ceiling and
-nothing that would make anyone revisit it: the reasoning survives, the deadline never
-arrives. Several are deliberate permanent positions and should be RESTATED as decisions
-rather than left as debt.
+**62 `ponytail:` markers. 38 name a trigger; of the 24 that do not, 10 already carry a
+MEASURED / RETIRED / MUTE annotation — leaving 14 genuinely open.**
+
+⚠️ **THE FIRST NUMBER THIS REPORT CARRIED WAS 26 AND IT WAS WRONG — THE INSTRUMENT WAS.**
+The classifier read only FORWARD from each marker, so a resolution written ABOVE it counted
+as no-trigger, and it treated "✅ MEASURED" as not a trigger. **The real debt is roughly
+half what was first reported**, and the number moved because the tool did, not the code.
+
+⭐ That is this repo's own recurring trap — *the witness is the thing that is wrong* — landing
+on the audit of the repo rather than on the engine. It is worth saying plainly: **an audit's
+own counting deserves the same deliberate break as a gate's.** Both numbers in this section
+were produced by a script nobody had tried to falsify.
+
+A no-trigger marker names a ceiling and nothing that would make anyone revisit it: the
+reasoning survives, the deadline never arrives. Several are deliberate permanent positions
+and should be RESTATED as decisions rather than left as debt.
 
 ⚠️ **The hit rate argues for the pass.** `HANDOFF-2026-09-08.md` records a sweep that turned
 16 markers into controls and found **4 real defects** — 25%.
@@ -112,7 +124,8 @@ That is very likely **why these markers have no trigger — there is nothing to 
 A marker whose effect no public output can show cannot be given a "revisit when" clause, and
 pretending otherwise produces exactly the mute probes above.
 
-**So the recommendation changes.** Do not work the 26 no-trigger markers in file order.
+**So the recommendation changes.** Do not work the (now 14) open no-trigger markers in file
+order.
 **Triage them by observability first** — can any public output distinguish the shortcut from
 the alternative? — and:
 

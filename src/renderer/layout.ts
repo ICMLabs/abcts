@@ -16532,6 +16532,19 @@ function systemHeight(system: LayoutSystem, _strict = true): number {
  * ponytail: no `%%titleformat`, `%%writefields` or `%%aligncomposer`. v1 has all three as
  * NATIVE extensions; nothing in the corpus sets any, and each changes only where within
  * the block a field lands, not the block's shape.
+ *
+ * ⚖️ **AND IT IS NOT AN abcjs-PARITY ITEM AT ALL — MEASURED 2026-09-12.** abcjs does not
+ * implement any of the three: `titleformat` and `aligncomposer` appear ONLY inside
+ * COMMENTED-OUT schema entries (`parse/abc_parse_directive.js:765`, `:788`) and
+ * `writefields` does not appear anywhere. Rendered both engines on `T:`/`C:`/`R:`/`O:` with
+ * each directive in turn: **all four runs are byte-identical to the baseline in abcjs AND
+ * in ours** — `title@215,50 rhythm@15,82 composer@415,82` every time.
+ *
+ * So not implementing them is ZERO divergence from abcjs, and this repo's standing order is
+ * abcjs parity. The gap is against **abcMusicKit v1**, which is a different order — the
+ * marker is a v1 FEATURE NOTE wearing a parity marker's clothes. ⚠️ A control here can only
+ * be MUTE: the directive moves nothing in the reference either, so the comparison proves
+ * that both engines ignored it. Treat this as a scoping decision, not as debt.
  */
 function topTextBlock(
   metadata: ScoreMetadata,

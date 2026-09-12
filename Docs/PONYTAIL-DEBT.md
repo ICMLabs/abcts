@@ -1,19 +1,20 @@
 # `ponytail:` debt ledger — abcts
 
-Harvested by `/ponytail-debt`, 2026-09-12. **One row per deliberate shortcut**: each names the
-ceiling it accepts and, where it has one, the trigger that should reopen it.
+Harvested by `/ponytail-debt` and re-triaged 2026-09-12. One row per deliberate shortcut.
 
-⚠️ **A row tagged `no-trigger` names a ceiling and nothing that would make anyone
-revisit it.** Those are the ones that rot: the reasoning survives, the deadline never
-arrives. They are not necessarily wrong — several are deliberate permanent positions —
-but each should either GAIN a trigger or be restated as a decision rather than a debt.
+**62 markers.** 38 name a trigger. Of the 24 that do not,
+**10 already carry a MEASURED / RETIRED / MUTE annotation** and are resolved rather
+than owed — leaving **14 genuinely open**.
 
-**63 markers, 26 with no trigger.**
+⚠️ **THE FIRST COUNT THIS FILE CARRIED WAS 26 AND IT WAS WRONG.** The classifier read only
+FORWARD from each marker, so a resolution written ABOVE it — which is where several are —
+counted as no-trigger. It also treated "✅ MEASURED" as not a trigger. Both are fixed; the
+number moved because the instrument did, not the code.
 
-⚠️ This is a SNAPSHOT and the repo's own handoffs are the authority on which have been
-turned into controls: `HANDOFF-2026-09-08.md` records a sweep of 97 markers that wrote
-16 controls and found **4 real defects of 16 predictions** — a 25% hit rate, which is
-why the remainder is worth a pass rather than an assumption.
+⚠️ **A row with no trigger names a ceiling and nothing that would make anyone revisit it.**
+Those rot: the reasoning survives, the deadline never arrives. Several are deliberate
+permanent positions and should be RESTATED as decisions rather than left as debt — see the
+triage at the end, which is the part worth reading.
 
 ## `src/renderer/layout.ts` — 37
 
