@@ -630,6 +630,16 @@ const OPTIONS = [
    *    lives — so re-read that rule before adding another, and remember its naturals are
    *    FILTERED by `wrap_lines.js:60-70`.
    *
+   *  ⚠️ **AND THE ENDING-ROOM PAIR: `synth-timing-06` AND `synth-flattener-21`.** On
+   *    `E8| / |1 D8 :|2 C8` the two barlines are 16px apart in abcjs and 34.5 in ours —
+   *    18.5, which is exactly the `|1` label's `textWidth + 10` that `createBarLine` adds
+   *    as `abselem.minspacing`. So abcjs does NOT spend it here and we do.
+   *    ⚠️ **THE OBVIOUS READING IS DISPROVED — TRIED, MEASURED, REVERTED.** `minspacing` is
+   *    spent through a SHORTFALL (`if (er < extraWidth) x += extraWidth - er`), which is
+   *    the `minPadding` lesson, so moving `endingRoom` from the gap into the LEFT-INK term
+   *    looks right and reddens SIX suites including `svg-bytes` — the unwrapped goldens
+   *    need the gap form. Whatever makes the wrapped case differ is NOT the shortfall.
+   *
    *    4  GEOMETRY ONLY, same element kinds throughout: `synth-flattener-20`,
    *       `text-udef-parts-overlays-tune8` and `-tune46`, `vskip-tune1`.
    *
