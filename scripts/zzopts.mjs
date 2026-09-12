@@ -569,6 +569,24 @@ const OPTIONS = [
    *    instrument the row needs now that 19 of its rows draw the same elements at the same
    *    page height.
    *
+   *  ⭐ **THE NEXT PAIR IS DIAGNOSED AND NOT FIXED: A TUPLET NUMBER ON THE WRONG SIDE.**
+   *    `visual-mouse-click-01` and `visual-tablature-15` share one signature — 108 of 265
+   *    elements moved, the first a staff line at dy 20.360 — and it is NOT a placement of
+   *    the staff. Everything ABOVE it is at the SAME absolute y in both engines: the
+   *    `[ending]line@839.62`, the `[ending]1@858.56`, the `dynamics@805.96` and all five
+   *    tempo parts. Only the staff differs, 901.19 against 880.83.
+   *
+   *    What differs is ONE TUPLET NUMBER: abcjs draws its `3` at **873.06, ABOVE** the
+   *    staff and we draw it at **937.40, BELOW**. abcjs's above-placement reserves the lane
+   *    that pushes the staff down, which is the whole 20.36. The SECOND tuplet on the same
+   *    tune has its bracket on the same side in both (1068.64 / 1127.60), so it is the
+   *    SIDE of one tuplet and not the tuplet code in general.
+   *
+   *    ⚠️ It must be wrap-reachable only — `svg-bytes` is 0 of 691 — so the re-lining is
+   *    what flips the side. Which input decides it is NOT yet measured: do not assume the
+   *    stem direction without checking, since the stems around it matched element for
+   *    element at the system before.
+   *
    *    4  GEOMETRY ONLY, same element kinds throughout: `synth-flattener-20`,
    *       `text-udef-parts-overlays-tune8` and `-tune46`, `vskip-tune1`.
    *
