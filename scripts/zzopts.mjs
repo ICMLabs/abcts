@@ -680,6 +680,21 @@ const OPTIONS = [
    *    and `lineBreaks` all identical — so nothing structural was wrong and the x-diff's
    *    positional alignment could only report "439/451".
    *
+   *  ⭐ **NEXT AND MEASURED: A WRAPPED SYSTEM REPRINTS THE DELINED LINE'S CLEF.**
+   *    `addLineBreaks` copies the delined line's staff keys onto every output line and has
+   *    NO `lastClef` to advance, where the key gets one — so a system cut from a merged run
+   *    reprints that run's OPENING clef whatever changed inside it. Measured on
+   *    `CDEF|×3 [K:C clef=bass] CDEF|×4` under wrap: abcjs's third system opens TREBLE,
+   *    the tune's first, although the bass change happened on the second; ours reprints the
+   *    bass. A standalone `K:C clef=bass` between lines behaves the same, and unwrapped the
+   *    two agree — which is why `svg-bytes` never saw it. It is `synth-flattener-20`'s
+   *    whole residual: ONE octave marker, 1 of 59 elements, 72.557px out.
+   *    ⚠️ **THE OBVIOUS PORT IS WRONG — TRIED, MEASURED, REVERTED.** A `wrapLineHeadClef`
+   *    carrying the SECTION's opening clef fixes both rungs exactly and breaks FOUR
+   *    ratcheted cases, `quartet-500` among them — so "the section's opening clef" is not
+   *    the right value for a multi-staff tune. Find what `inputStaff.clef` actually holds
+   *    per STAFF before re-trying; the rung pair is in `scripts/` history.
+   *
    *    4  GEOMETRY ONLY, same element kinds throughout: `synth-flattener-20`,
    *       `text-udef-parts-overlays-tune8` and `-tune46`, `vskip-tune1`.
    *
