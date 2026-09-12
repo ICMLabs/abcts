@@ -1052,3 +1052,50 @@ describe("renderAbc({wrap}) — the injected staff key keeps its naturals", () =
     expect(accidentals("%%keywarn 0\n")).toBe("flat flat flat flat flat flat");
   });
 });
+
+/**
+ * **A STANDALONE `M:` IS DRAWN ONCE UNDER WRAP, NOT TWICE.**
+ *
+ * The header parser's `M:` arm only fills `multilineVars.meter` for the next
+ * `startNewLine` — `appendStartingElement` is never called — so a standalone `M:` is a
+ * STAFF property and not a stream element. `deline` then turns it into the one voice
+ * element abcjs draws (`addMeterToVoices`, `data/deline-tune.js:23-27`), and
+ * `addLineBreaks` drops `staff.meter` for every output line but 0.
+ *
+ * Ours drew the injected element AND the change itself: two time signatures where abcjs
+ * puts one. ⚠️ An INLINE `[M:]` is exempt — it IS a stream element
+ * (`abc_parse_header.js:356-363`) — and is the control below.
+ *
+ * `zzopts` 24 -> 23 on `synth-flattener-38`, whose twelve `M:` changes made it twelve
+ * extra meter DIGITS: 35 against abcjs's 23, with the systems, bars and breaks identical.
+ */
+describe("renderAbc({wrap}) — a standalone M: is drawn once", () => {
+  const sigs = (abc: string, wrap = true): number => {
+    const host = { innerHTML: "" } as { innerHTML: string };
+    renderAbc(host, abc, {
+      staffwidth: 400,
+      ...(wrap
+        ? { wrap: { minSpacing: 1.8, maxSpacing: 2.7, preferredMeasuresPerLine: 4 } }
+        : {}),
+    });
+    // The group's name is `staff-extra time-signature` — one `<g>` per signature.
+    return [...host.innerHTML.matchAll(/data-name="staff-extra time-signature"/g)].length;
+  };
+  const B = "CDEF|";
+  const STANDALONE = `X:1\nT:t\nL:1/4\nM:4/4\nK:C\n${B.repeat(4)}\nM:3/4\nCDE|CDE|CDE|CDE|\n`;
+  const INLINE = `X:1\nT:t\nL:1/4\nM:4/4\nK:C\n${B.repeat(4)}[M:3/4]CDE|CDE|CDE|CDE|\n`;
+
+  // ⭐ Two signatures in total: the tune's own 4/4 and one 3/4. Ours drew three.
+  it("draws the standalone change once", () => {
+    expect(sigs(STANDALONE)).toBe(2);
+  });
+  // The control: an INLINE `[M:]` is a stream element and was never injected, so it was
+  // always drawn once — this row passed before the fix and must still.
+  it("draws an inline change once too", () => {
+    expect(sigs(INLINE)).toBe(2);
+  });
+  // …and with no wrap the standalone change is the LINE's meter, drawn at its head.
+  it("still draws it unwrapped", () => {
+    expect(sigs(STANDALONE, false)).toBe(2);
+  });
+});

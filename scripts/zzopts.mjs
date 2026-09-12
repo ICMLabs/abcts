@@ -219,7 +219,7 @@ const OPTIONS = [
   ['minPadding', { minPadding: 40 }, 5],
   ['timeBasedLayout', { timeBasedLayout: { minPadding: 20 } }, 669],
   /**
-   * ⚠️ **24, AND THE LINE-STRUCTURE HALF IS CLOSED.** Counting staff lines in each engine
+   * ⚠️ **23, AND THE LINE-STRUCTURE HALF IS CLOSED.** Counting staff lines in each engine
    * over the whole corpus: **ELEVEN fixtures drew a different NUMBER OF LINES and now NONE
    * does.** The two the line-count probe still reports are abcjs THROWING — see below.
    *
@@ -669,16 +669,27 @@ const OPTIONS = [
    *    looks right and reddens SIX suites including `svg-bytes` — the unwrapped goldens
    *    need the gap form. Whatever makes the wrapped case differ is NOT the shortfall.
    *
+   * ✅ **AND A STANDALONE `M:` IS DRAWN ONCE, NOT TWICE — 24 → 23.** The header parser's
+   *    `M:` arm only fills `multilineVars.meter` for the next `startNewLine`;
+   *    `appendStartingElement` is never called, so a standalone `M:` is a STAFF property
+   *    and not a stream element. `deline` turns it into the ONE voice element abcjs draws
+   *    (`addMeterToVoices`), and we drew the injected copy AND the change itself.
+   *    ⚠️ An INLINE `[M:]` is exempt — it IS a stream element — and is the control.
+   *    ⭐ Found by counting element KINDS on `synth-flattener-38`, whose twelve `M:`
+   *    changes showed as twelve extra meter DIGITS, 35 against 23, with the systems, bars
+   *    and `lineBreaks` all identical — so nothing structural was wrong and the x-diff's
+   *    positional alignment could only report "439/451".
+   *
    *    4  GEOMETRY ONLY, same element kinds throughout: `synth-flattener-20`,
    *       `text-udef-parts-overlays-tune8` and `-tune46`, `vskip-tune1`.
    *
-   * ⚠️ **AND TWO OF THE 24 ARE abcjs CRASHING, NOT US.** `abcts-vskip` tunes 0 and 2 throw
+   * ⚠️ **AND TWO OF THE 23 ARE abcjs CRASHING, NOT US.** `abcts-vskip` tunes 0 and 2 throw
    * inside abcjs's own `wrapLines` — `undefined is not an object (evaluating 'l[p]')` —
    * because `addLineBreaks` reads `lines[action.ogLine].staff[action.staff]` on a row a
    * `%%vskip` made non-music. We render them. A crash is not output and strict does not
    * reproduce one.
    */
-  ['wrap + staffwidth', { wrap: { minSpacing: 1.8, maxSpacing: 2.7, preferredMeasuresPerLine: 4 }, staffwidth: 400 }, 24],
+  ['wrap + staffwidth', { wrap: { minSpacing: 1.8, maxSpacing: 2.7, preferredMeasuresPerLine: 4 }, staffwidth: 400 }, 23],
 ]
 const every = Number(process.argv[2] ?? 1)
 const browser = await webkit.launch()

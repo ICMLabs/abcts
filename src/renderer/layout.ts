@@ -11446,6 +11446,11 @@ function layoutMeasure(
   }
   const drawMeterChange = (): void => {
     if (measure.meterChange == null) return
+    // …**AND NOT WHEN THE WRAP ALREADY INJECTED IT.** A STANDALONE `M:` is staff-only —
+    // `appendStartingElement` is never called for it — so `deline` turns it into the ONE
+    // voice element abcjs draws (`addMeterToVoices`), and drawing the change here as well
+    // put two time signatures where abcjs puts one. See `Measure.wrapInjectedMeter`.
+    if (measure.wrapInjectedMeter === true && measure.meterChangeStandalone === true) return
     // …and NOT AT THE HEAD when it was written after some of the measure's music — see
     // `meterEventIndex`. `drawMetersBefore` has it.
     if (singularMeterAt > 0) return
