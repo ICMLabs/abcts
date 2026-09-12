@@ -12761,9 +12761,43 @@ function layoutScoped(input: Score, options: LayoutOptions = {}): Layout {
     if (staff.indexOf(index) !== 0) return opensOnLine(index, line) ? false : null
     // …and the `up` is spliced onto `voices[0]` only when a later voice is created while
     // `thisStaff.voices[0] !== undefined`, which is to say AFTER it, ON THIS LINE.
-    const later = staff.filter((member, at) => at > 0 && opensOnLine(member, line))
-    if (later.length === 0) return null
-    return later.every((member) => opensAtOn(index, line) < opensAtOn(member, line)) ? true : null
+    const forcedOn = (l: number): boolean | null => {
+      const later = staff.filter((member, at) => at > 0 && opensOnLine(member, l))
+      if (later.length === 0) return null
+      return later.every((member) => opensAtOn(index, l) < opensAtOn(member, l)) ? true : null
+    }
+    const here = forcedOn(line)
+    if (here !== null) return here
+    /**
+     * ⚠️ **AND A WRAP CARRIES THE LAST LINE'S STEM DIRECTION FORWARD**, so a voice whose
+     * companion has RUN OUT keeps the `up` it was given while the companion was there.
+     *
+     *     if (lastStem[action.staff*10+action.voice])
+     *       …voices[action.voice].unshift({el_type: "stem", direction: lastStem[…].direction})
+     *     …
+     *     for (kk = currVoice.length-1; kk >= 0; kk--)
+     *       if (currVoice[kk].el_type === "stem") lastStem[…] = { direction: … }
+     *
+     * (`wrap_lines.js:59-60`, `:73-80`) — the same shape as `lastKeySig` two rules up, and
+     * it re-asserts the direction at the head of EVERY later output line.
+     *
+     * ⭐ **MEASURED, and the stems were NOT the discriminator they looked like.** On a
+     * two-voice staff whose second voice ends before the tuplet's system, abcjs draws the
+     * `3` at 249.82 — ABOVE — and we drew it at 318.43, below, with every sampled stem
+     * pointing up in both. The beam's own `stemsUp` is what `isAbove` reads
+     * (`layout/triplet.js:84-86`), and that is what the carry decides. It is worth 20.36px
+     * of page, because an above-tuplet reserves a lane.
+     *
+     * ⚠️ WRAP ONLY — `wrapSourceLine` is stamped by `applyLineBreaks` and by nothing else,
+     * and `svg-bytes` is 0 of 691 without it.
+     */
+    if (voices[index]?.measures.some((m) => m.wrapSourceLine !== undefined) !== true) return null
+    for (let l = line - 1; l >= 0; l -= 1) {
+      const was = forcedOn(l)
+      if (was !== null) return was
+      if (staff.some((member, at) => at > 0 && opensOnLine(member, l))) return null
+    }
+    return null
   }
 
   // Does the tune SING? Dynamics stack above the staff if so, below if not — abcjs's

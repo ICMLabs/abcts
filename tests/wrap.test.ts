@@ -901,3 +901,58 @@ describe("renderAbc({wrap}) — a carried ending draws before the line's decorat
     expect(lastEnding).toBeLessThan(lastDynamics);
   });
 });
+
+/**
+ * **A WRAP CARRIES A VOICE'S STEM DIRECTION FORWARD, SO A VOICE WHOSE COMPANION HAS RUN OUT
+ * KEEPS ITS FORCED `up`.**
+ *
+ *     if (lastStem[action.staff*10+action.voice])
+ *       …voices[action.voice].unshift({el_type: "stem", direction: lastStem[…].direction})
+ *     …
+ *     for (kk = currVoice.length-1; kk >= 0; kk--)
+ *       if (currVoice[kk].el_type === "stem") lastStem[…] = { direction: … }
+ *
+ * (`wrap_lines.js:59-60`, `:73-80`) — the same shape as `lastKeySig`, re-asserting the
+ * direction at the head of EVERY later output line.
+ *
+ * ⭐ **THE STEMS WERE NOT THE DISCRIMINATOR THEY LOOKED LIKE.** What this MOVES is a TUPLET
+ * NUMBER: the beam's own `stemsUp` is what `isAbove` reads (`layout/triplet.js:84-86`), and
+ * an above-tuplet reserves a lane worth 20.36px of page. Every sampled stem pointed up in
+ * both engines while the tuplet sat on opposite sides.
+ *
+ * `visual-mouse-click-01` and `visual-tablature-15` went from 108 of 265 elements moved to
+ * 1 — found by differencing x/y POSITIONS, which the element-kind sweep cannot see.
+ */
+describe("renderAbc({wrap}) — a voice keeps its forced stem after its companion ends", () => {
+  const M = "CDEF|";
+  const T = "b^f_df (3B2d2c2 B4|";
+  const tupletVsStaff = (secondVoice: string): string => {
+    const host = { innerHTML: "" } as { innerHTML: string };
+    renderAbc(
+      host,
+      `X:1\nT:t\nM:4/4\nL:1/16\n%%staves (V1 V2)\nV:V1\nV:V2\nK:C\n` +
+        `[V:V1]${M.repeat(5)}${T}${M.repeat(2)}\n[V:V2]${secondVoice}\n`,
+      {
+        staffwidth: 400,
+        wrap: { minSpacing: 1.8, maxSpacing: 2.7, preferredMeasuresPerLine: 4 },
+      },
+    );
+    const y = /data-name="triplet"[^>]*>[\s\S]*?<text[^>]*y="([0-9.]+)"/.exec(host.innerHTML)?.[1];
+    const tops = [...host.innerHTML.matchAll(/<path d="M [0-9.]+ ([0-9.]+)[^>]*class="abcjs-top-line"/g)].map((m) => m[1]);
+    // ABOVE or BELOW its own staff is the whole question — the absolute y moves with it.
+    return Number(y) < Number(tops[tops.length - 1]) ? "above" : "below";
+  };
+
+  // ⭐ V2 runs out after two measures; the tuplet is V1's sixth. abcjs keeps V1's forced
+  // `up`, so the beam is above and the number rides it. Ours dropped the force and the
+  // number went below, taking 20.36px of page with it.
+  it("keeps the tuplet above when the second voice has ended", () => {
+    expect(tupletVsStaff("C16|C16|")).toBe("above");
+  });
+
+  // The control: with the second voice present throughout, the force was never in doubt
+  // and this row passed before the fix.
+  it("keeps it above when the second voice runs the whole tune", () => {
+    expect(tupletVsStaff("C16|".repeat(8))).toBe("above");
+  });
+});

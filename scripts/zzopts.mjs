@@ -569,7 +569,20 @@ const OPTIONS = [
    *    instrument the row needs now that 19 of its rows draw the same elements at the same
    *    page height.
    *
-   *  ⭐ **THE NEXT PAIR IS DIAGNOSED AND NOT FIXED: A TUPLET NUMBER ON THE WRONG SIDE.**
+   * ✅ **THE TUPLET PAIR — 108 of 265 MOVED DOWN TO 1.** The cause is a WRAP CARRY, not the
+   *    tuplet code: `lastStem` re-asserts a voice's stem direction at the head of every
+   *    later output line (`wrap_lines.js:59-60`, `:73-80`), so a voice whose companion has
+   *    RUN OUT keeps the `up` it was forced while the companion was there. The beam's own
+   *    `stemsUp` is what `isAbove` reads (`layout/triplet.js:84-86`), an above-tuplet
+   *    reserves a lane, and that lane is the 20.36px.
+   *    ⚠️ **THE STEMS WERE NOT THE DISCRIMINATOR THEY LOOKED LIKE** — every sampled stem
+   *    pointed up in BOTH engines while the tuplet sat on opposite sides. Three rungs that
+   *    agreed (single voice, two voices on one staff, two staves) are what narrowed it to
+   *    "the companion has ended", which no amount of reading the tuplet code would give.
+   *    ⚠️ **What is left on that pair is ONE `voice-name` at dy 17.000** — a round number,
+   *    and the next thing to take there.
+   *
+   *    The original diagnosis, kept because the narrowing is the useful part:
    *    `visual-mouse-click-01` and `visual-tablature-15` share one signature — 108 of 265
    *    elements moved, the first a staff line at dy 20.360 — and it is NOT a placement of
    *    the staff. Everything ABOVE it is at the SAME absolute y in both engines: the
