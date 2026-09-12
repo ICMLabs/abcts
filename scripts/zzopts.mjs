@@ -623,15 +623,23 @@ const OPTIONS = [
    *    fix ignored the directive and drew one where abcjs draws none, caught by the
    *    control. `parsing-x10`'s lengths now MATCH (39/39).
    *
-   *    ⚠️ **WHAT REMAINS ON THE CLUSTER IS A DIFFERENT RULE.** `parsing-x11` is
-   *    `K:Eb / G| / K:F / B| / T:Sub / K:D / d|`: abcjs prints the CARRIED F — one flat —
-   *    at the head of the third system, where we print `K:D`'s two sharps. A mid-tune
-   *    subtitle starts a SECTION, and a section's first measure is not in `opensHere`, so
-   *    `headKeys` never covers it. ⚠️ Extending the walk with `sectionStarts` CHANGES
-   *    NOTHING, because a standalone `K:` is not on `Measure.keyChange` at all — measured,
-   *    all three measures of that tune report `keyChange` null — so the walk's running key
-   *    never advances either. **Find the field a standalone `K:` DOES land on before
-   *    touching `headKeys` again.**
+   *    ⚠️ **WHAT REMAINS ON THE CLUSTER IS THE CARRIED HEAD KEY, AND THE OBVIOUS FIX MAKES
+   *    IT WORSE — TRIED, MEASURED, REVERTED.** On `parsing-x10` system 2 abcjs's head is
+   *    TWO flats and a natural where ours is one flat and a natural, and two flats is
+   *    **Gm, the HEADER key** — not the `K:F` in force. The reason is `%%keywarn 0`: the
+   *    guard is on `appendStartingElement`, so no key ELEMENT enters the stream, `lastKeySig`
+   *    never advances, and `addLineBreaks` falls back to the delined line's own staff key.
+   *    So the carried head key is "the last key that was ALLOWED into the stream", which is
+   *    not the key in force.
+   *    ⚠️ Stamping `wrapLineHeadKey` on every return path AND treating a section start as
+   *    opening a line — both of which look right on their own — took `parsing-x10` from
+   *    39/39 back to 39/37 and `x11` from 38/39 to 38/41. Reverted.
+   *
+   *    ⚠️ **AND A NOTE HERE WAS WRONG, FROM A MUTE PROBE.** It said a standalone `K:` is
+   *    "not on `Measure.keyChange` at all", measured across three measures. The probe read
+   *    `m.keyChange?.root`; the field is `tonic`, so it printed null for a key that was
+   *    there. `keyChange` IS set on both. Corrected rather than left, because the next pass
+   *    would have gone looking for a field that does not exist.
    *
    *    The original diagnosis:
    *    `visual-parsing-x10` / `-x11` / `-x12` all toggle `%%keywarn` between key changes,
