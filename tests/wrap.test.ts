@@ -956,3 +956,51 @@ describe("renderAbc({wrap}) — a voice keeps its forced stem after its companio
     expect(tupletVsStaff("C16|".repeat(8))).toBe("above");
   });
 });
+
+/**
+ * **A VOICE THAT HAS RUN OUT DRAWS NO NAME, AND SHRINKS THE STACK FOR THE ONES THAT
+ * REMAIN.**
+ *
+ * abcjs's `total` and `index` in `baselineToCenter` come from the LINE's staff voices, and
+ * a voice with no music on a line is not among them — so the survivor's
+ * `(total - index - 2) * fontSize` term changes by a WHOLE font size the moment its
+ * companion stops. 17px, on a 17px `voicefont`.
+ *
+ * ⚠️ **AND A VOICE SURVIVES EXACTLY ONE LINE PAST ITS LAST MUSIC.** `findLineBreaks` pushes
+ * a final action after its element loop — `push({…, start, end: voice.length})`
+ * (`wrap_lines.js:143-147`) — unconditionally, so the line after a voice's last break still
+ * gets an entry for it with an empty slice. Filtering on music ALONE took that name away
+ * and was caught by the rung, not by the gate.
+ *
+ * `zzopts` 26 -> 24: `visual-mouse-click-01` and `visual-tablature-15`, both closed.
+ */
+describe("renderAbc({wrap}) — a voice that has ended stops being named", () => {
+  const M = "CDEF|";
+  const names = (secondVoice: string): string => {
+    const host = { innerHTML: "" } as { innerHTML: string };
+    renderAbc(
+      host,
+      `X:1\nT:t\nM:4/4\nL:1/16\n%%staves (V1 V2)\nV:V1 name=RH\nV:V2 name=X2\nK:C\n` +
+        `[V:V1]${M.repeat(12)}\n[V:V2]${secondVoice}\n`,
+      {
+        staffwidth: 400,
+        wrap: { minSpacing: 1.8, maxSpacing: 2.7, preferredMeasuresPerLine: 4 },
+      },
+    );
+    return [...host.innerHTML.matchAll(/data-name="voice-name"[^>]*>(?:<tspan[^>]*>)?([^<]*)/g)]
+      .map((m) => m[1])
+      .join(" ");
+  };
+
+  // ⭐ V2 has two measures. It is named on the system holding them AND on the one after —
+  // the empty slice `findLineBreaks` always pushes — and on none after that.
+  it("names the ended voice once more, then stops", () => {
+    expect(names("C16|C16|")).toBe("RH X2 RH X2 RH RH RH");
+  });
+
+  // The control: with the companion present throughout, every system names both, and the
+  // stack never shrinks. This row passed before the fix and must still.
+  it("names both on every system while both are playing", () => {
+    expect(names("C16|".repeat(12))).toBe("RH X2 RH X2 RH X2 RH X2 RH X2");
+  });
+});

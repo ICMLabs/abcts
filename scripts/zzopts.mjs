@@ -219,7 +219,7 @@ const OPTIONS = [
   ['minPadding', { minPadding: 40 }, 5],
   ['timeBasedLayout', { timeBasedLayout: { minPadding: 20 } }, 669],
   /**
-   * ⚠️ **26, AND THE LINE-STRUCTURE HALF IS CLOSED.** Counting staff lines in each engine
+   * ⚠️ **24, AND THE LINE-STRUCTURE HALF IS CLOSED.** Counting staff lines in each engine
    * over the whole corpus: **ELEVEN fixtures drew a different NUMBER OF LINES and now NONE
    * does.** The two the line-count probe still reports are abcjs THROWING — see below.
    *
@@ -579,8 +579,16 @@ const OPTIONS = [
    *    pointed up in BOTH engines while the tuplet sat on opposite sides. Three rungs that
    *    agreed (single voice, two voices on one staff, two staves) are what narrowed it to
    *    "the companion has ended", which no amount of reading the tuplet code would give.
-   *    ⚠️ **What is left on that pair is ONE `voice-name` at dy 17.000** — a round number,
-   *    and the next thing to take there.
+   * ✅ **AND THE `voice-name` AT dy 17.000 WITH IT — 26 → 24, BOTH FIXTURES CLOSED.** abcjs's
+   *    `total` and `index` in `baselineToCenter` come from the LINE's staff voices, so a
+   *    voice with no music on a line is not among them and the SURVIVOR's
+   *    `(total - index - 2) * fontSize` term changes by a whole font size — 17px on a 17px
+   *    `voicefont`. We were naming every declared voice on every system.
+   *    ⚠️ **AND A VOICE SURVIVES EXACTLY ONE LINE PAST ITS LAST MUSIC**, because
+   *    `findLineBreaks` pushes a final `{…, start, end: voice.length}` unconditionally
+   *    (`:143-147`) — an empty slice that still creates the voice on that line. Filtering
+   *    on music ALONE took that name away, and the RUNG caught it; the gate count had
+   *    already moved.
    *
    *    The original diagnosis, kept because the narrowing is the useful part:
    *    `visual-mouse-click-01` and `visual-tablature-15` share one signature — 108 of 265
@@ -607,13 +615,13 @@ const OPTIONS = [
    *    4  GEOMETRY ONLY, same element kinds throughout: `synth-flattener-20`,
    *       `text-udef-parts-overlays-tune8` and `-tune46`, `vskip-tune1`.
    *
-   * ⚠️ **AND TWO OF THE 26 ARE abcjs CRASHING, NOT US.** `abcts-vskip` tunes 0 and 2 throw
+   * ⚠️ **AND TWO OF THE 24 ARE abcjs CRASHING, NOT US.** `abcts-vskip` tunes 0 and 2 throw
    * inside abcjs's own `wrapLines` — `undefined is not an object (evaluating 'l[p]')` —
    * because `addLineBreaks` reads `lines[action.ogLine].staff[action.staff]` on a row a
    * `%%vskip` made non-music. We render them. A crash is not output and strict does not
    * reproduce one.
    */
-  ['wrap + staffwidth', { wrap: { minSpacing: 1.8, maxSpacing: 2.7, preferredMeasuresPerLine: 4 }, staffwidth: 400 }, 26],
+  ['wrap + staffwidth', { wrap: { minSpacing: 1.8, maxSpacing: 2.7, preferredMeasuresPerLine: 4 }, staffwidth: 400 }, 24],
 ]
 const every = Number(process.argv[2] ?? 1)
 const browser = await webkit.launch()

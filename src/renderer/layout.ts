@@ -14534,10 +14534,48 @@ function layoutScoped(input: Score, options: LayoutOptions = {}): Layout {
       const nameElements: LayoutElement[] = []
       // …UNLESS A BRACE TOOK IT. `setBottomStaff` deletes the header off the voice, so the
       // staff draws nothing and the brace's own group draws it — see `ConnectorSpan.header`.
-      if (labelText && !braceHeaders(systemIndex).takenFrom.has(voiceIndex)) {
-        const members = staffMembers
+      /**
+       * ⚠️ **AND A VOICE THAT HAS RUN OUT DRAWS NO NAME, AND SHRINKS THE STACK FOR THE ONES
+       * THAT REMAIN.** abcjs's `total` and `index` in `baselineToCenter` come from the
+       * LINE's staff voices, and a voice with no music on a line is not among them — so
+       * the surviving name's `(total - index - 2) * fontSize` term changes by a whole font
+       * size the moment its companion stops.
+       *
+       * Measured on a two-voice staff whose second voice ends after two measures: abcjs
+       * draws `RH` alone at 285.29 on every later system where we drew `RH` at 268.29 AND
+       * an `X2` at 285.29 — one name too many, and the survivor 17px high.
+       *
+       * ⚠️ WRAP-REACHABLE ONLY in practice: without a re-lining a short voice still opens
+       * every source line it is written on. `svg-bytes` is 0 of 691 either way.
+       */
+      /**
+       * ⚠️ **AND A VOICE SURVIVES EXACTLY ONE LINE PAST ITS LAST MUSIC.** `findLineBreaks`
+       * pushes a FINAL action after its element loop — `push({…, start, end: voice.length})`
+       * (`wrap_lines.js:143-147`) — unconditionally, so the line after a voice's last break
+       * still gets an entry for it, with an empty slice. Measured: abcjs draws `X2` on the
+       * system after its two measures and on none after that; filtering on music alone took
+       * that one name away.
+       */
+      const lastLineOf = (m: number): number => {
+        let last = -1
+        ;(voices[m]?.measures ?? []).forEach((_, i) => {
+          const l = lineOfMeasure[i]
+          if (l !== undefined && l > last) last = l
+        })
+        return last
+      }
+      const presentMembers = staffMembers.filter(
+        (m) => opensOnLine(m, systemIndex) || lastLineOf(m) + 1 === systemIndex,
+      )
+      const onThisLine = presentMembers.length > 0 ? presentMembers : staffMembers
+      if (
+        labelText &&
+        !braceHeaders(systemIndex).takenFrom.has(voiceIndex) &&
+        onThisLine.includes(voiceIndex)
+      ) {
+        const members = onThisLine
         // `headerPosition`'s `v` is the same index the title was read at — see above.
-        const pos = drawPos
+        const pos = Math.max(0, onThisLine.indexOf(voiceIndex))
         // **`%%voicefont` IS REALIZED, FACE, SIZE AND WEIGHT.** The label was hard-coded to
         // a bold 17px Times — the DEFAULT resolved — so `%%voicefont Helvetica-Bold 10.0`
         // drew at the default while `voiceNameWidth` (and therefore the whole indent)
