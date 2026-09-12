@@ -1887,6 +1887,22 @@ export function flattenAudio(
    *
    * ponytail: read voice-major where abcjs reads line-major, so a tune whose LAST line
    * changes meter on voice 0 and not on voice 1 differs. Nothing states one anywhere.
+   *
+   * ⚠️ **A CONTROL WAS WRITTEN FOR THIS AND IS MUTE — 2026-09-12.** The shape the marker
+   * names was built (`V1` changing meter on the last line, `V2` changed earlier and not
+   * after) and compared against abcjs's `getMidiFile` byte for byte in three
+   * configurations: `%%MIDI drum`+`drumon`+`drumbars`, the same plus a `drumIntro: 2`
+   * option, and the option alone. All three agree — AND ALL THREE STILL AGREE WHEN
+   * `introMeter` IS DELIBERATELY BROKEN from `.pop()` to `.shift()`, which is what says
+   * the control measures nothing rather than that the port is right.
+   *
+   * So `introMeter` does not reach `getMidiFile`'s bytes by any route reachable from ABC:
+   * the trigger is a HOST passing `drumIntro` through a path that does. ⚠️ Do not record
+   * this as "measured and correct" — it is UNMEASURED, and the mute control is the reason.
+   * ⚠️ And the first attempt passed `drum` as a getMidiFile OPTION: abcjs ignores it and
+   * used its own default velocities (0x10/0x50 against our 0x64/0x32), so the probe failed
+   * on the option plumbing and not on the meter. Use `%%MIDI` directives, which both
+   * engines parse the same way.
    */
   const introMeter =
     allVoices

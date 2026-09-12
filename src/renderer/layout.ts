@@ -19507,6 +19507,16 @@ function anchorBelowStaff<
  * bug — the lyric reserve, then `curveReserves` — so the lane is spent exactly once, in the
  * one function that spends it, and this asks that function for the answer.
  *
+ * ⚠️ **A CONTROL WAS WRITTEN FOR THE `ponytail:` BELOW AND IS MUTE — 2026-09-12.** Four
+ * shapes were rendered in both engines and compared: an ending with a `P:` label, with a
+ * `Q:` tempo, with BOTH, and with a chord plus a dynamic. All four AGREE, and the bracket
+ * sits BELOW the part and the tempo in ours as in abcjs (`ending@124.03` under
+ * `part@110.25` under `tempo@85.12`). ⚠️ But moving `ENGRAVE.voltaStep` by three steps
+ * moves the bracket NOT AT ALL, so the probe never touched the placement and the agreement
+ * proves nothing. The lane is read back from `verticalExtent`, as the paragraph above says
+ * — which is where a live probe has to reach. **Do not record the marker below as
+ * measured-correct on the strength of that run.**
+ *
  * ponytail: abcjs's order above the staff is lyric, chord, ENDING, dynamic, part, tempo,
  * and ours spends the ending lane last of all — so on a staff that ALSO carries a part
  * label or a tempo mark the bracket lands above them where abcjs puts it below. The staff's

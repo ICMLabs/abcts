@@ -72,6 +72,32 @@ rather than left as debt.
 ⚠️ **The hit rate argues for the pass.** `HANDOFF-2026-09-08.md` records a sweep that turned
 16 markers into controls and found **4 real defects** — 25%.
 
+### ⚠️ BUT THE FIRST TWO CONTROLS THIS SESSION WROTE WERE BOTH MUTE — budget for that
+
+The recommendation above is right and the cost is higher than it reads. Two no-trigger
+markers were taken and a control written for each. **Neither measured anything**, and each
+failed differently:
+
+- **`flatten.ts:1888` (intro meter, voice-major vs line-major).** The shape the marker names
+  was built and compared against `getMidiFile` byte for byte in THREE configurations. All
+  agree — and all still agree when `introMeter` is deliberately broken from `.pop()` to
+  `.shift()`. `introMeter` reaches no byte by any route an ABC file can take; only a host
+  passing `drumIntro` through a path that does. ⚠️ And the FIRST attempt failed on the
+  probe's own plumbing: passing `drum` as a `getMidiFile` option, which abcjs ignores, so the
+  two engines used different default velocities and the run "differed" for no reason.
+- **`layout.ts:19503` (the above-staff lane order).** Four shapes — ending with a part
+  label, with a tempo, with both, with a chord and a dynamic — all AGREE, and the bracket
+  sits below the part and tempo in both. But moving `ENGRAVE.voltaStep` by three steps moves
+  the bracket NOT AT ALL: the lane is read back from `verticalExtent`, so the probe never
+  touched the placement.
+
+**Neither marker was recorded as "measured and correct", because neither was measured.**
+Both now carry what was attempted and why it failed, which is the part a later session
+cannot reconstruct. ⭐ **The rule this adds: for these markers, a MUTE control is the
+default outcome and the deliberate break is the only thing that says otherwise.** The repo
+already knew it — `HANDOFF-2026-09-07.md` counts "four mute probes in two days" — and the
+sweep should be budgeted at roughly two attempts per finding rather than one.
+
 ## ⚖️ THE ONE DECISION FOR THE OWNER
 
 **`CLAUDE.md` is 2,240 lines and 88% of it sits in two sections:**
