@@ -14589,8 +14589,15 @@ function layoutScoped(input: Score, options: LayoutOptions = {}): Layout {
         })
         return last
       }
+      // ⚠️ **AND THE GRACE LINE IS THE WRAP'S, NOT EVERY RENDER'S.** `findLineBreaks` only
+      // runs under `wrap`; without one a voice absent from a source line is simply absent,
+      // and abcjs names it on none of them. Measured: four source lines with V2 on the
+      // second, UNWRAPPED — abcjs `RH X2 rh rh rh`, and the ungated grace made ours
+      // `RH X2 rh x2 rh rh`. `svg-bytes` cannot see it; no corpus fixture has the shape.
+      const wrapRan =
+        voices[voiceIndex]?.measures.some((m) => m.wrapSourceLine !== undefined) === true
       const presentMembers = staffMembers.filter(
-        (m) => opensOnLine(m, systemIndex) || lastLineOf(m) + 1 === systemIndex,
+        (m) => opensOnLine(m, systemIndex) || (wrapRan && lastLineOf(m) + 1 === systemIndex),
       )
       const onThisLine = presentMembers.length > 0 ? presentMembers : staffMembers
       if (

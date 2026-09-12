@@ -1003,6 +1003,28 @@ describe("renderAbc({wrap}) — a voice that has ended stops being named", () =>
   it("names both on every system while both are playing", () => {
     expect(names("C16|".repeat(12))).toBe("RH X2 RH X2 RH X2 RH X2 RH X2");
   });
+
+  /**
+   * ⚠️ **AND THE GRACE LINE IS THE WRAP'S, NOT EVERY RENDER'S.** `findLineBreaks` only runs
+   * under `wrap`; without one a voice absent from a source line is simply absent and abcjs
+   * names it on none of them. The first version of this rule was ungated and regressed the
+   * UNWRAPPED path, which `svg-bytes` cannot see because no corpus fixture has the shape.
+   */
+  it("does NOT extend a name past its music when no wrap runs", () => {
+    const M = "CDEF|";
+    const host = { innerHTML: "" } as { innerHTML: string };
+    renderAbc(
+      host,
+      `X:1\nT:t\nM:4/4\nL:1/16\n%%staves (V1 V2)\nV:V1 name=RH subname=rh\n` +
+        `V:V2 name=X2 subname=x2\nK:C\n[V:V1]${M}\n[V:V2]${M}\n[V:V1]${M}\n[V:V1]${M}\n[V:V1]${M}\n`,
+      { staffwidth: 400 },
+    );
+    const got = [...host.innerHTML.matchAll(/data-name="voice-name"[^>]*>(?:<tspan[^>]*>)?([^<]*)/g)]
+      .map((m) => m[1])
+      .join(" ");
+    // abcjs's own answer for that tune, unwrapped.
+    expect(got).toBe("RH X2 rh rh rh");
+  });
 });
 
 /**

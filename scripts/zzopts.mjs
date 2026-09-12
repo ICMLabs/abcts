@@ -695,6 +695,15 @@ const OPTIONS = [
    *    the right value for a multi-staff tune. Find what `inputStaff.clef` actually holds
    *    per STAFF before re-trying; the rung pair is in `scripts/` history.
    *
+   *  ⚠️ **AND A KNOWN LIMIT ON THE VOICE-NAME RULE, MEASURED.** The "one line past its last
+   *    music" grace is the WRAP's — `findLineBreaks` only runs under it — and is gated on
+   *    that now. ⚠️ It is still wrong for one shape: four SOURCE lines with the second
+   *    voice on only one of them, WRAPPED, gives abcjs `RH X2 RH` and ours `RH X2 RH X2`.
+   *    Removing the grace fixes that shape and takes this row 23 → 25, so it is load-bearing
+   *    for the corpus and the shape is not in it. The grace is probably compensating for
+   *    `lineOfMeasure` mapping a SHORT voice's measures to too few lines — check that
+   *    before removing it.
+   *
    *    4  GEOMETRY ONLY, same element kinds throughout: `synth-flattener-20`,
    *       `text-udef-parts-overlays-tune8` and `-tune46`, `vskip-tune1`.
    *
