@@ -3,6 +3,26 @@
 You are developing abcts, a modern TypeScript ABC notation library
 and community successor to abcjs.
 
+## How to read this file
+
+⚠️ **THE CURRENT STATE IS NOT IN THIS FILE.** It is in the newest
+`Docs/HANDOFF-*.md` — read that first, then `Docs/NEXT-AGENT-PROMPT.md`. `## Current phase`
+below is a CHRONOLOGICAL LOG of finished sessions, and its newest entry is older than the
+newest handoff.
+
+What is here, and where:
+
+| | |
+|---|---|
+| **the standing order + the method** | `## First Step — Always` — long, and load-bearing |
+| **commands** | `## Running it`, `## Measuring progress`, `## Quality Gate` |
+| **rules that bind** | `## Development Rules`, `## License`, `## Remote` (attribution) |
+| **where things live** | `## Key Files and Paths` |
+| **history** | `## Current phase` — a log; the handoffs are the durable record |
+
+⚠️ **AND THE GATES' NUMBERS IN THE LOG ARE HISTORICAL.** Every count in a `>` blockquote is
+what was true on the date beside it. Run the gate rather than quoting one.
+
 ## First Step — Always
 **THE STANDING ORDER IS 100% PARITY WITH ABCJS ON EVERY TUNE** — the 41-fixture corpus, the
 174-tune harvested corpus, Gonzato, and the audio feature set. Work until it is reached;
