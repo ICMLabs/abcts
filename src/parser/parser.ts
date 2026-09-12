@@ -3831,9 +3831,22 @@ class Parser {
      * away with it only because a digit is not a note letter.
      *
      * ponytail: non-strict stops at the first UNESCAPED `%` but does not yet UNESCAPE the
-     * `\%` it keeps, so `abcjs-extended` prints the backslash. Fixing that means rewriting the text
-     * after every field and music handler has taken its source offsets, which is a bigger
-     * change than the one this corrects.
+     * `\%` it keeps. Fixing that means rewriting the text after every field and music
+     * handler has taken its source offsets, which is a bigger change than the one this
+     * corrects.
+     *
+     * ⚠️ **AND THE SYMPTOM THE MARKER NAMED IS WRONG — MEASURED 2026-09-12.** It said
+     * `abcjs-extended` "prints the backslash". It does not: `T:100\% done` renders as
+     * `100​％ done` — a ZERO-WIDTH SPACE and a FULLWIDTH percent — in BOTH modes, and
+     * **abcjs renders exactly the same thing**, so there is no divergence to fix on that
+     * shape. A bare `T:100% done` truncates to `100` in both, and `CDEF| \% kept` parses
+     * the same note count in both.
+     *
+     * ⚠️ **THE CONTROL IS STILL MUTE, THOUGH**: replacing this line with a plain
+     * `line.indexOf('%')` changes none of the three, because a `T:` goes through the FIELD
+     * handler and the escape is resolved in the text-escape table, not here. So the shape
+     * that would exercise THIS line has not been found — do not read the agreement above as
+     * covering it.
      */
     const comment = isStrict(this.mode) ? line.indexOf('%') : line.search(/(?<!\\)%/)
     if (comment >= 0) {

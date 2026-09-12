@@ -91,12 +91,39 @@ failed differently:
   the bracket NOT AT ALL: the lane is read back from `verticalExtent`, so the probe never
   touched the placement.
 
-**Neither marker was recorded as "measured and correct", because neither was measured.**
-Both now carry what was attempted and why it failed, which is the part a later session
-cannot reconstruct. ⭐ **The rule this adds: for these markers, a MUTE control is the
-default outcome and the deliberate break is the only thing that says otherwise.** The repo
-already knew it — `HANDOFF-2026-09-07.md` counts "four mute probes in two days" — and the
-sweep should be budgeted at roughly two attempts per finding rather than one.
+- **`parser.ts:3833` (an unescaped `\%` in non-strict).** ⭐ **The marker's SYMPTOM is
+  wrong.** It says `abcjs-extended` "prints the backslash". It does not: `T:100\% done`
+  renders `100​％ done` — zero-width space, fullwidth percent — in BOTH modes, and **abcjs
+  renders exactly the same**, so there is no divergence on that shape. But replacing the
+  line with a plain `indexOf('%')` changes none of three cases, because a `T:` goes through
+  the FIELD handler and the escape resolves in the text-escape table. Mute again.
+
+**None was recorded as "measured and correct", because none was measured.** Each now carries
+what was attempted and why it failed — the part a later session cannot reconstruct.
+
+### ⭐ THREE OF THREE WERE MUTE, AND FOR THE SAME REASON — retriage by OBSERVABILITY
+
+The three failures look different and are one thing: **the code path each marker describes
+is not observable from the public render API for the shape the marker names.** `introMeter`
+reaches no MIDI byte from ABC; the volta lane is read back from `verticalExtent` rather than
+from `voltaStep`; the `%` line is bypassed entirely by the field handler.
+
+That is very likely **why these markers have no trigger — there is nothing to trigger on.**
+A marker whose effect no public output can show cannot be given a "revisit when" clause, and
+pretending otherwise produces exactly the mute probes above.
+
+**So the recommendation changes.** Do not work the 26 no-trigger markers in file order.
+**Triage them by observability first** — can any public output distinguish the shortcut from
+the alternative? — and:
+
+- **observable** → write the control, and prove it goes red by breaking the code first.
+- **not observable** → **restate the marker as a DECISION, not a debt.** It is a note about
+  an internal choice, and calling it debt implies a repayment that cannot be demonstrated.
+
+⚠️ **And budget the deliberate break as the FIRST step, not the last.** All three agreements
+above were worthless until the break was tried; two would have been recorded as "measured
+and correct" without it. The repo already counts "four mute probes in two days"
+(`HANDOFF-2026-09-07.md`) — this session makes it seven.
 
 ## ⚖️ THE ONE DECISION FOR THE OWNER
 
