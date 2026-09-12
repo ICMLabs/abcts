@@ -612,6 +612,24 @@ const OPTIONS = [
    *    direction next — and note that the isolated rung is what rules out the simpler
    *    explanation, which reading the tuplet code would not have.
    *
+   *  ⭐ **NEXT, AND DIAGNOSED TO THE ACCIDENTAL: `%%keywarn` UNDER WRAP.**
+   *    `visual-parsing-x10` / `-x11` / `-x12` all toggle `%%keywarn` between key changes,
+   *    and all three are LENGTH mismatches — 39/37, 38/37, 195/187 — so an element is
+   *    missing, not moved. Counted per system, the NOTES AND BARS MATCH exactly (four of
+   *    each on both lines of x10); every missing element is a key-signature accidental:
+   *
+   *      sys 1  js  fl@49 fl@57 fl@139 nat@221 sh@234 sh@252 **nat@257** nat@336 fl@343
+   *             ts  fl@49 fl@57 fl@141 nat@224 sh@237 sh@256             nat@335 fl@341
+   *      sys 2  js  fl@49 **fl@65** nat@75 sh@244 sh@254 sh@264
+   *             ts  fl@49          nat@58 sh@235 sh@246 sh@256
+   *
+   *    So at the head of system 2 abcjs prints TWO flats and a natural where we print one
+   *    flat and a natural — and the key in force there is F, which has one flat. Two flats
+   *    is Gm, the tune's HEADER key. ⚠️ That smells like the carried `lastKeySig` and the
+   *    `%%keywarn` naturals interacting, which is exactly where `Measure.wrapLineHeadKey`
+   *    lives — so re-read that rule before adding another, and remember its naturals are
+   *    FILTERED by `wrap_lines.js:60-70`.
+   *
    *    4  GEOMETRY ONLY, same element kinds throughout: `synth-flattener-20`,
    *       `text-udef-parts-overlays-tune8` and `-tune46`, `vskip-tune1`.
    *
