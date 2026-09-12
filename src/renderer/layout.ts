@@ -20475,10 +20475,21 @@ function verticalExtent(
   // `endingHeightAbove + 1` beyond the note on whichever side an ending sits, never
   // the bracket's real height. See the ABOVE/BELOW gather at the top of this function.
   // Dynamics: a flat lane past the music, never their own drawn box.
-  // ponytail: a staff whose only below-dynamic is a HAIRPIN reserves nothing, because
-  // hairpins resolve after packing and `spannerLines` is still empty here. abcjs does
-  // reserve for them (`dynamicHeightBelow`, `crescendo-element.js:11`). Taking presence
-  // from the model instead was tried and made the corpus much worse — see the checkpoint.
+  // ✅ **RETIRED 2026-09-12 — MEASURED, AND THE MARKER WAS STALE.** It said "a staff whose
+  // only below-dynamic is a HAIRPIN reserves nothing, because hairpins resolve after packing
+  // and `spannerLines` is still empty here", with abcjs named as reserving
+  // (`dynamicHeightBelow`, `crescendo-element.js:11`). It DOES reserve: `!<(!CDEF!<)!|GABc|`
+  // is 166.177 in both engines, the same as a letter dynamic, where a staff with no
+  // below-dynamic is 139.052.
+  //
+  // ⭐ The control is in `tests/above-lane-order.test.ts` and is the first of four such
+  // controls that was NOT mute — because it DISCRIMINATES: 139.052 against 166.177 says a
+  // present reserve from an absent one. Verified by forcing `sawDynamicBelow` false, which
+  // drops the hairpin row to 139.052 and makes it differ from abcjs while the no-dynamic
+  // row stays equal.
+  //
+  // (Taking presence from the model instead was tried once and made the corpus much worse —
+  // that part of the old note still stands, and is why this is not re-plumbed.)
   if (PROBE)
     probeFlags =
       `dynBelow=${sawDynamicBelow} dynAbove=${sawDynamicAbove}` +

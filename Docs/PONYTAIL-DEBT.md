@@ -111,3 +111,49 @@ why the remainder is worth a pass rather than an assumption.
 
 - **:682** — `rowExtra` is one number where the build is `((y + size) + index * step) + pad`. They are the same double for every row in either corpus — `index` is 0 and there is no box — and differ in the last bits for a boxed multi-row block. Split it if one turns up.
 
+## ⭐ TRIAGE — by OBSERVABILITY, not by file order
+
+**Three of the first four controls written for these were MUTE**, and all three for the same
+reason: the path each marker described is not observable from the public render API for the
+shape it named. That is very likely **why they have no trigger — there is nothing to trigger
+on.** See `Docs/CODEBASE-EVALUATION-2026-09-12.md`.
+
+So work them in this order, and **write the deliberate break FIRST**:
+
+### A. NOT OBSERVABLE — restate as DECISIONS, do not write controls
+
+These describe internal structure. No public output can distinguish the shortcut from the
+alternative, so there is nothing to measure and nothing to revisit. Calling them debt
+implies a repayment that cannot be demonstrated.
+
+- `layout.ts:5887`, `:5926`, `:5955`, `:6014`, `:6070` — five module-level switches. ⚠️ The
+  architecture-level version of this is ALREADY measured and declined: threading them is
+  217 references, `HANDOFF-2026-09-08.md` §6. One decision, five markers.
+- `chord-grid.ts:657` — a local copy of `overlayVoices` rather than an export out of `audio/`.
+- `parser.ts:5470` — buffering a line's tokens rather than streaming.
+- `parser.ts:6617` — warning-only ownership; the marker itself says "no oracle asking for it".
+- `layout.ts:20035` — a loop removed rather than guarded.
+
+### B. OBSERVABLE — controllable, in rough order of signal strength
+
+- ✅ `layout.ts:20478` — **DONE 2026-09-12, and the marker was STALE.** A hairpin DOES reserve
+  below. Control in `tests/above-lane-order.test.ts`; it discriminates 139.052 from 166.177,
+  which is why it was the first non-mute one.
+- `layout.ts:16532` — `%%titleformat` / `%%writefields` / `%%aligncomposer` unimplemented.
+  Set the directive and compare; the signal is where a field lands in the block.
+- `parser.ts:5416` — a voice DECLARED after a header `K:` takes the clef's copy in abcjs.
+  Signal: that voice's clef.
+- `layout.ts:915`, `:3198` — quarter-tone accidentals in the non-strict modes. Signal: the
+  drawn glyph. ⚠️ Strict draws nothing either way, so the control must set the mode.
+- `layout.ts:9011`, `:9153`, `:9981` — slur and beamed-tuplet endpoint pitches. Signal: the
+  curve's own coordinates.
+- `layout.ts:19037` — abcjs rounds four edges to whole pixels and we do not. Signal: a
+  coordinate's fraction.
+- `compat/selectables.ts:319` — a `tempo` and a `part` produce no selectable row. Signal:
+  `zzselect` already renders this surface.
+- `core/model.ts:1313` — a HEADER `P:ABAB` part order is deferred. Signal: what is drawn.
+- `compat/index.ts:781` — `setUpAudio` / `millisecondsPerMeasure` / `getTotalTime` absent
+  from the tune object. Signal: the host API surface, which `compat-surface.test.ts` already
+  walks.
+- ⚠️ `parser.ts:3833`, `layout.ts:19520`, `flatten.ts:1888` — **ATTEMPTED AND MUTE.** Each
+  carries its failed probe at the site. Do not re-run those probes; find a different signal.

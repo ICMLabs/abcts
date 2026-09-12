@@ -227,3 +227,48 @@ describe("above-lane order vs abcjs", () => {
     }
   });
 });
+
+/**
+ * **A HAIRPIN RESERVES BELOW THE STAFF, THE SAME AS A LETTER DYNAMIC.**
+ *
+ * `layout.ts`'s `ponytail:` at the below-lane gather predicted the opposite — "a staff whose
+ * only below-dynamic is a HAIRPIN reserves nothing, because hairpins resolve after packing
+ * and `spannerLines` is still empty here" — with abcjs named as reserving
+ * (`dynamicHeightBelow`, `crescendo-element.js:11`). **Measured 2026-09-12: it is stale.**
+ * The reserve is there and the two engines agree.
+ *
+ * ⭐ **THIS IS THE FIRST OF FOUR SUCH CONTROLS THAT WAS NOT MUTE**, and the discriminator is
+ * why: a tune with NO below-dynamic is 139.052 and one with either kind is 166.177, so the
+ * probe can tell a present reserve from an absent one. Three earlier attempts on other
+ * markers agreed with abcjs while a deliberate break changed nothing, which is the shape of
+ * a probe that measures the wrong thing — see `Docs/CODEBASE-EVALUATION-2026-09-12.md`.
+ *
+ * Verified by forcing `sawDynamicBelow` false: the hairpin row drops to 139.052 and DIFFERS
+ * from abcjs, while the no-dynamic row stays equal. Every number below is abcjs's.
+ */
+describe("the below lane — a hairpin reserves like a letter dynamic", () => {
+  const pageHeight = (abc: string): string => {
+    const host = { innerHTML: "" } as { innerHTML: string };
+    renderAbc(host, abc, { staffwidth: 400 });
+    return /<svg[^>]*height="([0-9.]+)"/.exec(host.innerHTML)?.[1] ?? "?";
+  };
+
+  it("reserves for a hairpin alone", () => {
+    expect(pageHeight("X:1\nT:t\nL:1/4\nM:4/4\nK:C\n!<(!CDEF!<)!|GABc|\n")).toBe(
+      "166.17700000000002",
+    );
+  });
+
+  it("reserves the same for a letter dynamic alone", () => {
+    expect(pageHeight("X:1\nT:t\nL:1/4\nM:4/4\nK:C\n!f!CDEF|GABc|\n")).toBe(
+      "166.17700000000002",
+    );
+  });
+
+  // ⭐ THE DISCRIMINATOR. Without it the two rows above would pass with the reserve gone.
+  it("reserves NOTHING when the staff carries no below-dynamic", () => {
+    expect(pageHeight("X:1\nT:t\nL:1/4\nM:4/4\nK:C\nCDEF|GABc|\n")).toBe(
+      "139.05200000000002",
+    );
+  });
+});
