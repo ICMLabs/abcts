@@ -1179,3 +1179,143 @@ describe("renderAbc({wrap}) — a break the wrap did not have to move", () => {
     );
   });
 });
+
+/**
+ * **A WRAPPED SYSTEM REPRINTS THE DELINED LINE'S CLEF, NOT THE ONE IN FORCE.**
+ *
+ * `addLineBreaks` copies every key of the INPUT staff onto each output line and has NO
+ * `lastClef` to match `lastKeySig` (`wrap_lines.js:41-50`), so a system cut out of a merged
+ * run carries that run's OPENING clef whatever changed inside it. `deline` merges the
+ * contiguous music lines into one, so the input staff is the FIRST source line of the run.
+ *
+ * `synth-flattener-20` is one source line — `[K:treble+8]…[K:treble-8]G8| G,2B,2 …` — and
+ * abcjs opens its second system **treble+8** where the clef in force is treble-8. ONE
+ * element of 59, the octave `8`, 72.557px, because the marker moves from above the staff to
+ * below. `zzopts` 22 -> 21.
+ *
+ * ⚠️ **PER VOICE, which is the half that failed before.** `startNewLine` takes
+ * `multilineVars.staves[staffNum].clef` before the tune-level one
+ * (`abc_parse_music.js:961`), so each staff carries its own; carrying voice 0's section
+ * clef onto every voice broke four ratcheted cases.
+ *
+ * ⚠️ **AND IT IS TWO SURFACES.** The ink was corrected first and `tune.lines` still said
+ * treble-8 — which no gate asked, because every golden is unwrapped. `lines.ts` carries the
+ * same rule under the same name.
+ */
+describe("renderAbc({wrap}) — a system reprints the delined line's clef", () => {
+  const staffClefs = (abc: string, wrap: boolean): string => {
+    const host = { innerHTML: "" } as { innerHTML: string };
+    const tunes = renderAbc(host, abc, {
+      staffwidth: wrap ? 400 : 670,
+      ...(wrap
+        ? { wrap: { minSpacing: 1.8, maxSpacing: 2.7, preferredMeasuresPerLine: 4 } }
+        : {}),
+    });
+    return (tunes[0]?.lines ?? [])
+      .flatMap((l) => l.staff ?? [])
+      .map((st) => st.clef?.type ?? "-")
+      .join(" ");
+  };
+
+  const OCTAVE = readFileSync(
+    join(
+      import.meta.dirname,
+      "corpus-abcjs",
+      "fixtures",
+      "abcjs-synth-flattener-20-k-treble-8-b-a4-ce-f-4-k-treble-8-g8-g-2.abc",
+    ),
+    "utf-8",
+  );
+
+  /**
+   * …**AND THE SAME ANSWER OFF THE INK**, because `tune.lines` is the other surface and a
+   * control that only reads it is MUTE for the renderer — measured: breaking `prefix`'s
+   * clef left every model row above still green. The octave marker is the whole signal:
+   * `treble+8` draws its `8` ABOVE the clef and `treble-8` draws it below.
+   */
+  const octaves = (abc: string, wrap: boolean): string => {
+    const host = { innerHTML: "" } as { innerHTML: string };
+    renderAbc(host, abc, {
+      staffwidth: wrap ? 400 : 670,
+      ...(wrap
+        ? { wrap: { minSpacing: 1.8, maxSpacing: 2.7, preferredMeasuresPerLine: 4 } }
+        : {}),
+    });
+    const marks = [
+      ...host.innerHTML.matchAll(
+        /data-name="(clefs\.[A-Z]|8)" d="M [\d.]+ ([\d.]+)/g,
+      ),
+    ].map((m) => ({ clef: m[1] !== "8", y: Number(m[2]) }));
+    const out: string[] = [];
+    for (let i = 0; i < marks.length - 1; i += 1) {
+      const here = marks[i];
+      const next = marks[i + 1];
+      if (here === undefined || next === undefined || !here.clef || next.clef) continue;
+      out.push(next.y < here.y ? "above" : "below");
+    }
+    return out.join(" ");
+  };
+
+  // ⭐ Both systems open `treble+8`, the source line's own clef — ours said `treble-8` on
+  // the second, which is the clef the `[K:treble-8]` inside the line left in force.
+  it("carries the line's opening clef onto every system it is cut into", () => {
+    expect(staffClefs(OCTAVE, true)).toBe("treble+8 treble+8");
+  });
+
+  // …and the ink says the same: the THIRD mark is system 2's head, and it was `below`.
+  // The five are the two heads and the three mid-line changes, in document order.
+  it("draws that clef's octave marker on the right side", () => {
+    expect(octaves(OCTAVE, true)).toBe("above below above below above");
+  });
+
+  // ⭐⭐⭐ THE UNWRAPPED CONTROL — one source line, one staff row, and the rule cannot fire:
+  // `wrapSourceLine` is stamped only by `applyLineBreaks`.
+  it("changes nothing without the wrap", () => {
+    expect(staffClefs(OCTAVE, false)).toBe("treble+8");
+    expect(octaves(OCTAVE, false)).toBe("above below below above");
+  });
+
+  /**
+   * ⚠️ **AND THE PER-STAFF RUNG, which is the one that decides between this rule and the
+   * disproved one.** Two staves, the clef changing mid-run on the FIRST only: voice 0's
+   * section clef is treble and voice 1's is bass, and a rule reading voice 0's for both
+   * would print treble on the bass staff. Rendered against abcjs in webkit, byte-identical.
+   */
+  const TWO_STAFF = [
+    "X:1",
+    "M:4/4",
+    "L:1/4",
+    "K:C",
+    "%%score (V1 V2)",
+    "V:1 clef=treble",
+    "CDEF|CDEF|CDEF|[K:C clef=bass]CDEF|CDEF|CDEF|",
+    "V:2 clef=bass",
+    "CDEF|CDEF|CDEF|CDEF|CDEF|CDEF|",
+    "",
+  ].join("\n");
+
+  it("keeps each staff on its own clef", () => {
+    const clefs = staffClefs(TWO_STAFF, true).split(" ");
+    // One `treble bass` pair per system, every system — never `treble treble`.
+    expect(new Set(clefs.filter((_, i) => i % 2 === 0))).toEqual(new Set(["treble"]));
+    expect(new Set(clefs.filter((_, i) => i % 2 === 1))).toEqual(new Set(["bass"]));
+  });
+
+  // …and on the ink, where reading voice 0's section clef for both staves would draw a
+  // second G where the F belongs. One head per staff per system, plus the one mid-run
+  // change on voice 1.
+  it("draws one clef of each kind at every system head", () => {
+    const host = { innerHTML: "" } as { innerHTML: string };
+    renderAbc(host, TWO_STAFF, {
+      staffwidth: 400,
+      wrap: { minSpacing: 1.8, maxSpacing: 2.7, preferredMeasuresPerLine: 4 },
+    });
+    const count = (n: string): number =>
+      [...host.innerHTML.matchAll(new RegExp(`data-name="clefs\\.${n}"`, "g"))].length;
+    // THREE systems: one treble head each on staff 0, one bass head each on staff 1, plus
+    // the one mid-run `clef=bass` change inside staff 0's line. A rule reading voice 0's
+    // section clef for both staves gives six G and one F.
+    expect(count("G")).toBe(3);
+    expect(count("F")).toBe(4);
+  });
+});

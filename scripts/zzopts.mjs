@@ -690,20 +690,28 @@ const OPTIONS = [
    *    and `lineBreaks` all identical — so nothing structural was wrong and the x-diff's
    *    positional alignment could only report "439/451".
    *
-   *  ⭐ **NEXT AND MEASURED: A WRAPPED SYSTEM REPRINTS THE DELINED LINE'S CLEF.**
+   * ✅ **A WRAPPED SYSTEM REPRINTS THE DELINED LINE'S CLEF — 22 → 21.**
    *    `addLineBreaks` copies the delined line's staff keys onto every output line and has
-   *    NO `lastClef` to advance, where the key gets one — so a system cut from a merged run
-   *    reprints that run's OPENING clef whatever changed inside it. Measured on
-   *    `CDEF|×3 [K:C clef=bass] CDEF|×4` under wrap: abcjs's third system opens TREBLE,
-   *    the tune's first, although the bass change happened on the second; ours reprints the
-   *    bass. A standalone `K:C clef=bass` between lines behaves the same, and unwrapped the
-   *    two agree — which is why `svg-bytes` never saw it. It is `synth-flattener-20`'s
-   *    whole residual: ONE octave marker, 1 of 59 elements, 72.557px out.
-   *    ⚠️ **THE OBVIOUS PORT IS WRONG — TRIED, MEASURED, REVERTED.** A `wrapLineHeadClef`
-   *    carrying the SECTION's opening clef fixes both rungs exactly and breaks FOUR
-   *    ratcheted cases, `quartet-500` among them — so "the section's opening clef" is not
-   *    the right value for a multi-staff tune. Find what `inputStaff.clef` actually holds
-   *    per STAFF before re-trying; the rung pair is in `scripts/` history.
+   *    NO `lastClef` to advance where the key gets `lastKeySig` — so a system cut from a
+   *    merged run reprints that run's OPENING clef whatever changed inside it.
+   *    `synth-flattener-20` is one source line reading `[K:treble+8]…[K:treble-8]G8| …`
+   *    and abcjs opens system 2 **treble+8**: ONE element of 59, the octave `8`, 72.557px,
+   *    the marker moving from above the staff to below.
+   *    ⭐ **THE VALUE IS RIGHT AND THE SCOPE WAS WRONG.** The previous attempt's
+   *    "section's opening clef" is the right quantity; it broke four ratcheted cases by
+   *    reading VOICE 0's for every voice. `startNewLine` takes
+   *    `multilineVars.staves[staffNum].clef` before the tune-level one
+   *    (`abc_parse_music.js:961`), so the map is built inside the per-voice walk and each
+   *    staff keeps its own. Rung: two staves, `clef=bass` mid-run on the first only —
+   *    byte-identical in webkit, where the old shape drew treble on the bass staff.
+   *    ⚠️ **AND IT IS TWO SURFACES.** The ink was corrected first and `tune.lines` still
+   *    said treble-8, which NO GATE ASKED: every golden is unwrapped. `lines.ts` carries
+   *    the same rule under the same name, and the control for each was MUTE for the other
+   *    until both were asserted — the model rows stayed green through a broken `prefix`.
+   *    ⚠️ **A SEPARATE, PRE-EXISTING DEFECT SITS BESIDE IT, MEASURED NOT FIXED.** On
+   *    `[K:treble+8]CDEF|CDEF|[K:treble-8]CDEF|…` under wrap, abcjs draws the inline change
+   *    at the HEAD of system 2 and we draw it at the END of system 1. It is there with and
+   *    without this rule — the same break-placement family as `openingBarlineTrails`.
    *
    *  ⚠️ **AND A KNOWN LIMIT ON THE VOICE-NAME RULE, MEASURED.** The "one line past its last
    *    music" grace is the WRAP's — `findLineBreaks` only runs under it — and is gated on
@@ -714,16 +722,16 @@ const OPTIONS = [
    *    `lineOfMeasure` mapping a SHORT voice's measures to too few lines — check that
    *    before removing it.
    *
-   *    4  GEOMETRY ONLY, same element kinds throughout: `synth-flattener-20`,
+   *    3  GEOMETRY ONLY, same element kinds throughout:
    *       `text-udef-parts-overlays-tune8` and `-tune46`, `vskip-tune1`.
    *
-   * ⚠️ **AND TWO OF THE 22 ARE abcjs CRASHING, NOT US.** `abcts-vskip` tunes 0 and 2 throw
+   * ⚠️ **AND TWO OF THE 21 ARE abcjs CRASHING, NOT US.** `abcts-vskip` tunes 0 and 2 throw
    * inside abcjs's own `wrapLines` — `undefined is not an object (evaluating 'l[p]')` —
    * because `addLineBreaks` reads `lines[action.ogLine].staff[action.staff]` on a row a
    * `%%vskip` made non-music. We render them. A crash is not output and strict does not
    * reproduce one.
    */
-  ['wrap + staffwidth', { wrap: { minSpacing: 1.8, maxSpacing: 2.7, preferredMeasuresPerLine: 4 }, staffwidth: 400 }, 22],
+  ['wrap + staffwidth', { wrap: { minSpacing: 1.8, maxSpacing: 2.7, preferredMeasuresPerLine: 4 }, staffwidth: 400 }, 21],
 ]
 const every = Number(process.argv[2] ?? 1)
 const browser = await webkit.launch()

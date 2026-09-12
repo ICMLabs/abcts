@@ -2697,6 +2697,27 @@ const VOICE_FURNITURE = new Set(["style", "stem", "color", "scale"]);
           .map((om) => musicStartsAt(om)),
       );
     let previousLineOpenedAt = -1;
+    /**
+     * **AND A WRAPPED SYSTEM'S STAFF CLEF IS THE DELINED LINE'S, NOT THE ONE IN FORCE.**
+     *
+     * `addLineBreaks` copies the INPUT staff's clef onto every output line and has no
+     * `lastClef` to match `lastKeySig` (`wrap_lines.js:41-50`), so every system cut out of
+     * a merged run carries that run's OPENING clef. `synth-flattener-20` is one source line
+     * whose second system abcjs opens **treble+8**, the line's own clef, where the clef in
+     * force is treble-8.
+     *
+     * ⚠️ **THE RENDERER HAS THE SAME RULE UNDER THE SAME NAME AND THEY ARE TWO SURFACES.**
+     * The ink was corrected first and `tune.lines` still said treble-8 — which no gate
+     * asked, because the goldens are unwrapped and `wrapSourceLine` is stamped only under
+     * `{wrap}`.
+     */
+    const clefAtSection = new Map<number, Clef>();
+    const wrapHeadClef = (m: Measure, now: Clef): Clef => {
+      const section = m.wrapSourceLine;
+      if (section === undefined) return now;
+      if (!clefAtSection.has(section)) clefAtSection.set(section, now);
+      return clefAtSection.get(section) ?? now;
+    };
     (voice?.measures ?? []).forEach((m, i) => {
       /**
        * A mid-tune clef governs from the START of its measure — the renderer reads it the
@@ -2896,7 +2917,11 @@ const VOICE_FURNITURE = new Set(["style", "stem", "color", "scale"]);
             naturals.length === 0
               ? built
               : { ...built, accidentals: [...(built.accidentals ?? []), ...naturals] },
-          clef: clefElement(clefInForce, voice?.transpose, voice?.staffLineOverride),
+          clef: clefElement(
+            wrapHeadClef(m, clefInForce),
+            voice?.transpose,
+            voice?.staffLineOverride,
+          ),
           ...(meter == null ? {} : { meter: meterElement(meter) }),
         });
       }

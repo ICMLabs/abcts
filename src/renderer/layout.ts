@@ -13139,6 +13139,26 @@ function layoutScoped(input: Score, options: LayoutOptions = {}): Layout {
      * `ox` -0.75 -> 0.03 but `dx` 13.31 -> 14.18 — which is what the missing natural's
      * 6.75 plus its 2 of gap is worth on the one line that needs it.
      */
+    /**
+     * **THE CLEF A WRAPPED SYSTEM PRINTS AT ITS HEAD — WHICH IS NOT THE CLEF IN FORCE.**
+     *
+     * `addLineBreaks` copies every key of the INPUT staff onto each output line and has NO
+     * `lastClef` to match `lastKeySig` (`wrap_lines.js:41-50`), so a system cut out of a
+     * merged run reprints that run's OPENING clef whatever changed inside it. `deline`
+     * merges the contiguous music lines into one, so the input staff is the FIRST source
+     * line of the run — this map, keyed by `Measure.wrapSourceLine`.
+     *
+     * `synth-flattener-20` is one source line reading
+     * `[K:treble+8]… [K:treble-8]G8| G,2B,2 …`: abcjs opens system 2 with **treble+8**, the
+     * line's own clef, where the clef in force there is treble-8. One element of 59 — the
+     * octave `8` — and 72.557px, because the marker moves from above the staff to below.
+     *
+     * ⚠️ **PER VOICE, which is what makes it right on a multi-staff tune.** `startNewLine`
+     * takes `multilineVars.staves[staffNum].clef` before the tune-level one
+     * (`abc_parse_music.js:961`), so each staff carries its own; a previous attempt read
+     * voice 0's section clef for every voice and broke four ratcheted cases.
+     */
+    const clefAtSection = new Map<number, Clef>()
     const keyAtMeasure: KeySignature[] = []
     /** The key the PREVIOUS line opened with, which is what this line's prefix cancels. */
     const keyBeforeLine: KeySignature[] = []
@@ -13243,6 +13263,10 @@ function layoutScoped(input: Score, options: LayoutOptions = {}): Layout {
       const clefEnteringMeasure = clefInForce
       if (measure.clefChange != null && clefLeadsHere) clefInForce = measure.clefChange
       clefAtMeasure.push(clefInForce)
+      // …and the first of a delined run is the clef every system cut from it reprints —
+      // see `clefAtSection`. `clefInForce` is `clefAtMeasure[measureIndex]` on this line.
+      if (measure.wrapSourceLine !== undefined && !clefAtSection.has(measure.wrapSourceLine))
+        clefAtSection.set(measure.wrapSourceLine, clefInForce)
       if (measure.clefChange != null && !clefLeadsHere) clefInForce = measure.clefChange
       if (measure.startsSystem) {
         const leads = keyChangeLeadsLine(measure)
@@ -13458,7 +13482,13 @@ function layoutScoped(input: Score, options: LayoutOptions = {}): Layout {
        */
       systemNumber: number | undefined = undefined,
     ): { elements: LayoutElement[]; advances: Advance[] } => {
-      const clef = clefAtMeasure[from] ?? clefInForce
+      // …**AND A WRAP REPRINTS THE DELINED LINE'S CLEF** — see `clefAtSection`. Absent
+      // without a wrap, where `wrapSourceLine` is never stamped and this is a no-op.
+      const section = (voice?.measures ?? [])[from]?.wrapSourceLine
+      const clef =
+        (section === undefined ? undefined : clefAtSection.get(section)) ??
+        clefAtMeasure[from] ??
+        clefInForce
       const elements: LayoutElement[] = []
       const advances: Advance[] = []
       // The voice-name reservation pushes the whole prefix — and the music after it —
