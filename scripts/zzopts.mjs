@@ -623,17 +623,27 @@ const OPTIONS = [
    *    fix ignored the directive and drew one where abcjs draws none, caught by the
    *    control. `parsing-x10`'s lengths now MATCH (39/39).
    *
-   *    ⚠️ **WHAT REMAINS ON THE CLUSTER IS THE CARRIED HEAD KEY, AND THE OBVIOUS FIX MAKES
-   *    IT WORSE — TRIED, MEASURED, REVERTED.** On `parsing-x10` system 2 abcjs's head is
-   *    TWO flats and a natural where ours is one flat and a natural, and two flats is
-   *    **Gm, the HEADER key** — not the `K:F` in force. The reason is `%%keywarn 0`: the
-   *    guard is on `appendStartingElement`, so no key ELEMENT enters the stream, `lastKeySig`
-   *    never advances, and `addLineBreaks` falls back to the delined line's own staff key.
-   *    So the carried head key is "the last key that was ALLOWED into the stream", which is
-   *    not the key in force.
-   *    ⚠️ Stamping `wrapLineHeadKey` on every return path AND treating a section start as
-   *    opening a line — both of which look right on their own — took `parsing-x10` from
-   *    39/39 back to 39/37 and `x11` from 38/39 to 38/41. Reverted.
+   * ✅ **AND `parsing-x10` IS CLOSED — 23 → 22 — AND THE HEAD KEY WAS NEVER THE PROBLEM.**
+   *    The two flats read as "Gm, the HEADER key" and they are not: abcjs's system 2 draws
+   *    the carried `K:F` at its HEAD and then a SECOND group in the stream, the delined
+   *    line's own staff key, which is `F [flat nat]`. Instrumenting abcjs's `tune.lines`
+   *    says so outright — `line 1 key=F [flatB]` with `v0: KEY{F [flatB naturalf]}@-1 …` —
+   *    where reading the ink alone gave a three-glyph head nothing explained.
+   *    ⭐ **TWO STAMPS WERE OWED ON THE SAME BRANCH.** `applyLineBreaks` returns bare where
+   *    the wrap's break COINCIDES with a source break — the "nothing moved" arm — but
+   *    neither stamp is about a break moving: `deline` runs BEFORE `findLineBreaks`, so its
+   *    injection is owed at every source line start, and the system opened there is still a
+   *    WRAPPED system, so its head takes `lastKeySig`. `Measure.wrapSourceLineStart` is the
+   *    parser's break surviving the wrap's overwrite of `startsSystem`.
+   *    ⚠️ **AND THE INJECTED NATURALS ARE THE PENDING ONES, NOT THE MEASURE'S.** `x10`
+   *    writes `%%keywarn 0` BETWEEN the inline `[K:F]` that creates them and the line that
+   *    re-emits them, and abcjs draws the natural anyway — `impliedNaturals` are built at
+   *    the change and live until the next `startNewLine` consumes them, and a voice switch
+   *    drops them. `keyAtPreviousLine` is NOT that value (it folds in this line's keywarn,
+   *    which is right for the prefix); `injectedKeyCancels` is.
+   *    ⚠️ **THE PREVIOUS SESSION'S "DISPROVED" READING WAS TWO CHANGES AT ONCE** — stamping
+   *    every return path AND treating a section start as opening a line. The first half is
+   *    right on its own; the second was what took `x10` to 39/37 and `x11` to 38/41.
    *
    *    ⚠️ **AND A NOTE HERE WAS WRONG, FROM A MUTE PROBE.** It said a standalone `K:` is
    *    "not on `Measure.keyChange` at all", measured across three measures. The probe read
@@ -707,13 +717,13 @@ const OPTIONS = [
    *    4  GEOMETRY ONLY, same element kinds throughout: `synth-flattener-20`,
    *       `text-udef-parts-overlays-tune8` and `-tune46`, `vskip-tune1`.
    *
-   * ⚠️ **AND TWO OF THE 23 ARE abcjs CRASHING, NOT US.** `abcts-vskip` tunes 0 and 2 throw
+   * ⚠️ **AND TWO OF THE 22 ARE abcjs CRASHING, NOT US.** `abcts-vskip` tunes 0 and 2 throw
    * inside abcjs's own `wrapLines` — `undefined is not an object (evaluating 'l[p]')` —
    * because `addLineBreaks` reads `lines[action.ogLine].staff[action.staff]` on a row a
    * `%%vskip` made non-music. We render them. A crash is not output and strict does not
    * reproduce one.
    */
-  ['wrap + staffwidth', { wrap: { minSpacing: 1.8, maxSpacing: 2.7, preferredMeasuresPerLine: 4 }, staffwidth: 400 }, 23],
+  ['wrap + staffwidth', { wrap: { minSpacing: 1.8, maxSpacing: 2.7, preferredMeasuresPerLine: 4 }, staffwidth: 400 }, 22],
 ]
 const every = Number(process.argv[2] ?? 1)
 const browser = await webkit.launch()

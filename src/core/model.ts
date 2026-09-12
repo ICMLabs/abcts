@@ -1425,6 +1425,18 @@ export interface Measure {
    * is the same thing on both routes.
    */
   readonly wrapInjectedKey?: true
+  /**
+   * **THIS MEASURE OPENED A SOURCE LINE, WHATEVER THE WRAP DID WITH THAT BREAK.**
+   *
+   * `startsSystem` is the wrap's answer and it overwrites the parser's, so a dissolved
+   * break leaves nothing saying a source line ever opened here. Everything keyed on
+   * abcjs's `startNewLine` — which runs at PARSE time, before `wrapLines` — needs this one
+   * instead: the pending `impliedNaturals` a key change leaves are consumed by the next
+   * `startNewLine` and dropped by a voice switch, and both events are source-line events.
+   *
+   * Absent when no wrap ran; `startsSystem` is the same fact then.
+   */
+  readonly wrapSourceLineStart?: true
   /** …the meter, on the same rule. See `wrapInjectedKey`. */
   readonly wrapInjectedMeter?: true
   /** …and the clef. See `wrapInjectedKey`. */

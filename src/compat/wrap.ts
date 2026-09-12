@@ -633,6 +633,11 @@ export function applyLineBreaks(
        * below, because the two that return early are exactly the "nothing moved" ones.
        */
       const trails = trailsHere.has(i) ? { openingBarlineTrails: true as const } : {};
+      // …**AND THE PARSER'S OWN BREAK SURVIVES THE WRAP'S**, because everything abcjs does
+      // at `startNewLine` happens before `wrapLines` ever runs. See
+      // `Measure.wrapSourceLineStart`.
+      const sourceStart =
+        m.startsSystem === true ? { wrapSourceLineStart: true as const } : {};
       /**
        * ⚠️ **AND A MUSIC LINE'S OWN `%%vskip` IS LOST.** `addLineBreaks` builds a FRESH
        * line — `outputLines[action.line] = {staff: []}` (`wrap_lines.js:33-35`) — and then
@@ -652,12 +657,41 @@ export function applyLineBreaks(
       };
       // A section's FIRST measure keeps whatever it had — it opens the section, and that
       // is not the wrap's to decide.
-      if (i === from) return noVskip({ ...m, wrapSourceLine: section, ...trails });
+      if (i === from) return noVskip({ ...m, wrapSourceLine: section, ...trails, ...sourceStart });
       // "These are the zero-based last measure on each line", so the measure AFTER one
       // opens a system and every other measure in the section does not.
       const opens = opensHere.has(i);
+      const owedHere = vi === 0 ? injects.get(i) : undefined;
+      const injected = {
+        ...(owedHere?.key === true ? { wrapInjectedKey: true as const } : {}),
+        ...(owedHere?.meter === true ? { wrapInjectedMeter: true as const } : {}),
+        ...(owedHere?.clef === true ? { wrapInjectedClef: true as const } : {}),
+      };
+      /**
+       * ⚠️ **A SOURCE BREAK THE WRAP ALSO BREAKS AT STILL OWES BOTH STAMPS.** This branch
+       * is "nothing moved", and it returned bare — but neither stamp is about a break
+       * MOVING. `deline` runs BEFORE `findLineBreaks`, so its injected staff property is
+       * owed at EVERY source line start past the first, whether or not the wrap happens to
+       * re-break there; and the system this measure opens is still a WRAPPED system, so
+       * its head takes the carried key rather than the one in force. It is the same "stamp
+       * it on every path" the trailing barline needed, and `parsing-x10` is where both are
+       * visible at once: abcjs's second system draws the carried `K:F` at its head AND the
+       * delined line's own `K:F [flat nat]` in the stream, where we drew one group of
+       * neither shape.
+       */
       if (opens === (m.startsSystem === true))
-        return noVskip({ ...m, wrapSourceLine: section, ...trails });
+        return noVskip({
+          ...m,
+          wrapSourceLine: section,
+          ...trails,
+          ...sourceStart,
+          ...(opens
+            ? {
+                ...injected,
+                ...(vi === 0 && headKeys.has(i) ? { wrapLineHeadKey: headKeys.get(i)! } : {}),
+              }
+            : {}),
+        });
       // ⚠️ **AND A WRAPPED LINE DOES NOT REPRINT THE METER, WHERE `%%barsperstaff`'s DOES.**
       // `addLineBreaks` copies every key of the input staff onto the output one EXCEPT
       // `voices`, and `if (keys[k] === "meter" && action.line !== 0) skip = true`
@@ -670,6 +704,7 @@ export function applyLineBreaks(
           startsSystem: true as const,
           wrapSourceLine: section,
           ...trails,
+          ...sourceStart,
           ...(vi === 0 && headKeys.has(i) ? { wrapLineHeadKey: headKeys.get(i)! } : {}),
         });
       // **THIS IS THE DISSOLVED BREAK** — `opens` is false and the measure DID start a
@@ -677,7 +712,7 @@ export function applyLineBreaks(
       // this one, so this is where `deline` would have injected its staff property; see
       // `injects` and `Measure.wrapInjectedKey`. Only voice 0 is walked, because the
       // staff's properties are the tune's and not a voice's.
-      const owed = vi === 0 ? injects.get(i) : undefined;
+      const owed = owedHere;
       /**
        * ⚠️ **AND `deline` HAS A FOURTH ARM WE DELIBERATELY DO NOT PORT.**
        * `addFontToVoices` injects a `vocalfont`, `gchordfont` or `tripletfont` the same
@@ -700,6 +735,7 @@ export function applyLineBreaks(
         ...m,
         startsSystem: false as const,
         wrapSourceLine: section,
+        ...sourceStart,
         ...(owed?.key === true ? { wrapInjectedKey: true as const } : {}),
         ...(owed?.meter === true ? { wrapInjectedMeter: true as const } : {}),
         ...(owed?.clef === true ? { wrapInjectedClef: true as const } : {}),

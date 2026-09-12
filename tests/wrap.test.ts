@@ -1121,3 +1121,61 @@ describe("renderAbc({wrap}) — a standalone M: is drawn once", () => {
     expect(sigs(STANDALONE, false)).toBe(2);
   });
 });
+
+/**
+ * **A SOURCE BREAK THE WRAP ALSO BREAKS AT STILL OWES BOTH STAMPS.**
+ *
+ * `applyLineBreaks` returned that measure bare — it is the "nothing moved" branch — but
+ * neither stamp is about a break MOVING. `deline` runs BEFORE `findLineBreaks`, so its
+ * injected staff property is owed at every source line start past the first whether or not
+ * the wrap re-breaks there (`data/deline-tune.js:23-39`); and the system that measure opens
+ * is still a WRAPPED system, so its head takes `lastKeySig` rather than the key in force
+ * (`wrap_lines.js:49-50`). See `Measure.wrapSourceLineStart` and `wrapLineHeadKey`.
+ *
+ * ⚠️ **AND THE INJECTED NATURALS ARE THE PENDING ONES, NOT THIS MEASURE'S.** `parsing-x10`
+ * writes `%%keywarn 0` between the inline `[K:F]` that creates them and the line that
+ * re-emits them, and abcjs draws the natural anyway: `impliedNaturals` are built at the
+ * CHANGE and survive until the next `startNewLine` consumes them
+ * (`abc_parse_key_voice.js:318-331`, `abc_parse_music.js:964-965`, `:1041-1042`).
+ * See `injectedKeyCancels`.
+ *
+ * `zzopts` 23 -> 22. The fixture is the test rather than a synthetic tune of the same
+ * shape: three `%%keywarn` toggles, a standalone and two inline `K:` changes are what put
+ * the pending set on both sides of the rule.
+ */
+describe("renderAbc({wrap}) — a break the wrap did not have to move", () => {
+  const X10 = readFileSync(
+    join(import.meta.dirname, "corpus-abcjs", "fixtures", "abcjs-visual-parsing-x10.abc"),
+    "utf-8",
+  );
+  const accidentals = (wrap: boolean): string => {
+    const host = { innerHTML: "" } as { innerHTML: string };
+    renderAbc(host, X10, {
+      staffwidth: wrap ? 400 : 670,
+      ...(wrap
+        ? { wrap: { minSpacing: 1.8, maxSpacing: 2.7, preferredMeasuresPerLine: 4 } }
+        : {}),
+    });
+    return [...host.innerHTML.matchAll(/data-name="accidentals\.([a-z]+)"/g)]
+      .map((m) => m[1])
+      .join(" ");
+  };
+
+  // ⭐ System 2 opens `flat flat nat`: the CARRIED `K:F` at the head, then the injected
+  // staff key with the `f` natural the `[K:F]` two measures back left pending. Ours drew
+  // `flat nat` — one group, of neither shape — and then `flat flat` once the stamps landed.
+  it("draws the carried head key AND the injected staff key", () => {
+    expect(accidentals(true)).toBe(
+      "flat flat flat nat sharp sharp nat nat flat flat flat nat sharp sharp sharp",
+    );
+  });
+
+  // ⭐⭐⭐ THE CONTROL FOR THE UNWRAPPED PATH — the rule is derived under `{wrap}` and must
+  // not fire without it. One `flat` fewer: no wrap, no second system, no carried head key.
+  // The voice-name grace regressed exactly this path with both gates green.
+  it("changes nothing without the wrap", () => {
+    expect(accidentals(false)).toBe(
+      "flat flat flat nat sharp sharp nat nat flat flat nat sharp sharp sharp",
+    );
+  });
+});

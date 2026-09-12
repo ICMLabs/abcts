@@ -11097,6 +11097,22 @@ function layoutMeasure(
    * other.
    */
   trailingBar: Barline | null = null,
+  /**
+   * **WHAT A WRAP-INJECTED STAFF KEY CANCELS, WHERE THIS MEASURE CHANGES NOTHING ITSELF.**
+   *
+   * `deline` injects `inputStaff.key`, and `createStaff` has already concatenated that
+   * key's `impliedNaturals` onto it (`tune-builder.js:1001-1003`) — so a source line that
+   * merely INHERITS a key still re-emits the cancellations of the change that established
+   * it, one line back. Reading the in-force key as its own predecessor drew the signature
+   * alone: `parsing-x10`'s last line follows an inline `[K:F]` and abcjs injects
+   * `F [flat nat]` where we injected `F [flat]`.
+   *
+   * It is `keyAtPreviousLine`, the same quantity the unwrapped prefix cancels against — so
+   * the voice-switch rule and `%%keywarn 0` are already in it, and both matter here:
+   * `parsing-x12` alternates `V:1`/`V:2` every line, the pending naturals die at the
+   * switch, and abcjs injects the bare `F [flat]` that this value gives.
+   */
+  injectedKeyCancels: KeySignature | null = null,
 ): MeasureBlock {
   const elements: LayoutElement[] = []
   /**
@@ -11582,8 +11598,19 @@ function layoutMeasure(
       // !== false)` — so with the directive off the STAFF's key carries none either, and
       // the injected copy is a bare signature. Passing the key as its own predecessor is
       // how this file states a change with nothing to cancel.
+      // ⚠️ **AND ONLY WHERE THIS MEASURE CARRIES NO CHANGE OF ITS OWN.** Where it does,
+      // `keyInForce` IS the predecessor and already draws the right naturals; and where the
+      // wrap DISSOLVED this line's break the measure is mid-system, so `keyAtPreviousLine`
+      // is the enclosing system's and not this line's — which is why it is gated on
+      // `startsSystem` as well.
       const cancelFrom =
-        (measure.keyChangeKeywarn ?? KEYWARN) ? (keyInForce ?? now) : now
+        measure.keyChange === null &&
+        measure.startsSystem === true &&
+        injectedKeyCancels !== null
+          ? injectedKeyCancels
+          : (measure.keyChangeKeywarn ?? KEYWARN)
+            ? (keyInForce ?? now)
+            : now
       const el =
         now === null || cancelFrom === null
           ? null
@@ -13134,10 +13161,39 @@ function layoutScoped(input: Score, options: LayoutOptions = {}): Layout {
      * at the switch and abcjs prints the plain `Bb`. Traced in abcjs, both ways:
      * `STARTNEWLINE key=E naturals=[{"note":"d"}]` against `naturals=undefined`.
      */
+    // ⚠️ **AND BOTH EVENTS ARE SOURCE-LINE EVENTS, NOT SYSTEM ONES** — `startNewLine` runs
+    // at parse time and `wrapLines` re-lines afterwards, so a break the wrap DISSOLVED
+    // still consumed the pending naturals when abcjs parsed it. See
+    // `Measure.wrapSourceLineStart`.
+    const opensSourceLine = (m: Measure): boolean =>
+      m.startsSystem === true || m.wrapSourceLineStart === true
     const otherVoiceLinesOpenAt: number[] = voices
       .filter((v) => v !== undefined && v !== voice)
       .flatMap((v) => (v?.measures ?? []).filter((m) => m.startsSystem).map(musicStartsAt))
+    const otherVoiceSourceLinesOpenAt: number[] = voices
+      .filter((v) => v !== undefined && v !== voice)
+      .flatMap((v) => (v?.measures ?? []).filter(opensSourceLine).map(musicStartsAt))
     let previousLineOpenedAt = -1
+    /**
+     * **THE NATURALS A KEY CHANGE LEAVES PENDING** — abcjs's `impliedNaturals`, tracked as
+     * the key they cancel. `parseKey` builds them at the change, under `if (oldKey &&
+     * multilineVars.keywarn !== false)` (`abc_parse_key_voice.js:318-331`); the next
+     * `startNewLine` copies them onto that line's staff key and DELETES them
+     * (`abc_parse_music.js:964-965`, `:1041-1042`); a voice switch drops them, because
+     * `deepCopyKey` does not copy the field; and `appendStartingElement` does NOT consume
+     * them, since `fixKey` hands it a `Object.assign({}, key)` COPY and the delete lands on
+     * that (`abc_parse_key_voice.js:163-167`, `tune-builder.js:244-248`).
+     *
+     * ⚠️ **IT IS NOT `keyAtPreviousLine`.** That value has THIS line's `%%keywarn` folded
+     * into it, which is right for the prefix and wrong here: `parsing-x10` writes
+     * `%%keywarn 0` between the `[K:F]` that creates the naturals and the line that
+     * re-emits them, and abcjs draws the natural anyway — the directive gates the change,
+     * not the staff key a later line inherits.
+     *
+     * Only the wrap's injected staff key reads it. See `injectedKeyCancels`.
+     */
+    let pendingNaturalsFrom: KeySignature | null = null
+    let sourceLineOpenedAt = -1
     const blocks = (voice?.measures ?? []).map((measure, measureIndex) => {
       /**
        * A mid-tune clef prints at the START of its measure and governs it — abcjs's
@@ -13248,6 +13304,24 @@ function layoutScoped(input: Score, options: LayoutOptions = {}): Layout {
         // `params.key`, so the prefix shows the NEW key. See `keyChangeLeadsLine`.
         keyAtLineStart = leads ? (measure.keyChange ?? keyInForce) : keyInForce
       }
+      let injectedCancels: KeySignature | null = null
+      if (opensSourceLine(measure)) {
+        const opensAt = musicStartsAt(measure)
+        const dropped = otherVoiceSourceLinesOpenAt.some(
+          (at) => at > sourceLineOpenedAt && at < opensAt,
+        )
+        sourceLineOpenedAt = opensAt
+        injectedCancels = keyChangeLeadsLine(measure)
+          ? // A change that LEADS the line is parsed before `startNewLine` runs, so its own
+            // naturals are the ones this line's staff key carries.
+            subtitleLeads(measure) || !(measure.keyChangeKeywarn ?? KEYWARN)
+            ? null
+            : keyInForce
+          : dropped
+            ? null
+            : pendingNaturalsFrom
+        pendingNaturalsFrom = null
+      }
       keyAtMeasure.push(keyAtLineStart)
       keyBeforeLine.push(keyAtPreviousLine)
       const block = layoutMeasure(
@@ -13350,7 +13424,11 @@ function layoutScoped(input: Score, options: LayoutOptions = {}): Layout {
           const next = (voice?.measures ?? [])[measureIndex + 1]
           return next?.openingBarlineTrails === true ? (next.openingBarline ?? null) : null
         })(),
+        // …and what a wrap-injected staff key cancels — see `injectedKeyCancels`.
+        injectedCancels,
       )
+      if (measure.keyChange !== null && !keyChangeLeadsLine(measure))
+        pendingNaturalsFrom = (measure.keyChangeKeywarn ?? KEYWARN) ? keyInForce : null
       if (measure.keyChange !== null) keyInForce = measure.keyChange
       if (measure.meterChange != null) meterInForce = measure.meterChange
       return block
