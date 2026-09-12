@@ -582,10 +582,14 @@ const OPTIONS = [
    *    tune has its bracket on the same side in both (1068.64 / 1127.60), so it is the
    *    SIDE of one tuplet and not the tuplet code in general.
    *
-   *    ⚠️ It must be wrap-reachable only — `svg-bytes` is 0 of 691 — so the re-lining is
-   *    what flips the side. Which input decides it is NOT yet measured: do not assume the
-   *    stem direction without checking, since the stems around it matched element for
-   *    element at the system before.
+   *    ⚠️ It must be wrap-reachable only — `svg-bytes` is 0 of 691.
+   *    ⭐ **AND THE TUPLET ITSELF IS NOT THE DEFECT — MEASURED.** Lifting that same
+   *    `(3B2d2c2` into a single-voice tune puts the `3` at 134.99 in BOTH engines, wrapped
+   *    and unwrapped alike. So the side is decided by the CONTEXT the fixture supplies and
+   *    not by the tuplet code: it is a `%%staves` piano tune and the triplet sits on
+   *    `[V: PianoRightHand]`, one voice of a shared staff. Look at the multi-voice stem
+   *    direction next — and note that the isolated rung is what rules out the simpler
+   *    explanation, which reading the tuplet code would not have.
    *
    *    4  GEOMETRY ONLY, same element kinds throughout: `synth-flattener-20`,
    *       `text-udef-parts-overlays-tune8` and `-tune46`, `vskip-tune1`.
