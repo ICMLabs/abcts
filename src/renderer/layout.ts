@@ -11559,10 +11559,30 @@ function layoutMeasure(
     }
     if (measure.wrapInjectedKey === true) {
       const now = measure.keyChange ?? keyInForce
-      // A line head states its key rather than cancelling into it — the naturals belong to
-      // the warning, which has already been drawn. Passing the key as its own predecessor
-      // is how this file states a change with nothing to cancel (see `drawKeyChange`).
-      const el = now === null ? null : layoutKeyChange(x, now, now, clef, strict)
+      /**
+       * ⚠️ **AND THE INJECTED KEY CARRIES ITS CANCELLING NATURALS, AFTER ITS ACCIDENTALS.**
+       * `deline` injects `inputStaff.key`, and a STAFF's key is built by `createStaff` as
+       * `accidentals.concat(impliedNaturals)` — the opposite order from a mid-tune `[K:]`,
+       * which `appendStartingElement` builds as `impliedNaturals.concat(accidentals)`
+       * (`tune-builder.js:998-1001` against `:280`, `:289`). `naturalsLast` is that flag.
+       *
+       * The first port passed the key as its own predecessor, which states a change with
+       * nothing to cancel and drew no naturals at all. Measured on
+       * `K:Gm / 4 bars / %%keywarn 1 / K:F / 4 bars` under wrap: abcjs writes
+       * `nat flat flat nat` at the merged change and we wrote `nat flat flat` — the
+       * warning's natural and flat, the injected flat, and NOT the injected natural.
+       */
+      // …**AND `%%keywarn 0` TAKES THE INJECTED NATURALS TOO.** abcjs builds
+      // `impliedNaturals` inside `parseKey`, under `if (oldKey && multilineVars.keywarn
+      // !== false)` — so with the directive off the STAFF's key carries none either, and
+      // the injected copy is a bare signature. Passing the key as its own predecessor is
+      // how this file states a change with nothing to cancel.
+      const cancelFrom =
+        (measure.keyChangeKeywarn ?? KEYWARN) ? (keyInForce ?? now) : now
+      const el =
+        now === null || cancelFrom === null
+          ? null
+          : layoutKeyChange(x, cancelFrom, now, clef, strict, true)
       if (el !== null) {
         elements.push(el)
         fixed(el.width + ENGRAVE.prefixGap, ENGRAVE.prefixGap, 'other', 0, el.width)

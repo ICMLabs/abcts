@@ -1004,3 +1004,51 @@ describe("renderAbc({wrap}) — a voice that has ended stops being named", () =>
     expect(names("C16|".repeat(12))).toBe("RH X2 RH X2 RH X2 RH X2 RH X2");
   });
 });
+
+/**
+ * **AN INJECTED STAFF KEY CARRIES ITS CANCELLING NATURALS — AFTER ITS ACCIDENTALS.**
+ *
+ * `deline` injects `inputStaff.key`, and a STAFF's key is built by `createStaff` as
+ * `accidentals.concat(impliedNaturals)` — the OPPOSITE order from a mid-tune `[K:]`, which
+ * `appendStartingElement` builds as `impliedNaturals.concat(accidentals)`
+ * (`tune-builder.js:998-1001` against `:280`, `:289`). `layoutKeyChange`'s `naturalsLast`
+ * is that flag and already existed.
+ *
+ * The first port of the injection passed the key as its OWN predecessor, which states a
+ * change with nothing to cancel and drew no naturals at all. Measured on
+ * `K:Gm / 4 bars / %%keywarn 1 / K:F / 4 bars` under wrap: abcjs writes `nat flat flat nat`
+ * at the merged change — the warning's natural and flat, then the injected flat and its
+ * natural — and we wrote `nat flat flat`.
+ */
+describe("renderAbc({wrap}) — the injected staff key keeps its naturals", () => {
+  const accidentals = (keywarn: string): string => {
+    const host = { innerHTML: "" } as { innerHTML: string };
+    const B = "CDEF|";
+    renderAbc(
+      host,
+      `X:1\nT:t\nL:1/4\nM:4/4\nK:Gm\n${B.repeat(4)}\n${keywarn}K:F\n${B.repeat(4)}\n`,
+      {
+        staffwidth: 400,
+        wrap: { minSpacing: 1.8, maxSpacing: 2.7, preferredMeasuresPerLine: 4 },
+      },
+    );
+    return [...host.innerHTML.matchAll(/data-name="accidentals\.([a-z]+)"/g)]
+      .map((m) => m[1])
+      .join(" ");
+  };
+
+  // ⭐ `flat flat` opens the tune, `flat flat` opens system 2, then the merged change:
+  // the warning's `nat flat` and the INJECTED `flat nat` — naturals LAST on that one.
+  it("draws the injected natural, after the injected flat", () => {
+    expect(accidentals("%%keywarn 1\n")).toBe(
+      "flat flat flat flat nat flat flat nat flat",
+    );
+  });
+
+  // The control: `%%keywarn 0` removes the cancellations from BOTH, so the merged change
+  // is a bare flat and nothing else. A rule that added naturals unconditionally would pass
+  // the row above and fail this one.
+  it("draws none when %%keywarn is off", () => {
+    expect(accidentals("%%keywarn 0\n")).toBe("flat flat flat flat flat flat");
+  });
+});

@@ -612,7 +612,28 @@ const OPTIONS = [
    *    direction next — and note that the isolated rung is what rules out the simpler
    *    explanation, which reading the tuplet code would not have.
    *
-   *  ⭐ **NEXT, AND DIAGNOSED TO THE ACCIDENTAL: `%%keywarn` UNDER WRAP.**
+   * ✅ **PART OF IT LANDED: THE INJECTED STAFF KEY CARRIES ITS NATURALS, AFTER ITS
+   *    ACCIDENTALS.** `deline` injects `inputStaff.key`, and a STAFF's key is built as
+   *    `accidentals.concat(impliedNaturals)` — the OPPOSITE order from a mid-tune `[K:]`,
+   *    which is `impliedNaturals.concat(accidentals)` (`tune-builder.js:998-1001` against
+   *    `:280`, `:289`). `layoutKeyChange`'s `naturalsLast` already existed for exactly this
+   *    and the first port of the injection missed it, passing the key as its OWN
+   *    predecessor. Measured: abcjs writes `nat flat flat nat` at a merged change and we
+   *    wrote `nat flat flat`. ⚠️ **AND `%%keywarn 0` TAKES THOSE NATURALS TOO** — the first
+   *    fix ignored the directive and drew one where abcjs draws none, caught by the
+   *    control. `parsing-x10`'s lengths now MATCH (39/39).
+   *
+   *    ⚠️ **WHAT REMAINS ON THE CLUSTER IS A DIFFERENT RULE.** `parsing-x11` is
+   *    `K:Eb / G| / K:F / B| / T:Sub / K:D / d|`: abcjs prints the CARRIED F — one flat —
+   *    at the head of the third system, where we print `K:D`'s two sharps. A mid-tune
+   *    subtitle starts a SECTION, and a section's first measure is not in `opensHere`, so
+   *    `headKeys` never covers it. ⚠️ Extending the walk with `sectionStarts` CHANGES
+   *    NOTHING, because a standalone `K:` is not on `Measure.keyChange` at all — measured,
+   *    all three measures of that tune report `keyChange` null — so the walk's running key
+   *    never advances either. **Find the field a standalone `K:` DOES land on before
+   *    touching `headKeys` again.**
+   *
+   *    The original diagnosis:
    *    `visual-parsing-x10` / `-x11` / `-x12` all toggle `%%keywarn` between key changes,
    *    and all three are LENGTH mismatches — 39/37, 38/37, 195/187 — so an element is
    *    missing, not moved. Counted per system, the NOTES AND BARS MATCH exactly (four of
