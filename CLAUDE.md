@@ -1037,8 +1037,9 @@ checkpoint and hand off as you go so no context is lost.
 > `Docs/CHECKPOINT-2026-08-14.md` — §4 is the work list as it stood, §5 the harness. Then the
 > files below.
 
-**READ `Docs/HANDOFF-2026-09-06.md` FIRST.** It supersedes `-09-05.md` and `-09-04.md` for
-the state. **`Docs/PARITY-STATUS.md` is the dated, plain-language companion** — every gate,
+**READ `Docs/HANDOFF-2026-09-14.md` FIRST.** It supersedes every earlier handoff for the
+state. `Docs/HANDOFF-2026-09-06.md` is the one before the wrap arc and supersedes `-09-05.md`
+and `-09-04.md`. **`Docs/PARITY-STATUS.md` is the dated, plain-language companion** — every gate,
 what it measures, what it does NOT, and the declared divergences, all re-run rather than
 carried forward. It is the file to hand anyone asking "how close are we to abcjs?".
 
@@ -1431,6 +1432,58 @@ abcjs source are all reached by sibling path and stay in that repo. Keep it that
 backup remote is not a licence to vendor someone else's tree into this one.
 
 ## Current phase
+
+> 🏁 **THE HOST-OPTION SURFACE IS THE ARC, AND ITS HARDEST ROW REACHED ITS FLOOR**
+> (2026-09-14). `zzopts` renders all 685 comparable tunes under each option a drop-in host
+> passes and compares the CONTAINER as well as the SVG; it opened at 685 of 685 on every row
+> on 2026-09-09. **`wrap + staffwidth` went 23 → 4 in one session, and 4 IS ITS FLOOR** —
+> two fixtures are abcjs's fourth debug marker, DECLINED by the owner, and two are abcjs
+> CRASHING in its own `wrapLines`. Fourteen landings; `print` 5 → 3, `minPadding` 5 → 4 and
+> `initialClef` 42 → 41 came with them. Suite 2,629, every other gate still at zero.
+> **`Docs/PARITY-STATUS.md` §1a is the whole table in plain language** and names the three
+> options that are unimplemented FEATURES rather than rounding — `timeBasedLayout` (669, a
+> second layout algorithm) above all.
+>
+> ⚠️ **AND THE SESSION'S REAL FINDING IS WHAT THE BOARD GOT WRONG.** Of the eight items the
+> previous handoff named: **four recorded CAUSES were wrong, one recorded DISPROOF was
+> backwards, one "pair" of fixtures shared no mechanism, and the stated FLOOR was 19 when it
+> was 4** — that last being 23 minus the four unreachable, i.e. the count of CLOSEABLE rows,
+> and taken literally it would have ended the session thirteen rows early. **Two notes
+> written DURING the session fell the same way within the hour.** The standing rule earned
+> itself again: a recorded cause is a hypothesis, and its SIZE rots faster than its cause.
+>
+> ⭐ **SEVEN FIXTURES THAT READ AS SEVEN SPACING DEFECTS WERE ONE EXPRESSION.**
+> `layoutMeasure` passed `el.width` for a trailing barline — ZERO for an invisible one, since
+> nothing is drawn — where `barWidthOf` gives abcjs's `w` of 1, and a `left` of 0 where every
+> other bar claims 5. Six short of the fixed budget per line, so the ELASTIC note gaps grew
+> to fill it and the error accumulated along the line. **13 → 8 on one expression.**
+>
+> ⭐ **INSTRUMENT abcjs AGAINST OUR OWN EQUIVALENT — every hard item fell to a side-by-side
+> log and none to a source read.** `layoutOneItem`'s per-element `x, w, extraw, minspacing,
+> er, minx` against our `fixed()` list; `roundNumber`'s raw input behind a `.xx5` boundary;
+> `calcY`'s `this.y`, `ofs` and `STEP`; both engines' `tune.lines` streams side by side.
+> Patch `dist/abcjs-basic.js` (unminified) by string replacement and inject it. Reading the
+> source alone produced the wrong bar width twice and the wrong conclusion both times.
+>
+> ⚠️ **AND A `wrap` DEFECT IS OFTEN NOT A WRAP DEFECT.** Three of the rules that closed the
+> row reproduce with NO wrap at all — an ending's room charged to two barlines instead of
+> one, a pitch converted to a y twice instead of once, an element's width built as
+> `(x + w) - base` instead of abcjs's `dx + w`. No golden covers the shapes that show them,
+> which is why they lived under a green `svg-bytes` for months, and two of the three have
+> their controls in `positioning.test.ts` rather than `wrap.test.ts`.
+>
+> ⚠️ **TWO SURFACES, FOUR TIMES, AND A CONTROL THAT READS ONE IS MUTE FOR THE OTHER.** The
+> ink and `tune.lines` carry the same rules separately and **NO GATE ASKS THE MODEL UNDER A
+> WRAP** — every golden is unwrapped. Breaking `prefix`'s clef left every model row green;
+> breaking the projection left every ink row green. The fourth case ran the other way: the
+> MODEL had the rule (`resolveOverlays` pads a silent `&` layer) and the drawing did not.
+>
+> ⚠️ **AND HALF A RULE CAN BE WORSE THAN NONE, THREE TIMES, WITH THE ROW COUNT UNCHANGED.**
+> A carried head key without its suppression drew 41 elements against abcjs's 38 where the
+> unfixed engine drew 39; a quoted-label ending closed without its marker drew a SECOND
+> labelled bracket; a cautionary clef suppressed rather than MOVED took a fixture from 54
+> elements to 52. Only the element-KIND instrument saw any of them.
+
 
 > 🖱️ **`engraver.selectables` IS CLOSED — 389 OF 389, ALL FOUR CASES RATCHETED**
 > (2026-08-17), from 158 when the day opened. `tune.lines` is **255,641 of 255,684

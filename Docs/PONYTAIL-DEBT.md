@@ -1,8 +1,10 @@
 # `ponytail:` debt ledger — abcts
 
 Harvested by `/ponytail-debt` and re-triaged 2026-09-12. One row per deliberate shortcut.
+**Re-counted 2026-09-14: 94 markers**, the wrap arc having added three; the triage below is
+still the 2026-09-12 one and the three new rows are listed at the end.
 
-**62 markers.** 38 name a trigger. Of the 24 that do not,
+**62 markers** as triaged, 38 name a trigger. Of the 24 that do not,
 **10 already carry a MEASURED / RETIRED / MUTE annotation** and are resolved rather
 than owed — leaving **14 genuinely open**.
 
@@ -158,3 +160,34 @@ implies a repayment that cannot be demonstrated.
   walks.
 - ⚠️ `parser.ts:3833`, `layout.ts:19520`, `flatten.ts:1888` — **ATTEMPTED AND MUTE.** Each
   carries its failed probe at the site. Do not re-run those probes; find a different signal.
+
+
+---
+
+## Added by the wrap arc, 2026-09-14 — three, and each names a shape absent from BOTH corpora
+
+These are narrower ports rather than cut corners: in each case abcjs asks a broader question
+than we do, and no fixture in either corpus distinguishes the two. Each says what would.
+
+- **`src/compat/wrap.ts`, the deline injection's DECISION** — abcjs asks it PER STAFF against
+  `currentKey[s]` (`data/deline-tune.js:19-33`); ours asks voice 0 and applies the answer to
+  every voice. Right whenever the staves share a key, which is every fixture in both corpora.
+  ⭐ **Trigger: a tune whose two staves carry DIFFERENT keys across a wrapped line.** Give
+  `injects` a staff dimension.
+- **`src/compat/wrap.ts`, the "published nothing" test** — a standalone `K:` written after a
+  `%%text`/subtitle row publishes no key element, because `appendStartingElement` bails on a
+  row with no staff. The model hangs `textBefore` on the MEASURE and keeps no relative
+  position, so `K:D` / `%%text` / music is read as `%%text` / `K:D` / music — and in the
+  first order the field DOES reach the previous line's voice.
+  ⭐ **Trigger: a fixture writing the field BEFORE the block.** Give `Measure` a source
+  offset for the block.
+- **`src/renderer/layout.ts`, `%%voicecolor` under a wrap** — abcjs loses it on every output
+  line but the one holding the `color` ELEMENT; "the line that carries it" is read here as
+  SYSTEM 0, which is where a directive at a voice head lands.
+  ⭐ **Trigger: a `%%voicecolor` written MID-TUNE.** Read the element's own offset instead.
+
+⚠️ **AND ONE MARKER WAS RETIRED RATHER THAN WORKED.** `layout.ts`'s "an OPENING barline takes
+a number in abcjs and cannot here" predicted `visual-options-01-fonts` would need the field;
+that fixture closed without it, because the bar numbers under a wrap are RENUMBERED from 1
+and the opening bar never carries one. The prediction was right about the mechanism and
+wrong about whether anything reaches it.

@@ -1,11 +1,17 @@
 # PARITY STATUS — abcts vs abcjs 6.7.0
 
-*Measured 2026-09-06, on commit `a17681f`, by running every gate in the repo plus both
+*Measured 2026-09-14, on commit `9e2f5da` (docs `HEAD`), by running every gate in the repo plus both
 browser comparisons. Every number below is a re-run, not a carried-forward claim.*
 
-**The one-line answer: on every axis this repo has built a way to measure, abcts and abcjs
+**The one-line answer: rendered with the options a page normally passes, abcts and abcjs
 produce identical output — the same SVG bytes and the same MIDI bytes — with the exceptions
 listed in §3, each of which is a case where abcjs itself produces broken output.**
+
+⚠️ **AND THE HONEST QUALIFIER IS §1a.** The sentence above was written when every gate here
+rendered with default options. `zzopts` renders the whole corpus under each HOST OPTION
+instead, and three of abcjs's options are still unimplemented features rather than rounding
+— `timeBasedLayout` above all, which is a second layout algorithm. A host that passes one of
+those does not get identical output, and the table in §1a says which.
 
 This file is the plain-language status. `CLAUDE.md` carries the working history,
 `Docs/HANDOFF-<date>.md` the session state, `Docs/ABCJS-DIFFERENCES.md` the evidence behind
@@ -42,6 +48,48 @@ WebKit is the deployment engine, not a proxy for one.
 `dump-svg.js` patches `getBBox`, so they assert *"abcts matches abcjs given synthetic text
 metrics"* — the right target headless, the wrong one in a browser. `zzlive` covers the real
 thing.
+
+---
+
+## 1a. Rendering under the HOST'S options
+
+`zzopts` renders all 685 comparable tunes under each option a drop-in host actually passes,
+and compares the **container as well as the SVG** — `outerHTML` — because half of what
+`setPaperSize` does is assign styles to the parent node, which no emitted string carries.
+
+**It opened at 685 of 685 on every row** (2026-09-09): abcjs sizes the container and we set
+nothing at all, and `responsive: "resize"` — the option a page reaches for first — was
+unimplemented outright. Every row is now at a DECLARED count, and a row that moves in either
+direction fails.
+
+| option | differ | what the remainder is |
+|---|---|---|
+| default, `responsive`, `viewport*`, `jazzchords`, `oneSvgPerLine`, `ariaLabel`, `germanAlphabet`, `accentAbove` | **0 of 685** | — |
+| `wrap` + `staffwidth` | **4** | **its floor** — 2 declined debug markers, 2 abcjs crashing in its own `wrapLines` |
+| `print`, `print + responsive` | 3 | last-digit rounding |
+| `scale 0.8` / `1.5`, `oneSvgPerLine + scale` | 1 / 2 / 1 | last-digit rounding |
+| `minPadding` | 4 | partially implemented |
+| `lineThickness` | 14 | **unimplemented** — an additive term on four line widths |
+| `expandToWidest` | 14 | **unimplemented** — needs abcjs's `i = -1` restart |
+| `add_classes` | 16 | class vocabulary on a few shapes |
+| `initialClef` | 41 | **unimplemented** — reprints the clef at the head of the tune |
+| `timeBasedLayout` | 669 | **unimplemented** — a SECOND layout algorithm (`layout/layout-in-grid.js`), spacing by TIME rather than by the spring solve. By far the largest thing outstanding in this repo. |
+
+⭐ **THE `wrap + staffwidth` ROW IS WORTH READING AS A CASE STUDY.** It opened at 59, was 23
+at the start of 2026-09-14 and reached its floor of 4 that day. What it cost was not
+arithmetic: **four of the eight recorded causes were wrong, one recorded DISPROOF was
+backwards, and seven fixtures that read as seven separate spacing defects were a single
+expression** — a trailing barline passing `el.width`, which is zero for an invisible bar,
+where `barWidthOf` gives abcjs's `w` of 1. Every one of those fell to instrumenting abcjs's
+own `layoutOneItem`, `calcY`, `roundNumber` and `tune.lines` **against our equivalent**, and
+none to reading its source alone.
+
+⚠️ **AND A `wrap` DEFECT IS OFTEN NOT A WRAP DEFECT.** Three rules closed that row while
+being general: an ending's room was charged to two barlines instead of one, a pitch was
+converted to a y twice instead of once, and an element's width was `(x + w) - base` instead
+of `dx + w`. All three reproduce with no wrap at all; no golden covers the shapes that show
+them, which is why they lived under a green `svg-bytes` for months. The third also moved
+`initialClef` 42 → 41 and the first two moved `print` and `minPadding`.
 
 ---
 
@@ -123,7 +171,11 @@ All at zero, re-run 2026-09-06. These are the parse and API surfaces rather than
 | `compat-surface` — abcjs's 64 public symbols | **0 absent** |
 | `selectables`, `dom`, `editor`, `synth-controller` | **0** |
 
-**Full suite: 79 files, 2,470 tests, no reds, no expected-fails.**
+**Full suite: 89 files, 2,629 tests, no reds, no expected-fails.**
+
+⚠️ **The file count fell by one on 2026-09-14** — `tests/zzk.test.ts` was a scratch probe
+from an earlier session that asserted NOTHING, only `console.log`. A test that cannot fail
+reads as coverage; it was deleted rather than filled in.
 
 ---
 
@@ -154,10 +206,14 @@ Read this section before quoting the numbers above.
    here read a confident zero while skipping a third of its inputs. Before concluding a
    surface is exhausted, ask what evidence EXISTS, not what the evidence says.
 
-4. **No gate can currently name the next defect.** That is the normal condition in this repo,
-   not a milestone — it has happened eleven times, and the answer has always been to build
-   the surface that expresses an axis none of the others can, or to render a control abcjs's
-   own suite does not contain.
+4. **A gate CAN name the next defect now, and that is new.** For most of this repo's life
+   every table read zero and the answer was to build a surface expressing an axis none of
+   the others could — eleven times over. `zzopts` is the twelfth, and it is still full: §1a's
+   three unimplemented options are named work, not a hunt.
+
+5. **Three of the four rows that cannot close are abcjs failing, not us.** Two tunes crash
+   inside abcjs's own `wrapLines` and two draw a red debug string on valid input; we render
+   all four. See §3.
 
 ---
 
@@ -294,7 +350,7 @@ pessimistic one. It is abcts's own symbol, not abcjs's, so the drop-in surface i
 cd /Users/lrettberg/ICMLabs/Code/abcts       # every command from here
 
 npx tsc --noEmit && echo OK                  # before anything else
-npx vitest run --testTimeout=180000          # 79 files, 2,470 tests
+npx vitest run --testTimeout=180000          # 89 files, 2,629 tests
 
 npm run build                                # zzlive loads dist/, a stale bundle lies
 PW=/tmp/gp/pw/node_modules/playwright-core/index.js node scripts/zzlive.mjs

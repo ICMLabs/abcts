@@ -5,9 +5,10 @@ Paste the block below.
 ---
 
 ```
-start here: abcts/Docs/HANDOFF-2026-09-14.md — §THE FLOOR IS 4 first (the last handoff's
-was wrong and would have stopped a session early), then §WHAT IS LEFT, which is TWO rows
-and both are differenced to a number. Then -09-13.md and -09-12.md for the rules that got
+start here: abcts/Docs/HANDOFF-2026-09-14.md — §THE FLOOR IS 4 first, then §WHAT IS LEFT,
+which is NOT the wrap row any more: that row reached its floor and the next arc is a HOST
+OPTION. `Docs/PARITY-STATUS.md` §1a is the same table in plain language and is the file to
+hand anyone asking how close this is. Then -09-13.md and -09-12.md for the rules that got
 the wrap row from 59 to 23, and -09-08.md for THE QUADRATICS.
 
 Work in /Users/lrettberg/ICMLabs/Code/abcts. Run every command from there — `cd` does not
@@ -19,23 +20,24 @@ persist between tool calls and the workspace ROOT collects every sibling repo's 
     cp -R ../abcMusicKit/Docs/References/abcjs/abcjs-6.7.0/src /tmp/gp/abcjs
 …then `cd` back into the repo — that `cd` resets the shell's CWD for the next call.
 
-    suite       90 files, 2,628 tests, no reds
+    suite       89 files, 2,629 tests, no reds
     svg-bytes   0 of 691 in-repo, 0 of 356 sibling
     mode-bytes  11 of 691 — every one DECLARED
     midi-bytes  0 of 691 — 19 ruled divergent
     zzlive      0 of 685  WebKit AND Chrome        zzselect 0 of 685
     zzclick     1 of 685 DECLARED ×3               zzledger 0 differ, 0 KNOWN, 41 agree
     zzopts      26 rows, every one at its declared count:
-                timeBasedLayout 669 · initialClef 42 · add_classes 16 · lineThickness 14 ·
-                expandToWidest 14 · wrap+staffwidth 6 · print 3 · print+responsive 3 ·
-                minPadding 4 · scale 2 / 1 / 1
+                timeBasedLayout 669 · initialClef 41 · add_classes 16 · lineThickness 14 ·
+                expandToWidest 14 · wrap+staffwidth 4 (THE FLOOR) · print 3 ·
+                print+responsive 3 · minPadding 4 · scale 2 / 1 / 1
     warnings    0 of 815 · test:dist 0 of 685 ESM and CJS
     lint        1,023 errors — PRE-EXISTING, not a gate, do not "fix" under other work
 
-🛑 THE WRAP ROW IS AT ITS FLOOR PLUS TWO. Four of the six can never close — two are abcjs's
-FOURTH DEBUG MARKER, DECLINED by the owner, and two are abcjs CRASHING in its own
-`wrapLines`. The floor is 4. ⚠️ The previous prompt said 19 and it was wrong: 19 was
-23 minus the four, i.e. the number of CLOSEABLE rows.
+🏁 THE WRAP ROW IS AT ITS FLOOR. All four remaining fixtures are closed by DECISION — two
+are abcjs's FOURTH DEBUG MARKER, declined by the owner, and two are abcjs CRASHING in its
+own `wrapLines`. Nothing reachable is left on it; do not go looking. ⚠️ The prompt before
+this one said the floor was 19 and it was wrong — 19 was 23 minus the four, i.e. the number
+of CLOSEABLE rows — and taken literally it would have ended that session thirteen rows early.
 
 ⭐ THE STANDING ORDER, AND IT PAID ON EVERY HARD ITEM LAST SESSION: INSTRUMENT abcjs, AND
 INSTRUMENT IT AGAINST OUR OWN EQUIVALENT. Not a source read — a side-by-side log.
@@ -59,21 +61,19 @@ and break both.
 last session a half-fix drew MORE wrong elements than the bug did while `zzopts` sat
 unchanged. Difference the element KINDS, not the count.
 
-WHAT TO DO NEXT — two rows, both already differenced:
-  1. `synth-flattener-21` — `&` overlay voices. Its single-layer measure is 16.5 too wide
-     and its three neighbours 5.5 short apiece; the gap from that measure's opening barline
-     to its note is 11.018 in abcjs and 33.018 in ours — 22 extra, TWO more bar rods.
-     ⚠️ NOT the per-element advances: every rod was logged against abcjs's and matches, the
-     invisible padding rest included. It is the SHARED CURSOR where the layer count changes
-     between measures. START FROM THE 22.
-  2. `visual-misc-04-stretchlast` — one ULP, and NOT the glissando: our glissando is abcjs's
-     expression term for term and abcjs's own `anchor1.x` already carries the noise. It is
-     the NOTE's solved x, and the glissando is the only emitter writing full precision.
+WHAT TO DO NEXT — a HOST OPTION, and they are named and sized in `zzopts`'s own comment:
+  1. `initialClef` (41) — reprints the clef at the head of the tune. ⚠️ ITS CONTROL IS MUTE;
+     fix that FIRST or nothing it reports can be trusted. Smallest real feature on the board.
+  2. `lineThickness` (14) — an additive term on four line widths, `dy + lineThickness` on a
+     staff line, `0.35 + …` on a ledger, `linewidth ± …` on a stem with the sign following
+     the stem's direction. Cause measured, fix scoped, NOT piecemeal.
+  3. `expandToWidest` (14) — needs abcjs's `i = -1` restart; SIZE THE RE-ENTRANCY FIRST.
+  4. `add_classes` (16) — class vocabulary on a few shapes.
+  5. `timeBasedLayout` (669) — a SECOND layout algorithm (`layout/layout-in-grid.js`) that
+     spaces by TIME rather than by the spring solve. By far the largest thing outstanding
+     here and its own arc; do not start it inside another.
 
-…and the arcs that are NOT those two: `timeBasedLayout` 669 (a second layout algorithm, its
-own arc and the largest thing here), `initialClef` 42 (⚠️ its control is MUTE),
-`add_classes` 16, `lineThickness` 14 (cause measured, fix scoped, NOT piecemeal),
-`expandToWidest` 14 (size the re-entrancy first). Also open: `Docs/PONYTAIL-DEBT.md`'s
+…and the things that are not rendering at all: `Docs/PONYTAIL-DEBT.md`'s
 open markers — 8 should be RESTATED AS DECISIONS rather than worked, and three more were
 added last session, each naming a shape absent from both corpora; `npm run lint`'s 1,023
 pre-existing errors, only as ITS OWN commit; and PUBLISH, which is a decision.
@@ -95,15 +95,17 @@ cannot be fixed afterwards without the force push the line above forbids.
 
 ## Why this order
 
-**There is very little left on this row, and both items are numbers rather than hunches.**
-Item 1 has a localised 22px on a named measure and an explicit list of what has already been
-excluded; item 2 is a single ULP whose owner has been traced upstream of the element that
-shows it. Neither needs re-deriving.
+**The wrap row is done, so the question changed.** For the last three sessions the work list
+was a list of FIXTURES; it is now a list of FEATURES, each of which abcjs implements and this
+engine does not. That is a different kind of task — no differencing to do, a named function
+to port — and it wants sizing before it wants starting.
 
-**Item 1 first because item 2 may not be worth closing.** Matching the spring solve's
-accumulation for one column, to fix one byte on one fixture, is a large change to a
-load-bearing path for no visible difference — worth stating as a decision rather than
-assuming it is work.
+**`initialClef` first because its control is MUTE**, which makes it the one row on the board
+whose number cannot currently be trusted. A mute control is worse than an absent one: it
+reads as evidence. Fixing that is cheap and it may move the 41 on its own.
 
-**And the row's floor matters to the expectation**: 4, not 6 and not 19. An agent that
-closes both should expect `wrap + staffwidth` to read 4 and stop there.
+**`timeBasedLayout` last and alone.** 669 of 685 is not a defect count, it is an unbuilt
+algorithm, and starting it inside another arc is how a green gate acquires a half-ported one.
+
+**And the row's floor matters to the expectation**: `wrap + staffwidth` reads 4 and that is
+finished. An agent that finds it at 5 has broken something.

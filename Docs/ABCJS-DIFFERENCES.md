@@ -948,6 +948,26 @@ strength of the source alone.
 the clef, key and meter `deline` injects beside the font are all drawn, with abcjs's
 `startChar: -1`.*
 
+### `%%vskip` under `wrap` throws inside abcjs's own `wrapLines`
+
+**A crash is not output, so there is nothing to reproduce.** With a host `wrap`, a
+`%%vskip` that makes an output row non-music leaves `addLineBreaks` reading
+`lines[action.ogLine].staff[action.staff]` on a row that has no `staff`:
+
+    TypeError: undefined is not an object (evaluating 'l[p]')
+
+abcjs renders nothing at all for the tune. abcts renders it — the `%%vskip` spent, the
+staff drawn, the page 139.052 tall — and there is no sense in which that is a divergence
+to be closed: the alternative is throwing on valid input.
+
+⚠️ **Measured, not inferred.** Both fixtures were run through abcjs 6.7.0 live in WebKit
+under `{wrap: {…}, staffwidth: 400}`; the exception is abcjs's, in its own file, and
+`abcjs-strict` reproduces no crash anywhere else.
+
+*Costs two fixtures of `zzopts`'s `wrap + staffwidth` row: `abcts-vskip-tune0` and
+`abcts-vskip-tune2`. With the entry above, those four ARE that row's floor — it reads 4 and
+nothing reachable is left on it.*
+
 **The short end reaches the same marker.** `note` runs out again past key 7, so a 256th
 (`C/32` under `L:1/8`) is headless too — and there abcjs keeps the STEM, because
 `hasStem = !nostem && durlog <= -1` is still true. abcts draws neither the marker nor that
