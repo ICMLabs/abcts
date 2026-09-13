@@ -64,14 +64,22 @@ direction fails.
 
 | option | differ | what the remainder is |
 |---|---|---|
-| default, `responsive`, `viewport*`, `jazzchords`, `oneSvgPerLine`, `ariaLabel`, `germanAlphabet`, `accentAbove`, **`lineThickness`**, **`initialClef`** | **0 of 685** | — |
+| default, `responsive`, `viewport*`, `jazzchords`, `oneSvgPerLine`, `ariaLabel`, `germanAlphabet`, `accentAbove`, **`lineThickness`**, **`initialClef`**, **`expandToWidest`** | **0 of 685** | — |
 | `wrap` + `staffwidth` | **4** | **its floor** — 2 declined debug markers, 2 abcjs crashing in its own `wrapLines` |
 | `print`, `print + responsive` | 3 | last-digit rounding |
 | `scale 0.8` / `1.5`, `oneSvgPerLine + scale` | 1 / 2 / 1 | last-digit rounding |
 | `minPadding` | 4 | partially implemented |
-| `expandToWidest` | 14 | **unimplemented** — needs abcjs's `i = -1` restart |
 | `add_classes` | 16 | class vocabulary on a few shapes |
 | `timeBasedLayout` | 669 | **unimplemented** — a SECOND layout algorithm (`layout/layout-in-grid.js`), spacing by TIME rather than by the spring solve. By far the largest thing outstanding in this repo. |
+
+**`expandToWidest` closed at 0 from 14** on 2026-09-15, and it is the row whose own recorded
+note was wrong about the COST rather than the cause. The note said the system pass is "one
+~1700-line `spans.map` with outer accumulators, so making it re-entrant is a real refactor and
+a real regression risk"; the pass writes six bindings outside itself, mutates no element, and
+running it twice unconditionally left both byte gates at zero. What the row actually needed was
+arithmetic: abcjs's `i = -1` is an ABORT, not a fixed point — the lines after the offender are
+never solved at the width it just left — the chase runs **112 passes** on one fixture, and the
+top text is rebuilt at the widened page so the title centres on the music.
 
 **`initialClef` closed at 0 from 125 and `lineThickness` at 0 from 665**, both on
 2026-09-14. Between them they show what these rows usually are: `initialClef`'s `l` is the

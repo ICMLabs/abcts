@@ -604,3 +604,136 @@ describe("lineThickness thickens without moving anything", () => {
     expect(height(1.5)).toBeCloseTo(3.7, 2);
   });
 });
+
+/**
+ * **`expandToWidest` — A LINE TOO STIFF FOR THE PAGE WIDENS THE PAGE FOR *EVERY* LINE.**
+ *
+ *     if (Math.round(thisWidth) > Math.round(maxWidth)) {
+ *       maxWidth = thisWidth
+ *       if (expandToWidest) i = -1   // do the calculations over with the new width
+ *     }
+ *
+ * (`layout/layout.js:26-29`.) The page ratchets up to the widest line solved so far with or
+ * without the flag; what the flag buys is the RESTART — the line loop begins again at line
+ * 0, so the lines ALREADY solved are re-justified to the new width instead of being left at
+ * the narrower one — and a top text rebuilt at `maxWidth`
+ * (`engraver-controller.js:263-297`).
+ *
+ * ⭐ **AND IT IS THE ABORT, NOT THE FIXED POINT.** `i = -1` fires the INSTANT a line widens
+ * the page, so the lines after the offender are never solved at the width it just left.
+ * Finishing the pass and taking the MAX is the obvious reading and settles somewhere else —
+ * `synth-flattener-32-quarter-tone2` at 714.51 against abcjs's 717.51 — because `thisWidth`
+ * is not linear in the target and a later line's larger claim jumps the page ahead of the
+ * chase. Both engines were instrumented side by side (`__ETW` in abcjs's own loop against
+ * `ABCTS_W` here) to settle it.
+ *
+ * ⚠️ **THE CHASE IS LONG.** A line that cannot compress justifies to just OVER its target
+ * and trips `Math.round` again, so `visual-layout-04-score-s-a` walks 670 → 850.54 in 112
+ * restarts of about a pixel and a half. A 64-pass cap read 824.02 — **a width that appears
+ * in abcjs's own trace**, one of the steps it walks through, which is why the truncation
+ * looked like a near miss.
+ *
+ * ⚠️ **AND THE OPTION HAS ONLY ONE SURFACE.** It changes no element's kind and no stream —
+ * `tune.lines` carries no width — so the ink is where it must be asserted, and the repo's
+ * usual "assert both surfaces" does not apply here.
+ *
+ * `zzopts`'s `expandToWidest` row: **14 → 0 of 685.**
+ */
+describe("expandToWidest restarts the line loop at the widened page", () => {
+  // Two stiff measures of sixteenths on one source line, then two short lines: the first
+  // line cannot compress to 300 and so widens the page for the ones after it.
+  const STIFF =
+    "X:1\nT:Wide\nL:1/16\nK:C\nCDEFGABcdefgabc'd'|CDEFGABcdefgabc'd'|\nCDEF GABc|\nGABc CDEF|\n";
+  const ink = (abc: string, expandToWidest = false): string => {
+    const host = { innerHTML: "" } as { innerHTML: string };
+    renderAbc(host, abc, { staffwidth: 300, ...(expandToWidest ? { expandToWidest } : {}) });
+    return host.innerHTML;
+  };
+  const widthOf = (svg: string): number => Number(/width="([\d.]+)"/.exec(svg)?.[1]);
+  const titleX = (svg: string): number =>
+    Number(/data-name="title"><tspan x="([\d.]+)"/.exec(svg)?.[1]);
+
+  // ⭐ THE TOP TEXT IS REBUILT AT THE WIDENED PAGE, so the title centres on the MUSIC.
+  // Four of the row's five remaining fixtures were this one rule; each centred at
+  // `staffwidth / 2 + padding.left`, the page's own centre, on a tune running far past it.
+  it("centres the title on the widened page, not on the staffwidth", () => {
+    const wide = ink(STIFF, true);
+    expect(titleX(ink(STIFF))).toBe(300 / 2 + 15);
+    expect(titleX(wide)).toBeCloseTo((widthOf(wide) - 30) / 2 + 15, 2);
+    expect(titleX(wide)).toBeGreaterThan(titleX(ink(STIFF)) + 40);
+  });
+
+  // ⭐⭐ AND THE EARLIER LINES ARE RE-JUSTIFIED, which is the restart itself: the forward-only
+  // ratchet leaves the line that WIDENED the page at its own natural width and only helps
+  // the ones after it. A fix that rebuilt the top text alone passes the row above and fails
+  // this one.
+  it("re-justifies the line that widened the page", () => {
+    const barOf = (svg: string): number =>
+      Number([...svg.matchAll(/data-name="bar"[^>]*><path d="M ([\d.]+)/g)][1]?.[1]);
+    expect(barOf(ink(STIFF, true))).toBeGreaterThan(barOf(ink(STIFF)));
+  });
+
+  // ⭐⭐⭐ THE ABORT'S OWN NUMBER. This fixture is the one that distinguishes abcjs's
+  // "restart at the first overflow" from "finish the pass and take the max": the second
+  // reading settles at 744.51 and abcjs is at 747.51. A cap that truncates the 40-restart
+  // chase also lands short here.
+  const fixtureWidth = (name: string): number => {
+    const host = { innerHTML: "" } as { innerHTML: string };
+    renderAbc(host, readFileSync(join(FIXTURES, `${name}.abc`), "utf-8"), {
+      staffwidth: 670,
+      expandToWidest: true,
+    });
+    return widthOf(host.innerHTML);
+  };
+
+  it("reaches abcjs's width on the fixture where the abort is the difference", () => {
+    expect(fixtureWidth("abcjs-synth-flattener-32-quarter-tone2")).toBeCloseTo(
+      747.5094495309276,
+      6,
+    );
+  });
+
+  // ⭐⭐⭐⭐ AND THE 112-RESTART CHASE HAS TO RUN TO ITS END. This is the fixture that walks
+  // 670 → 850.54 a pixel and a half at a time; a cap of 64 stops it at 824.02 and the row
+  // above still passes, because its own chase is only 40 long. **A cap is not visible to a
+  // control whose fixture is shorter than the cap.**
+  it("runs the whole chase out on the fixture that restarts 112 times", () => {
+    expect(fixtureWidth("abcjs-visual-layout-04-score-s-a")).toBeCloseTo(880.5445219546016, 6);
+  });
+
+  // ⭐⭐⭐⭐ AND THE PASS IS RUN AGAIN RATHER THAN CONTINUED, so anything it ACCUMULATES has to
+  // be cleared first. `voiceAnchors`/`voiceSites` collect per voice across the whole pass and
+  // are read back inside it, and a restart that left them drew every slur and every spanner
+  // once per pass — 261 of the 691 byte goldens.
+  // ⚠️ **AND THE SLUR MUST BE ON A LINE *BEFORE* THE ONE THAT RATCHETS**, because the abort
+  // throws before the offending line's own anchors are pushed. With the stiff line FIRST the
+  // duplication cannot happen and this control is MUTE — verified by deleting the reset,
+  // which left that shape at 6 slurs and this one at 8.
+  it("draws each slur once however many times the pass restarts", () => {
+    const slurred =
+      "X:1\nT:Slurs\nL:1/16\nK:C\n(CDEF)(GABc)|\nCDEFGABcdefgabc'd'|CDEFGABcdefgabc'd'|\n(GABc)(CDEF)|\n";
+    const count = (svg: string): number => (svg.match(/data-name="slur"/g) ?? []).length;
+    expect(count(ink(slurred))).toBe(4);
+    expect(count(ink(slurred, true))).toBe(4);
+  });
+
+  // ⚠️ **AND `voiceSites` IS A SECOND ACCUMULATOR THAT THE SLUR CONTROL IS MUTE FOR.** The
+  // barline sites a hairpin opens and closes at are collected the same way and cleared in the
+  // same place, and deleting only THAT line leaves every slur row green — the shapes are
+  // different, so the controls have to be too. Verified: 2 hairpins become 4.
+  it("draws each hairpin once however many times the pass restarts", () => {
+    const hairpins =
+      "X:1\nT:Hairpin\nL:1/16\nK:C\n!<(!CDEF GABc!<)!|\nCDEFGABcdefgabc'd'|CDEFGABcdefgabc'd'|\n!>(!GABc CDEF!>)!|\n";
+    const count = (svg: string): number =>
+      (svg.match(/data-name="dynamics"/g) ?? []).length;
+    expect(count(ink(hairpins))).toBe(2);
+    expect(count(ink(hairpins, true))).toBe(2);
+  });
+
+  // …and with the option OFF nothing changes: the ratchet is forward-only and the top text
+  // stays on the page's centre. abcjs's own default is off.
+  it("leaves the forward-only ratchet alone when the option is off", () => {
+    expect(titleX(ink(STIFF))).toBe(165);
+    expect(widthOf(ink(STIFF))).toBeCloseTo(431.971, 3);
+  });
+});

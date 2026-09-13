@@ -6026,6 +6026,31 @@ let INITIAL_CLEF = false
  * and therefore every lane above the staff.
  */
 let ACCENT_ABOVE = false
+/**
+ * **`expandToWidest` — A LINE TOO STIFF FOR THE PAGE WIDENS THE PAGE FOR EVERY LINE**,
+ * rather than only for the ones after it. `layout()` ratchets `maxWidth` up to the widest
+ * line it has solved either way; this flag is what makes it go back and re-solve the
+ * earlier lines at the new width (`i = -1`, `layout/layout.js:26-29`). `false` unless a
+ * host sets it — abcjs's own default. See the restart in `layoutScoped`.
+ */
+let EXPAND_TO_WIDEST = false
+/**
+ * **THE SIGNAL THAT ABORTS A SYSTEM PASS SO IT CAN START OVER WIDER** — abcjs's `i = -1`.
+ * `spans.map` has no `break`, and the abort is the point (see the ratchet), so the pass
+ * throws this and the driver catches exactly it.
+ */
+const RESTART_PASS = Symbol('abcts.restartPass')
+/**
+ * ponytail: abcjs bounds its restart not at all, and the chase is long — 112 passes on
+ * `visual-layout-04-score-s-a`, which walks 670 → 850.54 in ratchets of a pixel and a half
+ * because a line that cannot compress justifies to just OVER its target and trips
+ * `Math.round(thisWidth) > Math.round(maxWidth)` again. It ends when the overshoot falls
+ * inside the same rounded pixel. **A cap of 64 truncated that chase and read 824.02 — a
+ * width that appears in abcjs's own trace, one of the steps it walks through**, which is
+ * why the wrong number looked plausible. This is set well clear of the observed maximum so
+ * a shape that really does run away is a wrong render rather than a hang.
+ */
+const RESTART_LIMIT = 4096
 
 /**
  * The decoration pass an entry belongs to. `accentAbove` moves the accent from the
@@ -10745,6 +10770,8 @@ export interface LayoutOptions {
   readonly initialClef?: boolean
   /** `accentAbove` — the accent joins the ornament lane. See `ACCENT_ABOVE`. */
   readonly accentAbove?: boolean
+  /** `expandToWidest` — re-solve every line at the widest one's width. See `EXPAND_TO_WIDEST`. */
+  readonly expandToWidest?: boolean
   /**
    * **WHERE THIS TUNE'S PAGE CURSOR STARTS** — 0 for a tune of its own, and the PREVIOUS
    * tune's `endY` when a whole book is stacked into one SVG. `engraveABC` resets the
@@ -12657,6 +12684,7 @@ interface RenderState {
   minPadding: number
   initialClef: boolean
   accentAbove: boolean
+  expandToWidest: boolean
   keywarn: boolean
   lineWeights: typeof LINE_WEIGHTS
   scoreFonts: Score['fonts']
@@ -12680,6 +12708,7 @@ const captureRenderState = (): RenderState => ({
     minPadding: MIN_PADDING,
     initialClef: INITIAL_CLEF,
     accentAbove: ACCENT_ABOVE,
+  expandToWidest: EXPAND_TO_WIDEST,
   keywarn: KEYWARN,
   lineWeights: LINE_WEIGHTS,
   scoreFonts: SCORE_FONTS,
@@ -12703,6 +12732,7 @@ const restoreRenderState = (s: RenderState): void => {
   MIN_PADDING = s.minPadding
   INITIAL_CLEF = s.initialClef
   ACCENT_ABOVE = s.accentAbove
+  EXPAND_TO_WIDEST = s.expandToWidest
   KEYWARN = s.keywarn
   LINE_WEIGHTS = s.lineWeights
   SCORE_FONTS = s.scoreFonts
@@ -12864,6 +12894,7 @@ function layoutScoped(input: Score, options: LayoutOptions = {}): Layout {
   MIN_PADDING = spaces(options.minPadding ?? 0)
   INITIAL_CLEF = options.initialClef === true
   ACCENT_ABOVE = options.accentAbove === true
+  EXPAND_TO_WIDEST = options.expandToWidest === true
   KEYWARN = score.keywarn
   SCORE_FONTS = score.fonts
   SCORE_PARTS_BOX = score.partsBox
@@ -14218,7 +14249,24 @@ function layoutScoped(input: Score, options: LayoutOptions = {}): Layout {
    * never re-reads the bar, which is on the line before. See the end-of-system open.
    */
   let voltaOpenedOnPreviousSystem: number | null = null
-  const systems: LayoutSystem[] = spans.map((span, systemIndex) => {
+  /**
+   * **THE SYSTEM PASS, AS A THING THAT CAN BE RUN TWICE** — abcjs's `i = -1`
+   * (`layout/layout.js:26-29`): when a line is too stiff for the page it widens the page,
+   * and under `expandToWidest` the WHOLE line loop starts over at the new width so the
+   * lines already solved are justified to it rather than to the page they were handed.
+   *
+   * ⭐ **AND THE RE-ENTRANCY WAS SIZED BY MEASUREMENT, NOT BY READING** — the recorded note
+   * said this was "one ~1700-line `spans.map` with outer accumulators, so making it
+   * re-entrant is a real refactor and a real regression risk", and that was a hypothesis
+   * on the repo's usual terms. The pass writes exactly SIX bindings outside itself —
+   * `pageWidth`/`pageRatcheted` (the ratchet, which is what must carry), `topAdvances` and
+   * `topRows` (assigned outright, not accumulated), `voltaCarried` and
+   * `voltaOpenedOnPreviousSystem` (carried system to system, so they must be cleared) —
+   * plus `musicLeft[systemIndex]`, which is written by index. It mutates no `plan`, no
+   * `measure` and no element. Running it twice UNCONDITIONALLY, with those cleared, left
+   * `svg-bytes` at 0 of 691 and 0 of 356, which is the proof.
+   */
+  const layoutSystems = (): LayoutSystem[] => spans.map((span, systemIndex) => {
     // …**AND A LINE `%%barsperstaff` CUT OUT PRINTS ONE TOO** — see `Measure.wrappedLine`.
     //
     // ⚠️ **THIS FLAG IS NOT ONLY ABOUT THE METER, WHICH IS WHY `wrapDroppedMeter` IS NOT
@@ -14781,6 +14829,20 @@ function layoutScoped(input: Score, options: LayoutOptions = {}): Layout {
     if (Math.round(thisWidth * UNIT_PX) > Math.round(pageWidth * UNIT_PX)) {
       pageWidth = thisWidth
       pageRatcheted = true
+      /**
+       * ⭐ **AND THE RESTART ABORTS THE PASS HERE, WHICH IS THE WHOLE OF ITS ARITHMETIC.**
+       * abcjs sets `i = -1` the INSTANT a line widens the page, so the lines AFTER it are
+       * never solved at the width it just left behind (`layout/layout.js:26-29`).
+       *
+       * Finishing the pass and taking the MAX instead reaches a different fixed point, and
+       * the row cannot tell you which: instrumented side by side on
+       * `synth-flattener-32-quarter-tone2`, abcjs walks 670 → 717.51 in forty restarts,
+       * aborting at line 2 every time and never reaching line 3 at the old target, where
+       * taking the max let line 3's larger claim jump the page ahead and SETTLE LOWER, at
+       * 714.51. `thisWidth` is not linear in the target, so running ahead of the chase does
+       * not overshoot it — it lands somewhere else.
+       */
+      if (EXPAND_TO_WIDEST) throw RESTART_PASS
     }
     musicLeft[systemIndex] = Math.min(
       ...lines.map((line, v) => {
@@ -14839,7 +14901,25 @@ function layoutScoped(input: Score, options: LayoutOptions = {}): Layout {
               // `PlacedText.pageY`.
               const built = topTextBlock(
                 score.metadata,
-                systemWidth - pageSides(),
+                /**
+                 * **AND `expandToWidest` REBUILDS THE TOP TEXT AT THE WIDENED PAGE**, so a
+                 * title, a subtitle and any centred row sit over the MUSIC's centre rather
+                 * than the page's. `engraveTune` constructs `TopText` once at `this.width`,
+                 * runs `layout()`, and then — `if (this.expandToWidest && maxWidth >
+                 * this.width + 1)` — throws that block away and builds a second one at
+                 * `maxWidth` (`engraver-controller.js:263-297`).
+                 *
+                 * ⚠️ **THE GUARD'S 1px MATTERS AND IS abcjs'S OWN.** A page that ratchets
+                 * by less than a pixel keeps the first block, titles included.
+                 *
+                 * Measured: `visual-transpose-output-01` centres its title at 549.02 in
+                 * abcjs against our 350, which is `670 / 2 + 15` — the page's centre, on a
+                 * tune whose music runs to 1068. Four of the row's five fixtures were this
+                 * one rule and the restart alone could not reach any of them.
+                 */
+                EXPAND_TO_WIDEST && pageWidth > systemWidth - pageSides() + 1
+                  ? pageWidth
+                  : systemWidth - pageSides(),
                 score.textAbove,
                 score.fonts,
                 PAGE_TOP + PAGE_PADDING.top,
@@ -16328,6 +16408,44 @@ function layoutScoped(input: Score, options: LayoutOptions = {}): Layout {
       originY: 0,
     }
   })
+
+  /**
+   * **THE RESTART** — abcjs's `i = -1` under `expandToWidest` (`layout/layout.js:26-29`).
+   *
+   * abcjs aborts the line loop the moment a line widens the page and re-walks from line 0
+   * with the grown `maxWidth`; a pass that finishes without widening it is the answer. The
+   * forward-only ratchet stays the default, because abcjs's own default is off.
+   *
+   * ⚠️ **AND IT IS THE ABORT AND NOT THE FIXED POINT** — see the throw at the ratchet.
+   * Reproducing only "re-run at the width the last pass ended on" reaches a DIFFERENT fixed
+   * point, because a pass that finishes lets the lines after the offender push the page
+   * further than abcjs ever does in one step. Instrumented in abcjs's own loop (`__ETW` on
+   * `dist/abcjs-basic.js`) against `ABCTS_W` here, which is what settled it.
+   *
+   * The chase is long: 112 restarts on `visual-layout-04-score-s-a` and 40 on
+   * `synth-flattener-32-quarter-tone2`. See `RESTART_LIMIT`.
+   */
+  let systems: LayoutSystem[] = []
+  for (let pass = 0; ; pass += 1) {
+    topAdvances = []
+    topRows = []
+    voltaCarried = null
+    voltaOpenedOnPreviousSystem = null
+    musicLeft.length = 0
+    // ⚠️ These two ACCUMULATE per voice across the whole pass and are read back inside it
+    // (`systemAnchors`), so a re-run without clearing them draws every slur and every
+    // spanner twice — 261 of the 691 goldens, which is how they were found.
+    for (const anchors of voiceAnchors) anchors.length = 0
+    for (const sites of voiceSites) sites.length = 0
+    // …and `pageWidth`/`pageRatcheted` are deliberately NOT cleared: they are abcjs's
+    // `maxWidth`, which the restart carries rather than rediscovers.
+    try {
+      systems = layoutSystems()
+      break
+    } catch (error) {
+      if (error !== RESTART_PASS || pass >= RESTART_LIMIT) throw error
+    }
+  }
 
   // Now that every system exists, resolve each voice's slurs and ties across the whole
   // tune and hand each system its share.

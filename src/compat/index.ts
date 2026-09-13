@@ -383,6 +383,14 @@ export interface AbcjsParams {
    */
   readonly accentAbove?: boolean;
   /**
+   * **`expandToWidest` — THE PAGE GROWS TO THE WIDEST LINE AND EVERY LINE IS RE-SOLVED AT
+   * IT.** A line whose rods already exceed the page widens `maxWidth` with or without this
+   * flag; what the flag buys is the RESTART — `i = -1`, so the lines already laid out are
+   * justified to the new width too — and a top text rebuilt at it
+   * (`layout/layout.js:26-29`, `engraver-controller.js:266-297`).
+   */
+  readonly expandToWidest?: boolean;
+  /**
    * **THE CALLBACK A CLICK IN THE SCORE CALLS** — `(abcelem, tuneNumber, classes,
    * analysis, drag, ev)`. abcjs pushes it onto `this.listeners`
    * (`engraver-controller.js:61-63`) and `notifySelect` walks them
@@ -1212,6 +1220,7 @@ function renderInto(
         ...(params.minPadding === undefined ? {} : { minPadding: params.minPadding }),
         ...(params.initialClef === true ? { initialClef: true } : {}),
         ...(params.accentAbove === true ? { accentAbove: true } : {}),
+        ...(params.expandToWidest === true ? { expandToWidest: true } : {}),
       });
       return laidOutCache;
     };

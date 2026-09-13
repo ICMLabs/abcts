@@ -138,7 +138,7 @@ const OPTIONS = [
    *                          ever rendered its OUTPUT beside abcjs's.
    *   add_classes       17 — the class scheme itself is gated by 111 sibling goldens; these
    *                          are the rows those goldens do not reach.
-   *   expandToWidest    14 — a line stiffer than the page widens the page to fit it.
+   *   expandToWidest    14 — a line stiffer than the page widens the page to fit it. NOW 0 — CLOSED.
    *   accentAbove       13 — an `accent` joins the ABOVE stack instead of the below one
    *                          (`creation/decoration.js:20`), which moves every lane with it.
    */
@@ -200,7 +200,38 @@ const OPTIONS = [
    * A value derived twice in one function is one edit and two places.
    */
   ['lineThickness', { lineThickness: 1.5 }, 0],
-  ['expandToWidest', { expandToWidest: true }, 14],
+  /**
+   * ✅ **CLOSED — 14 → 9 → 5 → 0, AND IT IS THE ABORT THAT DID THE ARITHMETIC.**
+   * Three rules, and the row could not have arbitrated the first one on its own:
+   *
+   * 1. **THE RESTART, WHICH IS THE PASS ABORTING AND NOT A FIXED POINT.** `i = -1` the
+   *    INSTANT a line widens the page (`layout/layout.js:26-29`), so the lines AFTER the
+   *    offender are never solved at the width it just left. Re-running the whole pass at
+   *    the width the previous one ENDED on is the obvious reading and reaches a different
+   *    answer: `synth-flattener-32-quarter-tone2` settles at 714.51 that way against
+   *    abcjs's 717.51, because line 3's larger claim jumps the page ahead of the chase and
+   *    `thisWidth` is not linear in the target. 14 → 9 → 5 with the abort.
+   * 2. **THE CHASE IS 112 PASSES LONG, NOT TWO.** `visual-layout-04-score-s-a` walks
+   *    670 → 850.54 a pixel and a half at a time: a line that cannot compress justifies to
+   *    just OVER its target and trips `Math.round` again, until the overshoot lands inside
+   *    the same rounded pixel. ⚠️ **A 64-pass cap read 824.02 — a width that appears in
+   *    abcjs's OWN trace**, one of the steps it walks through, which is why it looked like
+   *    a plausible near-miss rather than a truncation.
+   * 3. **THE TOP TEXT IS REBUILT AT THE WIDENED PAGE — 5 → 1.** `engraveTune` builds
+   *    `TopText` at `this.width`, runs `layout()`, and then, `if (this.expandToWidest &&
+   *    maxWidth > this.width + 1)`, throws it away and builds a second one at `maxWidth`
+   *    (`engraver-controller.js:263-297`). Four fixtures centred their title at 350 —
+   *    `670 / 2 + 15`, the PAGE's centre — where abcjs centres on the music.
+   *
+   * ⭐ **AND THE ROW'S OWN RECORDED NOTE WAS WRONG ABOUT THE COST.** It said the pass is
+   * "one ~1700-line `spans.map` with outer accumulators, so making it re-entrant is a real
+   * refactor and a real regression risk". It writes SIX bindings outside itself and mutates
+   * no `plan` and no element; running it twice unconditionally left `svg-bytes` at 0 of 691
+   * and 0 of 356, which is the proof rather than the reading. The one that had to be FOUND
+   * was `voiceAnchors`/`voiceSites`, which accumulate per voice and drew every slur twice —
+   * 261 goldens, so it announced itself.
+   */
+  ['expandToWidest', { expandToWidest: true }, 0],
   // ✅ 125 → 42 → 3. The name reads the other way round: `(!this.initialClef || l === 0) &&
   // createClef(…)` (`creation/abstract-engraver.js:158`) — so it means the initial clef
   // ONLY. The key signature is outside the guard and still draws on every line, and a
@@ -914,6 +945,8 @@ const OPTIONS = [
   ['wrap + staffwidth', { wrap: { minSpacing: 1.8, maxSpacing: 2.7, preferredMeasuresPerLine: 4 }, staffwidth: 400 }, 4],
 ]
 const every = Number(process.argv[2] ?? 1)
+/** …and an optional LABEL substring, to re-measure one row without walking 26. */
+const only = process.argv[3]
 const browser = await webkit.launch()
 const page = await browser.newPage()
 await page.setContent('<!doctype html><meta charset="utf-8"><body></body>')
@@ -921,6 +954,7 @@ await page.addScriptTag({ content: readFileSync(join(repo, cfg.abcjsRef, 'dist',
 await page.addScriptTag({ content: readFileSync(join(repo, 'dist', 'abcts-browser.global.js'), 'utf-8') })
 let bad = 0
 for (const [label, opts, declared, witness] of OPTIONS) {
+  if (only !== undefined && !label.includes(only)) continue
   let off = 0, n = 0, seen = witness === undefined, moved = false
   const first = []
   for (let k = 0; k < cases.length; k += every) {
