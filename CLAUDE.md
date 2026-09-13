@@ -1433,13 +1433,20 @@ backup remote is not a licence to vendor someone else's tree into this one.
 
 ## Current phase
 
-> 🏁 **THE HOST-OPTION SURFACE IS THE ARC, AND ITS HARDEST ROW REACHED ITS FLOOR**
-> (2026-09-14). `zzopts` renders all 685 comparable tunes under each option a drop-in host
-> passes and compares the CONTAINER as well as the SVG; it opened at 685 of 685 on every row
-> on 2026-09-09. **`wrap + staffwidth` went 23 → 4 in one session, and 4 IS ITS FLOOR** —
-> two fixtures are abcjs's fourth debug marker, DECLINED by the owner, and two are abcjs
-> CRASHING in its own `wrapLines`. Fourteen landings; `print` 5 → 3, `minPadding` 5 → 4 and
-> `initialClef` 42 → 41 came with them. Suite 2,629, every other gate still at zero.
+> 🏁 **THE HOST-OPTION SURFACE IS THE ARC — THREE ROWS CLOSED AND A FOURTH AT ITS FLOOR**
+> (2026-09-14). **READ `Docs/CHECKPOINT-2026-09-14.md` §3 FIRST.** `zzopts` renders all 685
+> comparable tunes under each option a drop-in host passes and compares the CONTAINER as well
+> as the SVG; it opened at 685 of 685 on every row on 2026-09-09. In one session:
+> **`wrap + staffwidth` 23 → 4, which IS ITS FLOOR** (two fixtures are abcjs's fourth debug
+> marker, DECLINED by the owner, and two are abcjs CRASHING in its own `wrapLines`);
+> **`initialClef` 125 → 0**; **`lineThickness` 665 → 0**. `print` 5 → 3 and `minPadding`
+> 5 → 4 came with them. Suite 2,639, every other gate still at zero.
+>
+> **AND THE TWO THAT CLOSED OUTRIGHT ARE THE SHAPE THESE ROWS USUALLY HAVE.** `initialClef`'s
+> `l` is the index into `tune.lines` and COUNTS the non-music rows, so a tune with a subtitle
+> draws NO clef at all under it — the same index the wrap's `action.line !== 0` meter skip
+> reads. `lineThickness` is a DRAWN width abcjs never lets reach its engraver, and we had
+> folded it into a table the LAYOUT reads. **Neither was a missing feature.**
 > **`Docs/PARITY-STATUS.md` §1a is the whole table in plain language** and names the three
 > options that are unimplemented FEATURES rather than rounding — `timeBasedLayout` (669, a
 > second layout algorithm) above all.
@@ -1478,7 +1485,18 @@ backup remote is not a licence to vendor someone else's tree into this one.
 > breaking the projection left every ink row green. The fourth case ran the other way: the
 > MODEL had the rule (`resolveOverlays` pads a silent `&` layer) and the drawing did not.
 >
-> ⚠️ **AND HALF A RULE CAN BE WORSE THAN NONE, THREE TIMES, WITH THE ROW COUNT UNCHANGED.**
+> ⚠️ **A RESERVE ALWAYS MASKED BY A BIGGER ONE IS A RULE NO GATE CAN SEE.** A chord's
+> incoming tie-half reserve had been dead since it landed — a clef declares `bottom: -1` and
+> the tie's own 0 never won the `min`, so the staff came out identical either way. It took an
+> OPTION removing the clef to expose it, with NOTHING moved: 0 of 61 elements, kinds
+> identical, and the page 7.75 short.
+>
+> ⚠️ **AND A VALUE DERIVED TWICE IS ONE EDIT AND TWO PLACES.** `lineToRect` computes its
+> half-thickness in the rect AND again in the `printLine` branch; patching one took
+> `lineThickness` to **665 against the 14 it started at** — worse than the bug, with the
+> typecheck clean and the suite green. Only running the gate said so.
+>
+> ⚠️ **AND HALF A RULE CAN BE WORSE THAN NONE, FOUR TIMES, WITH THE ROW COUNT UNCHANGED.**
 > A carried head key without its suppression drew 41 elements against abcjs's 38 where the
 > unfixed engine drew 39; a quoted-label ending closed without its marker drew a SECOND
 > labelled bracket; a cautionary clef suppressed rather than MOVED took a fixture from 54

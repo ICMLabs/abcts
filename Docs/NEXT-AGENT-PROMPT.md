@@ -5,7 +5,8 @@ Paste the block below.
 ---
 
 ```
-start here: abcts/Docs/HANDOFF-2026-09-14.md — §THE FLOOR IS 4 first, then §WHAT IS LEFT,
+start here: abcts/Docs/CHECKPOINT-2026-09-14.md — §3 is the rules the arc produced and is
+the section to read before touching anything. Then HANDOFF-2026-09-14.md §WHAT IS LEFT,
 which is NOT the wrap row any more: that row reached its floor and the next arc is a HOST
 OPTION. `Docs/PARITY-STATUS.md` §1a is the same table in plain language and is the file to
 hand anyone asking how close this is. Then -09-13.md and -09-12.md for the rules that got
@@ -20,16 +21,16 @@ persist between tool calls and the workspace ROOT collects every sibling repo's 
     cp -R ../abcMusicKit/Docs/References/abcjs/abcjs-6.7.0/src /tmp/gp/abcjs
 …then `cd` back into the repo — that `cd` resets the shell's CWD for the next call.
 
-    suite       89 files, 2,629 tests, no reds
+    suite       89 files, 2,639 tests, no reds
     svg-bytes   0 of 691 in-repo, 0 of 356 sibling
     mode-bytes  11 of 691 — every one DECLARED
     midi-bytes  0 of 691 — 19 ruled divergent
     zzlive      0 of 685  WebKit AND Chrome        zzselect 0 of 685
     zzclick     1 of 685 DECLARED ×3               zzledger 0 differ, 0 KNOWN, 41 agree
     zzopts      26 rows, every one at its declared count:
-                timeBasedLayout 669 · initialClef 41 · add_classes 16 · lineThickness 14 ·
-                expandToWidest 14 · wrap+staffwidth 4 (THE FLOOR) · print 3 ·
-                print+responsive 3 · minPadding 4 · scale 2 / 1 / 1
+                timeBasedLayout 669 · add_classes 16 · expandToWidest 14 ·
+                wrap+staffwidth 4 (THE FLOOR) · initialClef 0 · lineThickness 0 ·
+                print 3 · print+responsive 3 · minPadding 4 · scale 2 / 1 / 1
     warnings    0 of 815 · test:dist 0 of 685 ESM and CJS
     lint        1,023 errors — PRE-EXISTING, not a gate, do not "fix" under other work
 
@@ -62,16 +63,18 @@ last session a half-fix drew MORE wrong elements than the bug did while `zzopts`
 unchanged. Difference the element KINDS, not the count.
 
 WHAT TO DO NEXT — a HOST OPTION, and they are named and sized in `zzopts`'s own comment:
-  1. `initialClef` (41) — reprints the clef at the head of the tune. ⚠️ ITS CONTROL IS MUTE;
-     fix that FIRST or nothing it reports can be trusted. Smallest real feature on the board.
-  2. `lineThickness` (14) — an additive term on four line widths, `dy + lineThickness` on a
-     staff line, `0.35 + …` on a ledger, `linewidth ± …` on a stem with the sign following
-     the stem's direction. Cause measured, fix scoped, NOT piecemeal.
-  3. `expandToWidest` (14) — needs abcjs's `i = -1` restart; SIZE THE RE-ENTRANCY FIRST.
-  4. `add_classes` (16) — class vocabulary on a few shapes.
-  5. `timeBasedLayout` (669) — a SECOND layout algorithm (`layout/layout-in-grid.js`) that
+  1. `expandToWidest` (14) — needs abcjs's `i = -1` restart. ⚠️ SIZE THE RE-ENTRANCY FIRST;
+     that note is the row's own and predates this session. Two rows have now closed on their
+     recorded note being right, so read it before re-deriving it.
+  2. `add_classes` (16) — class vocabulary on a few shapes.
+  3. `minPadding` (4), `print` / `print + responsive` (3 each), `scale` (1/2/1) — partially
+     implemented, and last-digit rounding.
+  4. `timeBasedLayout` (669) — a SECOND layout algorithm (`layout/layout-in-grid.js`) that
      spaces by TIME rather than by the spring solve. By far the largest thing outstanding
      here and its own arc; do not start it inside another.
+
+⚠️ `initialClef` AND `lineThickness` ARE AT 0 AND `wrap + staffwidth` IS AT ITS FLOOR OF 4.
+An agent that finds any of those higher has broken something.
 
 …and the things that are not rendering at all: `Docs/PONYTAIL-DEBT.md`'s
 open markers — 8 should be RESTATED AS DECISIONS rather than worked, and three more were
@@ -95,17 +98,16 @@ cannot be fixed afterwards without the force push the line above forbids.
 
 ## Why this order
 
-**The wrap row is done, so the question changed.** For the last three sessions the work list
-was a list of FIXTURES; it is now a list of FEATURES, each of which abcjs implements and this
-engine does not. That is a different kind of task — no differencing to do, a named function
-to port — and it wants sizing before it wants starting.
+**`expandToWidest` first because its note is the row's own and has not been tested.** Two
+rows closed today on exactly that — `lineThickness`'s note had said for weeks what the fix
+was, and reading it rather than re-deriving it was the whole saving. A note that predates
+the session is worth more than one written inside it.
 
-**`initialClef` first because its control is MUTE**, which makes it the one row on the board
-whose number cannot currently be trusted. A mute control is worse than an absent one: it
-reads as evidence. Fixing that is cheap and it may move the 41 on its own.
+**`add_classes` second** because it is markup rather than geometry, so its blast radius is
+the DOM contract rather than every byte gate.
 
 **`timeBasedLayout` last and alone.** 669 of 685 is not a defect count, it is an unbuilt
 algorithm, and starting it inside another arc is how a green gate acquires a half-ported one.
 
-**And the row's floor matters to the expectation**: `wrap + staffwidth` reads 4 and that is
-finished. An agent that finds it at 5 has broken something.
+**And three rows are finished**: `initialClef` 0, `lineThickness` 0, `wrap + staffwidth` 4
+and that is its floor. They are not places to look.

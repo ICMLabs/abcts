@@ -1,6 +1,6 @@
 # PARITY STATUS — abcts vs abcjs 6.7.0
 
-*Measured 2026-09-14, on commit `9e2f5da` (docs `HEAD`), by running every gate in the repo plus both
+*Measured 2026-09-14, on commit `ce9589e`, by running every gate in the repo plus both
 browser comparisons. Every number below is a re-run, not a carried-forward claim.*
 
 **The one-line answer: rendered with the options a page normally passes, abcts and abcjs
@@ -64,16 +64,20 @@ direction fails.
 
 | option | differ | what the remainder is |
 |---|---|---|
-| default, `responsive`, `viewport*`, `jazzchords`, `oneSvgPerLine`, `ariaLabel`, `germanAlphabet`, `accentAbove` | **0 of 685** | — |
+| default, `responsive`, `viewport*`, `jazzchords`, `oneSvgPerLine`, `ariaLabel`, `germanAlphabet`, `accentAbove`, **`lineThickness`**, **`initialClef`** | **0 of 685** | — |
 | `wrap` + `staffwidth` | **4** | **its floor** — 2 declined debug markers, 2 abcjs crashing in its own `wrapLines` |
 | `print`, `print + responsive` | 3 | last-digit rounding |
 | `scale 0.8` / `1.5`, `oneSvgPerLine + scale` | 1 / 2 / 1 | last-digit rounding |
 | `minPadding` | 4 | partially implemented |
-| `lineThickness` | 14 | **unimplemented** — an additive term on four line widths |
 | `expandToWidest` | 14 | **unimplemented** — needs abcjs's `i = -1` restart |
 | `add_classes` | 16 | class vocabulary on a few shapes |
-| `initialClef` | 41 | **unimplemented** — reprints the clef at the head of the tune |
 | `timeBasedLayout` | 669 | **unimplemented** — a SECOND layout algorithm (`layout/layout-in-grid.js`), spacing by TIME rather than by the spring solve. By far the largest thing outstanding in this repo. |
+
+**`initialClef` closed at 0 from 125 and `lineThickness` at 0 from 665**, both on
+2026-09-14. Between them they show what these rows usually are: `initialClef`'s `l` is the
+index into `tune.lines` and COUNTS the non-music rows, so a tune with a subtitle draws no
+clef at all under it; `lineThickness` is a DRAWN width abcjs never lets reach its engraver,
+and we had folded it into a table the layout also reads. Neither was a missing feature.
 
 ⭐ **THE `wrap + staffwidth` ROW IS WORTH READING AS A CASE STUDY.** It opened at 59, was 23
 at the start of 2026-09-14 and reached its floor of 4 that day. What it cost was not
@@ -171,7 +175,7 @@ All at zero, re-run 2026-09-06. These are the parse and API surfaces rather than
 | `compat-surface` — abcjs's 64 public symbols | **0 absent** |
 | `selectables`, `dom`, `editor`, `synth-controller` | **0** |
 
-**Full suite: 89 files, 2,629 tests, no reds, no expected-fails.**
+**Full suite: 89 files, 2,639 tests, no reds, no expected-fails.**
 
 ⚠️ **The file count fell by one on 2026-09-14** — `tests/zzk.test.ts` was a scratch probe
 from an earlier session that asserted NOTHING, only `console.log`. A test that cannot fail
@@ -350,7 +354,7 @@ pessimistic one. It is abcts's own symbol, not abcjs's, so the drop-in surface i
 cd /Users/lrettberg/ICMLabs/Code/abcts       # every command from here
 
 npx tsc --noEmit && echo OK                  # before anything else
-npx vitest run --testTimeout=180000          # 89 files, 2,629 tests
+npx vitest run --testTimeout=180000          # 89 files, 2,639 tests
 
 npm run build                                # zzlive loads dist/, a stale bundle lies
 PW=/tmp/gp/pw/node_modules/playwright-core/index.js node scripts/zzlive.mjs
