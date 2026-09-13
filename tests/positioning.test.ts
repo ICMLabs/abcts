@@ -512,3 +512,45 @@ describe("a chord ties into the next system", () => {
     expect(bottomGap(CHORD.replace(/-\|/g, "|"))).toBeLessThan(bottomGap(CHORD));
   });
 });
+
+/**
+ * **`startlimitelem` IS ENGRAVER STATE, NOT A PROPERTY OF THE LINE.**
+ *
+ * A slur's incoming half starts at `startLimitX.x + startLimitX.w`
+ * (`elements/tie-element.js:118-131`), and `startlimitelem` is assigned only where a CLEF,
+ * a KEY SIGNATURE or a TIME SIGNATURE is created (`abstract-engraver.js:164`, `:169`,
+ * `:178` — and a repeat bar at `:982`). It is cleared only by `reset()`, which runs per
+ * TUNE. **So a line that draws none of those keeps whatever the last line to draw one
+ * left**; it does not fall back to the `anchor2.x - 20` stub.
+ *
+ * ⭐ **INVISIBLE UNTIL `initialClef` REMOVED THE CLEF**, because every line has one
+ * otherwise and the carry can never be observed. `abcts-ledger-gaps-3` tune 3 is a slur
+ * spanning three systems, and with the option abcjs's limit on lines 1 and 2 is LINE 0's
+ * `M:4/4` — `staff-extra time-signature x=49.051 w=11.795`. Ours fell to the stub.
+ *
+ * That was the last row: `zzopts`'s `initialClef` is **0 of 685**, from 125.
+ */
+describe("a curve's start limit carries across systems", () => {
+  const firstTieX = (opt: object): number => {
+    const host = { innerHTML: "" } as { innerHTML: string };
+    renderAbc(host, readFileSync(join(FIXTURES, "abcts-ledger-gaps-3.abc"), "utf-8"), {
+      staffwidth: 670,
+      startingTune: 3,
+      ...opt,
+    });
+    const m = [...host.innerHTML.matchAll(/<path d="M ([\d.]+) [^>]*data-name="tie"/g)];
+    return Number(m[m.length - 1]?.[1] ?? 0);
+  };
+
+  // ⭐ With the clef suppressed the limit is line 0's TIME SIGNATURE, two systems back.
+  // Ours took `anchor2.x - 20` and started the arc 61px late.
+  it("keeps the last line's limit when this line draws no prefix", () => {
+    expect(firstTieX({ initialClef: true })).toBeCloseTo(66.85, 2);
+  });
+
+  // ⭐⭐ THE CONTROL — with the option OFF every line draws its own clef, so the limit is
+  // THIS line's and the carry is invisible. It must not change that number.
+  it("takes this line's own prefix when there is one", () => {
+    expect(firstTieX({})).toBeCloseTo(45.05, 2);
+  });
+});

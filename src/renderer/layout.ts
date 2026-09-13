@@ -16325,6 +16325,8 @@ function layoutScoped(input: Score, options: LayoutOptions = {}): Layout {
   // Now that every system exists, resolve each voice's slurs and ties across the whole
   // tune and hand each system its share.
   // Music starts after the widest prefix on the system and ends at its right margin.
+  /** `startlimitelem` carried across systems — see the note inside. */
+  let carriedPrefixEnd: number | undefined
   const systemBounds = systems.map((system, i) => {
     /**
      * `startlimitelem` — the CLEF, then the KEY SIGNATURE, then the TIME SIGNATURE of this
@@ -16342,6 +16344,19 @@ function layoutScoped(input: Score, options: LayoutOptions = {}): Layout {
       (el) => el.type === 'clef' || el.type === 'keySignature' || el.type === 'timeSignature',
     )
     const last = prefix[prefix.length - 1]
+    /**
+     * ⚠️ **AND `startlimitelem` IS ENGRAVER STATE, NOT A PROPERTY OF THE LINE.** It is
+     * assigned only where one of those three is CREATED (`abstract-engraver.js:164`, `:169`,
+     * `:178`, and a repeat bar at `:982`) and cleared only by `reset()`, which runs per
+     * TUNE. A line that draws none of them therefore keeps whatever the last line to draw
+     * one left — it does NOT fall back to the stub.
+     *
+     * Invisible until `initialClef` removed the clef, because every line has one otherwise.
+     * Instrumented on `abcts-ledger-gaps-3` tune 3, a slur spanning three systems: with the
+     * option abcjs's limit on lines 1 and 2 is `staff-extra time-signature x=49.051 w=11.795`
+     * — LINE 0's `M:4/4` — and ours fell to `anchor2.x - 20`, 128.28 against abcjs's 66.85.
+     */
+    if (last !== undefined) carriedPrefixEnd = last.x + last.width
     return {
       left: musicLeft[i] ?? leftEdgeFor(i),
       // …**AND THE STAFF'S OWN LEFT EDGE**, which is abcjs's `staffGroup.startx` and the
@@ -16349,7 +16364,7 @@ function layoutScoped(input: Score, options: LayoutOptions = {}): Layout {
       staffLeft: leftEdgeFor(i),
       // …and the RIGHT edge is the MUSIC's, not the system's — see `LayoutSystem.musicWidth`.
       right: system.musicWidth - PAGE_PADDING.left,
-      ...(last === undefined ? {} : { prefixEnd: last.x + last.width }),
+      ...(carriedPrefixEnd === undefined ? {} : { prefixEnd: carriedPrefixEnd }),
     }
   })
   const curvesBySystem = voiceAnchors.map((anchors, v) =>

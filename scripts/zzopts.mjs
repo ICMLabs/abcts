@@ -133,7 +133,7 @@ const OPTIONS = [
    *                          spaces by TIME rather than by the spring solve. The largest.
    *   minPadding       659 — extra room to the left of every note and bar in the solve
    *                          (`layout/voice-elements.js:34`, `:110-115`).
-   *   initialClef      125 — reprints the clef at the head of the tune. NOW 1.
+   *   initialClef      125 — reprints the clef at the head of the tune. NOW 0 — CLOSED.
    *   wrap+staffwidth   60 — re-lining is implemented (`compat/wrap.ts`) and no gate had
    *                          ever rendered its OUTPUT beside abcjs's.
    *   add_classes       17 — the class scheme itself is gated by 111 sibling goldens; these
@@ -224,14 +224,17 @@ const OPTIONS = [
   // always masked by a bigger one is a rule no gate can see.** Measured in abcjs's own
   // `staffGroup`: its `bottom` is 0 on the clef-less lines and ours was 2, the bare bottom
   // staff line.
-  // ⚠️ **THE ONE LEFT IS `abcts-ledger-gaps-3-tune3` AND IT IS `startlimitelem`.** A SLUR
-  // spanning three systems, so `writtenAs === 'slur'` and abcjs DOES call
-  // `setStartX(this.startlimitelem)` (`abstract-engraver.js:923-925`); with the clef gone
-  // and `K:C` yielding no key signature, the limit is not this line's prefix. abcjs starts
-  // the arc at x 66.85 and ours at 128.28, which is `anchor2.x - 20`, the stub an incoming
-  // half takes when it has no limit. Page height EXACT, 1 element of 50. Instrument what
-  // `startlimitelem` actually holds on that line before porting anything.
-  ['initialClef', { initialClef: true }, 1],
+  // ✅ **AND THE LAST ROW WAS `startlimitelem` AFTER ALL — 1 → 0.** It is ENGRAVER STATE,
+  // not a property of the line: assigned only where a clef, key signature or time signature
+  // is CREATED (`:164`, `:169`, `:178`, plus a repeat bar at `:982`) and cleared only by
+  // `reset()`, which runs per TUNE. A line drawing none of them KEEPS what the last line to
+  // draw one left, rather than falling back to the `anchor2.x - 20` stub.
+  // ⭐ Invisible until this option removed the clef, since every line has one otherwise.
+  // Instrumented on `abcts-ledger-gaps-3` tune 3, a slur spanning three systems: with the
+  // option abcjs's limit on lines 1 AND 2 is line 0's `M:4/4`,
+  // `staff-extra time-signature x=49.051 w=11.795`, and ours fell to the stub — 128.28
+  // against abcjs's 66.85, page height already exact.
+  ['initialClef', { initialClef: true }, 0],
   // ✅ 659 → 5. `getExtraWidth(child, pad)` returns `-child.extraw + pad`, so the padding is
   // part of what the element WANTS and the same shortfall test decides whether any of it is
   // spent — an element with slack in front of it costs nothing. `pad` is skipped for
