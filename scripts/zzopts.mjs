@@ -210,7 +210,9 @@ const OPTIONS = [
   // two-line control with a tie across the break did NOT reproduce it — both engines drew
   // the same height with and without the option — so that control is MUTE and the cause is
   // still open rather than named.
-  ['initialClef', { initialClef: true }, 42],
+  // 42 -> 41 when the element width became `dx + w` (see the wrap row) — one more row
+  // that was a last digit rather than the missing feature this count is declared for.
+  ['initialClef', { initialClef: true }, 41],
   // ✅ 659 → 5. `getExtraWidth(child, pad)` returns `-child.extraw + pad`, so the padding is
   // part of what the element WANTS and the same shortfall test decides whether any of it is
   // spent — an element with slack in front of it costs nothing. `pad` is skipped for
@@ -770,6 +772,25 @@ const OPTIONS = [
    *    between them is not drawn. The control lives in `positioning.test.ts`, not
    *    `wrap.test.ts`, and four volta spellings are rendered against abcjs in webkit.
    *
+   * 🏁 **THIS ROW IS AT ITS FLOOR — 4, AND ALL FOUR ARE CLOSED BY DECISION.** Two are
+   *    abcjs's FOURTH DEBUG MARKER, declined by the owner, and two are abcjs CRASHING in
+   *    its own `wrapLines`. There is nothing reachable left on it.
+   *
+   * ✅ **AN ELEMENT'S WIDTH IS `dx + w`, NOT `(x + w) - base` — 5 → 4, THE LAST ROW.**
+   *    `abselem.w` is `max(dx + w)` over the `addRight` children
+   *    (`absolute-element.js:141`) — each child's OFFSET added to its width, never two
+   *    absolute x's subtracted. A plain notehead's term built the second way is
+   *    `(394.97100000000006 + 9.81) - 394.97100000000006` = `9.809999999999945` against
+   *    abcjs's flat `9.81`.
+   *    ⚠️ **ONLY A GLISSANDO COULD SEE IT** — it insets by half that width at each end and
+   *    is the only emitter writing a coordinate at FULL precision; everything else goes
+   *    through `roundNumber`, where the two round the same. `visual-misc-04-stretchlast`
+   *    was 0 of 116 elements moved with one byte differing.
+   *    ⚠️ **AND THE NOTE'S SOLVED x WAS NEVER WRONG.** The recorded reading blamed the
+   *    spring solve's accumulation for that column; both engines' 41-element x chains were
+   *    logged and are BYTE-IDENTICAL, `394.97100000000006` included. The defect was one
+   *    association in the width beside it.
+   *
    * ✅ **AND `synth-flattener-21` IS CLOSED — 6 → 5 — AND IT NEVER BELONGED TO THE ENDING
    *    ROOM.** It has no ending in it at all; it is `&` overlay voices, and the cause is
    *    that **a SILENT layer measure takes an invisible rest of the PARENT's duration**.
@@ -859,13 +880,13 @@ const OPTIONS = [
    *    3  GEOMETRY ONLY, same element kinds throughout:
    *       `text-udef-parts-overlays-tune8` and `-tune46`, `vskip-tune1`.
    *
-   * ⚠️ **AND TWO OF THE 5 ARE abcjs CRASHING, NOT US.** `abcts-vskip` tunes 0 and 2 throw
+   * ⚠️ **AND TWO OF THE 4 ARE abcjs CRASHING, NOT US.** `abcts-vskip` tunes 0 and 2 throw
    * inside abcjs's own `wrapLines` — `undefined is not an object (evaluating 'l[p]')` —
    * because `addLineBreaks` reads `lines[action.ogLine].staff[action.staff]` on a row a
    * `%%vskip` made non-music. We render them. A crash is not output and strict does not
    * reproduce one.
    */
-  ['wrap + staffwidth', { wrap: { minSpacing: 1.8, maxSpacing: 2.7, preferredMeasuresPerLine: 4 }, staffwidth: 400 }, 5],
+  ['wrap + staffwidth', { wrap: { minSpacing: 1.8, maxSpacing: 2.7, preferredMeasuresPerLine: 4 }, staffwidth: 400 }, 4],
 ]
 const every = Number(process.argv[2] ?? 1)
 const browser = await webkit.launch()

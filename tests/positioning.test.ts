@@ -372,3 +372,45 @@ describe("a pitch is converted once", () => {
     ).toBe('x="272.16" y="49.68"');
   });
 });
+
+/**
+ * **AN ELEMENT'S WIDTH IS `dx + w`, NOT `(x + w) - base`.**
+ *
+ * `abselem.w` is `max(dx + w)` over the `addRight` children (`absolute-element.js:141`) —
+ * each child's OFFSET added to its width. abcjs never subtracts two absolute x's to get it,
+ * and the two are equal in algebra and not in doubles: a plain notehead's own term built the
+ * second way is `(394.97100000000006 + 9.81) - 394.97100000000006`, which is
+ * `9.809999999999945` where abcjs has the flat `9.81`. Subtracting the base FIRST makes the
+ * head's term exactly `0 + 9.81`.
+ *
+ * ⚠️ **AND ONLY A GLISSANDO COULD SEE IT.** A glissando insets by half this width at each
+ * end and is the only emitter in the engine that writes a coordinate at FULL precision —
+ * everything else goes through `roundNumber`, and `9.81` and `9.809999999999945` round the
+ * same. `visual-misc-04-stretchlast` was 0 of 116 elements moved with one byte differing,
+ * and that byte was the squiggle's first `M`. It is the last row of `zzopts`'s
+ * `wrap + staffwidth`: 5 -> 4, which is the floor.
+ *
+ * ⚠️ **AND THE NOTE'S OWN SOLVED x WAS NEVER WRONG** — the first reading of this row blamed
+ * the spring solve's accumulation. Both engines' 41-element x chains were logged and are
+ * byte-identical, `394.97100000000006` included; the defect was one association in the
+ * width beside it.
+ */
+describe("an element's width is built from offsets", () => {
+  // ⭐ The full-precision start of the first glissando on the wrapped render, which is
+  // `(anchor.x + w/2) + (w/2 + 4)`. Ours wrote `408.781` for abcjs's `408.78100000000006`.
+  it("insets a glissando by abcjs's own half-width", () => {
+    const host = { innerHTML: "" } as { innerHTML: string };
+    renderAbc(
+      host,
+      readFileSync(join(FIXTURES, "abcjs-visual-misc-04-stretchlast.abc"), "utf-8"),
+      {
+        staffwidth: 400,
+        wrap: { minSpacing: 1.8, maxSpacing: 2.7, preferredMeasuresPerLine: 4 },
+      },
+    );
+    const starts = [
+      ...host.innerHTML.matchAll(/<path d="M ([\d.]+) [^>]*data-name="glissando">/g),
+    ].map((m) => m[1]);
+    expect(starts).toContain("408.78100000000006");
+  });
+});

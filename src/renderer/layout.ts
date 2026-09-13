@@ -12005,12 +12005,23 @@ function layoutMeasure(
          * decoration `addFixedX`; none of the three touches `w`. The stem is `addRight` at
          * `w = 0` and `dx = ` the head's own width, so it never wins.
          */
-        absWidth:
-          Math.max(
-            ...el.glyphs
-              .filter((g) => g.role === 'notehead' || g.role === 'flag' || g.role === 'dot')
-              .map((g) => g.x + glyphsFor(strict).width(g.name)),
-          ) - headMinX,
+        /**
+         * ⚠️ **AND IT IS `dx + w`, NOT `(x + w) - base`** — abcjs adds each child's OFFSET
+         * to its width and never subtracts two absolute x's (`absolute-element.js:141`).
+         * The two are equal in algebra and not in doubles: a plain notehead's own term is
+         * `(394.97100000000006 + 9.81) - 394.97100000000006`, which is `9.809999999999945`
+         * where abcjs has the flat `9.81`. Subtracting the base FIRST makes the head's term
+         * exactly `0 + 9.81`.
+         *
+         * `visual-misc-04-stretchlast`'s one byte was that: a glissando insets by half this
+         * width at each end and is the only emitter that writes full precision, so the
+         * error was invisible everywhere else — the notehead itself rounds the same.
+         */
+        absWidth: Math.max(
+          ...el.glyphs
+            .filter((g) => g.role === 'notehead' || g.role === 'flag' || g.role === 'dot')
+            .map((g) => g.x - headMinX + glyphsFor(strict).width(g.name)),
+        ),
         event,
       })
     } else if (event.type === 'rest') {
