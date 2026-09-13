@@ -1,6 +1,11 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+
 import { describe, expect, it } from "vitest";
 
 import { parseOnly, renderAbc } from "../src/compat/index.js";
+
+const FIXTURES = join(import.meta.dirname, "corpus-abcjs", "fixtures");
 
 /**
  * **THE FIVE `positionChoices` DIRECTIVES — `%%vocal`, `%%dynamic`, `%%gchord`,
@@ -312,5 +317,58 @@ describe("an ending's room is charged once", () => {
     expect(bars("X:1\nT:t\nK:C\n|:CDEF|[1GABc:|[2cdef|]\n")).toBe(
       "58.05 66.05 255.03 465.52 469.52 677 681",
     );
+  });
+});
+
+/**
+ * **A PITCH IS CONVERTED TO A y ONCE, AND THE FRACTION GOES ON THE PITCH.**
+ *
+ * `calcY(ofs) = this.y - ofs * STEP` (`write/renderer.js:178-180`) shifts NOTHING. Every
+ * fudge the engraver applies — `p1 = minpitch + 1/3`, the beam pass's `+ 1/5`, the triplet
+ * number's `calcY(yTextPos - 1)` — is added to a pitch in abcjs's OWN origin before `calcY`
+ * ever sees it. Ours added those in step space and let `stepToY` add `PITCH_ORIGIN`
+ * afterwards, or converted first and added the offset in y. Both are the same number in
+ * algebra and a different double:
+ *
+ *     (-10 + 1/5) + 6                        -3.8000000000000007   vs abcjs's -3.8
+ *     (109.98 - 16.561 * 3.875) + 3.875      49.685                vs abcjs's 49.684999999999995
+ *
+ * and `roundNumber` — `parseFloat(x.toFixed(2))`, which this engine already matches exactly
+ * — then tips the other way: 99.29 against 99.28, 49.69 against 49.68. See `pitchToY`.
+ *
+ * ⚠️ **THE WRAP ONLY EXPOSES IT.** The rule is not the wrap's and neither fixture differs
+ * unwrapped: `svg-bytes` is 0 of 691 through both of these, because the defect shows only
+ * on a value that lands on a `.xx5` boundary and no golden's does. `zzopts` 20 -> 18.
+ *
+ * ⚠️ **AND `yTextPitch` MUST BE READ BESIDE `y`, NOT ABOVE THE MIDDLE-NOTE PASS** — a tall
+ * note in the middle FLATTENS `startNote`/`endNote` after they are first set, and hoisting
+ * the read reddened 26 rows of the suite.
+ */
+describe("a pitch is converted once", () => {
+  const wrapped = (file: string): string => {
+    const host = { innerHTML: "" } as { innerHTML: string };
+    renderAbc(host, readFileSync(join(FIXTURES, file), "utf-8"), {
+      staffwidth: 400,
+      wrap: { minSpacing: 1.8, maxSpacing: 2.7, preferredMeasuresPerLine: 4 },
+    });
+    return host.innerHTML;
+  };
+
+  // ⭐ A BEAMED stem's near end is `minpitch + 1/5`. Ours wrote 99.29 for abcjs's 99.28.
+  it("puts a beamed stem's foot where abcjs does", () => {
+    expect(
+      /M 125\.23 [\d.]+L 125\.23 [\d.]+/.exec(
+        wrapped("abcjs-visual-transpose-06-c-d-e-f-g-a-b-c-cdef-gabc-c-d-e-f-g-a-b-.abc"),
+      )?.[0],
+    ).toBe("M 125.23 61.31L 125.23 99.28");
+  });
+
+  // ⭐ And the triplet number's baseline is `calcY(yTextPos - 1)`, the `- 1` on the PITCH.
+  // abcjs's own words for it: "HACK: adjust the position of '3'. It is too high in all
+  // cases so we fudge it by subtracting 1 here." Ours wrote 49.69 for abcjs's 49.68.
+  it("puts a beamed triplet's number where abcjs does", () => {
+    expect(
+      /x="272\.16" y="[\d.]+"/.exec(wrapped("abcjs-visual-multi-voice-x03.abc"))?.[0],
+    ).toBe('x="272.16" y="49.68"');
   });
 });

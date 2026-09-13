@@ -965,6 +965,19 @@ function writtenNote(pitch: Pitch): string {
 export const stepToY = (step: number): number =>
   -(step + PITCH_ORIGIN) * ENGRAVE.spacePerStep
 
+/**
+ * **THE SAME CONVERSION FROM A PITCH ALREADY IN abcjs'S ORIGIN, AND IT IS A DIFFERENT
+ * DOUBLE.** `calcY(ofs) = this.y - ofs * STEP` (`write/renderer.js:178-180`) shifts
+ * NOTHING: whatever fraction the engraver added, it added to `minpitch` — a pitch — before
+ * `calcY` ever saw it.
+ *
+ * Ours added those fractions in STEP space and let `stepToY` add `PITCH_ORIGIN`
+ * afterwards, which is the same number in algebra and not in doubles: `(-10 + 1/5) + 6` is
+ * `-3.8000000000000007` where abcjs's `-4 + 1/5` is `-3.8`, and the two round to `99.29`
+ * and `99.28`. Use this wherever abcjs's own expression is written in pitch.
+ */
+export const pitchToY = (pitch: number): number => -pitch * ENGRAVE.spacePerStep
+
 /** Middle line to outer staff line, in staff spaces — the staff is four spaces tall. */
 const STAFF_HALF_HEIGHT = 2 * SPACE
 
@@ -4047,15 +4060,27 @@ function layoutNoteheads(
               ? -1.2
               : -0.7
             : 0
-    const nearStepRaw = (up ? lowest : highest) + (up ? 1 : -1) / (beamed ? 5 : 3)
+    /**
+     * ⭐ **IN PITCH, NOT IN STEPS** — `p1 = minpitch + 1/3` and the beam pass's
+     * `furthestHead.pitch + 1/5` are both written against abcjs's OWN origin
+     * (`abstract-engraver.js:740`, `layout/beam.js`), and `calcY` shifts nothing after
+     * them. Adding the fraction in step space and shifting by `PITCH_ORIGIN` inside
+     * `stepToY` is a different double — see `pitchToY`. `visual-transpose-06`'s beamed
+     * stem is `(-10 + 1/5) + 6` this way and `-4 + 1/5` abcjs's way, which round to
+     * `99.29` against `99.28`.
+     */
+    const nearPitchRaw =
+      (up ? lowest : highest) + PITCH_ORIGIN + (up ? 1 : -1) / (beamed ? 5 : 3)
     /**
      * …**AND IT IS APPLIED AFTER THE MIDDLE-LINE CLAMP**, which is where `p1`/`p2` already
      * stand when the `noteHead.c` tests run (`abstract-engraver.js:743-761`). Adding it to
      * the raw value instead let the clamp swallow part of it — `S5-directives`' three
      * styled stems moved by 2.583px where the rule is a whole pitch.
      */
+    // In PITCH, so the middle line is 6 and not 0 — abcjs's own `if (p1 > 6) p1 = 6`.
     const nearClamp = (v: number): number =>
-      (forcedUp !== null ? v : up ? Math.min(v, 0) : Math.max(v, 0)) + headStemShift
+      (forcedUp !== null ? v : up ? Math.min(v, PITCH_ORIGIN) : Math.max(v, PITCH_ORIGIN)) +
+      headStemShift
     /**
      * ⚠️ **AND `V:… scale=` QUANTISES THE STEM TO A TENTH OF A PITCH.**
      * `var stemHeight = Math.round(70 * this.voiceScale) / 10` (`abstract-engraver.js:740`)
@@ -4072,7 +4097,7 @@ function layoutNoteheads(
     const stemX = headX + ax
     // The stem starts at the head nearest its own end and runs past the far one, so a
     // chord's stem spans the whole spread rather than one notehead's worth.
-    const nearRaw = strict ? stepToY(nearStepRaw) : stepToY(up ? lowest : highest) + ay
+    const nearRaw = strict ? pitchToY(nearPitchRaw) : stepToY(up ? lowest : highest) + ay
     const far = stepToY(up ? highest : lowest)
     // A STEM ON A NOTE FAR FROM THE MIDDLE LINE IS STRETCHED TO REACH IT — abcjs's own
     // words, `create-note-head.js:39`: "the stem will have been stretched to the middle
@@ -4117,9 +4142,17 @@ function layoutNoteheads(
       : far + (up ? -ENGRAVE.stemLength : ENGRAVE.stemLength)
     const middle = stepToY(0)
     const tip = forcedUp !== null ? plain : up ? Math.min(plain, middle) : Math.max(plain, middle)
-    const base =
-      (forcedUp !== null ? nearRaw : up ? Math.max(nearRaw, middle) : Math.min(nearRaw, middle)) -
-      headStemShift * ENGRAVE.spacePerStep
+    /**
+     * ⭐ **AND THE CLAMP AND THE HEAD SHIFT ARE BOTH SPENT IN PITCH, THEN CONVERTED ONCE.**
+     * abcjs clamps `p1` and applies the notehead's shift to it and only then calls `calcY`
+     * — two more chances for the step-space form to land a hundredth out. `nearClamp` was
+     * already that expression; it was being used for `pitchRange` alone while the drawing
+     * rebuilt it in y.
+     */
+    const base = strict
+      ? pitchToY(nearClamp(nearPitchRaw))
+      : (forcedUp !== null ? nearRaw : up ? Math.max(nearRaw, middle) : Math.min(nearRaw, middle)) -
+        headStemShift * ENGRAVE.spacePerStep
     lines.push({
       x1: stemX,
       y1: base,
@@ -4135,9 +4168,9 @@ function layoutNoteheads(
       ...(strict
         ? {
             pitchRange: [
-              nearClamp(nearStepRaw) + PITCH_ORIGIN,
+              nearClamp(nearPitchRaw),
               beamed
-                ? nearClamp(nearStepRaw) + PITCH_ORIGIN
+                ? nearClamp(nearPitchRaw)
                 : (forcedUp !== null ? farStepRaw : up ? Math.max(farStepRaw, 0) : Math.min(farStepRaw, 0)) +
                   PITCH_ORIGIN,
             ] as [number, number],
@@ -9909,6 +9942,13 @@ function layoutTuplets(
     const yEnd = beamed ? beamY() : yOfPitch(endNote)
     /** abcjs's `yTextPos` — the bracket's midpoint, and what its declared box hangs off. */
     const y = beamed ? beamY() : yOfPitch(startNote + (endNote - startNote) / 2)
+    /**
+     * abcjs's `yTextPos` itself, in PITCH — see the text's `y` and the reserve's
+     * `topPitch`. ⚠️ **BESIDE `y`, NOT ABOVE THE MIDDLE-NOTE PASS**: a tall note in the
+     * middle FLATTENS `startNote`/`endNote` after they are first set, and reading them
+     * early gave a different bracket on 26 rows of the suite.
+     */
+    const yTextPitch = beamed ? beamPitch() : startNote + (endNote - startNote) / 2
 
     const label = String(number)
     // `%%tripletfont cursive 39 box` draws the number at `round(39 * 4/3)` = 52px. The
@@ -9960,7 +10000,24 @@ function layoutTuplets(
       // and the two `yTextPos` were not the same quantity. With the beaming fixed, ours
       // and abcjs's tuplet numbers land on the same x to the hundredth, and this closes
       // the y. The volta hook again, and this time both halves are in place.
-      y: y + ENGRAVE.tupletTextDrop,
+      /**
+       * ⭐ **`calcY(yTextPos - 1)` IS ONE CONVERSION OF A PITCH, NOT AN ADD IN y.**
+       * `draw/triplet.js:12` subtracts the fudge from the PITCH and hands the result to
+       * `calcY`; ours converted `yTextPos` first and added `3.875` to the y. Same number in
+       * algebra, a different double: on `visual-multi-voice-x03` abcjs's
+       * `109.98388135511122 - 15.561001640028703 * 3.875` is `49.684999999999995` and our
+       * `(109.98388135511122 - 16.561001640028703 * 3.875) + 3.875` is `49.685`, which
+       * round to `49.68` and `49.69`. See `pitchToY`.
+       *
+       * `yTextPitch` is abcjs's `yTextPos` and was already being computed for the reserve,
+       * a dozen lines below where the drawing needed it. Undefined only for a beamed group
+       * whose beam is not in `beamLines`, where the stem-tip fallback has no pitch and the
+       * y-space form is all there is.
+       */
+      y:
+        yTextPitch === undefined
+          ? y + ENGRAVE.tupletTextDrop
+          : pitchToY(yTextPitch - ABCJS_PITCH.tupletTextDrop),
       size,
       // …and the WEIGHT and STYLE the directive set. A `%%<type>font` REPLACES the whole
       // font object (`abc_parse_directive.js:200-240`), so `%%tripletfont cursive 39 box`
@@ -9983,7 +10040,6 @@ function layoutTuplets(
      * thickness — a length with no pitch of its own — so that arm keeps the division. No
      * fixture in either corpus reaches the extent through a beamed tuplet.
      */
-    const yTextPitch = beamed ? beamPitch() : startNote + (endNote - startNote) / 2
     reserves.push({
       top: y - ENGRAVE.spacePerStep,
       bottom: y + 2 * ENGRAVE.spacePerStep,

@@ -80,10 +80,12 @@ const OPTIONS = [
   ['responsive resize', { responsive: 'resize' }, 0],
   ['responsive + scale 1.5', { responsive: 'resize', scale: 1.5 }, 0],
   ['responsive + scale 0.7', { responsive: 'resize', scale: 0.7 }, 0],
-  ['print + responsive', { print: true, responsive: 'resize' }, 5],
+  // 5 -> 3 when the pitch-space conversion landed (see the wrap row): `visual-parsing-08`
+  // and `-09` were both a last digit, and both were a fraction added in step space.
+  ['print + responsive', { print: true, responsive: 'resize' }, 3],
   ['scale 0.8', { scale: 0.8 }, 1],
   ['scale 1.5', { scale: 1.5 }, 2],
-  ['print', { print: true }, 5],
+  ['print', { print: true }, 3],
   ['jazzchords', { jazzchords: true }, 0],
   // The witness for the split is the SECOND section: a one-`<g>` tune would produce
   // `section 1` from a split that never split anything.
@@ -216,7 +218,8 @@ const OPTIONS = [
   // applies to a `note` or a `bar` ONLY, which excludes a rest.
   // ⚠️ The 5 that remain are a ULP, a 0.01 tuplet y and a 0.03 staff width — the
   // layout-unit family, not the option.
-  ['minPadding', { minPadding: 40 }, 5],
+  // 5 -> 4 on the same change — `abcts-pitch-style-tune6` was a stem foot.
+  ['minPadding', { minPadding: 40 }, 4],
   ['timeBasedLayout', { timeBasedLayout: { minPadding: 20 } }, 669],
   /**
    * ⚠️ **23, AND THE LINE-STRUCTURE HALF IS CLOSED.** Counting staff lines in each engine
@@ -694,6 +697,30 @@ const OPTIONS = [
    *    has NO ending anywhere in it — it is `&` overlay voices — and it did not move when
    *    the ending charge was fixed. Its own difference is still open and undiagnosed.
    *
+   * ✅ **A PITCH IS CONVERTED TO A y ONCE, AND THE FRACTION GOES ON THE PITCH — 20 → 18.**
+   *    `calcY(ofs) = this.y - ofs * STEP` shifts NOTHING, so every fudge the engraver
+   *    applies — `p1 = minpitch + 1/3`, the beam pass's `+ 1/5`, the triplet number's
+   *    `calcY(yTextPos - 1)` — is added to a pitch in abcjs's OWN origin first. Ours added
+   *    them in step space and let `stepToY` add `PITCH_ORIGIN` after, or converted and then
+   *    added the offset in y. `(-10 + 1/5) + 6` is `-3.8000000000000007` against `-3.8`;
+   *    `roundNumber` tips the other way and writes `99.29` for `99.28`. See `pitchToY`.
+   *    Closed `visual-transpose-06` and `visual-multi-voice-x03`.
+   *    ⚠️ **THE WRAP ONLY EXPOSES IT** — the rule is not the wrap's and neither fixture
+   *    differs unwrapped, because the defect shows only on a value landing on a `.xx5`
+   *    boundary and no golden's does. Controls in `positioning.test.ts`.
+   *    ⚠️ **AND `yTextPitch` MUST BE READ BESIDE `y`** — a tall middle note FLATTENS
+   *    `startNote`/`endNote` after they are first set, and hoisting the read above that
+   *    pass reddened 26 rows of the suite.
+   *
+   *  ⚠️ **`visual-misc-04-stretchlast` IS THE THIRD OF THAT FAMILY AND IS NOT THE GLISSANDO.**
+   *    Its one byte is a glissando path's start x, `408.78100000000006` against our
+   *    `408.781` — and our glissando arithmetic is already abcjs's expression
+   *    term for term. Instrumented: abcjs's own `anchor1.x` is `394.97100000000006`, so the
+   *    noise is in the NOTE's solved x and the glissando is merely the only emitter that
+   *    writes full precision. The notehead itself rounds the same in both, which is why 0
+   *    of 116 elements move. Chasing it means matching the spring solve's accumulation for
+   *    that column — not attempted.
+   *
    * ✅ **AND A STANDALONE `M:` IS DRAWN ONCE, NOT TWICE — 24 → 23.** The header parser's
    *    `M:` arm only fills `multilineVars.meter` for the next `startNewLine`;
    *    `appendStartingElement` is never called, so a standalone `M:` is a STAFF property
@@ -740,13 +767,13 @@ const OPTIONS = [
    *    3  GEOMETRY ONLY, same element kinds throughout:
    *       `text-udef-parts-overlays-tune8` and `-tune46`, `vskip-tune1`.
    *
-   * ⚠️ **AND TWO OF THE 20 ARE abcjs CRASHING, NOT US.** `abcts-vskip` tunes 0 and 2 throw
+   * ⚠️ **AND TWO OF THE 18 ARE abcjs CRASHING, NOT US.** `abcts-vskip` tunes 0 and 2 throw
    * inside abcjs's own `wrapLines` — `undefined is not an object (evaluating 'l[p]')` —
    * because `addLineBreaks` reads `lines[action.ogLine].staff[action.staff]` on a row a
    * `%%vskip` made non-music. We render them. A crash is not output and strict does not
    * reproduce one.
    */
-  ['wrap + staffwidth', { wrap: { minSpacing: 1.8, maxSpacing: 2.7, preferredMeasuresPerLine: 4 }, staffwidth: 400 }, 20],
+  ['wrap + staffwidth', { wrap: { minSpacing: 1.8, maxSpacing: 2.7, preferredMeasuresPerLine: 4 }, staffwidth: 400 }, 18],
 ]
 const every = Number(process.argv[2] ?? 1)
 const browser = await webkit.launch()
