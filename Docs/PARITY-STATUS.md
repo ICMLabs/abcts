@@ -68,9 +68,17 @@ direction fails.
 | `wrap` + `staffwidth` | **4** | **its floor** — 2 declined debug markers, 2 abcjs crashing in its own `wrapLines` |
 | `print`, `print + responsive` | 3 | last-digit rounding |
 | `scale 0.8` / `1.5`, `oneSvgPerLine + scale` | 1 / 2 / 1 | last-digit rounding |
-| `minPadding` | 4 | partially implemented |
+| `minPadding` | **1** | two ULP in the root `width`, located to one step of the solve |
 | `add_classes` | **1** | one ending's measure counter, and its cause is measured |
 | `timeBasedLayout` | 669 | **unimplemented** — a SECOND layout algorithm (`layout/layout-in-grid.js`), spacing by TIME rather than by the spring solve. By far the largest thing outstanding in this repo. |
+
+**`minPadding` went 4 → 1** on 2026-09-15, and the row turned out to be a ROD MAGNIFIER rather
+than a feature: both remaining rules were element WIDTHS, and a width only reaches the page when
+it beats the elastic gap beside it, so `svg-bytes`, `zzlive` and `zzselect` were all blind to
+them. A rest's width takes the voice scale (a rest reaches `createNoteHead` like any head) and a
+chord's width is the max over its heads AS ADDED, so a per-pitch `!style=!` on the middle head
+widens the element. Both were laddered through abcjs with padding off and on — with it off the
+voice scale and the style move nothing at all, in either engine.
 
 **`add_classes` went 16 → 1** on 2026-09-15, in seven rules, and TEN of the sixteen were one
 question: where does the `abcjs-lN` counter advance. `draw()` runs `classes.incrLine()` at the

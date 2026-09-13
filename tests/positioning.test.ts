@@ -885,3 +885,77 @@ describe("add_classes counts lines, measures and voices in draw order", () => {
     ]);
   });
 });
+
+/**
+ * **`minPadding` — EXTRA ROOM TO THE LEFT OF EVERY NOTE AND BAR, AND THE ONLY GATE THAT CAN
+ * SEE A ROD AT ALL.**
+ *
+ * `getExtraWidth(child, pad)` returns `-child.extraw + padding` where `padding` is the host's
+ * value for a `note` or a `bar` and nothing else, and `layoutOneItem` skips it for anything
+ * still fixed to the line's left edge (`layout/voice-elements.js:33`, `:110-115`).
+ *
+ * ⭐ **IT IS A ROD MAGNIFIER, WHICH IS WHY THE TWO RULES BELOW WERE INVISIBLE EVERYWHERE
+ * ELSE.** Both are element WIDTHS — abcjs's `abselem.w` — and a width only reaches the page
+ * when it beats the elastic gap beside it. `svg-bytes` (0 of 691), `zzlive` and `zzselect` are
+ * all blind to them for that reason: nothing in them squeezes the springs hard enough.
+ * **A RESERVE ALWAYS MASKED BY A BIGGER ONE IS A RULE NO GATE CAN SEE** — and here it took a
+ * HOST OPTION to expose it rather than a fixture.
+ *
+ * ⚠️ Every number below was read out of abcjs on these same shapes in WebKit.
+ *
+ * `zzopts`'s `minPadding` row: **4 → 1 of 685.**
+ */
+describe("minPadding magnifies the rods, which is what exposes two widths", () => {
+  const staffEnd = (abc: string, minPadding?: number): number => {
+    const host = { innerHTML: "" } as { innerHTML: string };
+    renderAbc(host, abc, {
+      staffwidth: 670,
+      ...(minPadding === undefined ? {} : { minPadding }),
+    });
+    return Number(/<path d="M 15 [\d.]+ L ([\d.]+)/.exec(host.innerHTML)?.[1]);
+  };
+
+  /**
+   * ⭐ **A REST'S WIDTH TAKES THE VOICE SCALE, BECAUSE A REST REACHES `createNoteHead` LIKE
+   * ANY HEAD** — `new RelativeElement(c, shiftheadx, glyphs.getSymbolWidth(c) * scale, …)`
+   * (`creation/create-note-head.js:35`). Ours scaled the NOTE and left the rest at its unit
+   * width; the augmentation-dot term beside it already had the factor, which is what made the
+   * omission look deliberate.
+   */
+  it("scales a rest's width with the voice scale", () => {
+    const rests = (scale: string): string =>
+      `X:1\nT:t\nL:1/8\nV:1${scale}\nK:C\nz2 C2 z4|\n`;
+    // ⭐⭐ THE LADDER, AND ITS FIRST COLUMN IS THE WHOLE POINT: with no padding the voice scale
+    // moves NOTHING in either engine, because a rest's rod never wins against the gap. A fix
+    // measured only there would read "same" and be wrong.
+    expect(staffEnd(rests(""))).toBeCloseTo(194.9, 2);
+    expect(staffEnd(rests(" scale=1.5"))).toBeCloseTo(194.9, 2);
+    expect(staffEnd(rests(" scale=2"))).toBeCloseTo(194.9, 2);
+    // …and under padding the rods bind and the scale is visible, one rung per value.
+    expect(staffEnd(rests(""), 40)).toBeCloseTo(201.37, 2);
+    expect(staffEnd(rests(" scale=1.5"), 40)).toBeCloseTo(208.18, 2);
+    expect(staffEnd(rests(" scale=2"), 40)).toBeCloseTo(217.75, 2);
+  });
+
+  /**
+   * ⭐ **A CHORD'S WIDTH IS THE MAX OVER ITS HEADS AS THEY WERE ADDED, NOT THE CHORD-LEVEL
+   * GLYPH'S.** Each head goes in through its own `createNoteHead` with its own `c`
+   * (`abstract-engraver.js:678-688`), so `w = max(w, dx + child.w)` pairs EACH head's offset
+   * with THAT head's width — and a per-pitch `!style=!` makes those widths differ by the 0.033
+   * between `noteheads.quarter` and the `x` head.
+   *
+   * ⚠️ **A COMMENT IN THE ENGINE SAID THE CHORD-LEVEL `headName` "STILL DECIDES THE WIDTH".**
+   * It decides the DOTS and the STEM — `heads[0].w` — and not this.
+   */
+  it("takes a chord's width from the widest styled head", () => {
+    const styled = "X:1\nT:t\nL:1/8\nK:C\n[!style=harmonic!CEG]2 [C!style=x!EG]2|\n";
+    const plain = "X:1\nT:t\nL:1/8\nK:C\n[CEG]2 [CEG]2|\n";
+    // ⭐⭐ THE `x` HEAD IS ON THE MIDDLE PITCH, so a fix that reads pitch 0 passes the plain row
+    // and fails this one. 0.03 of staff, and the only place it surfaces.
+    expect(staffEnd(styled, 40)).toBeCloseTo(196.7, 2);
+    expect(staffEnd(plain, 40)).toBeCloseTo(196.67, 2);
+    // …and with no padding the two are the same number in both engines.
+    expect(staffEnd(styled)).toBeCloseTo(134.9, 2);
+    expect(staffEnd(plain)).toBeCloseTo(134.9, 2);
+  });
+});

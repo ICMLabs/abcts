@@ -2694,7 +2694,27 @@ function layoutRest(
   // chord and reserves the whole chord lane — 22.4px of staff on a tune that opens that
   // way, and the mark itself was lost outright before this.
   const textSpan = { left: 0, right: 0 }
-  const restWidth = spec === null ? 0 : glyphsFor(strict).width(spec.name)
+  /**
+   * ⭐ **AND IT IS THE *SCALED* WIDTH, BECAUSE A REST REACHES `createNoteHead` LIKE ANY
+   * HEAD.** `createNoteHead(abselem, c, {verticalPos: restpitch}, {dot, scale: voiceScale})`
+   * builds `new RelativeElement(c, shiftheadx, glyphs.getSymbolWidth(c) * scale, …)`
+   * (`creation/create-note-head.js:35`), so `abselem.w` carries the scale for a rest exactly
+   * as it does for a notehead. Ours scaled the NOTE and left the rest at its unit width — the
+   * DOT term beside this one already had the factor, which is what made it look deliberate.
+   *
+   * ⚠️ **AND NO GATE COULD SEE IT UNTIL `minPadding` MADE THE RODS BIND.** A four-rung ladder
+   * through abcjs, `z2 C2 z4|` on `V:1 scale=`:
+   *
+   *     scale —    minPadding —    194.9      scale 1.5  minPadding —    194.9
+   *     scale —    minPadding 40   201.37     scale 1.5  minPadding 40   208.18
+   *                                           scale 2    minPadding 40   217.75
+   *
+   * — the voice scale moves NOTHING on its own in either engine, because a rest's rod never
+   * wins against the elastic gap. `svg-bytes`, `zzlive` and `zzselect` are all blind to it for
+   * that reason. **A RESERVE ALWAYS MASKED BY A BIGGER ONE IS A RULE NO GATE CAN SEE**, third
+   * time — and this one needed a HOST OPTION to expose it, not a fixture.
+   */
+  const restWidth = spec === null ? 0 : glyphsFor(strict).width(spec.name) * voiceScale
   // …AND IT IS CENTRED ON THE ELEMENT, NOT ON THE REST GLYPH. `createNote` declares
   // `symbolWidth = 0` and assigns it only in the NOTE arm — `symbolWidth = ret2.symbolWidth`
   // (`abstract-engraver.js:784, 827`) — so the `noteheadWidth` reaching `addChord` on a
@@ -2898,7 +2918,7 @@ function layoutRest(
           // `notehead.w` — the rest glyph's SCALED width, since a rest reaches
           // `createNoteHead` with its own `c`. The dot MOVES with the scale and does not
           // GROW with it.
-          glyphsFor(strict).width(spec.name) * voiceScale,
+          restWidth,
           dotOff,
           spec.step + restPitchShift(sharedStaffStem),
           step,
@@ -2913,7 +2933,7 @@ function layoutRest(
       // one only ever knew `restWidth`. `S4-bars-repeats` X:403 is eleven rests and two
       // notes, and one dotted rest 6.45 narrow moved both heads.
       dotRight =
-        glyphsFor(strict).width(spec.name) * voiceScale +
+        restWidth +
         dotOff +
         step * spec.dots +
         (strict ? glyphsFor(strict).width('augmentationDot') : step)
@@ -4449,7 +4469,27 @@ function layoutNoteheads(
   // spring has been squeezed under it. The flag beside it already read the active table.
   // …**AND THE HEAD'S OWN CONTRIBUTION IS ITS SCALED WIDTH** — `abselem.w` is a running max
   // over `dx + w` and the head's `w` is `getSymbolWidth(c) * scale` (`create-note-head.js:35`).
-  const headRight = Math.max(0, ...offsetAt) + glyphsFor(strict).width(headName) * voiceScale
+  /**
+   * ⚠️ **AND IT IS PER HEAD, BECAUSE `abselem.w` IS A MAX OVER THE HEADS AS THEY WERE
+   * ADDED.** Each head goes in through its own `createNoteHead` with its own `c`
+   * (`abstract-engraver.js:678-688`), so `w = max(w, dx + child.w)` pairs EACH head's
+   * offset with THAT head's width — and a per-pitch `!style=!` makes those widths differ.
+   * `[C!style=x!EG]` reports 9.843 in abcjs, the `x` head's width, where the chord-level
+   * `headName` is the plain black notehead at 9.81.
+   *
+   * ⚠️ **A NOTE BESIDE THIS ONE CLAIMED THE CHORD-LEVEL `headName` "STILL DECIDES THE
+   * WIDTH".** It decides the DOTS and the STEM — `heads[0].w` (`abstract-engraver.js:747`)
+   * — and not this. Measured, not reasoned: `abcts-pitch-style` tunes 0 and 6 differ by
+   * exactly the 0.033 between the two glyphs, and only under `minPadding`, where the rod
+   * binds.
+   */
+  const headRight = Math.max(
+    0,
+    ...steps.map(
+      (_, position) =>
+        (offsetAt[position] ?? 0) + glyphsFor(strict).width(headOf(position)) * voiceScale,
+    ),
+  )
   const headLeft = -Math.min(0, ...offsetAt)
   // A lyric or a chord symbol is CENTRED on the note and counts on BOTH sides. It is the
   // dominant term in sung music: `birth-` makes a 9.81px notehead occupy 21.28px each way.

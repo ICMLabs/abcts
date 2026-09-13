@@ -132,7 +132,7 @@ const OPTIONS = [
    *   timeBasedLayout  669 — a SECOND layout algorithm, `layout/layout-in-grid.js`, which
    *                          spaces by TIME rather than by the spring solve. The largest.
    *   minPadding       659 — extra room to the left of every note and bar in the solve
-   *                          (`layout/voice-elements.js:34`, `:110-115`).
+   *                          (`layout/voice-elements.js:34`, `:110-115`). NOW 1.
    *   initialClef      125 — reprints the clef at the head of the tune. NOW 0 — CLOSED.
    *   wrap+staffwidth   60 — re-lining is implemented (`compat/wrap.ts`) and no gate had
    *                          ever rendered its OUTPUT beside abcjs's.
@@ -327,15 +327,45 @@ const OPTIONS = [
   // `staff-extra time-signature x=49.051 w=11.795`, and ours fell to the stub — 128.28
   // against abcjs's 66.85, page height already exact.
   ['initialClef', { initialClef: true }, 0],
-  // ✅ 659 → 5. `getExtraWidth(child, pad)` returns `-child.extraw + pad`, so the padding is
-  // part of what the element WANTS and the same shortfall test decides whether any of it is
-  // spent — an element with slack in front of it costs nothing. `pad` is skipped for
-  // anything still fixed to the left edge (`voice.durationindex + child.duration > 0`) and
-  // applies to a `note` or a `bar` ONLY, which excludes a rest.
-  // ⚠️ The 5 that remain are a ULP, a 0.01 tuplet y and a 0.03 staff width — the
-  // layout-unit family, not the option.
-  // 5 -> 4 on the same change — `abcts-pitch-style-tune6` was a stem foot.
-  ['minPadding', { minPadding: 40 }, 4],
+  /**
+   * ✅ **659 → 1, AND THIS ROW IS A ROD MAGNIFIER RATHER THAN A FEATURE.**
+   * `getExtraWidth(child, pad)` returns `-child.extraw + pad`, so the padding is part of what
+   * the element WANTS and the same shortfall test decides whether any of it is spent — an
+   * element with slack in front of it costs nothing. `pad` is skipped for anything still fixed
+   * to the left edge (`voice.durationindex + child.duration > 0`) and applies to a `note` or a
+   * `bar` ONLY, which excludes a rest.
+   *
+   * ⭐ **THE LAST TWO REAL ROWS WERE BOTH ELEMENT WIDTHS THAT NOTHING ELSE CAN SEE.** A width
+   * is abcjs's `abselem.w`, and a width only reaches the page when it beats the elastic gap
+   * beside it — so `svg-bytes` (0 of 691), `zzlive` and `zzselect` are blind to both. **A
+   * RESERVE ALWAYS MASKED BY A BIGGER ONE IS A RULE NO GATE CAN SEE**, and here it took a HOST
+   * OPTION to expose it rather than a fixture.
+   *
+   * ✅ **A REST'S WIDTH TAKES THE VOICE SCALE — 4 → 3.** A rest reaches `createNoteHead` like
+   *    any head, so `new RelativeElement(c, shiftheadx, getSymbolWidth(c) * scale, …)`
+   *    (`creation/create-note-head.js:35`) carries the scale for it too. Ours scaled the NOTE
+   *    and left the rest at unit width — and the augmentation-dot term beside it already had
+   *    the factor, which made the omission look deliberate. Laddered through abcjs on
+   *    `z2 C2 z4|`: the voice scale moves NOTHING without padding (194.9 at 1, 1.5 and 2) and
+   *    everything with it (201.37 / 208.18 / 217.75).
+   * ✅ **A CHORD'S WIDTH IS THE MAX OVER ITS HEADS AS ADDED — 3 → 1.** Each head goes in
+   *    through its own `createNoteHead` with its own `c` (`abstract-engraver.js:678-688`), so
+   *    `w = max(w, dx + child.w)` pairs EACH head's offset with THAT head's width, and a
+   *    per-pitch `!style=!` makes them differ. `[C!style=x!EG]` is 9.843 in abcjs where the
+   *    chord-level glyph is 9.81. ⚠️ **A comment in `layout.ts` asserted the chord-level
+   *    `headName` "still decides the WIDTH"** — it decides the DOTS and the STEM, `heads[0].w`,
+   *    and not this. `abcts-pitch-style` tunes 0 and 6.
+   *
+   * ⚠️ **THE LAST ROW IS TWO ULP IN THE ROOT `width`, AND ITS LOCATION IS NOW EXACT.**
+   * `synth-flattener-23`: `1144.9759999999999` against our `...9997`. Both engines' final-pass
+   * x chains were logged element by element and are IDENTICAL for the first ELEVEN elements;
+   * they part at the twelfth — abcjs `564.4630000000001`, ours `564.463` — and every element
+   * after it inherits the one ULP. Nothing visible moves. ⚠️ And the first attempt to compare
+   * those chains was MUTE, because the probe logged abcjs's TRIAL x (before
+   * `if (er < extraWidth) x += …`) against our FINAL one, which made all 23 rows read as
+   * differing. **A probe that measures two different quantities is worse than none.**
+   */
+  ['minPadding', { minPadding: 40 }, 1],
   ['timeBasedLayout', { timeBasedLayout: { minPadding: 20 } }, 669],
   /**
    * ⚠️ **23, AND THE LINE-STRUCTURE HALF IS CLOSED.** Counting staff lines in each engine
