@@ -626,6 +626,22 @@ const OPTIONS = [
    *    fix ignored the directive and drew one where abcjs draws none, caught by the
    *    control. `parsing-x10`'s lengths now MATCH (39/39).
    *
+   * ✅ **A QUOTED-LABEL ENDING CLOSES ON THE SYSTEM THAT OPENED IT — `abcts-endings`
+   *    tune 2 is 31 of 31 with identical kinds.** `["second"] E2` ends at the `]` its own
+   *    label leaves behind (`abc_parse_music.js:271-274`), ONE bar element after it opened;
+   *    when the wrap breaks between the two that bar TRAILS onto the system before it, so
+   *    abcjs's line 0 carries `bar_right_repeat start=second` AND `bar_invisible END` and
+   *    its line 1 has no ending element. The per-measure pass already makes that close, but
+   *    inside the `voltaOpenedOnPreviousSystem !== i` guard — so for an ending the previous
+   *    system opened, the open and the close were skipped together and a continuation
+   *    bracket was drawn that abcjs never draws.
+   *    ⚠️ **AND THE NEXT SYSTEM MUST STILL BE MARKED.** Clearing that marker along with the
+   *    carry drew a SECOND labelled bracket there — worse than the bug.
+   *    ⚠️ **WHAT REMAINS ON IT IS SPACING, NOT ELEMENTS**: every element is +3 and then +6,
+   *    starting at the C→`|` gap BEFORE any ending bar, so it is not the ending room —
+   *    measured by restoring the old double charge, which moves it not at all. Same family
+   *    as `layout-09-endings` and `tablature-20`.
+   *
    * ✅ **"LEADS THE LINE" IS A SOURCE POSITION, NOT A BRACKET — 16 → 14.** `startNewLine`
    *    fires LAZILY (`abc_parse_music.js:152-156`), so a BRACKETED `[K:… clef=]` written
    *    before a line's first note is already in `multilineVars` when `params.clef` is

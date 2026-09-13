@@ -15460,6 +15460,36 @@ function layoutScoped(input: Score, options: LayoutOptions = {}): Layout {
             measure: Math.max(0, span.end - span.start - 1),
           }
           opensNextSystemsVolta = span.end
+          /**
+           * …**AND THE QUOTED-LABEL SPELLING CLOSES IT ON THIS SYSTEM, NOT THE NEXT.**
+           * `["second"] E2` is an ending whose `]` is its own invisible barline, and
+           * `if (inEnding && bar.type !== 'bar_thin') bar.endEnding = true`
+           * (`abc_parse_music.js:271-274`) ends it there — one bar element after it opened,
+           * and that bar TRAILS onto this system like any other broken opening bar.
+           * abcjs's wrapped line 0 carries both: `bar_right_repeat start=second` then
+           * `bar_invisible END`, and its line 1 has no ending element at all.
+           *
+           * The per-measure pass already makes this close (`block.opensAfterVolta &&
+           * !block.voltaOnOpeningBar`), but it is inside the `voltaOpenedOnPreviousSystem
+           * !== i` guard — so for an ending the PREVIOUS system opened, the open and the
+           * close were skipped together and a continuation bracket was drawn at the head of
+           * the next system that abcjs never draws. `abcts-endings` tune 2.
+           */
+          const endsOnItsOwnOpeningBar =
+            nextBlock.opensAfterVolta === true && nextBlock.voltaOnOpeningBar !== true
+          const endAt = endsOnItsOwnOpeningBar
+            ? barAnchor(span.end - 1, 'trailing', 'endingEnd')
+            : null
+          if (endAt !== null) {
+            closeVolta(endAt, true)
+            openVolta = null
+            // ⚠️ **AND THE NEXT SYSTEM MUST STILL BE TOLD NOT TO RE-OPEN IT.** Clearing
+            // `opensNextSystemsVolta` as well let the per-measure pass open a SECOND
+            // labelled bracket there — two `text:second` against abcjs's one. Nothing
+            // carries (`openVolta` is null), but the measure is still one whose ending was
+            // dealt with on the previous system.
+            voltaOpenedOnPreviousSystem = span.end
+          }
         }
       }
       // …and it RESUMES on the next system — see `voltaCarried`.

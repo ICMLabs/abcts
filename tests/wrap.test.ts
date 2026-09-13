@@ -1469,3 +1469,55 @@ describe("renderAbc({wrap}) — %%barsperstaff under a host wrap", () => {
     expect(render().meters).toEqual(["meter", "-"]);
   });
 });
+
+/**
+ * **A QUOTED-LABEL ENDING CLOSES ON THE SYSTEM THAT OPENED IT.**
+ *
+ * `["second"] E2` is an ending whose `]` is its own invisible barline, and
+ * `if (inEnding && bar.type !== 'bar_thin') bar.endEnding = true`
+ * (`abc_parse_music.js:271-274`) ends it there — ONE bar element after it opened. When the
+ * wrap breaks between the two, that bar TRAILS onto the system before it like any other
+ * broken opening bar, so abcjs's wrapped line 0 carries both — `bar_right_repeat
+ * start=second` then `bar_invisible END` — and its line 1 has no ending element at all.
+ *
+ * The per-measure pass already makes this close (`block.opensAfterVolta &&
+ * !block.voltaOnOpeningBar`), but it sits inside the `voltaOpenedOnPreviousSystem !== i`
+ * guard: for an ending the PREVIOUS system opened, the open and the close were skipped
+ * together and a continuation bracket was drawn at the head of the next system that abcjs
+ * never draws.
+ *
+ * ⚠️ **AND THE NEXT SYSTEM STILL HAS TO BE TOLD NOT TO RE-OPEN IT.** Clearing the "opened
+ * on the previous system" marker along with the carry let the per-measure pass open a
+ * SECOND labelled bracket there — two `text:second` against abcjs's one, which is worse
+ * than the bug. Nothing carries and the measure is still marked.
+ *
+ * `abcts-endings` tune 2 is 31 elements of 31 with identical kinds now; what remains on it
+ * is a spacing difference, not a missing or extra element.
+ */
+describe("renderAbc({wrap}) — an ending whose ] is its own barline", () => {
+  const drawn = (): { lines: number; labels: number } => {
+    const host = { innerHTML: "" } as { innerHTML: string };
+    renderAbc(
+      host,
+      readFileSync(
+        join(import.meta.dirname, "corpus-abcjs", "fixtures", "abcts-endings.abc"),
+        "utf-8",
+      ),
+      {
+        staffwidth: 400,
+        startingTune: 2,
+        wrap: { minSpacing: 1.8, maxSpacing: 2.7, preferredMeasuresPerLine: 4 },
+      },
+    );
+    return {
+      lines: [...host.innerHTML.matchAll(/data-name="line"/g)].length,
+      labels: [...host.innerHTML.matchAll(/data-name="second"/g)].length,
+    };
+  };
+
+  // ⭐ TWO bracket rules, one per ending, both on system 1 — ours drew a third at the head
+  // of system 2. And ONE `second` label: the over-correction drew two.
+  it("draws one bracket per ending and no continuation", () => {
+    expect(drawn()).toEqual({ lines: 2, labels: 1 });
+  });
+});
