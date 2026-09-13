@@ -737,3 +737,151 @@ describe("expandToWidest restarts the line loop at the widened page", () => {
     expect(widthOf(ink(STIFF))).toBeCloseTo(431.971, 3);
   });
 });
+
+/**
+ * **`add_classes` — THE LINE, MEASURE AND VOICE COUNTERS, WHICH ARE THE WRITER'S AND NOT THE
+ * LAYOUT'S.**
+ *
+ * `Classes` is a stateful counter walked in draw order (`write/helpers/classes.js`), and
+ * `getFontAndAttr.calc` ends `'class': this.classes.generate(klass)` for EVERY text row
+ * (`helpers/get-font-and-attr.js:41`) — so a class is a position, not a name. The controls
+ * below are one per rule, and each was verified against its own deliberate break; three of
+ * them were MUTE on the first attempt for the reasons noted on them.
+ *
+ * ⚠️ **EVERY EXPECTED STRING HERE WAS READ OUT OF abcjs**, on these same synthetic shapes in
+ * WebKit, rather than copied from our own output.
+ *
+ * `zzopts`'s `add_classes` row: **16 → 1 of 685.**
+ */
+describe("add_classes counts lines, measures and voices in draw order", () => {
+  const ink = (abc: string): string => {
+    const host = { innerHTML: "" } as { innerHTML: string };
+    renderAbc(host, abc, { staffwidth: 670, add_classes: true });
+    return host.innerHTML;
+  };
+  const all = (abc: string, re: RegExp): string[] =>
+    [...ink(abc).matchAll(re)].map((m) => m[1] ?? "");
+  const WRAPPER = /class="(abcjs-staff-wrapper[^"]*)"/g;
+
+  /**
+   * ⭐ **A ROW THAT PAINTS NOTHING IS STILL A LINE.** `draw()` runs `classes.incrLine()` at
+   * the HEAD of each `tune.lines` iteration and only then asks what the line is
+   * (`draw/draw.js:29-31`). The emitter counted the blocks that produced ROWS, so a bare
+   * `%%text` — a line with one `{move}` and no ink — was skipped. Six of `zzopts`'s sixteen.
+   */
+  it("counts a bare %%text as a line", () => {
+    expect(all("X:1\nT:t\nL:1/4\nK:C\n%%text\nCDEF|\n", WRAPPER)).toEqual([
+      "abcjs-staff-wrapper abcjs-l1",
+    ]);
+    // ⭐⭐ THE CONTROL: the same shape with TEXT in it was always right, so a fix that only
+    // looked at rows with ink passes this pair's second half and fails its first.
+    expect(all("X:1\nT:t\nL:1/4\nK:C\n%%text hi\nCDEF|\n", WRAPPER)).toEqual([
+      "abcjs-staff-wrapper abcjs-l1",
+    ]);
+    // …and with nothing before the music the first line really is `abcjs-l0`.
+    expect(all("X:1\nT:t\nL:1/4\nK:C\nCDEF|\n", WRAPPER)).toEqual([
+      "abcjs-staff-wrapper abcjs-l0",
+    ]);
+  });
+
+  // …**AND A `%%newpage` IS A LINE THAT IS NOT A BLOCK AT ALL.** It pushes a `{newpage}` row
+  // nothing in `write/` reads, so it paints nothing anywhere — the third term
+  // `nonMusicPrecedesMusic` is built from, and the one a count of blocks misses.
+  it("counts a %%newpage as a line", () => {
+    expect(all("X:1\nT:t\n%%newpage 1\nL:1/4\nK:C\nCDEF|\n", WRAPPER)).toEqual([
+      "abcjs-staff-wrapper abcjs-l1",
+    ]);
+  });
+
+  /**
+   * ⭐ **A `%%sep` RULE'S CLASS IS GENERATED AT ITS OWN LINE** —
+   * `pathToBack({…, 'class': classes.generate('defined-text')})` (`draw/separator.js:13`).
+   * The emitter built the block's non-text markup as a STRING before the loop that advances
+   * the counter, where a text row is rendered inside it, so the rule went out with no
+   * `abcjs-lN` at all. It is a thunk now.
+   */
+  it("generates a %%sep rule's class at its own line", () => {
+    expect(
+      all("X:1\nT:t\nL:1/4\nK:C\n%%text hi\n%%sep\nCDEF|\n", /class="(abcjs-defined-text[^"]*)"/g),
+    ).toEqual(["abcjs-defined-text abcjs-l0", "abcjs-defined-text abcjs-l1"]);
+  });
+
+  /**
+   * ⭐ **A SUBTITLE AFTER THE MUSIC TAKES THE COUNTER AND ONE IN THE HEADER DOES NOT**, and
+   * the two come out of the same call. abcjs generates every row's class; the header block is
+   * drawn by `nonMusic(topText)` BEFORE the `tune.lines` loop, where `lineNumber` is still
+   * `null`, so `generate` adds nothing to it (`draw/draw.js:12-18`).
+   *
+   * ⚠️ **WHICH MAKES THE ORDER OF TWO STATEMENTS LOAD-BEARING.** The emitter wrote the meta
+   * block AFTER advancing the counter for each leading subtitle line; while these classes were
+   * literal strings that was invisible, and the moment the subtitle's became generated the
+   * header title would have taken an `abcjs-l0` abcjs never writes. **Both halves are in this
+   * one assertion** — the bare string is the header's, the `abcjs-l2` the trailing one's.
+   */
+  it("generates a trailing subtitle's class and leaves the header's bare", () => {
+    expect(
+      all(
+        "X:1\nT:t\nT:sub0\nL:1/4\nK:C\nCDEF|\nT:sub\n",
+        /class="(abcjs-text abcjs-subtitle[^"]*)"/g,
+      ),
+    ).toEqual(["abcjs-text abcjs-subtitle", "abcjs-text abcjs-subtitle abcjs-l2"]);
+  });
+
+  /**
+   * ⭐ **A BOXED ROW'S CLASS IS MOVED TO THE GROUP, NOT DROPPED.** `renderText` opens
+   * `openGroup({ klass: hash.attr['class'], … })` and only THEN
+   * `delete hash.attr['class']` (`draw/text.js:50`, `:58`). The suppression on the text was
+   * ported and the group left bare at all three sites — a music text, a top-block row and a
+   * bottom-block row.
+   */
+  it("puts a boxed row's class on the group it opens", () => {
+    expect(
+      all(
+        'X:1\nT:t\n%%gchordfont Arial 13 box\nL:1/4\nK:C\n"G"CDEF|\n',
+        /<g class="(abcjs-chord[^"]*)"/g,
+      ),
+    ).toEqual(["abcjs-chord abcjs-l0 abcjs-m0 abcjs-mm0 abcjs-v0"]);
+    // ⚠️ AND A BLOCK ROW IS A DIFFERENT SITE: the music-text one reads `t.dataName` through
+    // the element loop, this one through the top block, and fixing either alone leaves the
+    // other bare. `%%textfont … box` is the shape that showed it.
+    expect(
+      all(
+        "X:1\nT:t\n%%textfont Arial 13 box\nL:1/4\nK:C\n%%text hi\nCDEF|\n",
+        /<g class="(abcjs-defined-text[^"]*)"/g,
+      ),
+    ).toEqual(["abcjs-defined-text abcjs-l0"]);
+  });
+
+  /**
+   * ⭐ **A GRACE BEAM'S ELEMENT INDEX IS PER VOICE, AND ADDING THE VOICE BASE TWICE MISSES.**
+   * An ordinary beam's `beamAt` comes off the voice's own plan and `flushVoice` adds
+   * `voiceBase` to it; the grace-beam walk pushed a STAFF-wide index, so the `markerAt`
+   * lookup missed and fell to 0 for every grace beam in a LOWER voice.
+   *
+   * ⚠️ **INVISIBLE FOR VOICE 0, WHERE THE TWO ARE THE SAME NUMBER** — the same shape as the
+   * curve-anchor bug beside it, and the reason the graces here are on `V:B` after a barline.
+   */
+  it("classes a lower voice's grace beam at its own measure", () => {
+    expect(
+      all(
+        "X:1\nT:t\nL:1/8\nK:C\n%%staves (A B)\nV:A\nCDEF|GABc|\nV:B\nCDEF|{ab}GABc|\n",
+        /class="(abcjs-beam-elem abcjs-d0 [^"]*)"/g,
+      ),
+    ).toEqual(["abcjs-beam-elem abcjs-d0 abcjs-l0 abcjs-m1 abcjs-mm1 abcjs-v1"]);
+  });
+
+  /**
+   * ⭐ **A BEAM MULTIPLIES BY THE TUPLET RATIO ONLY WHEN ITS FIRST ELEMENT *OPENS* THE
+   * TUPLET** — `if (firstElement.startTriplet)` (`elements/beam-element.js:31-36`) — so the
+   * beam before the bar classes SOUNDING and the one after it classes NOTATED. See
+   * `TupletMark.opens`; the parse-side control is in `tests/corpus/parse.test.ts`.
+   */
+  it("classes a beam past the barline on the notated duration", () => {
+    expect(
+      all("X:20\nT:t\nL:1/8\nK:C\n(3CD|EFGA|\n", /class="(abcjs-beam-elem[^"]*)"/g),
+    ).toEqual([
+      "abcjs-beam-elem abcjs-d0-083 abcjs-l0 abcjs-m0 abcjs-mm0 abcjs-v0",
+      "abcjs-beam-elem abcjs-d0-125 abcjs-l0 abcjs-m1 abcjs-mm1 abcjs-v0",
+    ]);
+  });
+});

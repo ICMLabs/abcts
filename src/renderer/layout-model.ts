@@ -1256,6 +1256,20 @@ export interface LayoutSystem {
    */
   readonly heightPitch: number
   /**
+   * **HOW MANY `abcTune.lines` ROWS STAND BEFORE THIS SYSTEM'S STAFF LINE** — the blocks
+   * drawn above it, whatever they draw.
+   *
+   * `draw()` runs `classes.incrLine()` at the HEAD of every `tune.lines` iteration, before
+   * it asks whether the line is a staff or a nonMusic row (`draw/draw.js:29-31`), so a row
+   * that paints NOTHING still advances `abcjs-lN`. ⚠️ **AND ROWS THAT PAINT NOTHING ARE
+   * ORDINARY**: a bare `%%text`, a bare `%%center`, and the empty nonMusic line a directive
+   * such as `%%bagpipes` leaves behind are each a line in abcjs, `{rows: []}` or one bare
+   * `{move}` and no ink at all. The emitter cannot count them from the rows it was given,
+   * which is why the count travels instead of being re-derived — six of `zzopts`'s sixteen
+   * `add_classes` rows were exactly that.
+   */
+  readonly nonMusicLines?: number
+  /**
    * `staffs[0].top` and `staffs[last].bottom`, the two PITCHES `addStaffPadding` reads
    * (`draw/draw.js:86-87`). abcjs measures the gap between two systems from their own
    * declared extents and multiplies ONCE — `(nextTopLine + lastBottomLine) * STEP` — so

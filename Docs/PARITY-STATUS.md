@@ -69,8 +69,18 @@ direction fails.
 | `print`, `print + responsive` | 3 | last-digit rounding |
 | `scale 0.8` / `1.5`, `oneSvgPerLine + scale` | 1 / 2 / 1 | last-digit rounding |
 | `minPadding` | 4 | partially implemented |
-| `add_classes` | 16 | class vocabulary on a few shapes |
+| `add_classes` | **1** | one ending's measure counter, and its cause is measured |
 | `timeBasedLayout` | 669 | **unimplemented** — a SECOND layout algorithm (`layout/layout-in-grid.js`), spacing by TIME rather than by the spring solve. By far the largest thing outstanding in this repo. |
+
+**`add_classes` went 16 → 1** on 2026-09-15, in seven rules, and TEN of the sixteen were one
+question: where does the `abcjs-lN` counter advance. `draw()` runs `classes.incrLine()` at the
+head of every `tune.lines` iteration and only then asks what the line is, so a row that paints
+nothing — a bare `%%text`, a bare `%%center`, the empty line a `%%newpage` leaves — is a line
+like any other; and every text row's class is GENERATED, which reads as a literal only while
+the counter is still null. ⭐ **One of the sixteen was this repo's own prediction coming true**:
+a comment in `text-measure.ts` had said abcjs keys its text-size cache on the generated class
+and we do not, and named `add_classes` as where a page-order defect would show up. It did — and
+the first reading of it was backwards, because abcjs was the constant one and we were drifting.
 
 **`expandToWidest` closed at 0 from 14** on 2026-09-15, and it is the row whose own recorded
 note was wrong about the COST rather than the cause. The note said the system pass is "one

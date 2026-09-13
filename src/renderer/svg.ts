@@ -1165,8 +1165,24 @@ export function toSVG(
    * `abcjs-defined-text abcjs-l2` on `center-text-classes`. The table above is literal
    * strings; this one has to be generated at the row's own line.
    */
+  /**
+   * ⚠️ **EVERY TEXT ROW'S CLASS IS GENERATED IN abcjs — the literal table above is only what
+   * `generate` RETURNS while the counter is null.** `getFontAndAttr.calc` ends
+   * `'class': this.classes.generate(klass)` whatever the klass is
+   * (`helpers/get-font-and-attr.js:41`), and `getTextSize.calc` does the same for the
+   * measurement's own attrs. A title, a composer, a `%%header` and a `part-order` row are
+   * only ever drawn from `topText`, BEFORE the `tune.lines` loop, where `lineNumber` is still
+   * `null` — so for those two readings coincide.
+   *
+   * **A SUBTITLE IS THE ONE THAT DOES NOT.** A `T:` with music before it is a nonMusic LINE
+   * of its own, drawn inside the loop, and abcjs writes
+   * `abcjs-text abcjs-subtitle abcjs-l2` there. Ours read the literal and dropped the
+   * counter: `visual-mouse-click-01`, `visual-tablature-15` and
+   * `text-udef-parts-overlays` tune 51.
+   */
   const ABCJS_GENERATED_TEXT_CLASSES: Readonly<Record<string, string>> = {
     "free-text": "defined-text",
+    subtitle: "text subtitle",
   };
 
   const ABCJS_STYLE =
@@ -1913,9 +1929,18 @@ export function toSVG(
          * `nonMusicIndex` says which line a row came from; the rows with none are the title's
          * and stay in meta-top.
          */
+        /**
+         * ⚠️ **`s` IS A THUNK AND NOT A STRING, BECAUSE A SEPARATOR'S CLASS IS GENERATED AT
+         * ITS OWN LINE.** `drawSeparator` writes
+         * `'class': classes.generate('defined-text')` (`draw/separator.js:13`), so the rule
+         * carries the LINE counter exactly as a `%%text` row does — and this list is built
+         * BEFORE the group loop that advances the counter, where a text row's `renderRow`
+         * runs inside it. Built eagerly the rule read `abcjs-defined-text` with no `abcjs-lN`
+         * at all: `visual-mouse-click-01` and `visual-tablature-15`, byte 2825.
+         */
         const block: {
           t?: PlacedText;
-          s?: string;
+          s?: () => string;
           nonMusicIndex: number | undefined;
         }[] = [];
         const first = system.staves[0];
@@ -1935,7 +1960,7 @@ export function toSVG(
               const ly = line.pageY === undefined ? t.y1 : line.pageY * PX;
               block.push({
                 nonMusicIndex: line.nonMusicIndex,
-                s:
+                s: () =>
                   line.role === "separator"
                     ? separatorPath(
                         t.x1,
@@ -1972,9 +1997,9 @@ export function toSVG(
             t.pageY === undefined ? t.y * PX + oy : t.pageY * PX,
             t.size * PX,
           );
-        const renderRow = (b: { t?: PlacedText; s?: string }): string =>
+        const renderRow = (b: { t?: PlacedText; s?: () => string }): string =>
           b.s !== undefined || b.t === undefined
-            ? (b.s ?? "")
+            ? (b.s?.() ?? "")
             : b.t.phrases !== undefined
               ? richTextLine(
                   b.t.phrases,
@@ -2002,11 +2027,18 @@ export function toSVG(
                   // DELETES it from the text and opens a group for it
                   // (`draw/text.js:48-81`) — `openGroup` writes `class` before `fill`, so
                   // `partOrder` reads `<g class="abcjs-part-order" fill="currentColor" …>`.
+                  // ⚠️ **AND IT IS THE GENERATED ONE WHERE THERE IS ONE.** This read the
+                  // literal table only, which has no `free-text` entry at all, so a boxed
+                  // `%%text` row's group went out with NO class where abcjs writes
+                  // `abcjs-defined-text abcjs-l2` — `visual-options-01-fonts`'s
+                  // `%%historyfont … box`. Same precedence as the unboxed row one screen down.
                   `<g${
-                    options.addClasses === true &&
-                    b.t.dataName !== undefined &&
-                    ABCJS_TEXT_CLASSES[b.t.dataName] !== undefined
-                      ? ` class="${ABCJS_TEXT_CLASSES[b.t.dataName]}"`
+                    options.addClasses === true && b.t.dataName !== undefined
+                      ? attrIfAny(
+                          generatedTextClass(b.t.dataName) ??
+                            ABCJS_TEXT_CLASSES[b.t.dataName] ??
+                            "",
+                        )
                       : ""
                   } fill="currentColor" data-name="${b.t.dataName ?? ""}"${recordText(b.t)}>` +
                   `${renderRow({ t: stripBox(b.t) })}` +
@@ -2075,27 +2107,53 @@ export function toSVG(
           options.addClasses === true
             ? ` class="${!nonMusic && systemIndex === 0 ? "abcjs-meta-top" : "abcjs-non-music"}"`
             : "";
+        /**
+         * ⚠️ **THE META BLOCK IS WRITTEN BEFORE THE COUNTER MOVES AT ALL, AND THAT ORDER IS
+         * LOAD-BEARING.** `draw()` runs `nonMusic(topText)` and closes its group BEFORE the
+         * `tune.lines` loop starts (`draw/draw.js:12-18`), so every row of it is generated
+         * with `lineNumber` still `null` and carries no `abcjs-lN` — which is why the title's
+         * class reads as a literal. Written after the leading-subtitle advances it would take
+         * an `abcjs-l0` abcjs never writes; the two only looked equivalent while these classes
+         * were literal strings rather than generated ones.
+         */
+        const meta = block.filter((b) => b.nonMusicIndex === undefined);
+        if (meta.length > 0)
+          parts.push(`<g${klassOf(false)}>${meta.map(renderRow).join("")}</g>`);
         // **AND A SUBTITLE LINE DRAWS NOTHING AND STILL COUNTS** — see
         // `RenderDoc.blankLeadingLines`.
         if (systemIndex === 0)
           for (let i = 0; i < (doc.blankLeadingLines ?? 0); i += 1)
             classes.incrLine();
-        const meta = block.filter((b) => b.nonMusicIndex === undefined);
-        if (meta.length > 0)
-          parts.push(`<g${klassOf(false)}>${meta.map(renderRow).join("")}</g>`);
-        const indices = [
-          ...new Set(
-            block.flatMap((b) =>
-              b.nonMusicIndex === undefined ? [] : [b.nonMusicIndex],
-            ),
-          ),
-        ].sort((a, b) => a - b);
-        for (const i of indices) {
+        /**
+         * ⚠️ **ONE LINE PER *BLOCK*, NOT PER BLOCK THAT DREW SOMETHING.** This walked the
+         * distinct `nonMusicIndex` values among the ROWS it was handed, which silently skips
+         * every block that paints nothing — a bare `%%text`, a bare `%%center`, the empty
+         * nonMusic line a directive such as `%%bagpipes` leaves behind. abcjs runs
+         * `classes.incrLine()` at the HEAD of each `tune.lines` iteration and only then asks
+         * what the line is (`draw/draw.js:29-31`), so those advance the counter exactly like
+         * a row of text.
+         *
+         * `LayoutSystem.nonMusicLines` is that count, carried rather than re-derived, because
+         * a row that paints nothing leaves the emitter nothing to count. **Measured: six of
+         * `zzopts`'s sixteen `add_classes` rows, every one of them a staff wrapper or a text
+         * row an `abcjs-lN` short** — `Text Empty`, `Text Space`, `Center Empty`, and
+         * `Text Empty Twice`, which is two short.
+         *
+         * ⚠️ **AND THE EMPTY GROUP MUST STILL NOT BE WRITTEN.** abcjs opens one for a
+         * nonMusic line and `closeGroup` deletes it when nothing drew (`svg.js:364-372`), so
+         * the counter advances and the markup does not.
+         */
+        const lineCount = Math.max(
+          system.nonMusicLines ?? 0,
+          ...block.map((b) => (b.nonMusicIndex === undefined ? 0 : b.nonMusicIndex + 1)),
+        );
+        for (let i = 0; i < lineCount; i += 1) {
           // BEFORE the group, not after it: `draw()` runs `classes.incrLine()` at the head of
           // every line it walks (`draw/draw.js:30-31`), so the FIRST `%%text` is `abcjs-l0`.
           classes.incrLine();
           const rows = block.filter((b) => b.nonMusicIndex === i);
-          parts.push(`<g${klassOf(true)}>${rows.map(renderRow).join("")}</g>`);
+          if (rows.length > 0)
+            parts.push(`<g${klassOf(true)}>${rows.map(renderRow).join("")}</g>`);
         }
       }
 
@@ -3308,6 +3366,11 @@ export function toSVG(
           const at = voiceEnds.findIndex((end) => i < end);
           return at < 0 ? Math.max(0, staff.voices.length - 1) : at;
         };
+        /** Where this element's own voice starts in `staff.elements` — see `voiceBase`. */
+        const baseOf = (i: number): number => {
+          const v = voiceOf(i);
+          return v === 0 ? 0 : (voiceEnds[v - 1] ?? 0);
+        };
         let openVoice = 0;
         staff.elements.forEach((el, elIndex) => {
           // …AND THE PREVIOUS VOICE IS FINISHED BEFORE THIS ONE OPENS — see `flushVoice`.
@@ -3789,8 +3852,20 @@ export function toSVG(
                 const boxSvg = abcjs
                   ? `<path d="${d}" stroke="none" data-name="box"></path>`
                   : `<path d="${d}" stroke="none" class="${prefix}-box"></path>`;
+                /**
+                 * ⚠️ **AND THE GROUP CARRIES THE ROW'S CLASS, WHICH IS WHY THE TEXT DOES
+                 * NOT.** `renderText` opens
+                 * `openGroup({ klass: hash.attr['class'], fill, "data-name": params.name })`
+                 * and only THEN `delete hash.attr['class']` (`draw/text.js:50`, `:58`) — one
+                 * generated string, MOVED from the text to the group rather than dropped. The
+                 * suppression on the text was ported and the group was left bare, so a boxed
+                 * `%%gchordfont` chord read `<g fill data-name>` where abcjs writes
+                 * `<g class="abcjs-chord abcjs-l0 abcjs-m0 abcjs-mm0 abcjs-v0" fill
+                 * data-name>` — `visual-tablature-17` and `visual-options-01-fonts`.
+                 * The class comes FIRST: `openGroup` writes its keys in that order.
+                 */
                 const open = abcjs
-                  ? `<g fill="currentColor" data-name="${t.dataName ?? ""}">`
+                  ? `<g${attrIfAny(classes.generate(t.dataName ?? ""))} fill="currentColor" data-name="${t.dataName ?? ""}">`
                   : `<g fill="currentColor">`;
                 textParts[textParts.length - 1] = {
                   ...part,
@@ -3955,9 +4030,23 @@ export function toSVG(
           // …stamped with the element that carries it, because `voice.beams` is drawn in ADD
           // order and a grace beam is added inside `createNote` while its group's own beam is
           // added after the whole group — see `PlacedLine.beamAt`.
+          /**
+           * ⚠️ **AND THE INDEX IS PER VOICE, BECAUSE THAT IS WHAT `beamAt` MEANS** — an
+           * ordinary beam's is `Math.max(group.map(m => m.element))` off the voice's own plan
+           * (`layout.ts`), and `flushVoice` adds `voiceBase` to both before it reads
+           * `markerAt`. This walk's `elIndex` is STAFF-wide, so pushing it raw added the base
+           * twice: the lookup missed, fell to `?? 0`, and every grace beam in a LOWER voice
+           * was classed `abcjs-m0 abcjs-mm0`. **Invisible for voice 0, where the two are the
+           * same number** — the same shape as the curve-anchor bug one screen up, and it is
+           * what `visual-selection-01`, `-svg-per-line-01`, `visual-mouse-click-01` and
+           * `visual-tablature-15` differed on: abcjs's `abcjs-m1 abcjs-mm1` against our 0.
+           * It also put the grace beam in the wrong place in `beamOut`'s sort, which mixes
+           * the two kinds.
+           */
           if (abcjs)
             for (const l of el.lines)
-              if (l.role === "beam") graceBeams.push({ ...l, beamAt: elIndex });
+              if (l.role === "beam")
+                graceBeams.push({ ...l, beamAt: elIndex - baseOf(elIndex) });
           /**
            * **AN UNBEAMED GRACE'S STEM COMES BEFORE ITS OWN LEDGERS; A BEAMED GROUP'S COME
            * AFTER EVERY HEAD.** `addGraceNotes` runs `addExtra(stem)` and then
@@ -4543,7 +4632,19 @@ export function toSVG(
           // …and the same group-and-four-rules a boxed row takes anywhere else.
           return t.boxRect === undefined
             ? markup
-            : `<g fill="currentColor" data-name="${t.dataName ?? ""}"${recordText(t)}>` +
+            : // …**AND ITS GROUP CARRIES THE GENERATED CLASS**, exactly as the top block's
+              // does — `renderText` moves it off the text and onto the group it opens
+              // (`draw/text.js:50`, `:58`).
+              `<g${
+                options.addClasses === true && t.dataName !== undefined
+                  ? attrIfAny(
+                      generatedTextClass(t.dataName) ??
+                        t.groupClass ??
+                        ABCJS_TEXT_CLASSES[t.dataName] ??
+                        "",
+                    )
+                  : ""
+              } fill="currentColor" data-name="${t.dataName ?? ""}"${recordText(t)}>` +
                 `${markup}${boxRulesPath(
                   t.boxRect,
                   t.pageY === undefined ? t.y * PX + oy : t.pageY * PX,

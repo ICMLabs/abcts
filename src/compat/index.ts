@@ -1806,6 +1806,7 @@ function renderInto(
       }
       return tune;
     }),
+    params.add_classes !== true,
   );
 }
 
@@ -2257,7 +2258,13 @@ function duplicateSvg(doc: SplitDocument, source: SplitElement): SplitElement {
  * for a real number and keeps the tables when it does not get one. Without that check the
  * 691 goldens — harvested under jsdom — would all go red.
  */
-function withLiveTextMetrics<T>(run: () => T): T {
+/**
+ * ⚠️ **AND `add_classes` TAKES A PER-RENDER CACHE.** abcjs's text-size key carries the
+ * GENERATED CLASS, which is position-qualified once classes are on, so its cache barely
+ * shares across renders; ours cannot know that class at measure time — see `SIZE_CACHE`.
+ * Dropping the cross-render sharing under the flag is what makes the two agree.
+ */
+function withLiveTextMetrics<T>(run: () => T, crossRender = true): T {
   const doc = (globalThis as { document?: LiveDocument }).document;
   const body = doc?.body;
   if (doc === undefined || body === undefined || body === null) return run();
@@ -2269,7 +2276,7 @@ function withLiveTextMetrics<T>(run: () => T): T {
     host.setAttribute("height", "0");
     host.setAttribute("style", "position:absolute;visibility:hidden");
     body.appendChild(host);
-    const measure = createDomTextMeasurer(doc, host);
+    const measure = createDomTextMeasurer(doc, host, { crossRender });
     // A real layout engine answers a positive width for a real string. jsdom does not.
     if (measure("M", { size: 27, family: "Times New Roman" }).width <= 0) {
       body.removeChild(host);

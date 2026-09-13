@@ -265,9 +265,27 @@ describe("tuplets", () => {
 
   it("marks members with a shared group id and the printed number", () => {
     const [a, b, c] = eventsOf("X:1\nL:1/8\nM:4/4\nK:C\n(3abc |\n");
-    expect(a?.tuplet).toEqual({ group: 1, number: 3 });
-    expect(b?.tuplet).toEqual(a?.tuplet);
-    expect(c?.tuplet).toEqual(a?.tuplet);
+    expect(a?.tuplet).toEqual({ group: 1, number: 3, opens: true });
+    expect(b?.tuplet).toEqual({ group: 1, number: 3 });
+    expect(c?.tuplet).toEqual(b?.tuplet);
+  });
+
+  /**
+   * **ONLY THE MEMBER THE `(p` STOOD BEFORE OPENS THE GROUP, AND A BARLINE DOES NOT RESET
+   * THAT** — abcjs's `startTriplet`, read in one place: `BeamElem` multiplies by the tuplet
+   * ratio only `if (firstElement.startTriplet)` (`elements/beam-element.js:31-36`). The
+   * renderer used to infer it from "the first member of this group I have seen", out of a set
+   * that lived for one MEASURE, so `(3CD|EFGA|` opened the group twice and the beam after the
+   * bar classed `abcjs-d0-083` where abcjs writes `abcjs-d0-125`. See `TupletMark.opens`.
+   */
+  it("opens a tuplet once even when it crosses a barline", () => {
+    const notes = eventsOf("X:1\nL:1/8\nM:4/4\nK:C\n(3CD|EFGA|\n");
+    expect(notes[0]?.tuplet?.opens).toBe(true);
+    expect(notes[1]?.tuplet?.opens).toBeUndefined();
+    // …and the third member is the one PAST the barline, still the same group and still not
+    // opening it.
+    expect(notes[2]?.tuplet?.group).toBe(notes[0]?.tuplet?.group);
+    expect(notes[2]?.tuplet?.opens).toBeUndefined();
   });
 
   it("gives adjacent groups distinct ids", () => {

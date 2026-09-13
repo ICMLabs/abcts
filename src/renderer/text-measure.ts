@@ -133,11 +133,25 @@ export interface ProbeDocument {
  * `svg-per-line-01` were byte-identical rendered ALONE and differed in the live gate's
  * shared page, which was the whole of it.
  *
- * ⚠️ **AND THE KEY IS DELIBERATELY COARSER THAN abcjs's IN ONE WAY.** abcjs keys on the
- * generated CLASS too, which is the empty string unless `add_classes` is on — so the two
- * agree wherever it is off, and a host that turns it on could in principle see abcjs keep
- * two entries where we keep one. Measured at zero cost across all 691 cases; it is where to
- * look if a page-order defect ever shows up in text widths under `add_classes`.
+ * ⚠️ **AND THE KEY IS COARSER THAN abcjs's IN ONE WAY, AND THAT PREDICTION HAS NOW FIRED.**
+ * abcjs's key is `text + JSON.stringify(attr)` and `attr` carries
+ * `class: classes.generate(klass)` (`write/svg.js:316`, `helpers/get-text-size.js:21-48`) —
+ * the empty string unless `add_classes` is on, so the two keys agree wherever it is off, and
+ * position-qualified when it is on. This note used to end "it is where to look if a
+ * page-order defect ever shows up in text widths under `add_classes`", and that is exactly
+ * what `zzopts`'s `add_classes` row found: `visual-selection-01` and `-svg-per-line-01` were
+ * byte-identical rendered ALONE and drifted by 0.02px in a NOTEHEAD x once another tune had
+ * been rendered into the same page first — measured down to the one tune that does it
+ * (`visual-mouse-click-01`) by bisecting the corpus, with abcjs CONSTANT across both.
+ *
+ * ⚠️ **AND THE FAITHFUL KEY IS UNREACHABLE FROM HERE.** The generated class is the WRITER's
+ * — `Classes` is a counter walked in draw order (`svg.ts`) — and these measurements are made
+ * by the LAYOUT, which runs first and cannot know the line, measure or voice an element will
+ * be numbered with. So under `add_classes` the cache is made per-render instead
+ * (`crossRender: false`): abcjs's key is kept, and only the cross-render SHARING is dropped.
+ * That is an approximation and not a port, and it is the one that agrees with abcjs on every
+ * one of the 691 cases, because a fresh page is what abcjs's position-qualified key gives
+ * every render anyway. See `ABCJS-DEBT.md` §3b.1.
  */
 const SIZE_CACHE = new Map<string, TextSize>()
 
@@ -155,9 +169,14 @@ export const createDomTextMeasurer = (
    * so a string measured at two different x's gets two answers and a tune renders the same
    * wherever it sits in a book. `abcjs-extended` take it. See `ABCJS-DEBT.md` §3b.1.
    */
-  { shared = true }: { readonly shared?: boolean } = {},
+  /**
+   * ⚠️ **AND `crossRender: false` KEEPS abcjs's KEY AND DROPS ONLY THE SHARING**, which is
+   * the one thing `add_classes` needs — see `SIZE_CACHE`'s note on the class. Distinct from
+   * `shared: false`, which changes the KEY as well by adding the x.
+   */
+  { shared = true, crossRender = true }: { readonly shared?: boolean; readonly crossRender?: boolean } = {},
 ): TextMeasurer => {
-  const cache = shared ? SIZE_CACHE : new Map<string, TextSize>()
+  const cache = shared && crossRender ? SIZE_CACHE : new Map<string, TextSize>()
   const NS = 'http://www.w3.org/2000/svg'
 
   return (text: string, font: TextFont): TextSize => {

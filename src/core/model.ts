@@ -577,6 +577,22 @@ export interface TupletMark {
   /** Tune-unique id, so adjacent tuplets of the same size stay distinguishable. */
   readonly group: number
   readonly number: number
+  /**
+   * **DOES THIS EVENT OPEN THE GROUP?** — abcjs's `startTriplet`, which it sets on the note
+   * the `(p` was written before (`abc_parse_music.js`) and reads in exactly one place:
+   * `BeamElem` multiplies by the tuplet ratio only `if (firstElement.startTriplet)`
+   * (`write/creation/elements/beam-element.js:31-36`), so a beam whose first note OPENS a
+   * tuplet classes on the SOUNDING duration and one whose first note merely belongs to it
+   * classes on the NOTATED one.
+   *
+   * ⚠️ **IT IS A PROPERTY OF THE EVENT AND MUST NOT BE RE-DERIVED.** The renderer used to
+   * infer it — "the first member of this group I have seen" — inside the per-MEASURE
+   * builder, so a tuplet crossing a barline opened a second time and the beam after the bar
+   * classed `abcjs-d0-083` where abcjs writes `abcjs-d0-125` (`(3CD|EFGA|`,
+   * `bars-graces-and-groups` tune 19). The set that tracked it was reset per measure, which
+   * no amount of widening could fix: only the parser knows where the `(p` stood.
+   */
+  readonly opens?: true
 }
 
 /** A compound meter beats in threes — 6/8, 9/8, 12/8 — which changes the default tuplet q. */

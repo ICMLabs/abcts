@@ -5580,14 +5580,22 @@ class Parser {
     let tupletRatio: Rational | null = null
     let tupletNumber = 0
     let tupletGroup = 0
+    /** …and whether the NEXT member is the one the `(p` stood before — see `TupletMark.opens`. */
+    let tupletOpening = false
 
     const applyTuplet = (event: MusicEvent): MusicEvent => {
       if (tupletRemaining <= 0 || !tupletRatio) return event
       tupletRemaining--
+      const opens = tupletOpening
+      tupletOpening = false
       return {
         ...event,
         duration: ratMul(event.duration, tupletRatio),
-        tuplet: { group: tupletGroup, number: tupletNumber },
+        tuplet: {
+          group: tupletGroup,
+          number: tupletNumber,
+          ...(opens ? { opens: true as const } : {}),
+        },
       }
     }
 
@@ -6449,6 +6457,7 @@ class Parser {
             tupletRatio = rational(q, p)
             tupletNumber = p
             tupletGroup = builder.nextTupletGroup()
+            tupletOpening = true
           }
           break
         }

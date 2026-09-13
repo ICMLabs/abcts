@@ -11263,8 +11263,6 @@ function layoutMeasure(
   const anchors: NoteAnchor[] = []
   /** …and the non-note places a hairpin may open or close — see `MeasureBlock.spannerSites`. */
   const spannerSites: SpannerSite[] = []
-  /** Tuplet groups already opened, so only the FIRST member is stamped. */
-  const tupletSeen = new Set<number>()
   let x = 0
 
   // The label precedes the first event that comes AFTER the `P:` in the source, which is
@@ -12081,9 +12079,13 @@ function layoutMeasure(
     // …**AND A REST OPENS A TUPLET LIKE ANY OTHER ELEMENT.** `(3zcd` puts `startTriplet`
     // on the `z`, so the `c` after it is a member that does NOT open one and classes
     // NOTATED — `S8-layout` X:810's beam is `abcjs-d0-125`.
+    //
+    // ⚠️ **AND IT IS THE PARSER THAT KNOWS, NOT THIS WALK.** This asked "is it the first
+    // member of the group I have seen", out of a `Set` that lives for ONE MEASURE — so a
+    // tuplet crossing a barline opened twice and the beam after the bar classed
+    // `abcjs-d0-083` against abcjs's `abcjs-d0-125` (`(3CD|EFGA|`). See `TupletMark.opens`.
     const tupletGroupId = event.tuplet?.group ?? null
-    const opensTuplet = tupletGroupId !== null && !tupletSeen.has(tupletGroupId)
-    if (opensTuplet && tupletGroupId !== null) tupletSeen.add(tupletGroupId)
+    const opensTuplet = event.tuplet?.opens === true
     elements.push(
       tupletGroupId === null
         ? el
@@ -16406,6 +16408,18 @@ function layoutScoped(input: Score, options: LayoutOptions = {}): Layout {
        */
       musicWidth,
       originY: 0,
+      // …and how many `tune.lines` rows stand above this staff line, whatever they draw —
+      // see `LayoutSystem.nonMusicLines`. The first system's are the tune's own leading
+      // blocks; every later one's are the blocks written before it.
+      // ⚠️ **AND A `%%newpage` IS ONE OF THEM AND IS NOT A BLOCK.** It pushes a `{newpage}`
+      // LINE that nothing in `write/` reads, so it draws nothing anywhere — see
+      // `ScoreMetadata.newPage` and `Measure.newPageBefore`, and the same three terms
+      // `nonMusicPrecedesMusic` is built from.
+      nonMusicLines:
+        systemIndex === 0
+          ? score.textAbove.length + (score.newPage !== null ? 1 : 0)
+          : (blocksBeforeSystem[systemIndex] ?? []).length +
+            (plans.some((p) => p.measures[span.start]?.newPageBefore !== undefined) ? 1 : 0),
     }
   })
 

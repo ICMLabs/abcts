@@ -137,14 +137,14 @@ const OPTIONS = [
    *   wrap+staffwidth   60 — re-lining is implemented (`compat/wrap.ts`) and no gate had
    *                          ever rendered its OUTPUT beside abcjs's.
    *   add_classes       17 — the class scheme itself is gated by 111 sibling goldens; these
-   *                          are the rows those goldens do not reach.
+   *                          are the rows those goldens do not reach. NOW 1.
    *   expandToWidest    14 — a line stiffer than the page widens the page to fit it. NOW 0 — CLOSED.
    *   accentAbove       13 — an `accent` joins the ABOVE stack instead of the below one
    *                          (`creation/decoration.js:20`), which moves every lane with it.
    */
   /**
-   * ⚠️ **16, AND THE CLASS RULES BEHIND THEM ARE NOW THREE.** The scheme itself is gated by
-   * 111 sibling goldens; these are the rows those goldens do not reach.
+   * ✅ **1, FROM 16 — AND THE CLASS RULES BEHIND THEM ARE NOW TEN.** The scheme itself is
+   * gated by 111 sibling goldens; these were the rows those goldens do not reach.
    *
    * ✅ **A GROUP'S CLASS IS THE `<g>`'s AND AN UNGROUPED ROW'S IS ITS OWN**, and the two
    * callers differ by one argument: `addMultiLine`'s array branch opens a group with the
@@ -158,14 +158,72 @@ const OPTIONS = [
    * ✅ **AND A GENERATED CLASS WINS OVER THE FIELD'S OWN**, because `classes.generate`
    * appends the LINE counter: a `%%text` row is `abcjs-defined-text abcjs-l2`.
    *
-   * ⚠️ **THE NEXT ONE IS NAMED AND NOT FIXED**: a `%%sep` SEPARATOR rule is
-   * `abcjs-defined-text abcjs-l2` in abcjs and `abcjs-defined-text` here — the free-text
-   * row immediately above it is `abcjs-l1` in BOTH, so the counter is right and simply is
-   * not advanced for the separator's own line. `visual-mouse-click-01`, byte 2825.
-   * ⚠️ And some of the 16 are not class defects at all: `visual-selection-01` differs on a
-   * NOTEHEAD x, which `add_classes` only revealed by making the bytes before it match.
+   * ✅ **16 → 1, IN SEVEN RULES, AND `ZZWHERE=1` IS HOW EVERY ONE OF THEM WAS FOUND.** The
+   * slug list says which fixtures; the first differing BYTE says what. Ten of the sixteen
+   * were ONE question — where does the `abcjs-lN` counter advance — and it is the third time
+   * `tune.lines`'s index has been the cause, after `initialClef`'s `l` and the wrap's meter
+   * skip.
+   *
+   * ✅ **A ROW THAT PAINTS NOTHING IS STILL A LINE — 6.** `draw()` runs `classes.incrLine()`
+   *    at the HEAD of each `tune.lines` iteration and only THEN asks whether the line is a
+   *    staff or a nonMusic row (`draw/draw.js:29-31`). The emitter counted the blocks that
+   *    produced ROWS, so a bare `%%text`, a bare `%%center` and the empty nonMusic line a
+   *    `%%newpage` leaves behind were all skipped. The count travels now
+   *    (`LayoutSystem.nonMusicLines`) rather than being re-derived from the ink, because ink
+   *    is exactly what these lines do not have.
+   * ✅ **A `%%sep` RULE'S CLASS IS GENERATED AT ITS OWN LINE — 2.**
+   *    `pathToBack({…, 'class': classes.generate('defined-text')})`
+   *    (`draw/separator.js:13`). ⚠️ **IT WAS A LAZY-VS-EAGER BUG AND NOT A MISSING CALL**: the
+   *    block's non-text markup was built as a STRING before the loop that advances the
+   *    counter, where a text row's is a function called inside it. It is a thunk now.
+   * ✅ **EVERY TEXT ROW'S CLASS IS GENERATED — 3.** `getFontAndAttr.calc` ends
+   *    `'class': this.classes.generate(klass)` whatever the klass is
+   *    (`helpers/get-font-and-attr.js:41`). The literal table here is only what `generate`
+   *    RETURNS while the counter is null, which is true of a title and a composer because
+   *    they are drawn from `topText` BEFORE the loop — and NOT of a subtitle after the music,
+   *    which abcjs writes `abcjs-text abcjs-subtitle abcjs-l2`.
+   *    ⚠️ **AND THAT MADE THE ORDER OF TWO STATEMENTS LOAD-BEARING**: the meta block is
+   *    written before the leading-subtitle advances now, or the header title would take an
+   *    `abcjs-l0` abcjs never writes. Invisible while the classes were literal strings.
+   * ✅ **A BOXED ROW'S CLASS IS MOVED TO ITS GROUP, NOT DROPPED — 2.** `renderText` opens
+   *    `openGroup({ klass: hash.attr['class'], … })` and only THEN
+   *    `delete hash.attr['class']` (`draw/text.js:50`, `:58`). The suppression on the text
+   *    was ported and the group left bare at all THREE sites — a music text, a top-block row
+   *    and a bottom-block row — and fixing any one leaves the others bare.
+   * ✅ **A GRACE BEAM'S ELEMENT INDEX IS PER VOICE — 4.** An ordinary beam's `beamAt` comes
+   *    off the voice's own plan and `flushVoice` adds `voiceBase`; the grace-beam walk pushed
+   *    a STAFF-wide index, so the lookup missed and fell to `abcjs-m0 abcjs-mm0` for every
+   *    grace beam in a LOWER voice. ⚠️ **Invisible for voice 0, where the two are the same
+   *    number** — the same shape as the curve-anchor bug beside it in `svg.ts`.
+   * ✅ **A BEAM MULTIPLIES BY THE TUPLET RATIO ONLY WHEN ITS FIRST ELEMENT OPENS THE
+   *    TUPLET — 1.** `if (firstElement.startTriplet)` (`elements/beam-element.js:31-36`).
+   *    The rule was already ported and the PREDICATE was re-derived — "the first member of
+   *    this group I have seen", out of a set that lived for one MEASURE — so `(3CD|EFGA|`
+   *    opened the group twice. `TupletMark.opens` is the parser's answer; no widening of the
+   *    set could have worked, because only the parser knows where the `(p` stood.
+   *
+   * ⭐⭐ **AND ONE OF THE SIXTEEN WAS THIS REPO'S OWN PREDICTION COMING TRUE — 2.**
+   *    `visual-selection-01` and `-svg-per-line-01` were byte-identical rendered ALONE and
+   *    differed here by 0.02px in a NOTEHEAD x. `SIZE_CACHE`'s comment in
+   *    `text-measure.ts` already said abcjs keys its text-size cache on the generated CLASS
+   *    and ours does not, and ended: "it is where to look if a page-order defect ever shows
+   *    up in text widths under `add_classes`". It did. **And the first reading was
+   *    BACKWARDS** — measured with a fresh page against the gate's own walk, abcjs is
+   *    CONSTANT and OURS drifts, bisected down to the single earlier tune that does it.
+   *    The faithful key is unreachable (the class is the writer's, the measurement the
+   *    layout's), so the cache is per-render under the flag.
+   *
+   * ⚠️ **THE LAST ROW IS `abcts-endings` tune 2, AND ITS CAUSE IS MEASURED.** abcjs's second
+   * `EndingElem` is `addOther`'d after TWO `'bar'` markers and ours reports one:
+   * `other=[EndingElem, BAR, BAR, EndingElem, BAR, BAR, BAR]`, logged in abcjs's own
+   * `drawVoice`. The ending's counter is still DERIVED here —
+   * `measure: Math.max(0, i - span.start - 1)`, the measure index within the line minus one —
+   * where a TRIPLET already carries a `measureElement` and lets `markerAt` answer. **The
+   * derivation breaks exactly where the wrap arc's did: a measure that OPENS with a barline
+   * contributes TWO bar elements, not one.** Giving a volta the element index a triplet has
+   * is the fix and it is its own landing, not a term to bolt onto this one.
    */
-  ['add_classes', { add_classes: true }, 16],
+  ['add_classes', { add_classes: true }, 1],
   // ✅ CLOSED — two `if`s, one in each decoration pass: `closeDecoration` skips the accent
   // (`creation/decoration.js:20`) and `stackedDecoration` picks it up with the ORNAMENT's
   // own placement (`:268-273`). The same sforzato is drawn either way; what changes is
@@ -978,7 +1036,19 @@ for (const [label, opts, declared, witness] of OPTIONS) {
         base: needBase ? one(window.ABCJS, {}) : null,
       }
     }, [c.abc, c.tune, opts, !moved])
-    if (r.js !== r.ts) { off += 1; if (first.length < 3) first.push(c.slug) }
+    if (r.js !== r.ts) {
+      off += 1
+      if (first.length < 3) first.push(c.slug)
+      // `ZZWHERE=1` — the first differing BYTE of each row, which is what turns a slug list
+      // into a diagnosis. Every rule of the `add_classes` arc was found from this output.
+      if (process.env.ZZWHERE) {
+        let i = 0
+        while (i < r.js.length && r.js[i] === r.ts[i]) i += 1
+        console.log(`  WHERE ${c.slug} byte ${i} of ${r.js.length}` +
+          `\n    js …${r.js.slice(Math.max(0, i - 60), i + 60)}` +
+          `\n    ts …${r.ts.slice(Math.max(0, i - 60), i + 60)}`)
+      }
+    }
     if (!moved && r.base !== null && r.js !== r.base) moved = true
     if (!seen && witness.test(r.js)) seen = true
   }
