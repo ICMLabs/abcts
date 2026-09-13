@@ -15670,7 +15670,24 @@ function layoutScoped(input: Score, options: LayoutOptions = {}): Layout {
       const all = voiceAnchors[voiceIndex] ?? []
       const first = systemAnchors[0]
       const previous = first === undefined ? undefined : all[all.indexOf(first) - 1]?.event
-      const tiedIntoSystem = previous?.type === 'note' && previous.tiedToNext
+      /**
+       * ⚠️ **AND A CHORD TIES TOO.** `[GB]8-|` carries its `-` after the bracket exactly as
+       * a note does, and abcjs builds one `TieElem` per tied PITCH
+       * (`abc_parse_music.js:427`) — every one of which reserves `anchor2.pitch ± 4` when
+       * its closing head lands on this line. Testing `type === 'note'` alone left a chord's
+       * incoming half reserving NOTHING.
+       *
+       * Invisible until `initialClef` removed the clef: a treble clef declares `bottom: -1`
+       * and the tie's own 0 never won the `min`. `parse-tie-slur-03`'s staff came out at
+       * pitch 2 — the bare bottom line — against abcjs's 0, and the page 7.75 short.
+       * ⭐ **A RESERVE THAT IS ALWAYS MASKED BY A BIGGER ONE IS A RULE NO GATE CAN SEE**;
+       * this one had been ported, measured on a ladder, and written up, and was dead for a
+       * chord the whole time.
+       */
+      const tiedIntoSystem =
+        (previous?.type === 'note' || previous?.type === 'chord') &&
+        (previous.tiedToNext ||
+          (previous.type === 'chord' && (previous.tiedPitches ?? []).some(Boolean)))
       const curves = curveReserves(
         systemAnchors,
         elements,

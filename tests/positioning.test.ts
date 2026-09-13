@@ -466,3 +466,49 @@ describe("initialClef counts the non-music rows", () => {
     expect([...host.innerHTML.matchAll(/data-name="clefs\.[A-Z]"/g)].length).toBe(1);
   });
 });
+
+/**
+ * **A CHORD'S INCOMING TIE-HALF RESERVES, AND THE RULE HAD BEEN DEAD FOR A CHORD.**
+ *
+ * A tie arriving from the system above reserves `anchor2.pitch ± 4` as INK — the second
+ * half has a null `anchor1` and its closing note IS on that line, so `setEndAnchor` runs
+ * (`elements/tie-element.js:25-38`). That was ported, measured on a six-rung ladder and
+ * written up; it tested `previous.type === 'note'`, and `[GB]8-|` is a CHORD. abcjs builds
+ * one `TieElem` per tied PITCH (`abc_parse_music.js:427`), every one of which reserves.
+ *
+ * ⭐ **IT WAS INVISIBLE UNTIL `initialClef` REMOVED THE CLEF.** A treble clef declares
+ * `bottom: -1` and the tie's own 0 never won the `min`, so the staff came out the same
+ * either way. With the clef suppressed `parse-tie-slur-03`'s staff sat at pitch 2 — the
+ * bare bottom line — against abcjs's 0, and the page was 7.75 short with NOTHING moved:
+ * 0 of 61 elements, kinds identical. **A reserve that is always masked by a bigger one is
+ * a rule no gate can see.**
+ *
+ * `zzopts`'s `initialClef` row: 3 -> 1.
+ */
+describe("a chord ties into the next system", () => {
+  const bottomGap = (abc: string): number => {
+    const host = { innerHTML: "" } as { innerHTML: string };
+    renderAbc(host, abc, { staffwidth: 670, initialClef: true });
+    return Number(/height="([\d.]+)"/.exec(host.innerHTML)?.[1] ?? 0);
+  };
+
+  // THE FIXTURE, not a paraphrase of it — the first draft of this rewrote the `%%staves`
+  // and `%%staffwidth` lines and measured a different tune.
+  const CHORD = readFileSync(
+    join(FIXTURES, "abcjs-parse-tie-slur-03-onestaff.abc"),
+    "utf-8",
+  );
+
+  // ⭐ abcjs's own page. Testing `type === 'note'` alone gave 7.75 less — two staves, one
+  // pitch each, and nothing drawn moved to show it.
+  it("reserves for the arriving half of a chord tie", () => {
+    expect(bottomGap(CHORD)).toBeCloseTo(275.682, 3);
+  });
+
+  // ⭐⭐ THE CONTROL — the same tune with the ties REMOVED reserves nothing there, so the
+  // page is shorter. A rule that reserved for every chord regardless would pass the row
+  // above and fail this one.
+  it("reserves nothing when the chords do not tie", () => {
+    expect(bottomGap(CHORD.replace(/-\|/g, "|"))).toBeLessThan(bottomGap(CHORD));
+  });
+});

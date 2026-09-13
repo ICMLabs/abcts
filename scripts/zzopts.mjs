@@ -133,7 +133,7 @@ const OPTIONS = [
    *                          spaces by TIME rather than by the spring solve. The largest.
    *   minPadding       659 — extra room to the left of every note and bar in the solve
    *                          (`layout/voice-elements.js:34`, `:110-115`).
-   *   initialClef      125 — reprints the clef at the head of the tune. NOW 3.
+   *   initialClef      125 — reprints the clef at the head of the tune. NOW 1.
    *   wrap+staffwidth   60 — re-lining is implemented (`compat/wrap.ts`) and no gate had
    *                          ever rendered its OUTPUT beside abcjs's.
    *   add_classes       17 — the class scheme itself is gated by 111 sibling goldens; these
@@ -209,22 +209,29 @@ const OPTIONS = [
   // clef at all. Ours read it as the count of music SYSTEMS — the same misreading the
   // wrap's `action.line !== 0` meter skip had, and `nonMusicPrecedesMusic` is now the one
   // predicate both read. **27 of the 39 that closed were that single reading.**
-  // ⚠️ **AND THE RECORDED HYPOTHESIS WAS WRONG AND IS NOW DISPROVED, NOT JUST UNTESTED.**
-  // The note here said the 42 were page heights in both directions and named
-  // `this.startlimitelem = clef` (`:164`). `startlimitelem` only reaches `TieElem.setStartX`,
-  // which sets `startX` and nothing else (`elements/tie-element.js:42-44`, `:118-131`) — it
-  // cannot move a reserve, and on the two fixtures left NOTHING MOVES: 0 of 61 elements,
-  // kinds identical, and the page 7.75 short.
-  // ⚠️ **WHAT THOSE TWO ACTUALLY ARE, MEASURED IN abcjs'S OWN `staffGroup`:** with the
-  // option its staff `bottom` goes -1 → **0** on lines 1 and 2, and ours goes to **2**, the
-  // bare bottom staff line. abcjs initialises `{top: 10, bottom: 2}`
-  // (`elements/staff-group-element.js:55-56`) and then `staff.bottom -= diff` per voice
-  // (`layout/set-upper-and-lower-elements.js:75-79`); with no clef its diff is still 2 and
-  // ours is 0, so abcjs has a floor below the staff that we do not. Start at
-  // `setUpperAndLowerVoiceElements`'s `diff`, which is ASSIGNED per element rather than
-  // accumulated. `abcjs-parse-tie-slur-03-onestaff` and `-staffwidth-200`; the third,
-  // `abcts-ledger-gaps-3-tune3`, is geometry with no height difference at all.
-  ['initialClef', { initialClef: true }, 3],
+  // ⚠️ **AND THE RECORDED HYPOTHESIS WAS HALF RIGHT, WHICH IS WHY ITS CONTROL WAS MUTE.**
+  // The note named `this.startlimitelem = clef` (`:164`) as the cause of the 42. It reaches
+  // only `TieElem.setStartX`, which sets `startX` and nothing else
+  // (`elements/tie-element.js:42-44`, `:118-131`) — so it CANNOT move a reserve, and the
+  // two page-height fixtures had NOTHING moved at all (0 of 61 elements, kinds identical).
+  // It is real, and it is the LAST remaining row rather than the 42.
+  // ✅ **THE PAGE HEIGHTS WERE A CHORD'S INCOMING TIE-HALF, RESERVING NOTHING — 3 → 1.**
+  // A tie arriving from the system above reserves `anchor2.pitch ± 4` as ink; the rule was
+  // ported, ladder-measured and written up, and tested `previous.type === 'note'` where
+  // `[GB]8-|` is a CHORD. abcjs builds one `TieElem` per tied PITCH
+  // (`abc_parse_music.js:427`). ⭐ **INVISIBLE UNTIL THIS OPTION REMOVED THE CLEF**: a
+  // treble clef declares `bottom: -1` and the tie's own 0 never won the `min`. **A reserve
+  // always masked by a bigger one is a rule no gate can see.** Measured in abcjs's own
+  // `staffGroup`: its `bottom` is 0 on the clef-less lines and ours was 2, the bare bottom
+  // staff line.
+  // ⚠️ **THE ONE LEFT IS `abcts-ledger-gaps-3-tune3` AND IT IS `startlimitelem`.** A SLUR
+  // spanning three systems, so `writtenAs === 'slur'` and abcjs DOES call
+  // `setStartX(this.startlimitelem)` (`abstract-engraver.js:923-925`); with the clef gone
+  // and `K:C` yielding no key signature, the limit is not this line's prefix. abcjs starts
+  // the arc at x 66.85 and ours at 128.28, which is `anchor2.x - 20`, the stub an incoming
+  // half takes when it has no limit. Page height EXACT, 1 element of 50. Instrument what
+  // `startlimitelem` actually holds on that line before porting anything.
+  ['initialClef', { initialClef: true }, 1],
   // ✅ 659 → 5. `getExtraWidth(child, pad)` returns `-child.extraw + pad`, so the padding is
   // part of what the element WANTS and the same shortfall test decides whether any of it is
   // spent — an element with slack in front of it costs nothing. `pad` is skipped for
