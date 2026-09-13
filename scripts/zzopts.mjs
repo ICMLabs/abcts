@@ -626,6 +626,23 @@ const OPTIONS = [
    *    fix ignored the directive and drew one where abcjs draws none, caught by the
    *    control. `parsing-x10`'s lengths now MATCH (39/39).
    *
+   * ✅ **THE WHOLE `%%keywarn` CLUSTER IS CLOSED — x10, x11 AND x12.** x11 and x12 took
+   *    three more rules, 18 → 16:
+   *      · `lastKeySig` is a property of the STAFF and `addLineBreaks` never resets it, so
+   *        it crosses the non-music row a subtitle or `%%text` puts between two runs.
+   *        `opensHere` cannot see those measures — they open a SECTION, not a wrapped line.
+   *      · a standalone `K:` written after such a row publishes NO key element, because
+   *        `appendStartingElement` bails at `if (!staff) return` on the subtitle row
+   *        (`tune-builder.js:255-258`). Unwrapped that costs nothing — `startNewLine`
+   *        stamps the staff and the prefix prints it — but under a wrap `addLineBreaks`
+   *        overwrites the staff key with the carried one and the change is lost from the
+   *        DRAWING. abcjs renders x11's last system in the carried F, not the `K:D`.
+   *        ⚠️ Half of this is WORSE than none: the carry without the suppression drew both,
+   *        41 elements against abcjs's 38, where the unfixed engine drew 39.
+   *      · `addKeyToVoices` unshifts onto EVERY voice of the staff
+   *        (`data/deline-tune.js:135-142`), not voice 0's. x12 alternates `V:1`/`V:2` and
+   *        ours drew three accidentals of eighteen.
+   *
    * ✅ **AND `parsing-x10` IS CLOSED — 23 → 22 — AND THE HEAD KEY WAS NEVER THE PROBLEM.**
    *    The two flats read as "Gm, the HEADER key" and they are not: abcjs's system 2 draws
    *    the carried `K:F` at its HEAD and then a SECOND group in the stream, the delined
@@ -767,13 +784,13 @@ const OPTIONS = [
    *    3  GEOMETRY ONLY, same element kinds throughout:
    *       `text-udef-parts-overlays-tune8` and `-tune46`, `vskip-tune1`.
    *
-   * ⚠️ **AND TWO OF THE 18 ARE abcjs CRASHING, NOT US.** `abcts-vskip` tunes 0 and 2 throw
+   * ⚠️ **AND TWO OF THE 16 ARE abcjs CRASHING, NOT US.** `abcts-vskip` tunes 0 and 2 throw
    * inside abcjs's own `wrapLines` — `undefined is not an object (evaluating 'l[p]')` —
    * because `addLineBreaks` reads `lines[action.ogLine].staff[action.staff]` on a row a
    * `%%vskip` made non-music. We render them. A crash is not output and strict does not
    * reproduce one.
    */
-  ['wrap + staffwidth', { wrap: { minSpacing: 1.8, maxSpacing: 2.7, preferredMeasuresPerLine: 4 }, staffwidth: 400 }, 18],
+  ['wrap + staffwidth', { wrap: { minSpacing: 1.8, maxSpacing: 2.7, preferredMeasuresPerLine: 4 }, staffwidth: 400 }, 16],
 ]
 const every = Number(process.argv[2] ?? 1)
 const browser = await webkit.launch()

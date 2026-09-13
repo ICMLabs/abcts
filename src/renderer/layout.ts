@@ -11285,6 +11285,25 @@ function layoutMeasure(
     // bar 38.75px left of abcjs's — the NATURALS are what `%%keywarn 0` removes here, and
     // `parseKey` removes those for an inline change too.
     if (measure.keyChangeInline !== true && !(measure.keyChangeKeywarn ?? KEYWARN)) return
+    /**
+     * **AND A STANDALONE `K:` AFTER A NON-MUSIC ROW PUBLISHES NOTHING EITHER** — the same
+     * guard reached by a different early return. `appendStartingElement` bails at
+     * `if (!staff) return` (`tune-builder.js:255-258`), because the row the field is read
+     * on is the `%%text`/subtitle one and has no staff.
+     *
+     * UNWRAPPED it makes no difference: `startNewLine` stamps the key onto the NEXT line's
+     * staff and the prefix prints it. Under a wrap `addLineBreaks` overwrites that staff
+     * key with the carried `lastKeySig` (`wrap_lines.js:49-50`), and with no stream element
+     * to fall back on the change is lost from the drawing altogether — abcjs renders
+     * `visual-parsing-x11`'s last system in the carried **F**, not the `K:D` in force.
+     * Reproducing that is the point; see `Measure.wrapLineHeadKey`.
+     */
+    if (
+      measure.keyChangeInline !== true &&
+      measure.wrapLineHeadKey !== undefined &&
+      (measure.textBefore?.length ?? 0) > 0
+    )
+      return
     // NOT WHEN IT LEADS THE SYSTEM — the prefix already carries it, and the previous
     // system's `trailingKey` already drew it. See `keyChangeLeadsLine`.
     if (keyChangeLeadsLine(measure)) return

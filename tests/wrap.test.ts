@@ -1319,3 +1319,63 @@ describe("renderAbc({wrap}) — a system reprints the delined line's clef", () =
     expect(count("F")).toBe(4);
   });
 });
+
+/**
+ * **A CARRIED HEAD KEY SURVIVES A NON-MUSIC ROW, AND A `K:` AFTER ONE PUBLISHES NOTHING.**
+ *
+ * Two rules, and `visual-parsing-x11` needs both — `K:Eb / G| / K:F / B| / T:Sub / K:D / d|`,
+ * where abcjs opens the last system with ONE FLAT and the key in force there is D.
+ *
+ *   1. `lastKeySig` is a property of the STAFF and `addLineBreaks` never resets it
+ *      (`wrap_lines.js:49-50`), so it crosses the non-music row a subtitle or a `%%text`
+ *      puts between two runs. `opensHere` cannot see those measures — they open a SECTION,
+ *      not a wrapped line — so the stamp is owed on that path too.
+ *   2. A standalone `K:` written after such a row publishes NO key element:
+ *      `appendStartingElement` bails at `if (!staff) return` (`tune-builder.js:255-258`)
+ *      because the row it is read on has no staff. `lastKeySig` therefore never advances,
+ *      AND the change has no stream element to draw. Unwrapped it makes no difference —
+ *      `startNewLine` stamps the key onto the next line's staff and the prefix prints it —
+ *      but under a wrap `addLineBreaks` overwrites that staff key with the carried one and
+ *      the change is lost from the drawing altogether. abcjs renders the last system in F.
+ *
+ * ⚠️ **HALF OF IT IS WORSE THAN NONE.** Carrying the head without suppressing the change
+ * drew BOTH — the carried flat and a full F→D group — for 41 elements against abcjs's 38,
+ * where the unfixed engine drew 39. Each control below fails on its own half.
+ *
+ * …**AND THE INJECTION GOES INTO EVERY VOICE** — `addKeyToVoices` unshifts onto every voice
+ * of the staff (`data/deline-tune.js:135-142`). `visual-parsing-x12` alternates `V:1`/`V:2`
+ * and abcjs injects on each; ours drew three accidentals of eighteen. `zzopts` 18 -> 16.
+ */
+describe("renderAbc({wrap}) — a key across a non-music row", () => {
+  const accidentals = (file: string): string => {
+    const host = { innerHTML: "" } as { innerHTML: string };
+    renderAbc(
+      host,
+      readFileSync(join(import.meta.dirname, "corpus-abcjs", "fixtures", file), "utf-8"),
+      {
+        staffwidth: 400,
+        wrap: { minSpacing: 1.8, maxSpacing: 2.7, preferredMeasuresPerLine: 4 },
+      },
+    );
+    return [...host.innerHTML.matchAll(/data-name="accidentals\.([a-z]+)"/g)]
+      .map((m) => m[1])
+      .join(" ");
+  };
+
+  // ⭐ Three flats for `K:Eb`, the `K:F` change's `nat nat flat` twice — once as the
+  // warning and once as the injected staff key — and then ONE FLAT at the last system's
+  // head. No sharps anywhere: the `K:D` draws nothing at all.
+  it("carries the key over a subtitle and drops the K: that follows it", () => {
+    expect(accidentals("abcjs-visual-parsing-x11.abc")).toBe(
+      "flat flat flat nat nat flat flat nat nat flat",
+    );
+  });
+
+  // ⭐ And every staff takes the injection, not just the first.
+  it("injects the delined staff key into every voice", () => {
+    const a = accidentals("abcjs-visual-parsing-x12.abc").split(" ");
+    expect(a.filter((x) => x === "flat").length).toBe(18);
+    expect(a.filter((x) => x === "sharp").length).toBe(10);
+    expect(a.filter((x) => x === "nat").length).toBe(4);
+  });
+});

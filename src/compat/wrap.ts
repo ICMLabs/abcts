@@ -613,9 +613,42 @@ export function applyLineBreaks(
     if (vi === 0) {
       let runKey = score.key;
       voice.measures.forEach((m, i) => {
-        const opensNow = i === 0 ? m.startsSystem === true : opensHere.has(i);
+        /**
+         * ⚠️ **AND A SECTION'S FIRST MEASURE OPENS A SYSTEM TOO.** `lastKeySig` is a
+         * PROPERTY OF THE STAFF and `addLineBreaks` never resets it, so it survives the
+         * non-music row a `%%text` or a subtitle puts between two runs — the line after one
+         * carries exactly what the line before it left. `opensHere` cannot see those
+         * measures, because they open a SECTION rather than a wrapped line.
+         *
+         * `visual-parsing-x11` is that tune: `K:Eb / G| / K:F / B| / T:Sub / K:D / d|`,
+         * where abcjs opens the last system with ONE FLAT — the carried `K:F` — and the key
+         * in force there is D.
+         */
+        const opensNow =
+          i === 0 ? m.startsSystem === true : opensHere.has(i) || sectionStarts.includes(i);
         if (opensNow && i > 0) headKeys.set(i, runKey);
-        if (m.keyChange !== null) runKey = m.keyChange;
+        /**
+         * ⭐ **AND THE CARRIED KEY IS THE LAST ONE ALLOWED INTO THE STREAM, NOT THE ONE IN
+         * FORCE.** `lastKeySig` is taken from the last key ELEMENT of the line just
+         * finished (`wrap_lines.js:60-70`), and a change that publishes no element never
+         * advances it. A standalone `K:` after a subtitle is exactly that:
+         * `appendStartingElement` returns at `if (!tune.lines[tune.lineNum].staff) return`
+         * because the current row is the SUBTITLE and has no staff (`tune-builder.js:255`),
+         * so `x11`'s `K:D` reaches `multilineVars.key` and nothing else.
+         *
+         * ⚠️ **ANY non-music row does it, not only a subtitle** — a `%%text`, a `%%sep` and
+         * a `%%newpage` all leave `tune.lines[lineNum]` without a staff — which is why the
+         * test is the same `textBefore` one `sectionStarts` uses rather than
+         * `subtitleLeads`.
+         *
+         * ponytail: this cannot see the ORDER of the block and the `K:`. Written
+         * `K:D` / `%%text` / music the field lands on the previous music line's voice and
+         * DOES publish an element; written `%%text` / `K:D` / music it does not. The model
+         * hangs `textBefore` on the measure and keeps no relative position, so the second
+         * reading is assumed. Give `Measure` a source offset for the block if a fixture
+         * ever writes the first.
+         */
+        if (m.keyChange !== null && (m.textBefore?.length ?? 0) === 0) runKey = m.keyChange;
       });
     }
     const measures = voice.measures.map((m, i) => {
@@ -657,11 +690,34 @@ export function applyLineBreaks(
       };
       // A section's FIRST measure keeps whatever it had — it opens the section, and that
       // is not the wrap's to decide.
-      if (i === from) return noVskip({ ...m, wrapSourceLine: section, ...trails, ...sourceStart });
+      /**
+       * A section's FIRST measure keeps whatever it had — it opens the section, and that is
+       * not the wrap's to decide — **EXCEPT for the carried head key**, which is the staff's
+       * `lastKeySig` and survives the non-music row that split the sections. See `headKeys`.
+       */
+      if (i === from)
+        return noVskip({
+          ...m,
+          wrapSourceLine: section,
+          ...trails,
+          ...sourceStart,
+          ...(vi === 0 && headKeys.has(i) ? { wrapLineHeadKey: headKeys.get(i)! } : {}),
+        });
       // "These are the zero-based last measure on each line", so the measure AFTER one
       // opens a system and every other measure in the section does not.
       const opens = opensHere.has(i);
-      const owedHere = vi === 0 ? injects.get(i) : undefined;
+      /**
+       * ⭐ **THE INJECTION GOES INTO EVERY VOICE, NOT VOICE 0's** — `addKeyToVoices` runs
+       * `for (var i = 0; i < voices.length; i++) voices[i].unshift(key)` over the whole
+       * STAFF (`data/deline-tune.js:135-142`), so a two-staff tune re-emits the key at the
+       * head of both. `visual-parsing-x12` alternates `V:1`/`V:2` and abcjs injects on each
+       * — ours drew three accidentals of eighteen.
+       *
+       * ponytail: the DECISION is still voice 0's, where abcjs asks it per staff against
+       * `currentKey[s]`. Right whenever the staves share a key, which is every fixture in
+       * both corpora; give `injects` a staff dimension if one ever differs.
+       */
+      const owedHere = injects.get(i);
       const injected = {
         ...(owedHere?.key === true ? { wrapInjectedKey: true as const } : {}),
         ...(owedHere?.meter === true ? { wrapInjectedMeter: true as const } : {}),
