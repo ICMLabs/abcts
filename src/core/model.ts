@@ -1437,6 +1437,20 @@ export interface Measure {
    * Absent when no wrap ran; `startsSystem` is the same fact then.
    */
   readonly wrapSourceLineStart?: true
+  /**
+   * **THIS `&` LAYER SAYS NOTHING HERE, AND THE INVISIBLE REST IN IT IS A STAND-IN.**
+   *
+   * `resolveOverlays` fills a layer's silent measures with an invisible rest of the
+   * PARENT's duration, which is what keeps the layer's barline at the same musical time as
+   * its parent's — a voice with no element at all wants its bar at time 0, and the shared
+   * cursor then spends a whole bar rod before the parent's note instead of beside it.
+   *
+   * Carried because a PADDED measure is not a SINGING one: `overlaySilentHere` drops a
+   * layer that says nothing across a whole system, and a real `x4` is an invisible rest
+   * too, so the two cannot be told apart from the event alone. Set only by
+   * `expandOverlays`; absent everywhere else.
+   */
+  readonly overlayPad?: true
   /** …the meter, on the same rule. See `wrapInjectedKey`. */
   readonly wrapInjectedMeter?: true
   /** …and the clef. See `wrapInjectedKey`. */

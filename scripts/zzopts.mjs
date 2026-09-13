@@ -770,27 +770,24 @@ const OPTIONS = [
    *    between them is not drawn. The control lives in `positioning.test.ts`, not
    *    `wrap.test.ts`, and four volta spellings are rendered against abcjs in webkit.
    *
-   *  ⚠️ **AND `synth-flattener-21` WAS PAIRED WITH IT AND DOES NOT BELONG.** That fixture
-   *    has NO ending anywhere in it — it is `&` overlay voices — and it did not move when
-   *    the ending charge was fixed. **DIFFERENCED, NOT FIXED**, and the measurement is:
-   *
-   *      system 2 holds `B4&d4&f4 | c4&e4&g4 | a4 | b4&d'4`, four measures of one whole
-   *      note each. abcjs draws them 82.97 / 93.99 / 93.98 / 93.99 wide; ours 77.47 /
-   *      88.49 / **110.48** / 88.49 — the SINGLE-layer measure is 16.5 too wide and the
-   *      other three are 5.5 short apiece, which is the same 16.5 given back.
-   *
-   *      Localised further: the gap from that measure's opening barline to its note is
-   *      11.018 in abcjs — exactly the bar's own rod, `w 1 + minspacing 10` — and 33.018 in
-   *      ours. **22 extra, which is TWO more bar rods**, on the one measure whose `&`
-   *      layers are absent.
-   *
-   *    ⚠️ **AND IT IS NOT THE PER-ELEMENT ADVANCES.** Both engines were logged side by
-   *    side — abcjs's `layoutOneItem` against our `fixed()`/note pushes — and every rod
-   *    matches: a note is `w 14.985 + minsp 1`, a bar `w 1 + minsp 10`, and the invisible
-   *    padding REST abcjs inserts for a silent overlay layer is `w 0 + minsp 1`, which is
-   *    our `rod 1` exactly. So the defect is in the SHARED CURSOR across voices where the
-   *    layer count changes between measures, not in what any one element claims.
-   *    Start there, and start from the 22.
+   * ✅ **AND `synth-flattener-21` IS CLOSED — 6 → 5 — AND IT NEVER BELONGED TO THE ENDING
+   *    ROOM.** It has no ending in it at all; it is `&` overlay voices, and the cause is
+   *    that **a SILENT layer measure takes an invisible rest of the PARENT's duration**.
+   *    `resolveOverlays` fills one in (`core/overlays.ts`) and `expandOverlays` — the
+   *    RENDERER's own copy of that job — left the measure empty, so the layer had no
+   *    element at that musical time and the shared cursor put its BARLINE at time 0, beside
+   *    the parent's note, then spent a SECOND bar rod on the parent's own bar.
+   *    System 2's four measures are one whole note each: abcjs 82.97 / 93.99 / 93.98 /
+   *    93.99, ours 77.47 / 88.49 / 110.48 / 88.49 — the single-layer measure 16.5 too wide,
+   *    its neighbours 5.5 short apiece, and its opening barline 33.018 from its note against
+   *    abcjs's 11.018. **22 extra, TWO bar rods, one per absent layer.**
+   *    ⚠️ **AND THE PAD IS MARKED** (`Measure.overlayPad`): a layer silent across a WHOLE
+   *    system is dropped from the solve, worth 5px corpus-wide, and a real `x4` is an
+   *    invisible rest too. **This row cannot see that half — `extended-snapshot` is what
+   *    defends it**, checked rather than assumed.
+   *    ⚠️ **IT WAS DIFFERENCED FIRST AND PORTED SECOND.** Every per-element rod had already
+   *    been logged against abcjs's and matched, the padding rest included — which is what
+   *    said the defect was in the CURSOR and not in any element's claim.
    *
    * ✅ **A PITCH IS CONVERTED TO A y ONCE, AND THE FRACTION GOES ON THE PITCH — 20 → 18.**
    *    `calcY(ofs) = this.y - ofs * STEP` shifts NOTHING, so every fudge the engraver
@@ -862,13 +859,13 @@ const OPTIONS = [
    *    3  GEOMETRY ONLY, same element kinds throughout:
    *       `text-udef-parts-overlays-tune8` and `-tune46`, `vskip-tune1`.
    *
-   * ⚠️ **AND TWO OF THE 6 ARE abcjs CRASHING, NOT US.** `abcts-vskip` tunes 0 and 2 throw
+   * ⚠️ **AND TWO OF THE 5 ARE abcjs CRASHING, NOT US.** `abcts-vskip` tunes 0 and 2 throw
    * inside abcjs's own `wrapLines` — `undefined is not an object (evaluating 'l[p]')` —
    * because `addLineBreaks` reads `lines[action.ogLine].staff[action.staff]` on a row a
    * `%%vskip` made non-music. We render them. A crash is not output and strict does not
    * reproduce one.
    */
-  ['wrap + staffwidth', { wrap: { minSpacing: 1.8, maxSpacing: 2.7, preferredMeasuresPerLine: 4 }, staffwidth: 400 }, 6],
+  ['wrap + staffwidth', { wrap: { minSpacing: 1.8, maxSpacing: 2.7, preferredMeasuresPerLine: 4 }, staffwidth: 400 }, 5],
 ]
 const every = Number(process.argv[2] ?? 1)
 const browser = await webkit.launch()

@@ -1679,3 +1679,64 @@ describe("renderAbc({wrap}) — the cautionary clef moves to the next system", (
     expect(clefs()).toEqual({ first: 7, second: 7 });
   });
 });
+
+/**
+ * **A SILENT `&` LAYER MEASURE TAKES AN INVISIBLE REST OF THE PARENT'S DURATION.**
+ *
+ * `resolveOverlays` fills one in (`core/overlays.ts`), and `expandOverlays` — the RENDERER's
+ * own copy of that job — left the measure empty. Two surfaces again, and this time the model
+ * had the rule and the drawing did not.
+ *
+ * Without it the layer has no element at that musical time at all, so the shared cursor
+ * places its BARLINE at time 0 — beside the parent's note — and then spends a SECOND bar rod
+ * on the parent's own bar. `synth-flattener-21`'s system 2 is
+ * `B4&d4&f4 | c4&e4&g4 | a4 | b4&d'4`, four measures of one whole note each: abcjs draws
+ * them 82.97 / 93.99 / 93.98 / 93.99 and ours drew 77.47 / 88.49 / **110.48** / 88.49, the
+ * single-layer measure 16.5 too wide and its three neighbours 5.5 short apiece. The gap from
+ * that measure's opening barline to its note was 33.018 against abcjs's 11.018 — 22 extra,
+ * TWO more bar rods, one per absent layer. `zzopts` 6 -> 5.
+ *
+ * ⚠️ **AND THE PAD HAS TO BE MARKED** — see `Measure.overlayPad`. A layer that says nothing
+ * across a WHOLE system is dropped from the solve entirely, and that drop is worth 5px on
+ * every fixture in the corpus; a real `x4` is an invisible rest too, so `overlaySilentHere`
+ * cannot tell a stand-in from a note without the flag.
+ *
+ * ⚠️ **AND THE WRAP ROW CANNOT SEE THAT HALF — `extended-snapshot` IS WHAT DEFENDS IT.**
+ * Dropping the flag leaves `zzopts` at 5 and reddens exactly one row of the suite. Checked
+ * rather than assumed: the obvious control here would have been MUTE for it.
+ */
+describe("renderAbc({wrap}) — an & layer that is silent for a measure", () => {
+  const measures = (): number[] => {
+    const host = { innerHTML: "" } as { innerHTML: string };
+    renderAbc(
+      host,
+      readFileSync(
+        join(
+          import.meta.dirname,
+          "corpus-abcjs",
+          "fixtures",
+          "abcjs-synth-flattener-21-c4-d4.abc",
+        ),
+        "utf-8",
+      ),
+      {
+        staffwidth: 400,
+        wrap: { minSpacing: 1.8, maxSpacing: 2.7, preferredMeasuresPerLine: 4 },
+      },
+    );
+    // System 2's barlines, by their own y band — the `B4&d4&f4` line.
+    const bars = [
+      ...host.innerHTML.matchAll(/<path d="M ([\d.]+) ([\d.]+)[^"]*" data-name="bar">/g),
+    ]
+      .map((m) => ({ x: Number(m[1]), y: Number(m[2]) }))
+      .filter((b) => b.y > 150 && b.y < 175)
+      .map((b) => Math.round(b.x * 100) / 100);
+    return bars;
+  };
+
+  // ⭐ Four measures of equal duration space equally. Ours put the single-layer one 16.5
+  // wide of the rest, which is what an unpadded layer's stray bar rod costs.
+  it("spaces a single-layer measure like its neighbours", () => {
+    expect(measures()).toEqual([132.04, 226.03, 320.01, 414]);
+  });
+});

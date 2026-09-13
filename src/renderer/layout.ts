@@ -12534,11 +12534,47 @@ export function expandOverlays(score: Score): Score {
         id,
         name: null,
         subname: null,
-        measures: voice.measures.map((m) => ({
-          ...m,
-          events: m.overlays[layer] ?? [],
-          overlays: [],
-        })),
+        measures: voice.measures.map((m) => {
+          const own = m.overlays[layer] ?? []
+          if (own.length > 0) return { ...m, events: own, overlays: [] }
+          /**
+           * ⭐ **A SILENT LAYER MEASURE TAKES AN INVISIBLE REST OF THE PARENT'S DURATION.**
+           * `resolveOverlays` does exactly this (`core/overlays.ts`), and without it the
+           * layer has no element at that musical time at all — so the shared cursor places
+           * its BARLINE at time 0, beside the parent's note, and then spends a second bar
+           * rod on the parent's own bar. `synth-flattener-21`'s single-layer measure came
+           * out 16.5 too wide with its three neighbours 5.5 short apiece, and the gap from
+           * its opening barline to its note was 33.018 against abcjs's 11.018 — 22 extra,
+           * which is TWO more bar rods, one per absent layer.
+           *
+           * ⚠️ **AND THE PAD IS MARKED** — see `Measure.overlayPad`. A layer that says
+           * nothing across a WHOLE system is dropped from the solve entirely, and a real
+           * `x4` is an invisible rest too, so `overlaySilentHere` cannot tell a stand-in
+           * from a note without it.
+           */
+          // `rational()` normalises, so the cross-multiply cannot run away over a measure.
+          const sounding = m.events.reduce(
+            (t, e) =>
+              rational(
+                t.numerator * e.duration.denominator + e.duration.numerator * t.denominator,
+                t.denominator * e.duration.denominator,
+              ),
+            rational(0),
+          )
+          if (ratToNumber(sounding) <= 0) return { ...m, events: [], overlays: [] }
+          return {
+            ...m,
+            events: [
+              {
+                ...EMPTY_BAR_EVENT,
+                duration: sounding,
+                notatedDuration: sounding,
+              },
+            ],
+            overlays: [],
+            overlayPad: true as const,
+          }
+        }),
       })
     }
     if (ids.length > 0) layerIds.set(voice.id, ids)
@@ -14211,8 +14247,11 @@ function layoutScoped(input: Score, options: LayoutOptions = {}): Layout {
     const overlaySilentHere = (v: number): boolean => {
       const plan = plans[v]
       if (plan === undefined || voices[v]?.id.includes('$') !== true) return false
-      for (let i = span.start; i <= span.end; i += 1)
-        if ((plan.measures[i]?.events.length ?? 0) > 0) return false
+      for (let i = span.start; i <= span.end; i += 1) {
+        const m = plan.measures[i]
+        // …**AND A PAD IS NOT A VOICE SINGING** — see `Measure.overlayPad`.
+        if (m !== undefined && m.overlayPad !== true && m.events.length > 0) return false
+      }
       return true
     }
 
