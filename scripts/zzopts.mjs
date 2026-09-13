@@ -626,6 +626,19 @@ const OPTIONS = [
    *    fix ignored the directive and drew one where abcjs draws none, caught by the
    *    control. `parsing-x10`'s lengths now MATCH (39/39).
    *
+   * ✅ **"LEADS THE LINE" IS A SOURCE POSITION, NOT A BRACKET — 16 → 14.** `startNewLine`
+   *    fires LAZILY (`abc_parse_music.js:152-156`), so a BRACKETED `[K:… clef=]` written
+   *    before a line's first note is already in `multilineVars` when `params.clef` is
+   *    stamped and IS that line's staff clef. `deline`'s injection test read
+   *    `…Inline !== true`, which says the opposite. `abcts-stafflines-and-modifiers` tune 4
+   *    (`stafflines` is a property of the CLEF) and `abcts-ledger-gaps-4` tune 5.
+   *
+   * ✅ **A HOST WRAP DROPS THE METER ON EVERY OUTPUT LINE PAST 0, `%%barsperstaff`
+   *    INCLUDED — 14 → 13.** `addLineBreaks` skips `meter` for `action.line !== 0` whatever
+   *    made the line; `%%barsperstaff`'s own `wrapMusicLines` copies the staff WHOLE and is
+   *    why `Measure.wrappedLine` grants one. When both run the host wrap is applied LAST.
+   *    ⚠️ Two surfaces again — the ink was fixed first and `tune.lines` still carried 4/4.
+   *
    * ✅ **THE WHOLE `%%keywarn` CLUSTER IS CLOSED — x10, x11 AND x12.** x11 and x12 took
    *    three more rules, 18 → 16:
    *      · `lastKeySig` is a property of the STAFF and `addLineBreaks` never resets it, so
@@ -784,13 +797,13 @@ const OPTIONS = [
    *    3  GEOMETRY ONLY, same element kinds throughout:
    *       `text-udef-parts-overlays-tune8` and `-tune46`, `vskip-tune1`.
    *
-   * ⚠️ **AND TWO OF THE 16 ARE abcjs CRASHING, NOT US.** `abcts-vskip` tunes 0 and 2 throw
+   * ⚠️ **AND TWO OF THE 13 ARE abcjs CRASHING, NOT US.** `abcts-vskip` tunes 0 and 2 throw
    * inside abcjs's own `wrapLines` — `undefined is not an object (evaluating 'l[p]')` —
    * because `addLineBreaks` reads `lines[action.ogLine].staff[action.staff]` on a row a
    * `%%vskip` made non-music. We render them. A crash is not output and strict does not
    * reproduce one.
    */
-  ['wrap + staffwidth', { wrap: { minSpacing: 1.8, maxSpacing: 2.7, preferredMeasuresPerLine: 4 }, staffwidth: 400 }, 16],
+  ['wrap + staffwidth', { wrap: { minSpacing: 1.8, maxSpacing: 2.7, preferredMeasuresPerLine: 4 }, staffwidth: 400 }, 13],
 ]
 const every = Number(process.argv[2] ?? 1)
 const browser = await webkit.launch()

@@ -13712,8 +13712,24 @@ function layoutScoped(input: Score, options: LayoutOptions = {}): Layout {
       // …**AND A WRAP THAT PUSHED THE MUSIC OFF OUTPUT LINE 0 TAKES THE METER FROM SYSTEM 0
       // TOO** — see `Score.wrapDroppedMeter`. Applied HERE and not to `withMeter`, which
       // the tempo below also reads.
+      /**
+       * …**AND A HOST WRAP DROPS IT ON EVERY OUTPUT LINE PAST 0, `%%barsperstaff` LINES
+       * INCLUDED.** `addLineBreaks` skips `meter` for `action.line !== 0` whatever made the
+       * line (`wrap_lines.js:41-46`). `wrappedLine` grants one because `%%barsperstaff`'s
+       * own `wrapMusicLines` copies the staff WHOLE — two line-forcing features, two
+       * answers — and when both run the host wrap is applied LAST and wins.
+       *
+       * `abcts-directives-2` tune 3 is `%%barsperstaff 2` under `{wrap}`: abcjs draws one
+       * time signature and we drew two.
+       */
+      const hostWrapped = voice?.measures[from]?.wrapSourceLine !== undefined
       const prefixMeter =
-        leading ?? (withMeter && score.wrapDroppedMeter !== true ? score.meter : null)
+        leading ??
+        (withMeter &&
+        score.wrapDroppedMeter !== true &&
+        !(hostWrapped && (lineOfMeasure[from] ?? 0) > 0)
+          ? score.meter
+          : null)
       if (prefixMeter !== null) {
         push(layoutMeter(x, prefixMeter, strict))
       }

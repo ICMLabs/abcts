@@ -1379,3 +1379,93 @@ describe("renderAbc({wrap}) — a key across a non-music row", () => {
     expect(a.filter((x) => x === "nat").length).toBe(4);
   });
 });
+
+/**
+ * **"LEADS THE LINE" IS A SOURCE POSITION, NOT A BRACKET.**
+ *
+ * `startNewLine` fires LAZILY — `parseMusicLine` consumes every inline field at the head of
+ * a line before calling it (`abc_parse_music.js:152-156`) — so a BRACKETED `[K:… clef=]`
+ * written before the line's first note is already in `multilineVars` when `params.clef` is
+ * stamped, and it IS that line's staff clef. `deline`'s injection test read
+ * `…Inline !== true`, which says the opposite and excluded exactly that spelling.
+ *
+ * `abcts-stafflines-and-modifiers` tune 4 is `CDEF| / [K:C stafflines=1]GABc|`, where
+ * `stafflines` is a property of the CLEF — so the merged line's staff clef differs from the
+ * previous one and abcjs re-emits it mid-line. We drew no second clef at all. The key and
+ * the meter take the same test; `abcts-ledger-gaps-4` tune 5 closed with the key's.
+ * `zzopts` 16 -> 14.
+ */
+describe("renderAbc({wrap}) — a bracketed field can still lead its line", () => {
+  const count = (file: string, tune: number, name: string): number => {
+    const host = { innerHTML: "" } as { innerHTML: string };
+    renderAbc(
+      host,
+      readFileSync(join(import.meta.dirname, "corpus-abcjs", "fixtures", file), "utf-8"),
+      {
+        staffwidth: 400,
+        startingTune: tune,
+        wrap: { minSpacing: 1.8, maxSpacing: 2.7, preferredMeasuresPerLine: 4 },
+      },
+    );
+    return [...host.innerHTML.matchAll(new RegExp(`data-name="${name}"`, "g"))].length;
+  };
+
+  // ⭐ TWO clefs: the line's own, and the one `deline` re-emits because `stafflines=1`
+  // made the merged line's staff clef differ. Ours drew one.
+  it("re-emits a clef a bracketed field changed at a line head", () => {
+    expect(count("abcts-stafflines-and-modifiers.abc", 4, "clefs\\.G")).toBe(2);
+  });
+
+  // …and the key arm of the same test, which is four sharps rather than two.
+  it("re-emits a key the same way", () => {
+    expect(count("abcts-ledger-gaps-4.abc", 5, "accidentals\\.sharp")).toBe(4);
+  });
+});
+
+/**
+ * **A HOST WRAP DROPS THE METER ON EVERY OUTPUT LINE PAST 0 — `%%barsperstaff` INCLUDED.**
+ *
+ * `addLineBreaks` skips `meter` for `action.line !== 0` whatever made the line
+ * (`wrap_lines.js:41-46`). `%%barsperstaff`'s own `wrapMusicLines` copies the staff WHOLE
+ * and carries its meter, which is why `Measure.wrappedLine` grants one — two line-forcing
+ * features, two answers. When BOTH run the host wrap is applied last and wins.
+ *
+ * `abcts-directives-2` tune 3 is `%%barsperstaff 2` under `{wrap}`: abcjs draws one time
+ * signature and we drew two. ⚠️ **AND IT IS TWO SURFACES** — the ink was corrected first
+ * and `tune.lines[1].staff[0].meter` still carried 4/4, which no gate asked.
+ */
+describe("renderAbc({wrap}) — %%barsperstaff under a host wrap", () => {
+  const render = (): { html: string; meters: string[] } => {
+    const host = { innerHTML: "" } as { innerHTML: string };
+    const tunes = renderAbc(
+      host,
+      readFileSync(
+        join(import.meta.dirname, "corpus-abcjs", "fixtures", "abcts-directives-2.abc"),
+        "utf-8",
+      ),
+      {
+        staffwidth: 400,
+        startingTune: 3,
+        wrap: { minSpacing: 1.8, maxSpacing: 2.7, preferredMeasuresPerLine: 4 },
+      },
+    );
+    return {
+      html: host.innerHTML,
+      meters: (tunes[0]?.lines ?? [])
+        .flatMap((l) => l.staff ?? [])
+        .map((st) => (st.meter === undefined ? "-" : "meter")),
+    };
+  };
+
+  // ⭐ One `staff-extra time-signature` group, on system 1 only.
+  it("draws the time signature once", () => {
+    expect(
+      [...render().html.matchAll(/data-name="staff-extra time-signature"/g)].length,
+    ).toBe(1);
+  });
+
+  // …and `tune.lines` says the same, which it did not when only the ink was fixed.
+  it("says the same in tune.lines", () => {
+    expect(render().meters).toEqual(["meter", "-"]);
+  });
+});

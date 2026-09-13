@@ -2798,7 +2798,13 @@ const VOICE_FURNITURE = new Set(["style", "stem", "color", "scale"]);
           // see `Measure.wrappedLine`.
           // …**AND A WRAP THAT PUSHED THE MUSIC OFF OUTPUT LINE 0 TAKES IT FROM THE FIRST
           // LINE TOO** — see `Score.wrapDroppedMeter`.
-          (i === 0 && score.wrapDroppedMeter !== true) || m.wrappedLine === true
+          // …**AND A HOST WRAP DROPS IT ON EVERY OUTPUT LINE PAST 0, `%%barsperstaff` LINES
+          // INCLUDED.** `addLineBreaks` skips `meter` for `action.line !== 0` whatever made
+          // the line, and when both features run the host wrap is applied LAST. The
+          // renderer carries the same rule at `prefixMeter` — two surfaces, and the model
+          // still said 4/4 on line 1 after the ink was corrected.
+          (i === 0 && score.wrapDroppedMeter !== true) ||
+          (m.wrappedLine === true && (i === 0 || m.wrapSourceLine === undefined))
             ? /**
                * ⚠️ **AND A PENDING HEADER `M:` OVERWRITES WHAT A LEADING `[M:]` SET.**
                * abcjs 6.7.0's inline branch writes

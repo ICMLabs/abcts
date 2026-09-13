@@ -516,15 +516,46 @@ export function applyLineBreaks(
     let headClef = runClef
     let seenFirstLine = false
     const same = (a: unknown, b: unknown): boolean => JSON.stringify(a) === JSON.stringify(b)
+    /**
+     * ⚠️ **"LEADS THE LINE" IS A SOURCE POSITION, NOT A BRACKET.** `startNewLine` fires
+     * LAZILY — `parseMusicLine` consumes every inline field at the head of a line before
+     * calling it (`abc_parse_music.js:152-156`) — so a BRACKETED `[K:… clef=]` written
+     * before the line's first note is already in `multilineVars` when `params.clef` is
+     * stamped, and it IS that line's staff clef. `…Inline !== true` says the opposite and
+     * excluded exactly that spelling.
+     *
+     * `abcts-stafflines-and-modifiers` tune 4 is it: `CDEF| / [K:C stafflines=1]GABc|`,
+     * where `stafflines` is a property of the CLEF, so the merged line's staff clef differs
+     * and `deline` re-emits it. abcjs draws a second `clefs.G` mid-line at 225.03 and we
+     * drew none. It is the same test `keyChangeLeadsLine` makes on the drawing side.
+     */
+    const musicAt = (m: Measure): number =>
+      Math.min(
+        m.openingBarlineSourceRange?.start ?? Number.POSITIVE_INFINITY,
+        ...m.events.map((e) => e.sourceRange?.start ?? Number.POSITIVE_INFINITY),
+      )
+    const leadsLine = (m: Measure, at: number | null | undefined): boolean =>
+      at != null && at < musicAt(m)
     first.forEach((m, i) => {
       if (m.startsSystem === true) {
         // This line's HEAD takes a change that LEADS the line; one written after its own
         // music does not reach it and will reach the next line's instead.
-        const leadKey = m.keyChange !== null && m.keyChangeInline !== true ? m.keyChange : runKey
+        // …and the key and the meter take the same positional test — see `leadsLine`.
+        const leadKey =
+          m.keyChange !== null &&
+          (m.keyChangeInline !== true || leadsLine(m, m.keyChangeSourceRange?.start))
+            ? m.keyChange
+            : runKey
         const leadMeter =
-          m.meterChange !== null && m.meterChangeInline !== true ? m.meterChange : runMeter
+          m.meterChange !== null &&
+          (m.meterChangeInline !== true || leadsLine(m, m.meterChangeSourceRange?.start))
+            ? m.meterChange
+            : runMeter
         const leadClef =
-          m.clefChange != null && m.clefChangeInline !== true ? m.clefChange : runClef
+          m.clefChange != null &&
+          (m.clefChangeInline !== true || leadsLine(m, m.clefChangeSourceRange?.start))
+            ? m.clefChange
+            : runClef
         if (seenFirstLine) {
           injects.set(i, {
             key: !same(leadKey, headKey),
