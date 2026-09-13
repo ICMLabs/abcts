@@ -1621,3 +1621,61 @@ describe("renderAbc({wrap}) — %%voicecolor past the first system", () => {
     expect(fills(false).filter((c) => c === "currentColor").length).toBe(0);
   });
 });
+
+/**
+ * **A WRAP MOVES THE CAUTIONARY CLEF OFF THE SYSTEM'S END ONTO THE NEXT SYSTEM'S HEAD.**
+ *
+ * `appendStartingElement('clef', …)` pushes onto the voice that is still open
+ * (`abc_parse_header.js:508-513`), so a mid-tune `K: clef=` puts a clef element in the
+ * STREAM at the SOURCE break — not a reservation at a system end. `deline` then merges the
+ * lines and `addLineBreaks` re-splits them, and the element lands at the head of whatever
+ * slice follows it, beside `deline`'s own injected staff clef. That system opens with the
+ * SAME clef twice.
+ *
+ * `visual-selection-03` is seven `K:C clef=…` lines merged three to a system. abcjs ends
+ * system 1 at its barline and opens system 2 `clef, clef, note`; ours reserved the
+ * cautionary on the previous measure, as `trailingClef` correctly does with no wrap, and
+ * drew a bass clef and its octave marker PAST that system's last barline — 2 elements of
+ * 54, with everything after pushed left. `zzopts` 7 -> 6.
+ *
+ * ⚠️ **IT IS MOVED, NOT DROPPED.** Suppressing it outright took the fixture from 54
+ * elements to 52 — the first attempt, and the element counts caught it immediately.
+ */
+describe("renderAbc({wrap}) — the cautionary clef moves to the next system", () => {
+  const clefs = (): { first: number; second: number } => {
+    const host = { innerHTML: "" } as { innerHTML: string };
+    renderAbc(
+      host,
+      readFileSync(
+        join(
+          import.meta.dirname,
+          "corpus-abcjs",
+          "fixtures",
+          "abcjs-visual-selection-03-c4.abc",
+        ),
+        "utf-8",
+      ),
+      {
+        staffwidth: 400,
+        wrap: { minSpacing: 1.8, maxSpacing: 2.7, preferredMeasuresPerLine: 4 },
+      },
+    );
+    // Each system's clefs by their own y band — system 1 sits above 100, system 2 below.
+    const all = [
+      ...host.innerHTML.matchAll(
+        /data-name="clefs\.[A-Z]" d="M ([\d.]+) ([\d.]+)/g,
+      ),
+    ].map((m) => ({ x: Number(m[1]), y: Number(m[2]) }));
+    return {
+      first: all.filter((c) => c.y < 100).length,
+      second: all.filter((c) => c.y >= 100).length,
+    };
+  };
+
+  // ⭐ Seven clefs on each system — a prefix plus two per `K: clef=` line it holds. Ours
+  // drew EIGHT and six: the extra one was system 2's cautionary, stranded past system 1's
+  // last barline, which is where `trailingClef` reserves it when no wrap has run.
+  it("opens the second system with the clef twice", () => {
+    expect(clefs()).toEqual({ first: 7, second: 7 });
+  });
+});

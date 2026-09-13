@@ -626,6 +626,16 @@ const OPTIONS = [
    *    fix ignored the directive and drew one where abcjs draws none, caught by the
    *    control. `parsing-x10`'s lengths now MATCH (39/39).
    *
+   * ✅ **A WRAP MOVES THE CAUTIONARY CLEF ONTO THE NEXT SYSTEM'S HEAD — 7 → 6.**
+   *    `appendStartingElement('clef', …)` pushes onto the voice that is still open
+   *    (`abc_parse_header.js:508-513`), so a mid-tune `K: clef=` is a STREAM element fixed
+   *    at the SOURCE break, not a reservation at a system end. `deline` merges the lines,
+   *    `addLineBreaks` re-splits them, and it lands at the head of the slice that follows —
+   *    beside `deline`'s injected staff clef, so the system opens with the SAME clef twice.
+   *    `visual-selection-03` is seven `K:C clef=…` lines, three to a system; ours stranded
+   *    system 2's cautionary past system 1's last barline.
+   *    ⚠️ **MOVED, NOT DROPPED** — suppressing it took the fixture 54 elements to 52.
+   *
    * ⭐ **A TRAILING BAR IS A BAR LIKE ANY OTHER — 13 → 8, AND THAT WAS THE WHOLE
    *    "PROGRESSIVE SPACING" FAMILY.** `layoutOneItem` drops `child.minspacing` on the
    *    line's LAST element alone (`layout/voice-elements.js:78`); `getMinWidth` and the
@@ -834,13 +844,13 @@ const OPTIONS = [
    *    3  GEOMETRY ONLY, same element kinds throughout:
    *       `text-udef-parts-overlays-tune8` and `-tune46`, `vskip-tune1`.
    *
-   * ⚠️ **AND TWO OF THE 7 ARE abcjs CRASHING, NOT US.** `abcts-vskip` tunes 0 and 2 throw
+   * ⚠️ **AND TWO OF THE 6 ARE abcjs CRASHING, NOT US.** `abcts-vskip` tunes 0 and 2 throw
    * inside abcjs's own `wrapLines` — `undefined is not an object (evaluating 'l[p]')` —
    * because `addLineBreaks` reads `lines[action.ogLine].staff[action.staff]` on a row a
    * `%%vskip` made non-music. We render them. A crash is not output and strict does not
    * reproduce one.
    */
-  ['wrap + staffwidth', { wrap: { minSpacing: 1.8, maxSpacing: 2.7, preferredMeasuresPerLine: 4 }, staffwidth: 400 }, 7],
+  ['wrap + staffwidth', { wrap: { minSpacing: 1.8, maxSpacing: 2.7, preferredMeasuresPerLine: 4 }, staffwidth: 400 }, 6],
 ]
 const every = Number(process.argv[2] ?? 1)
 const browser = await webkit.launch()

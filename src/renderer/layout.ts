@@ -11191,6 +11191,20 @@ function layoutMeasure(
    * switch, and abcjs injects the bare `F [flat]` that this value gives.
    */
   injectedKeyCancels: KeySignature | null = null,
+  /**
+   * **THE CAUTIONARY CLEF THE PREVIOUS LINE'S STREAM CARRIES, WHICH A WRAP MOVES HERE.**
+   *
+   * `appendStartingElement('clef', …)` pushes onto the voice that is still open
+   * (`abc_parse_header.js:508-513`), so a mid-tune `K: clef=` puts a clef element in the
+   * stream at the SOURCE break. `deline` merges the lines and `addLineBreaks` re-splits
+   * them, and the element lands at the head of whatever slice follows it — beside the
+   * injected staff clef, so the system opens with the same clef TWICE.
+   *
+   * `visual-selection-03` is seven `K:C clef=…` lines merged three to a system, and abcjs's
+   * second system opens `clef, clef, note`. Reserved on the PREVIOUS measure, as
+   * `trailingClef` does without a wrap, it drew past that system's last barline instead.
+   */
+  leadingCautionaryClef: Clef | null = null,
 ): MeasureBlock {
   const elements: LayoutElement[] = []
   /**
@@ -11665,6 +11679,17 @@ function layoutMeasure(
      * abcjs DEBUG MARKER this engine declines, on the same rule as the other three; the
      * flag is still carried so the decision is visible rather than absent.
      */
+    // …**AND THE CAUTIONARY GOES FIRST** — it is the element the previous line's stream
+    // carried, and `deline`'s injection was UNSHIFTED onto the voice after it. See
+    // `leadingCautionaryClef`.
+    if (leadingCautionaryClef !== null) {
+      const el = layoutClef(x, leadingCautionaryClef, strict)
+      if (el !== null) {
+        elements.push(el)
+        fixed(el.width + ENGRAVE.prefixGap, ENGRAVE.prefixGap, 'other', 0, el.width)
+        x += el.width + ENGRAVE.prefixGap
+      }
+    }
     if (measure.wrapInjectedClef === true) {
       const el = layoutClef(x, measure.clefChange ?? clef, strict)
       if (el !== null) {
@@ -13491,6 +13516,24 @@ function layoutScoped(input: Score, options: LayoutOptions = {}): Layout {
           // …and with NO next measure, a trailing `K: clef=` draws the same cautionary.
           if (next === undefined) return measure.trailingClef ?? null
           if (next.clefChangeSilent === true) return null
+          /**
+           * ⚠️ **AND A WRAP HAS ALREADY PUT IT IN THE STREAM.** The cautionary is
+           * `appendStartingElement('clef', …)` pushing onto the voice that is still open
+           * (`abc_parse_header.js:508-513`), so it is a STREAM element fixed at the SOURCE
+           * break — and `deline` then merges the lines and `addLineBreaks` re-splits them,
+           * which puts it wherever the new slice boundary falls. Reserving one at the
+           * SYSTEM break as well draws it twice.
+           *
+           * `visual-selection-03` is seven `K:C clef=…` lines merged three to a system:
+           * abcjs ends system 1 at its barline and we drew a bass clef and its octave
+           * marker past it, 2 elements of 54, and every element after was pushed left.
+           *
+           * ⚠️ **IT IS MOVED, NOT DROPPED.** abcjs still draws it — at the HEAD of the new
+           * line, right beside `deline`'s injected staff clef, so that system opens with
+           * the SAME clef twice. Suppressing it outright took `selection-03` from 54
+           * elements to 52. See `leadingCautionaryClef`.
+           */
+          if (next.wrapSourceLine !== undefined) return null
           return next.startsSystem === true ? (next.clefChange ?? null) : null
         })(),
         (voicesOfStaff.find((m) => m.includes(voiceIndex))?.length ?? 1) > 1,
@@ -13564,6 +13607,14 @@ function layoutScoped(input: Score, options: LayoutOptions = {}): Layout {
         })(),
         // …and what a wrap-injected staff key cancels — see `injectedKeyCancels`.
         injectedCancels,
+        // …and the cautionary clef a wrap moved off the previous system's end onto this
+        // measure's head — see `leadingCautionaryClef`.
+        measure.wrapSourceLine !== undefined &&
+        measure.startsSystem === true &&
+        measureIndex > 0 &&
+        measure.clefChangeSilent !== true
+          ? (measure.clefChange ?? null)
+          : null,
       )
       if (measure.keyChange !== null && !keyChangeLeadsLine(measure))
         pendingNaturalsFrom = (measure.keyChangeKeywarn ?? KEYWARN) ? keyInForce : null
