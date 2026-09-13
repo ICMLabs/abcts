@@ -1474,6 +1474,11 @@ function renderInto(
         {
           staffSpace,
           classes: "abcjs",
+          // …**AND THE EMITTER IS WHERE `lineThickness` LANDS**, not the layout — it is a
+          // drawn width and never a placement. See `RenderOptions.lineThickness`.
+          ...(params.lineThickness === undefined
+            ? {}
+            : { lineThickness: params.lineThickness }),
           // …AND THE EMITTER TAKES IT TOO. It decides `<defs>`/`<use>`, which is a declared
           // divergence; everything else it draws is abcjs's in both modes.
           mode,

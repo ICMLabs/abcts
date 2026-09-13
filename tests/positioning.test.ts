@@ -554,3 +554,53 @@ describe("a curve's start limit carries across systems", () => {
     expect(firstTieX({})).toBeCloseTo(45.05, 2);
   });
 });
+
+/**
+ * **`lineThickness` IS A DRAWN WIDTH AND NEVER A PLACEMENT.**
+ *
+ * `renderer.lineThickness` is read in the DRAW functions alone (`draw/staff.js:14`, `:25`,
+ * `draw/relative.js:61-66`); the ENGRAVER never sees it, so **abcjs moves nothing for it at
+ * any value.** We folded it into `LINE_WEIGHTS`, which the LAYOUT reads too, and it leaked
+ * into where things go.
+ *
+ * ⚠️ **AND THE TERM IS NOT THE SAME SIZE AT EVERY SITE.** `printLine`'s `dy` is a HALF —
+ * drawn `y - dy` to `y + dy` — so a STAFF LINE and a LEDGER gain **2 ×**; `printStem`'s `dx`
+ * is the WHOLE width, so a BARLINE and a STEM gain **one**. Nothing else takes it.
+ *
+ * `zzopts`'s `lineThickness` row: **0 of 685**, from 665.
+ */
+describe("lineThickness thickens without moving anything", () => {
+  const TUNE = "X:1\nL:1/8\nK:C\n(3ceg|\n";
+  const render = (t?: number): string => {
+    const host = { innerHTML: "" } as { innerHTML: string };
+    renderAbc(host, TUNE, {
+      staffwidth: 670,
+      ...(t === undefined ? {} : { lineThickness: t }),
+    });
+    return host.innerHTML;
+  };
+
+  // ⭐ THE TUPLET NUMBER DOES NOT MOVE. abcjs puts it at the same y for 0, 0.5, 1.5 and 3;
+  // ours walked to 87.47 because the weight reached the layout.
+  it("leaves the tuplet number where it was", () => {
+    const y = (t?: number) => /data-name="3"[^>]*y="([\d.]+)"|y="([\d.]+)"[^>]*data-name="3"/.exec(render(t));
+    const at = (t?: number) => {
+      const m = /<text[^>]*y="([\d.]+)"[^>]*>(?:<[^>]*>)*3</.exec(render(t));
+      return m?.[1];
+    };
+    expect(at(1.5)).toBe(at(undefined));
+    expect(at(3)).toBe(at(undefined));
+    void y;
+  });
+
+  // ⭐⭐ AND THE STAFF LINE REALLY DOES THICKEN — `printLine`'s `dy` is a HALF, so 1.5 adds
+  // THREE to the drawn width. A fix that only stopped the leak would pass the row above.
+  it("adds twice the term to a staff line", () => {
+    const height = (t?: number): number => {
+      const m = /<path d="M 15 ([\d.]+) L [\d.]+ [\d.]+ L [\d.]+ ([\d.]+)/.exec(render(t));
+      return Math.round((Number(m?.[2]) - Number(m?.[1])) * 100) / 100;
+    };
+    expect(height(undefined)).toBeCloseTo(0.7, 2);
+    expect(height(1.5)).toBeCloseTo(3.7, 2);
+  });
+});

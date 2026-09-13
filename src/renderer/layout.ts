@@ -12848,9 +12848,16 @@ function layoutScoped(input: Score, options: LayoutOptions = {}): Layout {
    * the headless real-metrics path if this is ever declared, and it costs one branch.
    */
   STRICT_TEXT_METRICS = true
-  // …and the host's `lineThickness`, which is ADDED to five of them and at two different
-  // sizes — see `lineWeightsFor`.
-  LINE_WEIGHTS = lineWeightsFor(strict, options.lineThickness ?? 0)
+  /**
+   * ⚠️ **AND THE HOST'S `lineThickness` IS NOT ADDED HERE.** It is a DRAWN width and never a
+   * placement — `renderer.lineThickness` is read in the draw functions alone
+   * (`draw/staff.js:14`, `:25`, `draw/relative.js:61-66`) and the ENGRAVER never sees it, so
+   * abcjs moves nothing for it at any value. Folding it in here leaked it into the layout,
+   * which reads these weights too: swept over 0, 0.5, 1.5 and 3 on `X:1 L:1/8 K:C (3ceg|`,
+   * abcjs's tuplet number sits at 89.33 throughout and ours moved to 87.47.
+   * `RenderOptions.lineThickness` is where it goes now, applied per line ROLE.
+   */
+  LINE_WEIGHTS = lineWeightsFor(strict)
   JAZZ_CHORDS = score.jazzChords || options.jazzChords === true
   GERMAN_CHORDS = options.germanAlphabet === true
   // …in LAYOUT UNITS, since the host states it in pixels — see `MIN_PADDING`.

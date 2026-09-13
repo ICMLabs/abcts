@@ -125,7 +125,7 @@ const OPTIONS = [
    * Every one is a REAL feature and not a rounding difference — the count is how many
    * fixtures a host passing it would see drawn differently from abcjs.
    *
-   *   lineThickness    665 — an ADDITIVE term on four line widths: `dy + lineThickness` on
+   *   lineThickness    665 — CLOSED. An ADDITIVE term on four line widths: `dy + lineThickness` on
    *                          a staff line, `0.35 + …` on a ledger, `linewidth + …` on a bar
    *                          and `linewidth ± …` on a stem, the sign following the stem's
    *                          direction (`draw/staff.js:14`, `:25`, `draw/relative.js:61-66`).
@@ -172,31 +172,34 @@ const OPTIONS = [
   // which stack counts it, and so every lane above the staff.
   ['accentAbove', { accentAbove: true }, 0],
   /**
-   * ✅ 665 → 14. The term lands on five weights at two sizes — see `lineWeightsFor`.
+   * ✅ **CLOSED — 665 → 14 → 0. IT IS A DRAWN WIDTH AND NEVER A PLACEMENT.**
+   * `renderer.lineThickness` is read in the DRAW functions alone (`draw/staff.js:14`,
+   * `:25`, `draw/relative.js:61-66`); the ENGRAVER never sees it, so **abcjs moves NOTHING
+   * for it at any value.** Swept over 0, 0.5, 1.5 and 3 on `X:1 L:1/8 K:C (3ceg|`, abcjs's
+   * tuplet number sits at 89.33 throughout and ours moved to 87.47 — because we folded the
+   * term into `LINE_WEIGHTS`, which the LAYOUT reads too.
    *
-   * ⚠️ **THE 14 THAT REMAIN ARE ONE SYMPTOM AND THE CAUSE IS NOW MEASURED, NOT GUESSED.**
-   * A TUPLET NUMBER over a beam sits at a different `y`. Reduced to one bar —
-   * `X:1 L:1/8 K:C (3ceg|` — and swept over `lineThickness` 0, 0.5, 1.5 and 3:
+   * The fix is the separation this note used to say the file could not make one site at a
+   * time, and it is three edits: `LINE_WEIGHTS` is pristine again, `RenderOptions` carries
+   * the term, and `lineToRect` adds it per line ROLE.
    *
-   *     abcjs   89.33   89.33   89.33   89.33      <- it does NOT move, at any value
-   *     abcts   89.33   89.33   87.47   87.53
+   * ⚠️ **AND THE TERM IS NOT THE SAME SIZE AT EVERY SITE.** `printLine`'s `dy` is a HALF —
+   * drawn `y - dy` to `y + dy` — so a STAFF LINE and a LEDGER gain **2 ×**; `printStem`'s
+   * `dx` is the WHOLE width, so a BARLINE and a STEM gain **one**. Nothing else takes it: a
+   * beam is a filled path, the staff-group connector passes a bare 0.6, a glissando and a
+   * `%%sep` are their own emitters.
    *
-   * **abcjs NEVER MOVES ANYTHING FOR `lineThickness`.** `renderer.lineThickness` is read in
-   * the DRAW functions alone (`draw/staff.js:14`, `:25`, `draw/relative.js:61-66`); the
-   * ENGRAVER never sees it, so it is a drawn width and never a placement. We fold it into
-   * `LINE_WEIGHTS`, which our LAYOUT also reads — so it leaks into where things go.
-   * Bisected: excluding `stem` and `beamedStem` from the thickening fixes the tuplet
-   * exactly, and breaks the drawn stem width, which needs it.
+   * ⚠️ **AND A STEM'S ANCHOR MUST NOT MOVE WITH IT.** abcjs leaves `printStem`'s `x` alone
+   * and grows `dx`; ours places a stem by its CENTRE. The anchor is built from the BASE
+   * weight and only the width takes the term — which is what the earlier attempt measured
+   * at 622 of 685 by placing the stem at its base weight instead.
    *
-   * ⚠️ **AND THE OBVIOUS NARROW FIX IS WRONG — 622 of 685, MEASURED.** Placing the stem at
-   * its BASE weight (abcjs's `printStem(x, linewidth ± t)` leaves `x` alone) does not
-   * transfer: our stem is placed by its CENTRE, and a centre DOES move when the width
-   * grows even though abcjs's `x` does not. The two models differ structurally here.
-   *
-   * So the real fix is to keep `LINE_WEIGHTS` pristine for layout and add the term only
-   * where a thickness is EMITTED — a separation this file cannot make one site at a time.
+   * ⚠️ **AND THE HALF IS COMPUTED TWICE IN `lineToRect`.** Patching the rect's `y`/`h` left
+   * the `printLine` branch recomputing `half` from `line.thickness`, so every staff line and
+   * ledger stayed at its base width and the row read **665 of 685** — worse than before.
+   * A value derived twice in one function is one edit and two places.
    */
-  ['lineThickness', { lineThickness: 1.5 }, 14],
+  ['lineThickness', { lineThickness: 1.5 }, 0],
   ['expandToWidest', { expandToWidest: true }, 14],
   // ✅ 125 → 42 → 3. The name reads the other way round: `(!this.initialClef || l === 0) &&
   // createClef(…)` (`creation/abstract-engraver.js:158`) — so it means the initial clef

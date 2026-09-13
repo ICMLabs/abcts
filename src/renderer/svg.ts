@@ -168,6 +168,28 @@ export interface DrawnElement {
 }
 
 export interface RenderOptions {
+  /**
+   * **`lineThickness` — AND IT IS A DRAWN WIDTH, NEVER A PLACEMENT.**
+   *
+   * `renderer.lineThickness` is read in the DRAW functions alone (`draw/staff.js:14`,
+   * `:25`, `draw/relative.js:61-66`); the ENGRAVER never sees it, so abcjs moves NOTHING
+   * for it at any value. Folding it into `LINE_WEIGHTS`, which the layout also reads, leaked
+   * it into where things go — a tuplet number over a beam moved where abcjs's does not.
+   *
+   * ⚠️ **AND THE TERM IS NOT THE SAME SIZE AT EVERY SITE**, because the two primitives
+   * disagree about what their width argument means — see `lineWeightsFor`, which still
+   * documents the four. A staff line and a ledger gain **2 ×** (`printLine`'s `dy` is a
+   * HALF, drawn `y - dy` to `y + dy`); a barline and a stem gain **one** (`printStem`'s
+   * `dx` is the whole width). And a stem's is a SIGN rather than a size: `linewidth`
+   * carries the direction and the magnitude grows either way.
+   *
+   * ⚠️ **AND A STEM'S ANCHOR MUST NOT MOVE WITH IT.** abcjs leaves `printStem`'s `x` alone
+   * and grows `dx`; ours places a stem by its CENTRE, so growing the thickness symmetrically
+   * moves an edge abcjs holds still. The anchor is built from the BASE weight here and only
+   * the width takes the term — the structural difference an earlier attempt measured at 622
+   * of 685 by placing the stem at its base weight instead.
+   */
+  readonly lineThickness?: number;
   /** Pixels per staff space. 8 gives a ~32px staff, close to typical engraving size. */
   readonly staffSpace?: number;
   /**
@@ -451,6 +473,28 @@ const separatorPath = (
  */
 // abcjs-debt: §1.3 — string formatting in a hot path, because `toFixed` and
 // `Math.round(x*100)/100` disagree on a decimal half. Docs/ABCJS-DEBT.md
+/**
+ * The host's `lineThickness`, in LAYOUT units — 0 unless a host sets one. Read ONLY by
+ * `lineToRect`; see `RenderOptions.lineThickness` for why it may not reach the layout.
+ */
+let LINE_THICKNESS = 0;
+
+/** What this line's own width gains, by the rule abcjs applies at each of its four sites. */
+const thickenBy = (role: PartRole | undefined): number => {
+  if (LINE_THICKNESS === 0) return 0;
+  // `printStem`'s `dx` is the WHOLE width: a barline is `linewidth + lineThickness` and a
+  // stem `linewidth ± lineThickness` (`draw/relative.js:61-66`).
+  if (role === "bar" || role === "stem") return LINE_THICKNESS;
+  // `printLine`'s `dy` is a HALF, drawn `y - dy` to `y + dy`: a staff line is
+  // `dy + lineThickness` (`draw/staff.js:14`, `:25`) and a ledger `0.35 + lineThickness`
+  // (`draw/relative.js:66`), so both gain twice. A staff line carries no `role` at all.
+  if (role === undefined || role === "ledger" || role === "staff") return LINE_THICKNESS * 2;
+  // Nothing else takes it — a BEAM is a filled path rather than a `printStem`, the
+  // staff-group CONNECTOR passes a bare 0.6 (`draw/staff-group.js:143`), and a glissando
+  // and a `%%sep` are their own emitters.
+  return 0;
+};
+
 const roundNumber = (n: number): number => Number.parseFloat(n.toFixed(2));
 const round2 = (n: number): string => {
   const r = roundNumber(n);
@@ -509,15 +553,23 @@ function lineToRect(
     return `<polygon${attr} points="${points}"/>`;
   }
 
+  /**
+   * **THE HOST'S `lineThickness` IS ADDED HERE AND NOWHERE ELSE** — see
+   * `RenderOptions.lineThickness`. A HORIZONTAL rule is centred, so the term goes on both
+   * edges (`printLine` draws `y - dy` to `y + dy`); a VERTICAL one keeps its anchor and
+   * only the width grows, because abcjs leaves `printStem`'s `x` alone.
+   */
+  const extra = thickenBy(line.role);
+  const drawn = line.thickness + extra;
   const horizontal = line.y1 === line.y2;
   const x = horizontal
     ? Math.min(line.x1, line.x2)
     : line.x1 - line.thickness / 2;
   const y = horizontal
-    ? line.y1 - line.thickness / 2
+    ? line.y1 - drawn / 2
     : Math.min(line.y1, line.y2);
-  const w = horizontal ? Math.abs(line.x2 - line.x1) : line.thickness;
-  const h = horizontal ? line.thickness : Math.abs(line.y2 - line.y1);
+  const w = horizontal ? Math.abs(line.x2 - line.x1) : drawn;
+  const h = horizontal ? drawn : Math.abs(line.y2 - line.y1);
   /**
    * **A LINE IS A CLOSED PATH IN ABCJS, NOT A `<rect>`** — `printStem` and `printStaff`
    * both build `M x y L x2 y L x2 y2 L x y2 z` and fill it (`write/draw/*`), so a staff
@@ -587,7 +639,8 @@ function lineToRect(
     // case and genuinely does chain its second edge off the rounded first, so the two
     // emitters must differ here exactly as abcjs's do.
     const klass = / class="[^"]*"/.exec(attr)?.[0] ?? "";
-    const half = line.thickness / 2;
+    // …and the host's `lineThickness` is on BOTH edges here — `printLine`'s `dy` is a HALF.
+    const half = drawn / 2;
     const [cx, cy] = horizontal
       ? [0, (line.y1 + line.y2) / 2]
       : [(line.x1 + line.x2) / 2, 0];
@@ -863,6 +916,7 @@ export function toSVG(
   input: Layout | readonly Layout[],
   options: RenderOptions = {},
 ): string {
+  LINE_THICKNESS = spaces(options.lineThickness ?? 0);
   const scale = options.staffSpace ?? 8;
   const prefix = options.className ?? "abcts";
   const abcjs = options.classes === "abcjs";
