@@ -772,7 +772,25 @@ const OPTIONS = [
    *
    *  ⚠️ **AND `synth-flattener-21` WAS PAIRED WITH IT AND DOES NOT BELONG.** That fixture
    *    has NO ending anywhere in it — it is `&` overlay voices — and it did not move when
-   *    the ending charge was fixed. Its own difference is still open and undiagnosed.
+   *    the ending charge was fixed. **DIFFERENCED, NOT FIXED**, and the measurement is:
+   *
+   *      system 2 holds `B4&d4&f4 | c4&e4&g4 | a4 | b4&d'4`, four measures of one whole
+   *      note each. abcjs draws them 82.97 / 93.99 / 93.98 / 93.99 wide; ours 77.47 /
+   *      88.49 / **110.48** / 88.49 — the SINGLE-layer measure is 16.5 too wide and the
+   *      other three are 5.5 short apiece, which is the same 16.5 given back.
+   *
+   *      Localised further: the gap from that measure's opening barline to its note is
+   *      11.018 in abcjs — exactly the bar's own rod, `w 1 + minspacing 10` — and 33.018 in
+   *      ours. **22 extra, which is TWO more bar rods**, on the one measure whose `&`
+   *      layers are absent.
+   *
+   *    ⚠️ **AND IT IS NOT THE PER-ELEMENT ADVANCES.** Both engines were logged side by
+   *    side — abcjs's `layoutOneItem` against our `fixed()`/note pushes — and every rod
+   *    matches: a note is `w 14.985 + minsp 1`, a bar `w 1 + minsp 10`, and the invisible
+   *    padding REST abcjs inserts for a silent overlay layer is `w 0 + minsp 1`, which is
+   *    our `rod 1` exactly. So the defect is in the SHARED CURSOR across voices where the
+   *    layer count changes between measures, not in what any one element claims.
+   *    Start there, and start from the 22.
    *
    * ✅ **A PITCH IS CONVERTED TO A y ONCE, AND THE FRACTION GOES ON THE PITCH — 20 → 18.**
    *    `calcY(ofs) = this.y - ofs * STEP` shifts NOTHING, so every fudge the engraver
