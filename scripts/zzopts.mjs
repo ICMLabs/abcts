@@ -133,7 +133,7 @@ const OPTIONS = [
    *                          spaces by TIME rather than by the spring solve. The largest.
    *   minPadding       659 — extra room to the left of every note and bar in the solve
    *                          (`layout/voice-elements.js:34`, `:110-115`).
-   *   initialClef      125 — reprints the clef at the head of the tune.
+   *   initialClef      125 — reprints the clef at the head of the tune. NOW 3.
    *   wrap+staffwidth   60 — re-lining is implemented (`compat/wrap.ts`) and no gate had
    *                          ever rendered its OUTPUT beside abcjs's.
    *   add_classes       17 — the class scheme itself is gated by 111 sibling goldens; these
@@ -198,21 +198,33 @@ const OPTIONS = [
    */
   ['lineThickness', { lineThickness: 1.5 }, 14],
   ['expandToWidest', { expandToWidest: true }, 14],
-  // ✅ 125 → 42. The name reads the other way round: `(!this.initialClef || l === 0) &&
-  // createClef(…)` (`creation/abstract-engraver.js:158`), `l` being the LINE index — so it
-  // means the initial clef ONLY. The key signature is outside the guard and still draws on
-  // every line, and a mid-tune `[K: clef=]` is untouched.
-  // ⚠️ The 42 that remain are PAGE HEIGHTS and they differ in BOTH directions — ours 7.75
-  // short on `parse-tie-slur-03-onestaff`, 14.43 tall on `visual-directives-01-incipit-test`
-  // — so it is not one missing reserve. The untested hypothesis is abcjs's
-  // `this.startlimitelem = clef` (`:164`), which is INSIDE `if (clef)`: with the clef gone
-  // the tie limit falls to the key signature, or stays stale when there is none. A
-  // two-line control with a tie across the break did NOT reproduce it — both engines drew
-  // the same height with and without the option — so that control is MUTE and the cause is
-  // still open rather than named.
-  // 42 -> 41 when the element width became `dx + w` (see the wrap row) — one more row
-  // that was a last digit rather than the missing feature this count is declared for.
-  ['initialClef', { initialClef: true }, 41],
+  // ✅ 125 → 42 → 3. The name reads the other way round: `(!this.initialClef || l === 0) &&
+  // createClef(…)` (`creation/abstract-engraver.js:158`) — so it means the initial clef
+  // ONLY. The key signature is outside the guard and still draws on every line, and a
+  // mid-tune `[K: clef=]` is untouched.
+  // ⭐ **AND `l` IS THE INDEX INTO `tune.lines`, WHICH COUNTS THE NON-MUSIC ROWS** —
+  // `createABCLine(abcLine.staff, …, i)` with `i` walking `abcTune.lines`
+  // (`engraver-controller.js:229-234`). A tune whose music is preceded by a subtitle, a
+  // `%%text`, a `%%sep` or a `%%newpage` has its FIRST music line at `l > 0` and draws NO
+  // clef at all. Ours read it as the count of music SYSTEMS — the same misreading the
+  // wrap's `action.line !== 0` meter skip had, and `nonMusicPrecedesMusic` is now the one
+  // predicate both read. **27 of the 39 that closed were that single reading.**
+  // ⚠️ **AND THE RECORDED HYPOTHESIS WAS WRONG AND IS NOW DISPROVED, NOT JUST UNTESTED.**
+  // The note here said the 42 were page heights in both directions and named
+  // `this.startlimitelem = clef` (`:164`). `startlimitelem` only reaches `TieElem.setStartX`,
+  // which sets `startX` and nothing else (`elements/tie-element.js:42-44`, `:118-131`) — it
+  // cannot move a reserve, and on the two fixtures left NOTHING MOVES: 0 of 61 elements,
+  // kinds identical, and the page 7.75 short.
+  // ⚠️ **WHAT THOSE TWO ACTUALLY ARE, MEASURED IN abcjs'S OWN `staffGroup`:** with the
+  // option its staff `bottom` goes -1 → **0** on lines 1 and 2, and ours goes to **2**, the
+  // bare bottom staff line. abcjs initialises `{top: 10, bottom: 2}`
+  // (`elements/staff-group-element.js:55-56`) and then `staff.bottom -= diff` per voice
+  // (`layout/set-upper-and-lower-elements.js:75-79`); with no clef its diff is still 2 and
+  // ours is 0, so abcjs has a floor below the staff that we do not. Start at
+  // `setUpperAndLowerVoiceElements`'s `diff`, which is ASSIGNED per element rather than
+  // accumulated. `abcjs-parse-tie-slur-03-onestaff` and `-staffwidth-200`; the third,
+  // `abcts-ledger-gaps-3-tune3`, is geometry with no height difference at all.
+  ['initialClef', { initialClef: true }, 3],
   // ✅ 659 → 5. `getExtraWidth(child, pad)` returns `-child.extraw + pad`, so the padding is
   // part of what the element WANTS and the same shortfall test decides whether any of it is
   // spent — an element with slack in front of it costs nothing. `pad` is skipped for

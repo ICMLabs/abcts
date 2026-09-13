@@ -12861,6 +12861,27 @@ function layoutScoped(input: Score, options: LayoutOptions = {}): Layout {
   SCORE_FONTS = score.fonts
   SCORE_PARTS_BOX = score.partsBox
   PERC_MAP = score.percMap
+  /**
+   * **DOES A NON-MUSIC ROW STAND BEFORE THE TUNE'S FIRST STAFF?**
+   *
+   * abcjs's engraver walks `abcTune.lines` and hands each staff row its INDEX in that array
+   * — `createABCLine(abcLine.staff, …, i)` (`engraver-controller.js:229-234`) — so `i`
+   * counts a subtitle, a `%%text`, a `%%sep` and a `%%newpage` exactly as it counts a
+   * staff. A tune whose music is preceded by any of them has its FIRST music line at
+   * `i > 0`.
+   *
+   * Two rules turn on that index and BOTH read as "the first line" until it is said out
+   * loud: `initialClef`'s `l === 0` (`abstract-engraver.js:158`) and the wrap's
+   * `action.line !== 0` meter skip (`wrap_lines.js:43`) — see `Score.wrapDroppedMeter`,
+   * which is this same predicate computed in `applyLineBreaks` for the wrap's own use.
+   *
+   * The expression was MEASURED rather than reasoned: over all 685 fixtures abcjs's
+   * `tune.lines.findIndex(l => l.staff) > 0` names exactly the fixtures this names, with no
+   * fixture on either side of the disagreement. ⚠️ `newPage` is a NUMBER — `%%newpage 1`
+   * reads back as `1`, and a `=== true` test misses one fixture of 685.
+   */
+  const nonMusicPrecedesMusic =
+    score.textAbove.length > 0 || score.metadata.titles.length > 1 || score.newPage !== null
   const { spacingScale } = PROFILES[profile]
   const voices = score.voices.length > 0 ? score.voices : [undefined]
 
@@ -13738,8 +13759,19 @@ function layoutScoped(input: Score, options: LayoutOptions = {}): Layout {
        * clef INSIDE `if (clef)` (`abstract-engraver.js:159-162`), so a suppressed clef
        * takes the number it would have carried.
        */
-      const bare =
-        INITIAL_CLEF && (lineOfMeasure[from] ?? 0) > 0 ? null : layoutClef(x, clef, strict)
+      /**
+       * ⚠️ **AND `l` IS THE INDEX INTO `tune.lines`, WHICH COUNTS THE NON-MUSIC ROWS** — see
+       * `nonMusicPrecedesMusic`. A tune whose music is preceded by a subtitle, a `%%text`, a
+       * `%%sep` or a `%%newpage` has its FIRST music line at `l > 0` and draws NO clef at
+       * all under this option. `abcts-text-udef-parts-overlays` tune 50 is
+       * `T:…/T:t/L:1/4/K:C/T:sub/CDEF|`, abcjs draws ZERO `clefs.G` for it, and we drew one
+       * — with the staff 14.432px lower for the room it took.
+       *
+       * Reading it as the count of music SYSTEMS, which is what `lineOfMeasure` holds, is
+       * what made this and the wrap's meter rule both look like "the first line".
+       */
+      const outputLine = (lineOfMeasure[from] ?? 0) + (nonMusicPrecedesMusic ? 1 : 0)
+      const bare = INITIAL_CLEF && outputLine > 0 ? null : layoutClef(x, clef, strict)
       const clefElement =
         bare === null || systemNumber === undefined
           ? bare

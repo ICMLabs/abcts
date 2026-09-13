@@ -414,3 +414,55 @@ describe("an element's width is built from offsets", () => {
     expect(starts).toContain("408.78100000000006");
   });
 });
+
+/**
+ * **`initialClef`'s `l` IS THE INDEX INTO `tune.lines`, AND IT COUNTS THE NON-MUSIC ROWS.**
+ *
+ *     var clef = (!this.initialClef || l === 0) && createClef(abcstaff.clef, …)
+ *
+ * (`abstract-engraver.js:158`.) `l` is handed down from
+ * `createABCLine(abcLine.staff, …, i)` where `i` walks `abcTune.lines`
+ * (`engraver-controller.js:229-234`) — so it counts a subtitle, a `%%text`, a `%%sep` and a
+ * `%%newpage` exactly as it counts a staff. **A tune whose music is preceded by any of them
+ * has its FIRST music line at `l > 0` and draws NO clef at all under this option.**
+ *
+ * Ours read it as the count of music SYSTEMS, which is what `lineOfMeasure` holds, so the
+ * option looked like "every line but the first". That is the same misreading the wrap's
+ * meter skip had — `action.line !== 0` (`wrap_lines.js:43`) is the same index — and
+ * `nonMusicPrecedesMusic` is now the one predicate both read.
+ *
+ * `zzopts`'s `initialClef` row: **42 -> 3**, and 27 of the 39 were this one reading.
+ */
+describe("initialClef counts the non-music rows", () => {
+  const clefs = (abc: string): number => {
+    const host = { innerHTML: "" } as { innerHTML: string };
+    renderAbc(host, abc, { staffwidth: 670, initialClef: true });
+    return [...host.innerHTML.matchAll(/data-name="clefs\.[A-Z]"/g)].length;
+  };
+
+  // ⭐ A subtitle stands between the header and the music, so the ONE music line is
+  // `tune.lines[2]` and abcjs draws NO clef for it. Ours drew one, and the staff sat
+  // 14.432px lower for the room it took.
+  it("draws no clef at all when a subtitle precedes the music", () => {
+    expect(clefs("X:1\nT:title\nT:t\nL:1/4\nK:C\nT:sub\nCDEF|\n")).toBe(0);
+  });
+
+  // ⭐⭐ THE CONTROL, and it is the shape that was always right: with NOTHING before the
+  // music the first line IS `tune.lines[0]` and keeps its clef, while the second loses one.
+  // A fix that suppressed by music-system index alone passes the row above and fails this.
+  it("keeps the first line's clef when nothing precedes the music", () => {
+    expect(clefs("X:1\nT:t\nL:1/4\nK:C\nCDEF|\nGABc|\n")).toBe(1);
+  });
+
+  // …and a `%%text` counts the same as a subtitle — the row is what matters, not its kind.
+  it("counts a %%text row too", () => {
+    expect(clefs("X:1\nT:t\nL:1/4\nK:C\n%%text hello\nCDEF|\n")).toBe(0);
+  });
+
+  // …and with the option OFF every line keeps its clef, whatever precedes the music.
+  it("does nothing when the option is off", () => {
+    const host = { innerHTML: "" } as { innerHTML: string };
+    renderAbc(host, "X:1\nT:title\nT:t\nL:1/4\nK:C\nT:sub\nCDEF|\n", { staffwidth: 670 });
+    expect([...host.innerHTML.matchAll(/data-name="clefs\.[A-Z]"/g)].length).toBe(1);
+  });
+});
