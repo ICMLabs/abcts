@@ -12252,8 +12252,21 @@ function layoutMeasure(
     const el = layoutBar(x, trailingBar, strict)
     trailingBarIndex = elements.length
     elements.push(el)
-    fixed(el.width, 0, 'bar', 0, el.width)
-    x += el.width
+    /**
+     * ⚠️ **A TRAILING BAR IS A BAR LIKE ANY OTHER — ITS `w` AND ITS LEFT CLEARANCE ARE
+     * SPENT, AND ONLY ITS `minspacing` IS NOT.** `layoutOneItem` drops `child.minspacing`
+     * on the line's LAST element alone (`layout/voice-elements.js:78`); `getMinWidth` and
+     * the `extraw -= 5` shift apply to it exactly as to every other barline.
+     *
+     * This passed `el.width` — which is ZERO for an INVISIBLE bar, since nothing is drawn —
+     * and a `left` of 0. `barWidthOf` exists for precisely that gap: abcjs's `w` for
+     * `bar_invisible` is the thin bar's 1, whatever the ink. So the line was 6 short of
+     * abcjs's fixed budget (1 of width, 5 of clearance) and the elastic note gaps grew to
+     * fill it: `abcts-endings` tune 2 drew every element +3 and then +6.
+     */
+    const w = barWidthOf(trailingBar, el, strict)
+    fixed(w, 0, 'bar', ENGRAVE.barClearance, w)
+    x += w
   }
 
   /**
@@ -15671,7 +15684,29 @@ function layoutScoped(input: Score, options: LayoutOptions = {}): Layout {
       )
       const first = parts[0]
       if (first === undefined) return centred[0] as (typeof centred)[number]
-      const voiceColors = members.map((v) => voices[v]?.color ?? null)
+      /**
+       * **AND A WRAP LOSES `%%voicecolor` ON EVERY OUTPUT LINE BUT THE ONE THAT CARRIES
+       * THE DIRECTIVE.** It is a `color` ELEMENT in the voice stream
+       * (`tune-builder.js:993`), and `drawVoice` swaps only `if (params.color)` — which
+       * `abstract-engraver.js:376-377` sets when that element is PROCESSED. `deline` merges
+       * the music into ONE line, so an unwrapped tune colours throughout and every golden
+       * agrees; `addLineBreaks` then re-splits that line and only the slice holding the
+       * element keeps `voice.color`.
+       *
+       * Measured on `visual-layout-09-endings`, whose V:1 is blue and V:2 red: abcjs's
+       * SECOND system draws its clef, key, notes, bar and ending in `currentColor` — both
+       * colours gone — where ours kept them.
+       *
+       * ponytail: "the line that carries it" is read as SYSTEM 0, which is where a
+       * `%%voicecolor` at the head of a voice lands. A directive written mid-tune belongs
+       * to whichever output line holds its offset; no fixture in either corpus writes one.
+       */
+      const wrapLostColor =
+        systemIndex > 0 &&
+        plans.some((p) => p?.measures[span.start]?.wrapSourceLine !== undefined)
+      const voiceColors = members.map((v) =>
+        wrapLostColor ? null : (voices[v]?.color ?? null),
+      )
       if (parts.length === 1) return { ...first, voices: [first.elements], voiceColors }
       // …AND ONLY NOW DO THE RESTS GET OUT OF EACH OTHER'S WAY. abcjs runs
       // `fixVoiceCollisions` after the lanes are stacked and does not restack them, so this

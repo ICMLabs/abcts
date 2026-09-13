@@ -626,6 +626,27 @@ const OPTIONS = [
    *    fix ignored the directive and drew one where abcjs draws none, caught by the
    *    control. `parsing-x10`'s lengths now MATCH (39/39).
    *
+   * ⭐ **A TRAILING BAR IS A BAR LIKE ANY OTHER — 13 → 8, AND THAT WAS THE WHOLE
+   *    "PROGRESSIVE SPACING" FAMILY.** `layoutOneItem` drops `child.minspacing` on the
+   *    line's LAST element alone (`layout/voice-elements.js:78`); `getMinWidth` and the
+   *    `extraw -= 5` clearance apply to it as to every other barline. `layoutMeasure`
+   *    passed `el.width` for the trailing copy of a wrap-broken opening bar — ZERO for an
+   *    INVISIBLE bar, since nothing is drawn — and a `left` of 0, where `barWidthOf` gives
+   *    abcjs's `w` of 1 whatever the ink. Six short of the fixed budget (1 + 5), and the
+   *    ELASTIC note gaps grew to fill it.
+   *    ⚠️ **SEVEN FIXTURES READ AS SEVEN SPACING DEFECTS AND WERE ONE EXPRESSION.**
+   *    `synth-flattener-07`, `-46`, `visual-tablature-20`, `-24` and `abcts-endings` tune 2
+   *    closed together. Found by instrumenting abcjs's `layoutOneItem` against our own
+   *    `fixed()` list: abcjs's last element reports `w=1 extraw=-5`, ours `rod 0 … w 0`.
+   *
+   * ✅ **A WRAP LOSES `%%voicecolor` ON EVERY LINE BUT THE ONE THAT CARRIES IT — 8 → 7.**
+   *    It is a `color` ELEMENT in the voice stream (`tune-builder.js:993`) and `drawVoice`
+   *    swaps only `if (params.color)`, set when that element is PROCESSED
+   *    (`abstract-engraver.js:376-377`). `deline` merges the music into ONE line so an
+   *    unwrapped tune colours throughout; `addLineBreaks` re-splits it and only the slice
+   *    holding the element keeps `voice.color`. `visual-layout-09-endings`' second system
+   *    is `currentColor` throughout in abcjs — the V:1 blue AND the V:2 red both gone.
+   *
    * ✅ **A QUOTED-LABEL ENDING CLOSES ON THE SYSTEM THAT OPENED IT — `abcts-endings`
    *    tune 2 is 31 of 31 with identical kinds.** `["second"] E2` ends at the `]` its own
    *    label leaves behind (`abc_parse_music.js:271-274`), ONE bar element after it opened;
@@ -813,13 +834,13 @@ const OPTIONS = [
    *    3  GEOMETRY ONLY, same element kinds throughout:
    *       `text-udef-parts-overlays-tune8` and `-tune46`, `vskip-tune1`.
    *
-   * ⚠️ **AND TWO OF THE 13 ARE abcjs CRASHING, NOT US.** `abcts-vskip` tunes 0 and 2 throw
+   * ⚠️ **AND TWO OF THE 7 ARE abcjs CRASHING, NOT US.** `abcts-vskip` tunes 0 and 2 throw
    * inside abcjs's own `wrapLines` — `undefined is not an object (evaluating 'l[p]')` —
    * because `addLineBreaks` reads `lines[action.ogLine].staff[action.staff]` on a row a
    * `%%vskip` made non-music. We render them. A crash is not output and strict does not
    * reproduce one.
    */
-  ['wrap + staffwidth', { wrap: { minSpacing: 1.8, maxSpacing: 2.7, preferredMeasuresPerLine: 4 }, staffwidth: 400 }, 13],
+  ['wrap + staffwidth', { wrap: { minSpacing: 1.8, maxSpacing: 2.7, preferredMeasuresPerLine: 4 }, staffwidth: 400 }, 7],
 ]
 const every = Number(process.argv[2] ?? 1)
 const browser = await webkit.launch()

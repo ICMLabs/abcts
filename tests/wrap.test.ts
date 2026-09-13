@@ -1521,3 +1521,103 @@ describe("renderAbc({wrap}) — an ending whose ] is its own barline", () => {
     expect(drawn()).toEqual({ lines: 2, labels: 1 });
   });
 });
+
+/**
+ * **A TRAILING BAR IS A BAR LIKE ANY OTHER — ONLY ITS `minspacing` IS DROPPED.**
+ *
+ * `layoutOneItem` drops `child.minspacing` on the line's LAST element alone
+ * (`layout/voice-elements.js:78`); `getMinWidth(child)` and the `extraw -= 5` left
+ * clearance apply to it exactly as to every other barline.
+ *
+ * `layoutMeasure` passed `el.width` for the trailing copy of a wrap-broken opening bar —
+ * which is ZERO for an INVISIBLE bar, since nothing is drawn — and a `left` of 0.
+ * `barWidthOf` exists for that gap: abcjs's `w` for `bar_invisible` is the thin bar's 1,
+ * whatever the ink. So the line came out 6 short of abcjs's fixed budget — 1 of width and 5
+ * of clearance — and the ELASTIC note gaps grew to fill it.
+ *
+ * ⭐ **THAT WAS THE WHOLE "PROGRESSIVE SPACING" FAMILY.** Seven fixtures differed by an x
+ * that drifted along the line with element counts and kinds identical, and it read as seven
+ * separate spacing defects. `zzopts` 13 -> 8 on one expression: `synth-flattener-07`,
+ * `-46`, `visual-tablature-20`, `-24` and `abcts-endings` tune 2 closed with it.
+ *
+ * Instrumented in abcjs's own `layoutOneItem` against our `fixed()` list: abcjs's last
+ * element on the line reports `w=1 extraw=-5`, ours reported `rod 0 … w 0`.
+ */
+describe("renderAbc({wrap}) — a trailing bar still spends its width", () => {
+  // ⭐ `C2|["first"] D2:|["second"] E2|]` — the first barline at abcjs's x, which the
+  // 6px-short budget pushed to 159.22.
+  it("puts the first barline where abcjs does", () => {
+    const host = { innerHTML: "" } as { innerHTML: string };
+    renderAbc(
+      host,
+      readFileSync(
+        join(import.meta.dirname, "corpus-abcjs", "fixtures", "abcts-endings.abc"),
+        "utf-8",
+      ),
+      {
+        staffwidth: 400,
+        startingTune: 2,
+        wrap: { minSpacing: 1.8, maxSpacing: 2.7, preferredMeasuresPerLine: 4 },
+      },
+    );
+    const bars = [
+      ...host.innerHTML.matchAll(/<path d="M ([\d.]+) [^"]*" data-name="bar">/g),
+    ].map((m) => Math.round(Number(m[1]) * 100) / 100);
+    expect(bars[0]).toBe(156.2);
+  });
+});
+
+/**
+ * **A WRAP LOSES `%%voicecolor` ON EVERY OUTPUT LINE BUT THE ONE THAT CARRIES IT.**
+ *
+ * It is a `color` ELEMENT in the voice stream (`tune-builder.js:993`), and `drawVoice`
+ * swaps only `if (params.color)` — which `abstract-engraver.js:376-377` sets when that
+ * element is PROCESSED. `deline` merges the music into ONE line, so an unwrapped tune
+ * colours throughout and every golden agrees; `addLineBreaks` then re-splits that line and
+ * only the slice holding the element keeps `voice.color`.
+ *
+ * `visual-layout-09-endings` has `%%voicecolor blue` on V:1 and `red` on V:2, and abcjs's
+ * SECOND system draws its clef, key, notes, bar and ending in `currentColor` — both colours
+ * gone. Ours kept them, and that was the fixture's last byte.
+ */
+describe("renderAbc({wrap}) — %%voicecolor past the first system", () => {
+  const fills = (wrap: boolean): string[] => {
+    const host = { innerHTML: "" } as { innerHTML: string };
+    renderAbc(
+      host,
+      readFileSync(
+        join(
+          import.meta.dirname,
+          "corpus-abcjs",
+          "fixtures",
+          "abcjs-visual-layout-09-endings.abc",
+        ),
+        "utf-8",
+      ),
+      {
+        staffwidth: wrap ? 400 : 670,
+        ...(wrap
+          ? { wrap: { minSpacing: 1.8, maxSpacing: 2.7, preferredMeasuresPerLine: 4 } }
+          : {}),
+      },
+    );
+    return [...host.innerHTML.matchAll(/<g fill="([^"]*)"[^>]*data-name=/g)].map(
+      (m) => m[1] ?? "",
+    );
+  };
+
+  // ⭐ Blue and red on system 1, nothing but `currentColor` after it.
+  it("colours the first system only", () => {
+    const f = fills(true);
+    expect(new Set(f.slice(0, 3))).toEqual(new Set(["blue"]));
+    expect(f.filter((c) => c === "blue").length).toBe(12);
+    expect(f.filter((c) => c === "red").length).toBe(3);
+    expect(f.filter((c) => c === "currentColor").length).toBeGreaterThan(10);
+  });
+
+  // ⭐⭐⭐ THE UNWRAPPED CONTROL — `deline` leaves one music line, so every mark is coloured
+  // and NOTHING is `currentColor`. The rule must not fire here.
+  it("colours throughout without the wrap", () => {
+    expect(fills(false).filter((c) => c === "currentColor").length).toBe(0);
+  });
+});
