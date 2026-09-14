@@ -5795,10 +5795,25 @@ const fontFor = (size: number, face: Face): TextFont => ({
  * this does too; `Mg` survives only as the fallback where a caller has no string, which is
  * a lane's own reserve rather than a drawn row. **THREE STRINGS AGREEING IS NOT A RULE.**
  */
-const textHeight = (size: number, text = 'Mg', font: Face | TextFont = 'serif'): number => {
+const textHeight = (
+  size: number,
+  text = 'Mg',
+  font: Face | TextFont = 'serif',
+  /** The x the run will be DRAWN at, when the caller knows it — see `textWidth`'s. */
+  x?: number,
+  /** A measurement abcjs never makes, kept out of the shared cache — `TextFont.transient`. */
+  transient = false,
+): number => {
   const live = getTextMeasurer()
   if (live === null) return goldenTextHeight(size)
-  return live(text, typeof font === 'string' ? fontFor(size, font) : font).height / UNIT_PX
+  const f = typeof font === 'string' ? fontFor(size, font) : font
+  return (
+    live(text, {
+      ...f,
+      ...(x === undefined ? {} : { x }),
+      ...(transient ? { transient: true } : {}),
+    }).height / UNIT_PX
+  )
 }
 
 /**
@@ -6132,6 +6147,36 @@ const markWidth = (
   boxed: boolean,
   font: Face | TextFont = 'sans',
 ): number => textWidth(text, size, font) + (boxed ? size * ENGRAVE.fontBoxPadding * 4 : 0)
+
+/**
+ * **abcjs's SECOND MEASUREMENT OF A BOXED ROW — `elem.getBBox()` ON THE DRAWN NODE.**
+ *
+ * `renderText` rounds `hash.attr.x`, builds the element, and measures THAT
+ * (`draw/text.js:63-69`), so the rect's width and height are taken at the element's real x
+ * and never touch the size cache. The LAYOUT's own measurement — `PlacedText.boxSize` — is
+ * the rod's, made before the line was solved and therefore at no x, and the two differ by one
+ * 1/64-px quantum whenever the drawn x has a fractional part (see `TextFont.x`).
+ *
+ * `x` is the number the emitter is about to WRITE, which is `roundNumber(x)`.
+ *
+ * ⚠️ **`transient` KEEPS IT OUT OF THE SHARED CACHE, WHICH IS THE POINT.** That cache is
+ * keyed without an x — abcjs's is too — so a second ask for the same string would hand back
+ * the first, x-less answer and the whole exercise would measure nothing.
+ *
+ * `null` where there is no live measurer: node has no `getBBox`, abcjs's generator had none
+ * either, and the 691 goldens are that measurement. The caller keeps `boxSize`.
+ */
+export const boxInkAt = (
+  m: NonNullable<PlacedText['boxMeasure']>,
+  size: number,
+  x: number,
+): { width: number; height: number } | null => {
+  if (getTextMeasurer() === null) return null
+  return {
+    width: textWidth(m.widthText, size, m.font, x, true),
+    height: textHeight(size, m.heightText, m.font, x, true),
+  }
+}
 
 /**
  * **THE STRING A MARK IS MEASURED AS, WHICH IS NOT ALWAYS THE ONE IT DRAWS.**
@@ -6575,6 +6620,14 @@ function noteText(
                   fontOfType(SCORE_FONTS, 'gchordfont', size),
                 ),
                 height: textHeight(size, line, fontOfType(SCORE_FONTS, 'gchordfont', size)),
+              },
+              // …**AND THE SAME TWO STRINGS AND FONT AGAIN, SO THE EMITTER CAN ASK AT THE x IT
+              // WRITES** — abcjs's box comes off `getBBox()` on the DRAWN node, which is 1/64
+              // wider at a fractional x. See `PlacedText.boxMeasure`.
+              boxMeasure: {
+                widthText: measured,
+                heightText: line,
+                font: fontOfType(SCORE_FONTS, 'gchordfont', size),
               },
             }
           : {}),

@@ -53,7 +53,7 @@ const outlineHash = (parts: readonly string[]): string => {
   }
   return h.toString(36);
 };
-import { ENGRAVE, stepToY } from "./layout.js";
+import { boxInkAt, ENGRAVE, stepToY } from "./layout.js";
 import type {
   ConnectorSpan,
   Layout,
@@ -3675,7 +3675,28 @@ export function toSVG(
              * is DELETED, and the rect is measured from `getBBox()` — `PlacedText.boxSize`.
              */
             const pad = t.size * ABCJS_RATIO.fontBoxPadding;
-            const bs = t.box === true ? t.boxSize : undefined;
+            /**
+             * ⭐ **AND THE RECT IS MEASURED AT THE x IT IS DRAWN AT, WHICH IS abcjs's SECOND
+             * MEASUREMENT AND NOT THE LAYOUT'S.** `renderText` rounds `hash.attr.x`, builds
+             * the element, and takes `elem.getBBox()` on THAT node (`draw/text.js:63-69`);
+             * `PlacedText.boxSize` is the LAYOUT's ask, made before the line was solved and so
+             * at no x at all. The two differ by one 1/64-px quantum whenever the drawn x has a
+             * fractional part — and `visual-tablature-17` at `scale: 0.8` straddles a whole
+             * pixel on it, `93.4982` against `93.5062`.
+             *
+             * ⚠️ **THE x IS THE ONE THIS EMITTER WRITES**, `roundNumber(t.x * PX)`, because
+             * that is the attribute the browser lays the element out from.
+             *
+             * `boxInkAt` answers `null` with no live measurer, and then `boxSize` stands: node
+             * has no `getBBox`, abcjs's generator had none either, and the 691 goldens ARE that
+             * measurement. So this moves nothing headless and everything in a browser.
+             */
+            const bs =
+              t.box !== true
+                ? undefined
+                : t.boxMeasure === undefined
+                  ? t.boxSize
+                  : (boxInkAt(t.boxMeasure, t.size, Number(round2(t.x * PX))) ?? t.boxSize);
             /**
              * **`renderText` BUILDS THE BASELINE AS THREE ADDS ONTO THE PAGE'S y, AND AN
              * ASSOCIATION IS A DECISION.**

@@ -129,8 +129,19 @@ const OPTIONS = [
    * known, so it is the x = 0 measurement. Landing on `.498` against `.506` turns that into a
    * whole pixel.
    *
-   * **The fix is to measure the box in the EMITTER, at the drawn x** — the same phase
-   * argument as the `add_classes` cache key, and its own landing.
+   * ✅ **THE EMITTER MEASURES THE BOX NOW, AT THE x IT WRITES — 3 OF THIS FIXTURE'S 4 BOXES
+   * ARE EXACT AND THE ROW IS STILL 1.** `PlacedText.boxMeasure` carries the two strings and
+   * the font, and `boxInkAt` asks again TRANSIENTLY at `roundNumber(x)`; the layout's
+   * `boxSize` stands wherever there is no live measurer, which is what keeps the 691 headless
+   * goldens meaning what they meant. Byte-exact on boxes 1, 2 and 4 (51.3125, 106.546875,
+   * 422.171875 against abcjs's own).
+   *
+   * ⚠️ **THE FOURTH IS STILL 1/64 SHORT AND THE SIMPLE READING IS OUT.** Box 3 is
+   * `209.109375` against abcjs's `209.125` at the SAME rounded x (207.36) and the same font,
+   * where boxes 1, 2 and 4 all have fractional xs too and all now agree — so the quantum is
+   * not "fractional or not". What is left is a nested-tspan measurement: a `%%jazzchords`
+   * chord draws its modifier at `font-size:0.7em`, and box 3 is the one whose split differs.
+   * **A rule that fixes three of four is not the rule for the fourth.**
    */
   ['scale 0.8', { scale: 0.8 }, 1],
   // ⚠️ TWO, both a last digit: `synth-flattener-32`'s tempo flag path x

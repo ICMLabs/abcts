@@ -28,6 +28,7 @@ import type {
   Tempo,
 } from '../core/model.js'
 import type { GlyphName } from './glyphs.js'
+import type { TextFont } from './text-measure.js'
 
 export type ElementType =
   | 'title'
@@ -637,6 +638,34 @@ export interface PlacedText {
    * One flag rather than two because it is one fact: which `openGroup` call this is.
    */
   readonly groupLiteral?: true
+  /**
+   * **WHAT IT TAKES TO MEASURE THIS ROW'S BOX AGAIN, AT THE x IT IS DRAWN AT.**
+   *
+   * abcjs measures a boxed row TWICE. The LAYOUT asks `getTextSize.calc` for the rod, at no
+   * x at all; the DRAW then rounds `hash.attr.x`, builds the element, and takes
+   * `elem.getBBox()` on THAT node (`draw/text.js:63-69`) — so the box's own width and height
+   * are measured at the element's real, rounded x, and go nowhere near the size cache.
+   *
+   * ⚠️ **AND THAT MATTERS BY EXACTLY ONE 1/64-PX QUANTUM**, the one `TextFont.x` exists for: a
+   * fractional x measures 1/64 wider. `boxSize` is the LAYOUT's measurement — correct for the
+   * rod and 1/64 narrow for the rect — and the layout cannot do better, because a chord
+   * symbol's x is not known until the line is solved. `visual-tablature-17` at `scale: 0.8`
+   * lands on `93.4982` in abcjs against our `93.5062`, which `Math.round` turns into a WHOLE
+   * PIXEL of box edge.
+   *
+   * So the strings and the font travel, and the EMITTER asks again at the x it is about to
+   * write. Absent where there is no box, and ignored where there is no live measurer — node
+   * has no `getBBox` and the 691 goldens keep their meaning.
+   *
+   * ⚠️ **AND THE TWO STRINGS ARE DIFFERENT ONES.** abcjs's width comes off the DRAWN form —
+   * a `%%jazzchords` chord's nested tspans — and its height off the plain line. Recorded
+   * rather than re-derived, so the emitter cannot pick the wrong one.
+   */
+  readonly boxMeasure?: {
+    readonly widthText: string
+    readonly heightText: string
+    readonly font: TextFont
+  }
   readonly measure?: number
   /** …or the ELEMENT whose counters it takes, when only the emitter knows them. */
   readonly measureElement?: number

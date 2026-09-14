@@ -1,9 +1,10 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 
 import { parseOnly, renderAbc } from "../src/compat/index.js";
+import { setTextMeasurer, type TextFont } from "../src/renderer/text-measure.js";
 
 const FIXTURES = join(import.meta.dirname, "corpus-abcjs", "fixtures");
 
@@ -1026,5 +1027,80 @@ describe("%%footer draws the print page's last rows", () => {
       group: true,
       rows: ["start 90.67 231.26", "middle 537.33 257.26", "end 984 283.26"],
     });
+  });
+});
+
+
+/**
+ * **A BOXED ROW'S RECT IS MEASURED AT THE x IT IS DRAWN AT, WHICH IS abcjs's *SECOND*
+ * MEASUREMENT OF THE SAME STRING.**
+ *
+ * `renderText` rounds `hash.attr.x`, builds the element, and takes `elem.getBBox()` on THAT
+ * node (`draw/text.js:63-69`) — so the rect comes off the drawn x and never touches the size
+ * cache. `PlacedText.boxSize` is the LAYOUT's ask, made for the ROD before the line was
+ * solved and therefore at no x at all, and the two differ by one 1/64-px quantum whenever the
+ * drawn x has a fractional part (see `TextFont.x`). `visual-tablature-17` at `scale: 0.8`
+ * straddles a WHOLE PIXEL of box edge on it — `93.4982` in abcjs against our `93.5062`.
+ *
+ * ⚠️ **THE RULE IS INVISIBLE WITHOUT A BROWSER, so this control asks a STUB MEASURER what it
+ * was asked.** Node has no `getBBox`, `boxInkAt` answers `null` there and `boxSize` stands —
+ * which is deliberate, because the 691 goldens ARE the headless measurement. Asserting
+ * geometry here would measure the stub; asserting the CALL measures the rule.
+ *
+ * ⚠️ **AND IT MUST BE `transient`.** The shared cache is keyed without an x — abcjs's is too
+ * — so a second ask for the same string would be handed the first, x-less answer and the whole
+ * exercise would measure nothing. A missing `transient` is the one way this can look right and
+ * do nothing.
+ */
+describe("a boxed row is measured at the x it is drawn at", () => {
+  afterEach(() => setTextMeasurer(null));
+
+  const BOXED = 'X:1\nT:t\n%%gchordfont Arial 13 box\nL:1/4\nK:C\n"G"CDEF|\n';
+
+  /** Every ask a render made, with the two fields that say which kind of ask it was. */
+  const asksFor = (
+    abc: string,
+  ): { asks: { text: string; x?: number; transient?: boolean }[]; svg: string } => {
+    const asks: { text: string; x?: number; transient?: boolean }[] = [];
+    setTextMeasurer((text: string, font: TextFont) => {
+      asks.push({
+        text,
+        ...(font.x === undefined ? {} : { x: font.x }),
+        ...(font.transient === undefined ? {} : { transient: font.transient }),
+      });
+      // Deterministic and nothing like a real face: the assertions are about the CALL.
+      return { width: text.length * font.size * 0.5, height: font.size * 1.2 };
+    });
+    const host = { innerHTML: "" } as { innerHTML: string };
+    renderAbc(host, abc, { staffwidth: 670 });
+    return { asks, svg: host.innerHTML };
+  };
+
+  it("asks at the x it writes, and asks transiently", () => {
+    const { asks, svg } = asksFor(BOXED);
+    // ⭐ THE x IN THE MARKUP, not a number copied out of a previous run — which is the whole
+    // claim: the measurement is taken at the attribute the browser will lay the element out
+    // from. Two asks, because abcjs's one `getBBox()` gives both a width and a height.
+    const drawn = /<text[^>]*x="([\d.]+)"[^>]*data-name="chord"/.exec(svg)?.[1];
+    expect(drawn).toBeDefined();
+    const boxAsks = asks.filter((a) => a.text === "G" && a.transient === true);
+    expect(boxAsks).toEqual([
+      { text: "G", x: Number(drawn), transient: true },
+      { text: "G", x: Number(drawn), transient: true },
+    ]);
+  });
+
+  // ⭐⭐ AND THE ROD'S OWN ASK CARRIES NO x, because the layout cannot know one. A fix that
+  // passed the x everywhere would pass the row above and change every cached width in the
+  // engine; this is the row that says the two asks are different asks.
+  it("leaves the layout's own measurement without an x", () => {
+    const { asks } = asksFor(BOXED);
+    expect(asks.some((a) => a.text === "G" && a.x === undefined)).toBe(true);
+  });
+
+  // …and with no box there is no second ask at all.
+  it("asks once for an unboxed row", () => {
+    const { asks } = asksFor('X:1\nT:t\n%%gchordfont Arial 13\nL:1/4\nK:C\n"G"CDEF|\n');
+    expect(asks.filter((a) => a.text === "G" && a.transient === true)).toEqual([]);
   });
 });
