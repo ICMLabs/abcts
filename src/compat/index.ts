@@ -391,6 +391,19 @@ export interface AbcjsParams {
    */
   readonly expandToWidest?: boolean;
   /**
+   * **`timeBasedLayout` — A SECOND LAYOUT ALGORITHM.** `layout()` runs `layoutInGrid` instead
+   * of `setXSpacing` on every line when this is present, so every element's x comes from its
+   * MUSICAL TIME on a uniform grid and the spring solve is not used at all
+   * (`layout/layout.js:21-24`, `layout/layout-in-grid.js`).
+   *
+   * `{}` turns it on with every default — abcjs tests `!== undefined`, not truthiness.
+   */
+  readonly timeBasedLayout?: {
+    readonly minPadding?: number;
+    readonly minWidth?: number;
+    readonly align?: "left" | "center";
+  };
+  /**
    * **THE CALLBACK A CLICK IN THE SCORE CALLS** — `(abcelem, tuneNumber, classes,
    * analysis, drag, ev)`. abcjs pushes it onto `this.listeners`
    * (`engraver-controller.js:61-63`) and `notifySelect` walks them
@@ -1221,6 +1234,7 @@ function renderInto(
         ...(params.initialClef === true ? { initialClef: true } : {}),
         ...(params.accentAbove === true ? { accentAbove: true } : {}),
         ...(params.expandToWidest === true ? { expandToWidest: true } : {}),
+        ...(params.timeBasedLayout === undefined ? {} : { timeBasedLayout: params.timeBasedLayout }),
       });
       return laidOutCache;
     };

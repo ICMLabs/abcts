@@ -193,7 +193,7 @@ const OPTIONS = [
    *                          and `linewidth ± …` on a stem, the sign following the stem's
    *                          direction (`draw/staff.js:14`, `:25`, `draw/relative.js:61-66`).
    *   timeBasedLayout  669 — a SECOND layout algorithm, `layout/layout-in-grid.js`, which
-   *                          spaces by TIME rather than by the spring solve. The largest.
+   *                          spaces by TIME rather than by the spring solve. NOW 1.
    *   minPadding       659 — extra room to the left of every note and bar in the solve
    *                          (`layout/voice-elements.js:34`, `:110-115`). NOW 1.
    *   initialClef      125 — reprints the clef at the head of the tune. NOW 0 — CLOSED.
@@ -429,7 +429,60 @@ const OPTIONS = [
    * differing. **A probe that measures two different quantities is worse than none.**
    */
   ['minPadding', { minPadding: 40 }, 1],
-  ['timeBasedLayout', { timeBasedLayout: { minPadding: 20 } }, 669],
+  /**
+   * ✅ **CLOSED TO 1 FROM 669 — A SECOND LAYOUT ALGORITHM, AND IT IS 83 LINES.**
+   * `layout()` calls `layoutInGrid` INSTEAD OF `setXSpacing` for every line
+   * (`layout/layout.js:21-24`): every element's x comes from its MUSICAL TIME on a uniform
+   * grid, one `minSpacing` for the whole line set by whichever element is tightest per unit of
+   * time. The step is LINEAR in duration where a spring is `sqrt`-weighted — 2.000000 against
+   * √2 on the same 2:1 pair, which is how the two algorithms are told apart in one number.
+   *
+   * ⚠️ **THE BIGGEST ROW ON THIS BOARD WAS NOT THE BIGGEST JOB.** The port itself took 669 → 11
+   * in one go. **The other ten were four passes of the spring solve that a grid line does not
+   * get, because they live INSIDE `setXSpacing`** — and each had to be found by differencing,
+   * because nothing in the algorithm mentions them:
+   *
+   * ✅ **`checkLastBarX` — 11 → 7.** Called at the end of `layoutStaffGroup`
+   *    (`layout/staff-group.js:119`), which only `setXSpacing` calls. So a short voice's closing
+   *    bar is NOT pulled out to meet the long one's. `abcts-last-bar` tune 0 was a whole slot.
+   * ✅ **`centerWholeRests` — inside `setXSpacing` itself** (`layout/layout.js:78`), so a
+   *    time-based whole rest stays on its grid slot: 181.53 against the solve's 366.36.
+   * ⭐ **SIMULTANEITY IS TIME AND WE GROUPED BY x — 7 → 3.** `toTimeAndStaffBased` keys a
+   *    staff's slots on a running sum of `child.duration` and reads no x at all
+   *    (`layout/to-time-and-staff-based.js`). Grouping by x agreed for as long as the SPRING
+   *    SOLVE was the only layout, because it puts simultaneous elements at the same x; the grid
+   *    left-aligns each by its own ink and the grouping simply stopped finding them. **The grid
+   *    did not break this, it revealed it** — and the fix is on the DEFAULT path too, where the
+   *    two answers coincide (`svg-bytes` 0 of 691 either way).
+   * ⭐ **AN ENDING'S ROOM IS CHARGED TO VOICE 0 ALONE — 3 → 1.**
+   *    `if (voice.voicenumber === 0)` gates `minspacing += textWidth + 10` AND the `EndingElem`
+   *    together (`abstract-engraver.js:1034-1042`). The CLOSING bar's charge was already gated
+   *    here and the OPENING bar's asked nobody. Invisible under the shared cursor, where
+   *    `minspacing` is only a floor and voice 0's larger one wins.
+   *
+   * ⚠️ **AND THE VOICES ARE NOT ON A COMMON GRID.** `durationUnit` is computed INSIDE the voice
+   * loop, from where THAT voice's fixed-left walk left the cursor — and a duplicate voice has no
+   * staff-extras at all (`voice.children = []`, `abstract-engraver.js:181`), so its music starts
+   * at the left edge and its unit is wider. That is what made the two per-voice bugs above
+   * visible at all.
+   *
+   * ⚠️ **THE LAST ROW IS A CENTRE-VERSUS-EDGE REPRESENTATION, MEASURED TO THE DOUBLE.**
+   * `abcts-rests-and-bars-tune13`'s closing bar: both engines place the ELEMENT at exactly
+   * 119.955, and abcjs draws `M 119.95` where we draw `M 119.96`. abcjs stores a rule's EDGE and
+   * `printStem` writes `roundNumber(x)` then `roundNumber(x + dx)` (`draw/print-stem.js:13-14`);
+   * we store the CENTRE — the placed line is 120.25500000000001 — and the emitter recovers the
+   * edge as `centre - half`, which is `119.95500000000001` and rounds the other way.
+   * `(119.955).toFixed(2)` is `"119.95"` and `(119.95500000000001).toFixed(2)` is `"119.96"`.
+   * The engine already knows this asymmetry — `lineThickness`'s note says abcjs "leaves
+   * `printStem`'s `x` alone and grows `dx`; ours places a stem by its CENTRE" — so the fix is
+   * representational and belongs with that, not here.
+   *
+   * ⚖️ **AND `{}` IS A DECLARED DIVERGENCE: abcjs WRITES 29 `NaN`s FOR IT.**
+   * `getTotalDuration` is handed `timeBasedLayout.minPadding` and adds it to every width, so an
+   * ABSENT `minPadding` is `w + undefined`. `{minPadding: 0}` is byte-identical. See
+   * `Docs/ABCJS-DIFFERENCES.md`.
+   */
+  ['timeBasedLayout', { timeBasedLayout: { minPadding: 20 } }, 1],
   /**
    * ⚠️ **23, AND THE LINE-STRUCTURE HALF IS CLOSED.** Counting staff lines in each engine
    * over the whole corpus: **ELEVEN fixtures drew a different NUMBER OF LINES and now NONE

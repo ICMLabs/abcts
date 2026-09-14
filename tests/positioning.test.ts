@@ -1104,3 +1104,216 @@ describe("a boxed row is measured at the x it is drawn at", () => {
     expect(asks.filter((a) => a.text === "G" && a.transient === true)).toEqual([]);
   });
 });
+
+
+/**
+ * **`timeBasedLayout` — A SECOND LAYOUT ALGORITHM, AND IT REPLACES THE SOLVE RATHER THAN
+ * TUNING IT.**
+ *
+ * `layout()` calls `layoutInGrid` INSTEAD OF `setXSpacing` for every line when the host passes
+ * it (`layout/layout.js:21-24`), so every element's x comes from its MUSICAL TIME on a uniform
+ * grid:
+ *
+ *     totalDuration = max over voices of Σ child.duration
+ *     minSpacing    = max over elements with duration of (child.w + minPadding) / duration
+ *     totalWidth    = minSpacing * totalDuration
+ *     durationUnit  = (totalWidth + leftEdge - x) / totalDuration      … at the FIRST note
+ *
+ * ⚠️ **AND FOUR PASSES OF THE SPRING SOLVE GO WITH IT, BECAUSE THEY LIVE INSIDE IT.** The
+ * eight justification iterations, `centerWholeRests` (`layout/layout.js:78`), `checkLastBarX`
+ * (`layout/staff-group.js:119`) and the voice-overlap displacement in `layoutOneItem` are all
+ * reached only through `setXSpacing`, so a time-based line gets none of them. Each of those is
+ * a row below, because each was a differing fixture.
+ *
+ * ⚠️ Every expected number was read out of abcjs on these same shapes in WebKit.
+ *
+ * `zzopts`'s `timeBasedLayout` row: **669 → 1 of 685.**
+ */
+describe("timeBasedLayout spaces by time instead of by the spring solve", () => {
+  const GRID = { timeBasedLayout: { minPadding: 20 } } as const;
+  const ink = (abc: string, opts: object): string => {
+    const host = { innerHTML: "" } as { innerHTML: string };
+    renderAbc(host, abc, { staffwidth: 670, ...opts });
+    return host.innerHTML;
+  };
+  const heads = (abc: string, opts: object): number[] =>
+    [...ink(abc, opts).matchAll(/data-name="[A-Ga-g][,\']*" d="M ([\d.]+)/g)].map((m) =>
+      Number(m[1]),
+    );
+  const at2 = (xs: number[]): string[] => xs.map((x) => x.toFixed(2));
+
+  /**
+   * A 2:1:1:1 line, and **EVERY HEAD IS THE SAME GLYPH ON PURPOSE.** With equal durations a
+   * grid and a solve are both even and agree by accident; with a WHOLE note in the line the
+   * drawn notehead xs stop being proportional at all, because each head's own `dx` joins the
+   * slot's. Four quarters-and-eighths make the step readable off the ink.
+   */
+  const RATIO = "X:1\nT:t\nL:1/8\nK:C\nC2D1E1F1|\n";
+
+  /**
+   * ⭐ **THE STEP IS LINEAR IN THE DURATION, EXACTLY.** That is the rule, so it is asserted as
+   * a RATIO as well as four numbers a future change could simply re-baseline: 46 : 23 : 23 for
+   * 2 : 1 : 1.
+   */
+  it("advances each element by its own duration", () => {
+    const xs = heads(RATIO, GRID);
+    expect(at2(xs)).toEqual(["65.14", "111.14", "134.14", "157.14"]);
+    expect((xs[1]! - xs[0]!) / (xs[3]! - xs[2]!)).toBeCloseTo(2, 9);
+  });
+
+  /**
+   * ⭐⭐ THE CONTROL, AND IT IS THE ALGORITHM'S SIGNATURE: the spring solve's step ratio for
+   * the same 2 : 1 is **√2**, because a spring is `sqrt(duration)`-weighted
+   * (`layout/voice-elements.js`), where the grid is linear. Two different algorithms, told
+   * apart by one number.
+   */
+  it("is not what the spring solve does", () => {
+    const xs = heads(RATIO, {});
+    expect(at2(xs)).toEqual(["55.14", "97.57", "127.57", "157.57"]);
+    expect((xs[1]! - xs[0]!) / (xs[3]! - xs[2]!)).toBeCloseTo(Math.SQRT2, 6);
+  });
+
+  // …and `align: "center"` centres each element in its own slot instead of left-aligning it,
+  // which moves the first note RIGHT and every later one LEFT of the left-aligned answer.
+  it("centres each element in its slot under align: center", () => {
+    const UNEVEN = "X:1\nT:t\nL:1/8\nK:C\nC4D2E1F1|\n";
+    expect(at2(heads(UNEVEN, GRID))).toEqual(["66.49", "167.36", "218.46", "244.02"]);
+    expect(at2(heads(UNEVEN, { timeBasedLayout: { minPadding: 20, align: "center" } }))).toEqual([
+      "102.41",
+      "178.00",
+      "216.33",
+      "241.89",
+    ]);
+  });
+
+  /**
+   * ⭐ **EACH VOICE GETS ITS OWN `durationUnit`, FROM ITS OWN PREFIX.** `durationUnit` is
+   * computed INSIDE the voice loop, from where that voice's fixed-left walk left the cursor —
+   * so the two voices of a shared staff are NOT on a common grid. A duplicate voice has no
+   * staff-extras at all (`voice.children = []`, `abstract-engraver.js:181`), so its music
+   * starts at the left edge and its unit is wider.
+   *
+   * ⚠️ **AND THE SPRING SOLVE PUTS THEM AT THE SAME x**, which is why nothing before this
+   * could see a per-voice prefix error.
+   */
+  it("gives each voice its own grid from its own prefix", () => {
+    const TWO = "X:1\nT:t\nL:1/8\nK:C\n%%score (A B)\nV:A\nC2D2|\nV:B\nE2F2|\n";
+    expect(at2(heads(TWO, GRID))).toEqual(["65.14", "77.93", "31.09", "60.90"]);
+    // the control: simultaneous notes share an x under the solve.
+    expect(at2(heads(TWO, {}))).toEqual(["55.14", "97.57", "55.14", "97.57"]);
+  });
+
+  /**
+   * ⭐ **AN ENDING'S ROOM IS CHARGED TO VOICE 0 ALONE** — `if (voice.voicenumber === 0)` gates
+   * `abselem.minspacing += textWidth + 10` and the `EndingElem` together
+   * (`abstract-engraver.js:1034-1042`). Ours charged every voice, and under the SHARED CURSOR
+   * of the spring solve a lower voice's phantom charge is never spent, because `minspacing` is
+   * only a floor. The grid walks each voice's prefix separately and it became 18.5px of staff.
+   */
+  it("charges an ending's room to voice 0 only", () => {
+    // ⚠️ **A SYNTHETIC `|1` DOES NOT REACH THE RULE** and the first shape tried here was MUTE
+    // for that reason: `openGap` charges only a volta written ON the measure's own OPENING
+    // barline (`voltaOnOwnOpeningBar`), and an ordinary `|1` is the PREVIOUS measure's closing
+    // bar — whose charge was already gated. This is the fixture that measured it.
+    const abc = readFileSync(
+      join(FIXTURES, "abcjs-visual-tablature-20-score-1-2.abc"),
+      "utf-8",
+    );
+    const host = { innerHTML: "" } as { innerHTML: string };
+    renderAbc([host], abc, { staffwidth: 670, ...GRID });
+    const xs = [
+      ...host.innerHTML.matchAll(/data-name="[A-Ga-g][,']*" d="M ([\d.]+)/g),
+    ].map((m) => Number(m[1]).toFixed(2));
+    /**
+     * ⚠️ **AND IT IS THE LOWER VOICE OF A LATER SYSTEM, WHICH TWO ATTEMPTS AT THIS CONTROL
+     * MISSED.** The first read a synthetic `|1` that never reaches `openGap`; the second read
+     * the first nine heads, and the two that move are at indices 14 and 19. Both were MUTE and
+     * both looked right. **So the claim is stated as the two values themselves**: the lower
+     * voice's note sits at the left edge plus `leftAlignPadding`, and never 18.5px right of it,
+     * which is where its own bar's ending charge would put it.
+     */
+    expect(xs).toContain("42.09");
+    expect(xs).not.toContain("60.59");
+  });
+
+  /**
+   * ⭐ **AND `centerWholeRests` IS INSIDE `setXSpacing`**, so a time-based line does not centre
+   * one — it stays on its grid slot. 181.53 against the solve's 366.36, which is the midpoint
+   * of the bar it fills.
+   */
+  it("leaves a whole rest on its grid slot", () => {
+    const WR = "X:1\nT:t\nL:1/4\nM:4/4\nK:C\nCDEF|z4|CDEF|\n";
+    const wholeRest = (opts: object): string =>
+      /data-name="rests\.whole" d="M ([\d.]+)/.exec(ink(WR, opts))?.[1] ?? "";
+    expect(Number(wholeRest(GRID)).toFixed(2)).toBe("181.53");
+    expect(Number(wholeRest({})).toFixed(2)).toBe("366.36");
+  });
+
+  /**
+   * ⭐ **AND `checkLastBarX` IS INSIDE `layoutStaffGroup`**, which only `setXSpacing` calls —
+   * so a short voice's closing bar is NOT pulled out to meet the long one's. `abcts-last-bar`
+   * tune 0 read one whole grid slot wide before this.
+   */
+  it("does not align the last barline under the grid", () => {
+    // ⚠️ **AND THE ASSERTION IS THAT THE TWO BARS DISAGREE**, which is what "not aligned"
+    // means. A synthetic pair was MUTE here: its two closing bars landed on the same x under
+    // the grid anyway, so removing the guard changed nothing. This is the fixture that
+    // measured it, and abcjs writes both numbers.
+    const abc = readFileSync(join(FIXTURES, "abcts-last-bar.abc"), "utf-8");
+    const host = { innerHTML: "" } as { innerHTML: string };
+    renderAbc([host, "*", "*", "*"], abc, { staffwidth: 670, ...GRID });
+    expect(
+      [...host.innerHTML.matchAll(/data-name="bar"><path d="M ([\d.]+)/g)].map((m) =>
+        Number(m[1]).toFixed(2),
+      ),
+    ).toEqual(["283.29", "257.26"]);
+  });
+  /**
+   * ⭐ **SIMULTANEITY IS TIME, AND OUR COLLISION PASS GROUPED BY x.** `toTimeAndStaffBased`
+   * keys each staff's slots on a running sum of `child.duration`, never on an x
+   * (`layout/to-time-and-staff-based.js`). Grouping by x agreed for as long as the SPRING
+   * SOLVE was the only layout — it puts simultaneous elements of two voices at the same x —
+   * and `timeBasedLayout` does not, because each voice is left-aligned by its own left ink.
+   *
+   * ⚠️ **SO THE ASSERTION IS THAT THE TWO LAYOUTS AGREE**, which is the rule stated exactly:
+   * a rest gets out of the way by TIME, so changing every x must not change which rest moves
+   * or by how much. Three of `zzopts`'s rows were this, a rest 26px from where abcjs leaves it.
+   */
+  it("moves a rest by time, so the grid and the solve agree on which", () => {
+    const abc = readFileSync(
+      join(FIXTURES, "abcts-shared-staff-rests.abc"),
+      "utf-8",
+    );
+    const restYs = (opts: object): string[] => {
+      const host = { innerHTML: "" } as { innerHTML: string };
+      renderAbc([host, "*", "*"], abc, { staffwidth: 670, ...opts });
+      return [
+        ...host.innerHTML.matchAll(/data-name="rests\.\w+" d="M [\d.]+ ([\d.]+)/g),
+      ].map((m) => Number(m[1]).toFixed(3));
+    };
+    expect(restYs(GRID)).toEqual(["130.872", "126.997", "123.122", "119.247"]);
+    expect(restYs({})).toEqual(restYs(GRID));
+  });
+
+  /**
+   * ⚖️ **AND `{}` IS A DECLARED DIVERGENCE, BECAUSE abcjs EMITS `NaN` FOR IT.**
+   * `layoutInGrid` calls `getTotalDuration(staffGroup, timeBasedLayout.minPadding)` and the
+   * callee adds that parameter to every element's width — so an ABSENT `minPadding` makes
+   * `w + undefined` NaN, and `minSpacing`, `totalWidth`, `durationUnit` and every x after the
+   * first go with it. Measured: abcjs writes **29 literal `NaN`s** into the SVG for
+   * `timeBasedLayout: {}` on a four-note line.
+   *
+   * ⚠️ `{minPadding: 0}` is byte-identical between the two engines, so the divergence is on
+   * the ABSENT value alone — abcjs's own types declare it optional. We read it as 0 and emit
+   * numbers. See `Docs/ABCJS-DIFFERENCES.md`.
+   */
+  it("emits numbers where abcjs emits NaN for an empty option", () => {
+    const host = { innerHTML: "" } as { innerHTML: string };
+    renderAbc(host, RATIO, { staffwidth: 670, timeBasedLayout: {} });
+    expect(host.innerHTML).not.toContain("NaN");
+    // …and `{minPadding: 0}` is the same render, which is what says 0 is the reading.
+    expect(at2(heads(RATIO, { timeBasedLayout: {} }))).toEqual(
+      at2(heads(RATIO, { timeBasedLayout: { minPadding: 0 } })),
+    );
+  });
+});

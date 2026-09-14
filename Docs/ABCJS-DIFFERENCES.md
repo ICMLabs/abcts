@@ -1089,6 +1089,35 @@ and `clef=x` debug strings above, and write the 180bpm default instead.
 *Verified by running `abcjs.synth.getMidiFile` over the corpus: 10 tunes of 231 hit it, all
 of them a header with no music. `toHex(NaN, 6)` reproduces `%00%0N%aN` exactly.*
 
+### `timeBasedLayout: {}` writes `NaN` into every x on the line
+
+`layoutInGrid` hands its helper the option's `minPadding` and the helper adds that parameter
+to every element's width (`layout/layout-in-grid.js:5`, `:74`):
+
+    var ret = getTotalDuration(staffGroup, timeBasedLayout.minPadding)
+    …
+    var width = (element.w + timeBasedLayout) / element.duration    ← the parameter, renamed
+
+so an ABSENT `minPadding` makes `element.w + undefined` NaN. `minSpacing`, `totalWidth` and
+`durationUnit` go with it, and every element after the line's first lands at NaN:
+
+    abcjs   M 57.141 …   M NaN …   M NaN …   M NaN …     ← 29 literal NaNs in one four-note line
+    abcts   M 57.141 …   M 58.438 …   M 59.735 …   M 61.033 …
+
+abcjs's own types declare the field optional — `timeBasedLayout?: { minPadding?: number, … }`
+(`types/index.d.ts:299`) — so `{}` is a legal host call. **We decline to write NaN into an
+SVG**, exactly as we decline the corrupt MIDI tempo above, and read the absent value as 0.
+
+⚠️ **AND THE DIVERGENCE IS ON THE ABSENT VALUE ALONE.** `{minPadding: 0}` is byte-identical
+between the two engines on the whole corpus, which is what says 0 is the right reading rather
+than a guess. `leftAlignPadding` keeps abcjs's own `minPadding ? minPadding/2 : 2`, so `{}`
+and `{minPadding: 0}` both take the 2 there — that half is falsy-tested in abcjs and is
+reproduced as written.
+
+*Measured 2026-09-15 in WebKit on `X:1 L:1/8 K:C C2D1E1F1|`. `zzopts` passes
+`{minPadding: 20}`, so the option row never reaches this; it was found by laddering the option
+shapes while writing the controls.*
+
 ### `getMidiFile` throws on three corpus tunes, and the host gets no file
 
 Not a wrong byte — no output at all. Found by running `abcjs.synth.getMidiFile` over every

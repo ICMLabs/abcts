@@ -70,7 +70,21 @@ direction fails.
 | `scale 0.8` / `1.5`, `oneSvgPerLine + scale` | 1 / 2 / 1 | a whole pixel from one 1/64-px bbox, and two ULP |
 | `minPadding` | **1** | two ULP in the root `width`, located to one step of the solve |
 | `add_classes` | **1** | one ending's measure counter, and its cause is measured |
-| `timeBasedLayout` | 669 | **unimplemented** — a SECOND layout algorithm (`layout/layout-in-grid.js`), spacing by TIME rather than by the spring solve. By far the largest thing outstanding in this repo. |
+| `timeBasedLayout` | **1** | a bar rule stored by its CENTRE where abcjs stores the EDGE — one rounding boundary |
+
+🏁 **`timeBasedLayout` went 669 → 1** on 2026-09-15 — the whole second layout algorithm, and it
+is 83 lines. Every element's x comes from its MUSICAL TIME on a uniform grid, and the step is
+LINEAR in duration where a spring is `sqrt`-weighted: 2.000000 against √2 on the same 2:1 pair,
+which is how the two algorithms are told apart in one number.
+
+⭐ **The biggest row on the board was not the biggest job.** The port took 669 → 11 in one go.
+The other ten were **four passes of the spring solve that a grid line does not get, because they
+live inside `setXSpacing`** — `checkLastBarX`, `centerWholeRests`, the voice-overlap
+displacement, and two rules that were only ever right by accident: our collision pass grouped
+simultaneity **by x** where abcjs groups by **time** (the same answer for as long as the spring
+solve was the only layout), and an ending's room was charged to **every** voice where abcjs
+charges voice 0 alone (invisible under a shared cursor, where `minspacing` is only a floor). The
+grid did not break either of those; it revealed them, and both fixes are on the default path.
 
 **`%%footer` landed 2026-09-15** — print draws one and we drew none at all — and it moved no row
 count, because the only fixture with a `%%footer` differs 23px earlier for another reason.

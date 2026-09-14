@@ -6090,6 +6090,24 @@ let ACCENT_ABOVE = false
  */
 let EXPAND_TO_WIDEST = false
 /**
+ * **`timeBasedLayout` — A SECOND LAYOUT ALGORITHM, NOT AN OPTION ON THE FIRST.**
+ *
+ * `layout()` calls `layoutInGrid` INSTEAD OF `setXSpacing` for every line when this is set
+ * (`layout/layout.js:21-24`), so the spring solve, its eight justification passes and
+ * `centerWholeRests` are all skipped. Every element's x comes from its MUSICAL TIME on a
+ * uniform grid instead.
+ *
+ * ⚠️ **AND `undefined` IS THE SWITCH, NOT A FALSY FIELD** — `if (timeBasedLayout !== undefined)`,
+ * so `{}` turns it ON with every default. `null` here means off.
+ *
+ * ⚠️ **THE ENGRAVER IS HANDED IT AND NEVER READS IT.** `engraveTune` passes
+ * `timeBasedLayout: this.timeBasedLayout` into `AbstractEngraver`'s params
+ * (`engraver-controller.js:201`) and nothing in `write/creation/` mentions it — grepped, not
+ * assumed. So it changes no element, only where they are put.
+ */
+let TIME_BASED_LAYOUT: { minPadding?: number; minWidth?: number; align?: 'left' | 'center' } | null =
+  null
+/**
  * **THE SIGNAL THAT ABORTS A SYSTEM PASS SO IT CAN START OVER WIDER** — abcjs's `i = -1`.
  * `spans.map` has no `break`, and the abort is the point (see the ratchet), so the pass
  * throws this and the driver catches exactly it.
@@ -10866,6 +10884,11 @@ export interface LayoutOptions {
   /** `expandToWidest` — re-solve every line at the widest one's width. See `EXPAND_TO_WIDEST`. */
   readonly expandToWidest?: boolean
   /**
+   * `timeBasedLayout` — space by TIME on a uniform grid instead of by the spring solve. See
+   * `TIME_BASED_LAYOUT`; `undefined` is OFF and `{}` is ON with every default.
+   */
+  readonly timeBasedLayout?: { minPadding?: number; minWidth?: number; align?: 'left' | 'center' }
+  /**
    * **WHERE THIS TUNE'S PAGE CURSOR STARTS** — 0 for a tune of its own, and the PREVIOUS
    * tune's `endY` when a whole book is stacked into one SVG. `engraveABC` resets the
    * renderer once and then runs `engraveTune` per tune, so `renderer.y` runs CONTINUOUSLY
@@ -11325,6 +11348,21 @@ function layoutMeasure(
    * `trailingClef` does without a wrap, it drew past that system's last barline instead.
    */
   leadingCautionaryClef: Clef | null = null,
+  /**
+   * **DOES THIS VOICE PAY FOR AN ENDING'S ROOM?** — `if (voice.voicenumber === 0)`, which
+   * gates `abselem.minspacing += textWidth + 10` AND the `EndingElem` together
+   * (`abstract-engraver.js:1034-1042`). So a lower voice's barline keeps its bare 10 and the
+   * bracket is drawn once, off voice 0.
+   *
+   * ⚠️ **THE CLOSING BAR'S CHARGE WAS ALREADY GATED AND THE OPENING BAR'S WAS NOT** — the
+   * `voltaAfter` argument returns `null` for `voiceIndex !== 0` at the call site, and
+   * `measure.volta`'s own charge, one screen down, asked nobody. Under the SPRING SOLVE that
+   * cannot show: `minspacing` is a floor on a cursor SHARED by every voice, so voice 0's
+   * larger floor wins and a lower voice's phantom 18.5 is never spent. `timeBasedLayout` walks
+   * each voice's prefix SEPARATELY, and then it is 18.5px of staff —
+   * `visual-tablature-20-score-1-2` and `visual-layout-09-endings`.
+   */
+  chargesEndingRoom = true,
 ): MeasureBlock {
   const elements: LayoutElement[] = []
   /**
@@ -11572,7 +11610,9 @@ function layoutMeasure(
      * is the same join the projection uses to hang `startEnding`.
      */
     const openCarriesVolta = voltaOnOwnOpeningBar(measure)
-    const openGap = ENGRAVE.prefixGap + (openCarriesVolta ? endingRoom(measure.volta) : 0)
+    const openGap =
+      ENGRAVE.prefixGap +
+      (openCarriesVolta && chargesEndingRoom ? endingRoom(measure.volta) : 0)
     fixed(
       openW + openGap,
       openGap,
@@ -12780,6 +12820,7 @@ interface RenderState {
   initialClef: boolean
   accentAbove: boolean
   expandToWidest: boolean
+  timeBasedLayout: { minPadding?: number; minWidth?: number; align?: 'left' | 'center' } | null
   keywarn: boolean
   lineWeights: typeof LINE_WEIGHTS
   scoreFonts: Score['fonts']
@@ -12804,6 +12845,7 @@ const captureRenderState = (): RenderState => ({
     initialClef: INITIAL_CLEF,
     accentAbove: ACCENT_ABOVE,
   expandToWidest: EXPAND_TO_WIDEST,
+  timeBasedLayout: TIME_BASED_LAYOUT,
   keywarn: KEYWARN,
   lineWeights: LINE_WEIGHTS,
   scoreFonts: SCORE_FONTS,
@@ -12828,6 +12870,7 @@ const restoreRenderState = (s: RenderState): void => {
   INITIAL_CLEF = s.initialClef
   ACCENT_ABOVE = s.accentAbove
   EXPAND_TO_WIDEST = s.expandToWidest
+  TIME_BASED_LAYOUT = s.timeBasedLayout
   KEYWARN = s.keywarn
   LINE_WEIGHTS = s.lineWeights
   SCORE_FONTS = s.scoreFonts
@@ -12990,6 +13033,7 @@ function layoutScoped(input: Score, options: LayoutOptions = {}): Layout {
   INITIAL_CLEF = options.initialClef === true
   ACCENT_ABOVE = options.accentAbove === true
   EXPAND_TO_WIDEST = options.expandToWidest === true
+  TIME_BASED_LAYOUT = options.timeBasedLayout ?? null
   KEYWARN = score.keywarn
   SCORE_FONTS = score.fonts
   SCORE_PARTS_BOX = score.partsBox
@@ -13816,6 +13860,9 @@ function layoutScoped(input: Score, options: LayoutOptions = {}): Layout {
         measure.clefChangeSilent !== true
           ? (measure.clefChange ?? null)
           : null,
+        // …**AND ONLY VOICE 0 PAYS FOR AN ENDING'S ROOM**, the same gate the `voltaAfter`
+        // argument above already had — see `chargesEndingRoom`.
+        voiceIndex === 0,
       )
       if (measure.keyChange !== null && !keyChangeLeadsLine(measure))
         pendingNaturalsFrom = (measure.keyChangeKeywarn ?? KEYWARN) ? keyInForce : null
@@ -14827,7 +14874,127 @@ function layoutScoped(input: Score, options: LayoutOptions = {}): Layout {
      * notehead sat left of abcjs's and why the error is a STAIRCASE: a spring-dominated
      * bar carries the difference and a rod-dominated one holds it constant.
      */
+    /**
+     * **`layoutInGrid` — THE SECOND LAYOUT ALGORITHM, AND IT REPLACES THE SOLVE ENTIRELY.**
+     *
+     * `layout()` calls this INSTEAD OF `setXSpacing` for every line when the host passes
+     * `timeBasedLayout` (`layout/layout.js:21-24`), so the spring solve, its eight
+     * justification passes, the voice-overlap displacement inside `layoutOneItem` and
+     * `centerWholeRests` are all skipped. Every element's x comes from its MUSICAL TIME on a
+     * uniform grid:
+     *
+     *     totalDuration = max over voices of Σ child.duration
+     *     minSpacing    = max over elements with duration of (child.w + minPadding) / duration
+     *     totalWidth    = minSpacing * totalDuration          (floored by `minWidth`)
+     *     durationUnit  = (totalWidth + leftEdge - x) / totalDuration     … at the FIRST note
+     *
+     * — one spacing for the whole line, set by whichever element is tightest per unit of
+     * time, and then every element placed at `x += duration * durationUnit`.
+     *
+     * ⚠️ **THE PREFIX IS NOT ON THE GRID.** Everything before the first element with a
+     * duration — the clef, the key, the meter, and a barline that OPENS the line, since a bar
+     * has no duration — is laid out `x += child.w + child.minspacing`, and `durationUnit` is
+     * computed from where that walk LEFT the cursor. So the prefix is measured and the music
+     * is a grid, and the grid's unit depends on the prefix's width.
+     *
+     * ⚠️ **AND A BARLINE IS RIGHT-ALIGNED, BY ONE PIXEL PAST ITS SLOT** — `child.x = x + 1 -
+     * child.w` under abcjs's own comment *"it looks better to move bar lines one pixel to
+     * right. Not sure why."* A note is LEFT-aligned by `leftAlignPadding` and pushed further
+     * right by its own left ink, so its accidentals land inside the slot rather than over the
+     * element before it.
+     *
+     * ⚠️ **`leftAlignPadding` IS `minPadding / 2`, OR 2 WHEN THERE IS NO `minPadding`** —
+     * `timeBasedLayout.minPadding ? minPadding/2 : 2`, abcjs's own comment: *"If the padding
+     * isn't specified still give it some"*. So `{minPadding: 0}` and `{}` both take the 2.
+     */
+    /**
+     * **abcjs's `child.w`** — `getMinWidth(child)`, the element's INK, which our `Advance`
+     * carries as `width` wherever it is known exactly and otherwise as the rod less its
+     * `minspacing`. See `Advance.width`.
+     */
+    const widthOfItem = (item: (typeof lines)[number] extends undefined
+      ? never
+      : NonNullable<(typeof lines)[number]>['items'][number]): number =>
+      item.width ?? item.rod - item.gap
+    const gridAt = (
+      grid: NonNullable<typeof TIME_BASED_LAYOUT>,
+    ): { at: number[][]; width: number; units: number } => {
+      // The host states these in PIXELS, as it does `minPadding` — see `MIN_PADDING`.
+      const pad = spaces(grid.minPadding ?? 0)
+      /** `getTotalDuration` — the longest voice in TIME, and the tightest element per unit. */
+      let totalDuration = 0
+      let minSpacing = 0
+      for (const line of lines) {
+        if (line === undefined) continue
+        let count = 0
+        for (const item of line.items) {
+          count += item.duration
+          // **`element.w`, NOT ITS ROD** — `getMinWidth(child)` is `child.w` and the
+          // `minspacing` is a second add, so the grid's unit is set by INK alone.
+          if (item.duration !== 0)
+            minSpacing = Math.max(minSpacing, (widthOfItem(item) + pad) / item.duration)
+        }
+        totalDuration = Math.max(totalDuration, count)
+      }
+      let totalWidth = minSpacing * totalDuration
+      if (grid.minWidth) totalWidth = Math.max(totalWidth, spaces(grid.minWidth))
+      const leftAlignPadding = grid.minPadding ? pad / 2 : spaces(2)
+      const at: number[][] = []
+      for (const [gv, line] of lines.entries()) {
+        const xs: number[] = []
+        at.push(xs)
+        if (line === undefined) continue
+        let x = leftEdge
+        let afterFixedLeft = false
+        let durationUnit = 0
+        // `ABCTS_GRID` — the grid's own inputs and placements, which is what closed this row
+        // against abcjs's `__GRID` log on `dist/abcjs-basic.js`. The items print in abcjs's
+        // own order and vocabulary so the two traces line up row for row.
+        if (ENV.ABCTS_GRID)
+          console.log(
+            `GRID sys=${systemIndex} v=${gv} items=[` +
+              line.items
+                .map((it) => `${it.kind}:${it.duration}:w${widthOfItem(it)}:g${it.gap}:l${it.left}`)
+                .join(',') +
+              ']',
+          )
+        for (const item of line.items) {
+          if (!afterFixedLeft) {
+            if (item.duration !== 0) {
+              afterFixedLeft = true
+              durationUnit = (totalWidth + leftEdge - x) / totalDuration
+            } else {
+              // The preliminary stuff — clef, time signature, an opening bar.
+              xs.push(x)
+              x += widthOfItem(item) + item.gap
+              continue
+            }
+          }
+          xs.push(
+            grid.align === 'center'
+              ? x + (item.duration * durationUnit) / 2 - widthOfItem(item) / 2
+              : item.duration === 0
+                ? // A barline is RIGHT-aligned on its slot, and one pixel past it.
+                  x + spaces(1) - widthOfItem(item)
+                : // …and a note is LEFT-aligned, pushed right by its own left ink so an
+                  // accidental lands inside the slot. `item.left` IS `-child.extraw`.
+                  x + leftAlignPadding + item.left,
+          )
+          if (ENV.ABCTS_GRID)
+            console.log(`  place ${item.kind} dur=${item.duration} -> x=${xs[xs.length - 1]} (cursor ${x})`)
+          x += item.duration * durationUnit
+        }
+      }
+      // `staffGroup.w = totalWidth + leftEdge`, and `layout()` reads the bare `totalWidth`
+      // back as `thisWidth` — which is what `solved.width - leftEdge` recovers here. `units`
+      // is the justification's and there is no justification.
+      return { at, width: totalWidth + leftEdge, units: 0 }
+    }
+
     const justify = ((): number => {
+      // …**AND THE SOLVE IS NOT RUN AT ALL UNDER THE GRID**, which replaces it rather than
+      // tuning it. Eight `lineAt` passes for a number nothing reads.
+      if (TIME_BASED_LAYOUT !== null) return spacingScale
       // abcjs's `newspace`, which OPENS at the 30px base and is replaced outright each pass
       // (`layout/layout.js:68`). Not a ratio to it.
       let spacing = spacingScale
@@ -14867,7 +15034,7 @@ function layoutScoped(input: Score, options: LayoutOptions = {}): Layout {
       return spacing
     })()
     probeFinalPass = true
-    const solved = lineAt(justify)
+    const solved = TIME_BASED_LAYOUT === null ? lineAt(justify) : gridAt(TIME_BASED_LAYOUT)
     probeFinalPass = false
     /**
      * **THE LAST BARLINE OF EVERY VOICE IS ALIGNED, AND ONLY THE LAST** — `checkLastBarX`,
@@ -14896,6 +15063,12 @@ function layoutScoped(input: Score, options: LayoutOptions = {}): Layout {
      */
     const lastBarNudge: ({ block: number; index: number; dx: number } | undefined)[] = []
     ;(() => {
+      // ⚠️ **AND NOT UNDER THE GRID.** `checkLastBarX` is called at the end of
+      // `layoutStaffGroup` (`layout/staff-group.js:119`), and `layoutStaffGroup` is only ever
+      // called from `setXSpacing` — which `layoutInGrid` replaces. So a time-based line leaves
+      // each voice's closing bar exactly where its own time put it. `abcts-last-bar` tune 0
+      // read 283.29 against abcjs's 257.26, one whole grid slot. See `gridAt`.
+      if (TIME_BASED_LAYOUT !== null) return
       let maxX = 0
       for (let v = 0; v < lines.length; v += 1) {
         const line = lines[v]
@@ -15668,7 +15841,12 @@ function layoutScoped(input: Score, options: LayoutOptions = {}): Layout {
        * and abcjs skips it. Ours centred it 16.9px right.
        */
       const musicStart = heading.length + nameElements.length
-      for (let j = musicStart + 1; j < elements.length - 1; j++) {
+      // ⚠️ **AND NOT UNDER THE GRID AT ALL.** `centerWholeRests` is called from INSIDE
+      // `setXSpacing` (`layout/layout.js:78`), which `layoutInGrid` replaces — so a time-based
+      // line leaves its whole rests where the grid put them. Ours runs in the staves build
+      // rather than in the solve, so the phase has to be said out loud. See `gridAt`.
+      const centreWholeRests = TIME_BASED_LAYOUT === null
+      for (let j = centreWholeRests ? musicStart + 1 : elements.length; j < elements.length - 1; j++) {
         const el = elements[j]
         const before = elements[j - 1]
         const after = elements[j + 1]
@@ -20445,13 +20623,35 @@ function fixRestCollisions(
   const drawnRest = (el: LayoutElement): boolean => el.type === 'rest' && el.plainRest === true
   const timed = (el: LayoutElement): boolean => el.type === 'note' || el.type === 'rest'
 
+  /**
+   * ⭐ **SIMULTANEITY IS MUSICAL TIME, AND THIS GROUPED BY x.**
+   *
+   * `toTimeAndStaffBased` keys each staff's slots on `'T' + Math.round(time * 1000)`, a running
+   * sum of `child.duration` over the voice's NOTE elements alone — abcjs's own comment says
+   * why it rounds: *"there can be inexactness when calculating triplets"*
+   * (`layout/to-time-and-staff-based.js:16`). Nothing in it reads an x.
+   *
+   * ⚠️ **AND THE TWO ONLY COINCIDE UNDER THE SPRING SOLVE**, which puts simultaneous elements
+   * of two voices at the same x. `timeBasedLayout` does not: its left-alignment offsets every
+   * element by `leftAlignPadding - extraw`, so two notes at the same TIME with different left
+   * ink land at different xs and the grouping simply stopped finding them. Three of `zzopts`'s
+   * `timeBasedLayout` rows were that — a rest 26px from where abcjs leaves it.
+   *
+   * **So the grid did not break this; it revealed it.** Grouping by x was a re-derivation of
+   * simultaneity that happened to agree, and it is the TIME that is the rule.
+   */
   const slots = new Map<number, { voice: number; index: number }[]>()
   out.forEach((elements, voice) => {
+    let time = 0
     elements.forEach((el, index) => {
       if (!timed(el)) return
-      const at = slots.get(el.x) ?? []
+      const at = slots.get(Math.round(time * 1000)) ?? []
       at.push({ voice, index })
-      slots.set(el.x, at)
+      slots.set(Math.round(time * 1000), at)
+      // **THE SOUNDING DURATION, WHICH IS WHAT `abselem.duration` HOLDS** — tuplet-scaled,
+      // and `ZERO_DURATION_SPACING`'s 0.25 for a zero-duration note, exactly as abcjs
+      // rewrites it (`abstract-engraver.js:791`). See `LayoutElement.durationClass`.
+      time += el.durationClass ?? 0
     })
   })
 
