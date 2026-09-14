@@ -1433,6 +1433,29 @@ backup remote is not a licence to vendor someone else's tree into this one.
 
 ## Current phase
 
+> 🏁 **THE HOST-OPTION SURFACE IS FINISHED — 17 OF 17,810 COMPARISONS DIFFER** (2026-09-15).
+> **READ `Docs/HANDOFF-2026-09-15.md`, then `Docs/CHECKPOINT-2026-09-15.md` §3.** Deliberately
+> short, because this file is 2,300+ lines and trimming it is an open owner decision: the
+> handoff is the durable record and duplicating it here is the thing that made the file long.
+> `timeBasedLayout` 669 → 1 (the whole second layout algorithm, 83 lines), `add_classes`
+> 16 → 1, `expandToWidest` 14 → 0, `minPadding` 4 → 1, and `%%footer` built. **Nothing on
+> `zzopts` is a feature any more.** Suite 2,671; every other gate still at zero.
+>
+> ⭐ **THE FINDING: AN OPTION IS A RESERVE MAGNIFIER.** FIVE of the rules closed were defects
+> on the DEFAULT path that no default-path gate could see — `svg-bytes` 0 of 691 and both
+> browser gates 0 of 685 throughout. A width only reaches the page when it beats the elastic
+> gap beside it, and `minspacing` is only a floor on a cursor every voice shares; change which
+> reserve wins and the masked rule surfaces. Corollary, and the stronger half: **A SECOND
+> ALGORITHM REVEALS EVERY COINCIDENCE THE FIRST ONE PAID FOR** — grouping collisions by x
+> instead of TIME, and charging every voice for an ending instead of voice 0, were both
+> CORRECT OUTPUTS for as long as the spring solve was the only layout.
+>
+> ⚠️ **AND A PROBE THAT MEASURES TWO DIFFERENT QUANTITIES IS WORSE THAN NONE — TWICE.** One
+> log took abcjs's TRIAL x against our FINAL one; an "isolated" render of the same tune had a
+> different tune's content. Both produced confident wrong conclusions. **THREE controls of
+> eight were MUTE on the first attempt**, and once the row count disagreed with my own
+> attribution and the row count was right.
+
 > 🏁 **THE HOST-OPTION SURFACE IS THE ARC — THREE ROWS CLOSED AND A FOURTH AT ITS FLOOR**
 > (2026-09-14). **READ `Docs/CHECKPOINT-2026-09-14.md` §3 FIRST.** `zzopts` renders all 685
 > comparable tunes under each option a drop-in host passes and compares the CONTAINER as well

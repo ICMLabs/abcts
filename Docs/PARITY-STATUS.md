@@ -1,17 +1,18 @@
 # PARITY STATUS — abcts vs abcjs 6.7.0
 
-*Measured 2026-09-14, on commit `ce9589e`, by running every gate in the repo plus both
+*Measured 2026-09-15, on commit `192a6df`, by running every gate in the repo plus both
 browser comparisons. Every number below is a re-run, not a carried-forward claim.*
 
 **The one-line answer: rendered with the options a page normally passes, abcts and abcjs
 produce identical output — the same SVG bytes and the same MIDI bytes — with the exceptions
 listed in §3, each of which is a case where abcjs itself produces broken output.**
 
-⚠️ **AND THE HONEST QUALIFIER IS §1a.** The sentence above was written when every gate here
-rendered with default options. `zzopts` renders the whole corpus under each HOST OPTION
-instead, and three of abcjs's options are still unimplemented features rather than rounding
-— `timeBasedLayout` above all, which is a second layout algorithm. A host that passes one of
-those does not get identical output, and the table in §1a says which.
+✅ **AND §1a IS NO LONGER A QUALIFIER — IT IS A LAST-DIGIT TABLE.** The sentence above was
+written when every gate here rendered with default options, and this paragraph used to warn
+that three of abcjs's options were unimplemented FEATURES. As of 2026-09-15 none is:
+`zzopts` renders the whole corpus under each host option and **17 of its 17,810 comparisons
+differ**, across 12 fixtures, every one a last digit, a rounding boundary or a declared
+decision. The table in §1a says which, and each row names its own term.
 
 This file is the plain-language status. `CLAUDE.md` carries the working history,
 `Docs/HANDOFF-<date>.md` the session state, `Docs/ABCJS-DIFFERENCES.md` the evidence behind
