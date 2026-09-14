@@ -193,7 +193,7 @@ const OPTIONS = [
    *                          and `linewidth ± …` on a stem, the sign following the stem's
    *                          direction (`draw/staff.js:14`, `:25`, `draw/relative.js:61-66`).
    *   timeBasedLayout  669 — a SECOND layout algorithm, `layout/layout-in-grid.js`, which
-   *                          spaces by TIME rather than by the spring solve. NOW 1.
+   *                          spaces by TIME rather than by the spring solve. NOW 0 — CLOSED.
    *   minPadding       659 — extra room to the left of every note and bar in the solve
    *                          (`layout/voice-elements.js:34`, `:110-115`). NOW 1.
    *   initialClef      125 — reprints the clef at the head of the tune. NOW 0 — CLOSED.
@@ -466,23 +466,27 @@ const OPTIONS = [
    * at the left edge and its unit is wider. That is what made the two per-voice bugs above
    * visible at all.
    *
-   * ⚠️ **THE LAST ROW IS A CENTRE-VERSUS-EDGE REPRESENTATION, MEASURED TO THE DOUBLE.**
-   * `abcts-rests-and-bars-tune13`'s closing bar: both engines place the ELEMENT at exactly
-   * 119.955, and abcjs draws `M 119.95` where we draw `M 119.96`. abcjs stores a rule's EDGE and
-   * `printStem` writes `roundNumber(x)` then `roundNumber(x + dx)` (`draw/print-stem.js:13-14`);
-   * we store the CENTRE — the placed line is 120.25500000000001 — and the emitter recovers the
-   * edge as `centre - half`, which is `119.95500000000001` and rounds the other way.
-   * `(119.955).toFixed(2)` is `"119.95"` and `(119.95500000000001).toFixed(2)` is `"119.96"`.
-   * The engine already knows this asymmetry — `lineThickness`'s note says abcjs "leaves
-   * `printStem`'s `x` alone and grows `dx`; ours places a stem by its CENTRE" — so the fix is
-   * representational and belongs with that, not here.
+   * ✅ **CLOSED AT 0 — AND THE LAST ROW WAS A CENTRE-VERSUS-EDGE REPRESENTATION, MEASURED TO
+   * THE DOUBLE.** `abcts-rests-and-bars-tune13`'s closing bar: both engines placed the ELEMENT
+   * at exactly 119.955, and abcjs drew `M 119.95` where we drew `M 119.96`. abcjs stores a
+   * rule's EDGE and `printStem` writes `roundNumber(x)` then `roundNumber(x + dx)`
+   * (`draw/print-stem.js:13-14`); we store the CENTRE — the placed line is 120.25500000000001 —
+   * and the emitter RECOVERED the edge as `centre - half`, which is `119.95500000000001` and
+   * rounds the other way. `(119.955).toFixed(2)` is `"119.95"` and
+   * `(119.95500000000001).toFixed(2)` is `"119.96"`.
+   *
+   * The fix is representational, as `lineThickness`'s note already said it would be: the four
+   * producers of a vertical rule — a barline, a note stem, a tempo stem and a grace stem —
+   * record the edge they ALREADY HAD in `PlacedLine.anchorX`, and the emitter uses it in place
+   * of the recovery. It rides every shift and the output scale exactly as `x1` does, and the
+   * emitter falls back to the recovery when the two disagree by more than a rounding tail.
    *
    * ⚖️ **AND `{}` IS A DECLARED DIVERGENCE: abcjs WRITES 29 `NaN`s FOR IT.**
    * `getTotalDuration` is handed `timeBasedLayout.minPadding` and adds it to every width, so an
    * ABSENT `minPadding` is `w + undefined`. `{minPadding: 0}` is byte-identical. See
    * `Docs/ABCJS-DIFFERENCES.md`.
    */
-  ['timeBasedLayout', { timeBasedLayout: { minPadding: 20 } }, 1],
+  ['timeBasedLayout', { timeBasedLayout: { minPadding: 20 } }, 0],
   /**
    * ⚠️ **23, AND THE LINE-STRUCTURE HALF IS CLOSED.** Counting staff lines in each engine
    * over the whole corpus: **ELEVEN fixtures drew a different NUMBER OF LINES and now NONE

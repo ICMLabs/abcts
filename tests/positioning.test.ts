@@ -1162,6 +1162,25 @@ describe("timeBasedLayout spaces by time instead of by the spring solve", () => 
   });
 
   /**
+   * ⭐ **A RULE IS DRAWN FROM THE EDGE IT WAS GIVEN, NOT FROM ITS CENTRE AND BACK.**
+   *
+   * `PlacedLine.anchorX`. This tune is the one that MEASURED it — `rests-and-bars`'s breve
+   * boundary, the last differing row on `zzopts`'s `timeBasedLayout`. Both engines put the
+   * closing bar's left edge at exactly 119.955; recovering it as `centre - half` gives
+   * `119.95500000000001`, and the two round opposite ways — 119.95 against 119.96. The far
+   * edge is `roundNumber(x + dx)` off the ROUNDED anchor, so it follows.
+   *
+   * Asserted as the bar's own `d`, which is the byte abcjs writes.
+   */
+  it("draws a bar from the edge it was given, not from its centre and back", () => {
+    const BREVE = "X:14\nT:the breve boundary either side of it\nL:1/8\nK:C\nC16 D8|\n";
+    const bars = [...ink(BREVE, GRID).matchAll(/data-name="bar"><path d="M ([\d.]+)/g)].map(
+      (m) => m[1],
+    );
+    expect(bars[bars.length - 1]).toBe("119.95");
+  });
+
+  /**
    * ⭐⭐ THE CONTROL, AND IT IS THE ALGORITHM'S SIGNATURE: the spring solve's step ratio for
    * the same 2 : 1 is **√2**, because a spring is `sqrt(duration)`-weighted
    * (`layout/voice-elements.js`), where the grid is linear. Two different algorithms, told

@@ -2299,6 +2299,9 @@ function layoutTempo(
         tempoStem.push({
           role: 'stem',
           x1: stemX,
+          // The head's right edge, which is the `x` abcjs hands `printStem` with a
+          // negative `dx` — see `PlacedLine.anchorX`.
+          anchorX: cursor + headAdvance,
           y1: noteY - 0.25 * ENGRAVE.spacePerStep,
           x2: stemX,
           y2: noteY - 3.75 * ENGRAVE.spacePerStep,
@@ -4180,6 +4183,10 @@ function layoutNoteheads(
       y2: tip,
       thickness: weight,
       role: 'stem',
+      // `x = abselem.x + (dir === "down" ? 0 : heads[0].w)` (`abstract-engraver.js:747`,
+      // `:762`) — the edge itself, not this centre with the half taken back off. Strict
+      // only: the extended path places the stem at Bravura's anchor and carries no half.
+      ...(strict ? { anchorX: headX + baseShift + (up ? stemDx : 0) } : {}),
       // The clamps are abcjs's `if (p1 > 6) p1 = 6` / `if (p2 < 6) p2 = 6`, in pitch.
       // **A BEAMED STEM'S FAR END IS A PLACEHOLDER** — the beam pass RETARGETS it and
       // replaces this second entry with the beam's own `bary`, which abcjs also computes
@@ -4776,6 +4783,9 @@ function layoutBar(
       y2: stepToY(-4),
       thickness,
       role: 'bar',
+      // abcjs's own `x` for this rule — see `PlacedLine.anchorX`. The cursor IS the edge
+      // here, so the emitter never has to take the half back off the centre.
+      anchorX: cursor,
     })
     anchorLeft = cursor
     anchorWidth = anchorW
@@ -12529,7 +12539,13 @@ const placeElement = (el: LayoutElement, at: number): LayoutElement => ({
       console.log('PL', g.name, 'at', at, 'elx', el.x, 'gx', g.x, 'dx', g.dx, 'off', g.dx ?? g.x - el.x, '=>', at + (g.dx ?? g.x - el.x))
     return { ...g, x: at + (g.dx ?? g.x - el.x) }
   }),
-  lines: el.lines.map((l) => ({ ...l, x1: at + (l.x1 - el.x), x2: at + (l.x2 - el.x) })),
+  lines: el.lines.map((l) => ({
+    ...l,
+    x1: at + (l.x1 - el.x),
+    x2: at + (l.x2 - el.x),
+    // The anchor rides with the line — see `PlacedLine.anchorX`.
+    ...(l.anchorX === undefined ? {} : { anchorX: at + (l.anchorX - el.x) }),
+  })),
   texts: el.texts.map((t) => ({ ...t, x: at + (t.x - el.x) })),
 })
 
@@ -12537,7 +12553,12 @@ const shiftElement = (el: LayoutElement, dx: number): LayoutElement => ({
   ...el,
   x: el.x + dx,
   glyphs: el.glyphs.map((g) => ({ ...g, x: g.x + dx })),
-  lines: el.lines.map((l) => ({ ...l, x1: l.x1 + dx, x2: l.x2 + dx })),
+  lines: el.lines.map((l) => ({
+    ...l,
+    x1: l.x1 + dx,
+    x2: l.x2 + dx,
+    ...(l.anchorX === undefined ? {} : { anchorX: l.anchorX + dx }),
+  })),
   texts: el.texts.map((t) => ({ ...t, x: t.x + dx })),
 })
 
@@ -12588,7 +12609,12 @@ const displaceHeads = (el: LayoutElement, dx: number): LayoutElement =>
           const off = (g.dx ?? g.x - el.x) + dx
           return { ...g, x: el.x + off, dx: off }
         }),
-        lines: el.lines.map((l) => ({ ...l, x1: l.x1 + dx, x2: l.x2 + dx })),
+        lines: el.lines.map((l) => ({
+          ...l,
+          x1: l.x1 + dx,
+          x2: l.x2 + dx,
+          ...(l.anchorX === undefined ? {} : { anchorX: l.anchorX + dx }),
+        })),
         texts: el.texts.map((t) => ({ ...t, x: t.x + dx })),
       }
 
@@ -15770,7 +15796,14 @@ function layoutScoped(input: Score, options: LayoutOptions = {}): Layout {
                 ? {
                     ...placed,
                     lines: placed.lines.map((l, li) =>
-                      li === 0 ? { ...l, x1: l.x1 + nudge.dx, x2: l.x2 + nudge.dx } : l,
+                      li === 0
+                        ? {
+                            ...l,
+                            x1: l.x1 + nudge.dx,
+                            x2: l.x2 + nudge.dx,
+                            ...(l.anchorX === undefined ? {} : { anchorX: l.anchorX + nudge.dx }),
+                          }
+                        : l,
                     ),
                   }
                 : placed
@@ -22117,6 +22150,9 @@ function layoutGraces(
       const headY = stepToY(graceStep)
       graceLines.push({
         x1: stemX,
+        // The grace head's right edge — `dx = grace.dx + grace.w` with `linewidth -0.6`
+        // (`abstract-engraver.js:515-520`). See `PlacedLine.anchorX`.
+        anchorX: gx + glyphsFor(strict).width('noteheadBlack') * scale,
         /**
          * **BOTH ENDS ARE A PITCH, CONVERTED ONCE** — `p1 = gracepitch + 1/3 * gracescale`,
          * `p2 = gracepitch + 7 * gracescale` (`abstract-engraver.js:515-520`), and `calcY`

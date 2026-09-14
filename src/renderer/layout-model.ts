@@ -292,6 +292,23 @@ export interface PlacedLine {
    * the emitter, so it holds abcjs's number unshifted and skips the trip.
    */
   readonly edgeY?: boolean
+  /**
+   * **THE x abcjs HANDS `printStem`, WHICH IS AN EDGE AND NOT THIS LINE'S CENTRE.**
+   *
+   * A vertical rule is stored here by its centre, and the emitter took the edge back off
+   * it — `centre - thickness/2` for a bar or a down stem, `+` for an up one. That round
+   * trip is the `edgeY` case one field up, in x: `(119.955 + 0.3) - 0.3` is
+   * `119.95500000000001`, and `roundNumber` sends it to 119.96 where abcjs, which never
+   * left 119.955, writes 119.95. It was `rests-and-bars-tune13`'s bar under
+   * `timeBasedLayout`.
+   *
+   * So the PRODUCER records the edge it already had — `abselem.x`, or `+ heads[0].w` for
+   * an up stem (`abstract-engraver.js:747`, `:762`) — and the emitter uses it in place of
+   * the recovery. It travels through every shift and the output scale exactly as `x1`
+   * does, and the emitter falls back to the recovery when the two disagree by more than a
+   * rounding tail, so a pass that moves `x1` and forgets this cannot misplace a stem.
+   */
+  readonly anchorX?: number
   /** Which grace of the group this belongs to, so a ledger follows its OWN head. */
   readonly graceIndex?: number
   /**

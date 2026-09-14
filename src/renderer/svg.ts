@@ -620,7 +620,22 @@ function lineToRect(
        * clefs showed it — `alto2`, `perc` and `none` — because only a clef whose width
        * lands the line on a `.xx5` boundary can.
        */
-      const anchor = roundNumber(up ? line.x1 + line.thickness / 2 : x);
+      /**
+       * **AND THE ANCHOR IS CARRIED RATHER THAN RECOVERED WHERE THE PRODUCER KNEW IT** —
+       * `PlacedLine.anchorX`. `(edge + half) - half` is not `edge`, and on a rule that
+       * lands on a `.xx5` boundary the two round opposite ways: `rests-and-bars-tune13`'s
+       * bar is exactly 119.955 in abcjs and `119.95500000000001` recovered, so it printed
+       * 119.96 against abcjs's 119.95 under `timeBasedLayout`.
+       *
+       * The recovery stays as the fallback, and a carried anchor that disagrees with it by
+       * more than a rounding tail is ignored — so a pass that shifts `x1` and forgets the
+       * anchor cannot move a stem, it only gives the hundredth back.
+       */
+      const recovered = up ? line.x1 + line.thickness / 2 : x;
+      const carried = line.anchorX;
+      const anchor = roundNumber(
+        carried !== undefined && Math.abs(carried - recovered) < 1e-6 ? carried : recovered,
+      );
       const [xa, xb] = [anchor, roundNumber(anchor + (up ? -w : w))];
       const [ya, yb] = up ? [y, y + h] : [y + h, y];
       return (
@@ -1648,6 +1663,8 @@ export function toSVG(
             ...l,
             x1: l.x1 * PX,
             x2: l.x2 * PX,
+            // …and the anchor takes the same scale — see `PlacedLine.anchorX`.
+            ...(l.anchorX === undefined ? {} : { anchorX: l.anchorX * PX }),
             // …unless the line carries an ABSOLUTE end — see `PlacedLine.absY1`.
             y1: l.absY1 ?? l.y1 * PX + oy,
             y2: l.absY2 ?? l.y2 * PX + oy,
