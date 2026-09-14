@@ -1221,6 +1221,8 @@ function renderInto(
       laidOutCache = layout(drawnScore(), {
         mode,
         ...(systemWidth ? { systemWidth } : {}),
+        // abcjs's `this.width` before the scale divides it — see `LayoutOptions.staffWidthPx`.
+        staffWidthPx: staffwidth,
         ...(printing ? { print: true } : {}),
         ...(hostScale === undefined || ignoreScale ? {} : { hostScale }),
         ...(ignoreScale ? { ignoreScale: true } : {}),

@@ -81,8 +81,9 @@ const OPTIONS = [
   ['responsive + scale 1.5', { responsive: 'resize', scale: 1.5 }, 0],
   ['responsive + scale 0.7', { responsive: 'resize', scale: 0.7 }, 0],
   /**
-   * ⚠️ **THREE ROWS, THREE CAUSES, AND ALL THREE ARE NOW MEASURED TO THE TERM.** Shared with
-   * the `print` row below — the same three fixtures.
+   * ⚠️ **TWO ROWS, AND BOTH ARE MEASURED TO THE TERM.** Shared with the `print` row below —
+   * the same fixtures. It was three until the page width became a PRIMITIVE rather than a
+   * recovery (3, below).
    *
    * 1. **`visual-options-01-fonts` — 23.54px, AND IT IS THE PAGE CURSOR AND NOT THE INK.**
    *    Every drawn row through the FIRST SYSTEM matches to the digit; everything after it is
@@ -96,17 +97,22 @@ const OPTIONS = [
    *    sum of many small term errors rather than one rule.
    * 2. **`visual-svg-per-line-02-scaled` — ONE ULP** in a notehead path's x,
    *    `325.912` against our `325.9119999999999`.
-   * 3. **`abcts-directives-tune3` — ONE ULP** in the print width, `%%rightmargin 40`.
-   *    ⚠️ **AND ITS CAUSE IS A SUM ORDER, WHICH IS FIXED FOR THE RATCHET AND NOT FOR THE
-   *    BASE.** abcjs writes `(maxwidth + padding.left) + padding.right`, left to right:
+   * 3. ✅ **`abcts-directives-tune3` — CLOSED.** ONE ULP in the print width,
+   *    `%%rightmargin 40`, and its cause was a SUM ORDER. abcjs writes
+   *    `(maxwidth + padding.left) + padding.right`, left to right:
    *    `(893.3333333333334 + 90.66666666666667) + 53.333333333333336` is `1037.3333333333333`
    *    and `893.3333333333334 + (90.66666666666667 + 53.333333333333336)` is `…335`, which at
    *    print's 0.75 are 778 and 778.0000000000001. `pageSides()` sums the two margins FIRST,
-   *    so it is the second form. The ratchet branch takes abcjs's order now; the base branch
-   *    is `systemWidth`, a PRE-SUMMED page width that the engine then subtracts the sides
-   *    back out of — **the wrong primitive**, where abcjs keeps the MUSIC width and adds the
-   *    margins once, at `setPaperSize`. Changing that is a refactor of the width primitive
-   *    with 691 byte goldens resting on its arithmetic, so it is its own landing.
+   *    so the engine — which holds the PRE-SUMMED page and subtracts the sides back out to
+   *    reach the music — could only write the second form.
+   *
+   *    The page is now summed from abcjs's own terms, IN PIXELS: `staffwidth / scale` plus
+   *    each margin, left then right (`LayoutOptions.staffWidthPx`, `Layout.pageWidthPx`).
+   *    ⚠️ **And the pixel domain is the point** — summing the same three terms in SPACES and
+   *    multiplying out reproduces abcjs on 16 of 32 measured width/scale pairs where the
+   *    existing single division reproduces 28; only the pixel form is 32 of 32, because it
+   *    IS abcjs's expression. The space-domain width the other 691 goldens rest on did not
+   *    move: nothing subtracts differently, one new number is published beside it.
    *
    * ✅ **AND `%%footer` LANDED HERE WITHOUT MOVING THE ROW** — print draws one and we drew
    * none at all. `visual-options-01-fonts` is the only fixture with a `%%footer` and it
@@ -114,7 +120,7 @@ const OPTIONS = [
    * DIFFERENCING THE ROW LIST — every `data-name`/`y` pair in order — to see a row abcjs has
    * and we do not. **A row count says nothing about which row.**
    */
-  ['print + responsive', { print: true, responsive: 'resize' }, 3],
+  ['print + responsive', { print: true, responsive: 'resize' }, 2],
   /**
    * ⚠️ **ONE ROW, AND IT IS A WHOLE PIXEL FROM 1/64 OF ONE.** `visual-tablature-17`'s boxed
    * jazzchord rect is `M 93` in abcjs and `M 94` here, and the terms line up exactly:
@@ -144,11 +150,12 @@ const OPTIONS = [
    * **A rule that fixes three of four is not the rule for the fourth.**
    */
   ['scale 0.8', { scale: 0.8 }, 1],
-  // ⚠️ TWO, both a last digit: `synth-flattener-32`'s tempo flag path x
-  // (`123.0705` against `123.07050000000001`) and `visual-directives-01`'s root `width`
-  // (`216.2` against `216.20000000000005`). The layout-unit family.
-  ['scale 1.5', { scale: 1.5 }, 2],
-  ['print', { print: true }, 3],
+  // ⚠️ ONE, a last digit: `synth-flattener-32`'s tempo flag path x, `123.0705` against
+  // `123.07050000000001`. The layout-unit family.
+  // ✅ `visual-directives-01`'s root `width` — `216.2` against `216.20000000000005` — closed
+  // with the print width: the same recovered page, at a `%%scale` instead of print's.
+  ['scale 1.5', { scale: 1.5 }, 1],
+  ['print', { print: true }, 2],
   ['jazzchords', { jazzchords: true }, 0],
   // The witness for the split is the SECOND section: a one-`<g>` tune would produce
   // `section 1` from a split that never split anything.

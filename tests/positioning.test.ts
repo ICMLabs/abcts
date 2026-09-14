@@ -982,6 +982,39 @@ describe("minPadding magnifies the rods, which is what exposes two widths", () =
  * ⚠️ Every number here was read out of abcjs on these same shapes in WebKit, and the whole
  * markup agrees byte for byte there.
  */
+/**
+ * **THE PAGE IS abcjs'S OWN SUM, IN ITS OWN ORDER AND IN ITS OWN PIXELS.**
+ *
+ * `setPaperSize` writes `w = maxwidth + renderer.padding.left + renderer.padding.right`,
+ * which JS evaluates LEFT TO RIGHT (`draw/set-paper-size.js:2`), over `this.width` and both
+ * paddings after each has been divided by the scale (`engraver-controller.js:124-126`).
+ *
+ * The engine holds the summed PAGE in staff spaces and takes the sides back off to reach the
+ * music, so the page it could report was `a + (b + c)`. This is the fixture that measured it
+ * — `abcts-directives` tune 4, the only one whose margins DIFFER, so the pair arm of
+ * `pageSides()` is reached where equal margins happen to agree:
+ *
+ *     (893.3333333333334 + 90.66666666666667) + 53.333333333333336 = 1037.3333333333333
+ *      893.3333333333334 + (90.66666666666667  + 53.333333333333336) = 1037.3333333333335
+ *
+ * ⚠️ **AND THE PIXEL DOMAIN IS THE POINT, NOT ONLY THE ORDER.** Summing the same three terms
+ * in SPACES and multiplying out reproduces abcjs on 16 of 32 measured width/scale pairs where
+ * the single division the space-domain width already uses reproduces 28. Only the pixel form
+ * is 32 of 32 — it is abcjs's expression rather than an equivalent of it.
+ */
+describe("the page width is summed the way abcjs sums it", () => {
+  const RIGHT_MARGIN =
+    "X:4\nT:rightmargin\n%%rightmargin 40\nL:1/4\nM:4/4\nK:C\nCDEF|GABc|\nw:la la la la la la la la\n";
+
+  it("adds the margins to the music width, left then right", () => {
+    const host = { innerHTML: "" } as { innerHTML: string };
+    renderAbc(host, RIGHT_MARGIN, { staffwidth: 670, print: true });
+    // The root's own attribute, which is the byte abcjs writes. `width / scale` at print's
+    // 0.75 is 778 for abcjs's sum and 778.0000000000001 for the recovered one.
+    expect(host.innerHTML).toContain('width="1037.3333333333333"');
+  });
+});
+
 describe("%%footer draws the print page's last rows", () => {
   const footerOf = (
     abc: string,

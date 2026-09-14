@@ -4761,8 +4761,17 @@ export function toSVG(
     }
   }
 
+  /**
+   * **THE PAGE IS abcjs'S OWN PIXEL SUM WHERE THE LAYOUT COULD GIVE ONE** — see
+   * `Layout.pageWidthPx`. `pageWidth * OUT` is the space-domain page multiplied back out,
+   * which is a different grouping from `maxwidth + padding.left + padding.right` and wrote
+   * `1037.3333333333335` for abcjs's `…333`.
+   *
+   * Only at the default output scale: `OUT` also carries a host's own `staffSpace`, and a
+   * page in abcjs pixels means nothing to a host that asked for a different one.
+   */
   const wRaw = abcjs
-    ? lastDoc.pageWidth * OUT
+    ? (OUT === UNIT_PX ? lastDoc.pageWidthPx : undefined) ?? lastDoc.pageWidth * OUT
     : (options.pageWidth ?? lastDoc.width * OUT);
   // …and the LAST tune's height IS the whole page, because its own walk was seeded with
   // the tune above's `endY` — see `LayoutOptions.pageTop`.

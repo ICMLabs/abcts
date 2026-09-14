@@ -1389,6 +1389,21 @@ export interface Layout {
    * Never smaller than the requested width, so it is not the same as `width`.
    */
   readonly pageWidth: number
+  /**
+   * **THE SAME PAGE IN abcjs'S OWN PIXELS, SUMMED IN ITS OWN ORDER** — `maxwidth +
+   * padding.left + padding.right`, left to right (`draw/set-paper-size.js:2`).
+   *
+   * `pageWidth` one line up is the space-domain page, and multiplying it out is not the
+   * same double: the engine holds the summed page and takes the sides back off to reach the
+   * music, so `(a + b) + c` becomes `a + (b + c)` — `abcts-directives-tune3` wrote
+   * `1037.3333333333335` for abcjs's `…333`. Summing the three terms in SPACES and
+   * multiplying reproduces abcjs on half the width/scale pairs; the pixel form is the
+   * expression itself.
+   *
+   * Absent where the caller gave no pixel width (`LayoutOptions.staffWidthPx`) and on a page
+   * the ratchet widened, and the emitter falls back to `pageWidth * OUT` for both.
+   */
+  readonly pageWidthPx?: number
   readonly height: number
   /** y of the topmost content — the SVG backend translates by this. */
   readonly top: number

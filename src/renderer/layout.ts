@@ -6012,6 +6012,12 @@ const pageSides = (): number =>
     ? 2 * PAGE_PADDING.left
     : PAGE_PADDING.left + PAGE_PADDING.right
 
+/**
+ * **THE PAGE WIDTH IN abcjs'S OWN PIXELS**, summed in its own order — see where it is
+ * assigned, and `Layout.pageWidthPx`. Null when this render cannot say.
+ */
+let PAGE_WIDTH_PX: number | null = null
+
 /** 1 on screen; `%%scale`'s number, or `print`'s own 0.75 — see `LayoutOptions.print`. */
 let PRINT_SCALE = 1
 
@@ -10836,6 +10842,21 @@ export interface LayoutOptions {
    */
   readonly systemWidth?: number
   /**
+   * **abcjs's `this.width` — THE MUSIC AREA IN PIXELS, BEFORE THE SCALE DIVIDES IT.**
+   *
+   * `systemWidth` one line up is the PAGE in staff spaces, which is this plus both
+   * margins, converted — and the page a host is told is `maxwidth + padding.left +
+   * padding.right` in abcjs's own pixels, LEFT THEN RIGHT (`draw/set-paper-size.js:2`).
+   * Recovering the music back out of the summed page is `a + (b + c)` where abcjs wrote
+   * `(a + b) + c`: `abcts-directives-tune3` came out `1037.3333333333335` against
+   * abcjs's `…333`, which at print's 0.75 is `778.0000000000001` against 778.
+   *
+   * So the caller that KNOWS the pixel width passes it, and the page is summed in abcjs's
+   * terms and order rather than round-tripped. Absent for a caller that has only the
+   * space-domain width, which falls back to the summed page exactly as before.
+   */
+  readonly staffWidthPx?: number
+  /**
    * abcjs's `print: true` — its PAGE media rather than its screen media
    * (`abc_parse.js:525-526` sets `tune.media = 'print'`, `renderer.js:38` reads it).
    * It is four things and no engraving change at all: the page margins take their print
@@ -13022,6 +13043,40 @@ function layoutScoped(input: Score, options: LayoutOptions = {}): Layout {
   // and put that page 7.5px out.
   const marginDelta = PAGE_PADDING.left - defaultSide + (PAGE_PADDING.right - defaultSide)
   if (marginDelta !== 0) systemWidth += marginDelta
+  /**
+   * **THE PAGE IS SUMMED IN abcjs'S OWN PIXELS AND IN ITS OWN ORDER** — `w = maxwidth +
+   * renderer.padding.left + renderer.padding.right`, which JS evaluates left to right
+   * (`draw/set-paper-size.js:2`), over `this.width` and both paddings AFTER
+   * `adjustNonScaledItems` has divided each by the scale (`engraver-controller.js:124-126`).
+   *
+   * The engine holds the PAGE in staff spaces and takes the sides back off to reach the
+   * music, so the page it could report was `a + (b + c)` where abcjs wrote `(a + b) + c`:
+   * `abcts-directives-tune3` (`%%rightmargin 40`, so its margins differ and the pair arm of
+   * `pageSides()` is reached) wrote `1037.3333333333335` against abcjs's `…333`, which at
+   * print's 0.75 is `778.0000000000001` against 778.
+   *
+   * ⚠️ **AND IT IS SUMMED IN PIXELS RATHER THAN IN SPACES**, because the space domain is the
+   * wrong place to do it: summing three space-domain terms and multiplying by `UNIT_PX`
+   * reproduces abcjs on 16 of 32 measured width/scale pairs where the current single
+   * division reproduces it on 28. Only the pixel form is 32 of 32 — it IS abcjs's
+   * expression.
+   *
+   * Null when the caller has no pixel width to give, and on a page the ratchet widened,
+   * where the music is the layout's own and the space-domain sum is already exact.
+   */
+  const marginPx = (key: string, fallbackPx: number): number =>
+    (score.measurements[key] === undefined ? fallbackPx : score.measurements[key]! * UNIT_PX) /
+    printScale
+  const musicPx =
+    score.staffWidth ??
+    (options.staffWidthPx === undefined ? null : options.staffWidthPx)
+  const defaultPaddingPx = options.print === true ? ABCJS_PX.printPaddingLeft : ABCJS_PX.paddingLeft
+  PAGE_WIDTH_PX =
+    musicPx === null
+      ? null
+      : musicPx / printScale +
+        marginPx('leftmargin', defaultPaddingPx) +
+        marginPx('rightmargin', defaultPaddingPx)
   SPACING = score.measurements
   TITLE_LEFT = score.titleLeft
   FLAT_BEAMS = score.flatBeams
@@ -17337,6 +17392,9 @@ function layoutScoped(input: Score, options: LayoutOptions = {}): Layout {
     pageWidth: pageRatcheted
       ? pageWidth + PAGE_PADDING.left + PAGE_PADDING.right
       : systemWidth,
+    // …and the same page in abcjs's own pixels, summed in its order — see `Layout.pageWidthPx`.
+    // A page the ratchet widened is the layout's own width and keeps the space-domain sum.
+    ...(pageRatcheted || PAGE_WIDTH_PX === null ? {} : { pageWidthPx: PAGE_WIDTH_PX }),
     // See `blankLeadingLines` — every `T:` past the first is one.
     blankLeadingLines: Math.max(0, score.metadata.titles.length - 1),
     printScale: PRINT_SCALE,
