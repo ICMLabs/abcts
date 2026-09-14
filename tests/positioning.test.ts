@@ -959,3 +959,72 @@ describe("minPadding magnifies the rods, which is what exposes two widths", () =
     expect(staffEnd(plain)).toBeCloseTo(134.9, 2);
   });
 });
+
+/**
+ * **`%%footer` — THE LAST ROWS OF A PRINT PAGE, AND THE MIRROR OF `%%header`.**
+ *
+ *     if (metaText.footer && isPrint) this.footer(metaText.footer, width, paddingLeft, …)
+ *     this.rows.push({ startGroup: "footer", klass: 'header meta-bottom' })
+ *     addTextIf(rows, {marginLeft: paddingLeft,             text: footer.left,   …})
+ *     addTextIf(rows, {marginLeft: paddingLeft + width / 2, text: footer.center, anchor: 'middle', …})
+ *     addTextIf(rows, {marginLeft: paddingLeft + width,     text: footer.right,  anchor: 'end', …})
+ *
+ * (`elements/bottom-text.js:9-10`, `:83-91`.) The model has carried `%%header`/`%%footer`
+ * since the parser did; the header landed when the corpus was first rendered with
+ * `print: true` and **the footer was still drawn NOWHERE**.
+ *
+ * ⚠️ **AND THE OPTION ROW COULD NOT SAY SO.** `visual-options-01-fonts` is the only fixture
+ * with a `%%footer` and it differs 23px earlier for an unrelated reason, so `zzopts` reported
+ * it before and after. It took DIFFERENCING THE ROW LIST — every `data-name`/`y` pair in
+ * order — to see a row abcjs has and we do not. **A row count says nothing about which row.**
+ *
+ * ⚠️ Every number here was read out of abcjs on these same shapes in WebKit, and the whole
+ * markup agrees byte for byte there.
+ */
+describe("%%footer draws the print page's last rows", () => {
+  const footerOf = (
+    abc: string,
+    print: boolean,
+  ): { group: boolean; rows: string[] } => {
+    const host = { innerHTML: "" } as { innerHTML: string };
+    renderAbc(host, abc, { staffwidth: 670, ...(print ? { print: true } : {}) });
+    return {
+      // ⚠️ The LITERAL class, `header` and all — abcjs's own string, written whether or not
+      // `add_classes` is on, and with NO `data-name` on the group. See `PlacedText.groupLiteral`.
+      group: /<g class="header meta-bottom">/.test(host.innerHTML),
+      rows: [
+        ...host.innerHTML.matchAll(
+          /<text[^>]*text-anchor="(\w+)" x="([\d.]+)" y="([\d.]+)" data-name="footer"/g,
+        ),
+      ].map((m) => m.slice(1).join(" ")),
+    };
+  };
+  const ONE = "X:1\nT:t\n%%footer The footer\nL:1/4\nK:C\nCDEF|\n";
+  // …and the THREE-part form, split on TABS, which is what exercises the left and right x.
+  const THREE = "X:1\nT:t\n%%footer L\tC\tR\nL:1/4\nK:C\nCDEF|\n";
+
+  it("centres a one-part footer on the music", () => {
+    expect(footerOf(ONE, true)).toEqual({
+      group: true,
+      rows: ["middle 537.33 231.26"],
+    });
+  });
+
+  // ⭐ THE CONTROL, and it is the whole of `isPrint`: a screen render draws no footer at all,
+  // group included. `%%header` has the same gate.
+  it("draws nothing on screen", () => {
+    expect(footerOf(ONE, false)).toEqual({ group: false, rows: [] });
+  });
+
+  /**
+   * ⭐⭐ AND THE THREE PARTS ARE `paddingLeft`, `paddingLeft + width / 2` and
+   * `paddingLeft + width` — the LAST is the music's right edge and `anchor: end`, so a fix
+   * that centred all three passes the row above and fails this one. Each advances 26.
+   */
+  it("spreads a three-part footer across the music", () => {
+    expect(footerOf(THREE, true)).toEqual({
+      group: true,
+      rows: ["start 90.67 231.26", "middle 537.33 257.26", "end 984 283.26"],
+    });
+  });
+});

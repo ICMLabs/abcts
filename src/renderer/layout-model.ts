@@ -625,6 +625,18 @@ export interface PlacedText {
    */
   readonly group?: number
   readonly groupClass?: string
+  /**
+   * **THIS GROUP IS abcjs's `{startGroup, klass}` WITH NO `name`** — one `openGroup` call with
+   * two keys instead of three, which `%%footer` is the only row to make:
+   * `rows.push({ startGroup: "footer", klass: 'header meta-bottom' })`
+   * (`elements/bottom-text.js:86`). `openGroup` writes only the keys it is handed
+   * (`draw/non-music.js:36`), so the `<g>` carries the class and NO `data-name` — and the
+   * class is a LITERAL in the source, written whether or not `add_classes` is on, where every
+   * other group's klass is already `shouldAddClasses ? 'abcjs-…' : ''`.
+   *
+   * One flag rather than two because it is one fact: which `openGroup` call this is.
+   */
+  readonly groupLiteral?: true
   readonly measure?: number
   /** …or the ELEMENT whose counters it takes, when only the emitter knows them. */
   readonly measureElement?: number

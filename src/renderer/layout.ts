@@ -16914,7 +16914,12 @@ function layoutScoped(input: Score, options: LayoutOptions = {}): Layout {
         )
 
   const bottomStart = bottom + trailingHeight + spaces(ABCJS_PX.bottomTextGap)
-  const bottomBlock = bottomTextBlock(score.metadata, score.fonts, bottomStart)
+  const bottomBlock = bottomTextBlock(
+    score.metadata,
+    score.fonts,
+    bottomStart,
+    systemWidth - pageSides(),
+  )
   const bottomText =
     bottomBlock.texts.length === 0 && trailing.length === 0
       ? undefined
@@ -17050,7 +17055,24 @@ function layoutScoped(input: Score, options: LayoutOptions = {}): Layout {
      * neither expressible as a host-supplied constant, and the byte table is the only gate
      * that could see it, since a page too narrow moves no ink.
      */
-    pageWidth: pageRatcheted ? pageWidth + pageSides() : systemWidth,
+    /**
+     * ⚠️ **AND THE TWO MARGINS ARE ADDED ONE AT A TIME, LEFT THEN RIGHT — `pageSides()` IS
+     * THE WRONG TERM HERE.** abcjs writes
+     * `(maxwidth + renderer.padding.left) + renderer.padding.right`, which JS evaluates
+     * left to right (`draw/set-paper-size.js:2`), and **A SUM CANNOT SEE AN ORDER**:
+     *
+     *     (893.3333333333334 + 90.66666666666667) + 53.333333333333336 = 1037.3333333333333
+     *      893.3333333333334 + (90.66666666666667  + 53.333333333333336) = 1037.3333333333335
+     *
+     * — abcjs's on top, ours below, and at print's 0.75 those are 778 and 778.0000000000001.
+     * `abcts-directives` tune 3 is `%%rightmargin 40`, so its margins are UNEQUAL and
+     * `pageSides()` reached its `left + right` arm; with equal margins its `2 * m` arm happens
+     * to agree. The sibling gate's 47 `-print` fixtures could not see it because none of them
+     * ratchets, and this branch is the ratchet's.
+     */
+    pageWidth: pageRatcheted
+      ? pageWidth + PAGE_PADDING.left + PAGE_PADDING.right
+      : systemWidth,
     // See `blankLeadingLines` — every `T:` past the first is one.
     blankLeadingLines: Math.max(0, score.metadata.titles.length - 1),
     printScale: PRINT_SCALE,
@@ -18337,6 +18359,7 @@ function appendFreeText(
 function bottomTextBlock(
   metadata: ScoreMetadata,
   fonts: Score['fonts'] = {},
+
   /**
    * **WHERE THE PAGE'S CURSOR ALREADY IS**, as `topTextBlock` takes it — because a RICH
    * row's y goes into the markup RAW (`renderText` returns before `roundNumber`), so
@@ -18344,6 +18367,12 @@ function bottomTextBlock(
    * abcjs's 610.5614999999999. A plain row's `round2` hid it.
    */
   from = 0,
+  /**
+   * The MUSIC's width — abcjs's `this.width`, which `BottomText` takes only to place
+   * `%%footer`'s three parts across it (`elements/bottom-text.js:4`, `:83-91`). Nothing else
+   * in the block reads it.
+   */
+  musicWidth = 0,
 ): { texts: PlacedText[]; height: number; advances: number[]; rows: MetaTextRow[] } {
   const texts: PlacedText[] = []
   const advances: number[] = []
@@ -18802,6 +18831,87 @@ function bottomTextBlock(
   abcRow('abc-copyright', 'Copyright: ', 'abcjs-extra-text abcjs-copyright')
   abcRow('abc-creator', 'Creator: ', 'abcjs-extra-text abcjs-creator')
   abcRow('abc-edited-by', 'Edited By: ', 'abcjs-extra-text abcjs-edited-by')
+
+  /**
+   * **`%%footer` — THE LAST THREE ROWS OF THE PAGE, AND PRINT-ONLY**, the mirror of
+   * `%%header` in `topTextBlock`:
+   *
+   *     if (metaText.footer && isPrint) this.footer(metaText.footer, width, paddingLeft, …)
+   *     this.rows.push({ startGroup: "footer", klass: 'header meta-bottom' })
+   *     addTextIf(rows, {marginLeft: paddingLeft,             text: footer.left,   …})
+   *     addTextIf(rows, {marginLeft: paddingLeft + width / 2, text: footer.center, anchor: 'middle', …})
+   *     addTextIf(rows, {marginLeft: paddingLeft + width,     text: footer.right,  anchor: 'end', …})
+   *
+   * (`elements/bottom-text.js:9-10`, `:83-91`.)
+   *
+   * ⚠️ **IT HAS NO `marginTop`, WHICH IS THE ONE WAY IT IS NOT THE HEADER.** The header
+   * carries `marginTop: -headerTextHeight` so it can sit ABOVE the page's own margin; the
+   * footer simply draws where the cursor is and advances, so it DOES lengthen the page
+   * whenever the page has already passed print's 1056px floor.
+   *
+   * ⚠️ **AND ITS GROUP'S CLASS IS THE LITERAL `header meta-bottom`, WITH `header` IN IT** —
+   * abcjs's own string (`:84`), not a typo to tidy. It is written whether or not
+   * `add_classes` is on, because `openGroup` takes it raw.
+   *
+   * The model has carried `%%header`/`%%footer` since the parser did. The header landed when
+   * the corpus was first rendered with `print: true`; the footer was still drawn NOWHERE,
+   * which the option row could not say because that fixture differs earlier for another
+   * reason — it took DIFFERENCING THE ROW LIST to see a row abcjs has and we do not.
+   */
+  const footer = metadata.runningHead.footer
+  if (PRINT && footer !== undefined) {
+    // …**AND `footerfont` IS ONE OF THE TWO FONTS PRINT PRE-DIVIDES BY THE SCALE**, with
+    // `headerfont` — `adjustNonScaledItems` (`renderer.js:79-86`). See `topTextBlock`.
+    const footerSize =
+      Math.round(
+        (((fonts.footerfont?.size ?? ABC_FONT_DEFAULT_PT.footerfont) / PRINT_SCALE) * 4) / 3,
+      ) / UNIT_PX
+    const parts: readonly [string, number, 'start' | 'middle' | 'end'][] = [
+      [footer.left, PAGE_PADDING.left, 'start'],
+      [footer.center, PAGE_PADDING.left + musicWidth / 2, 'middle'],
+      [footer.right, PAGE_PADDING.left + musicWidth, 'end'],
+    ]
+    const box = boxOf('footerfont')
+    for (const [text, x, anchor] of parts) {
+      if (text === '') continue
+      texts.push({
+        text,
+        role: 'title',
+        dataName: 'footer',
+        groupName: 'footer',
+        // The literal, and `header` really is in it — see above. `groupLiteral` is what says
+        // this `<g>` takes the class verbatim and carries no `data-name`.
+        groupClass: 'header meta-bottom',
+        groupLiteral: true,
+        x,
+        // …**AND THE BASELINE IS ONE FONT SIZE BELOW THE CURSOR**, as every `renderText` row
+        // takes it (`draw/text.js:30`).
+        y: y + footerSize,
+        rowExtra: footerSize,
+        size: footerSize,
+        bold: fonts.footerfont?.bold === true,
+        italic: fonts.footerfont?.italic === true,
+        anchor,
+        ...faceIn('footerfont'),
+        ...(metadata.fieldRanges['footer'] === undefined
+          ? {}
+          : {
+              selectable: {
+                elType: 'footer',
+                startChar: metadata.fieldRanges['footer'].start,
+                endChar: metadata.fieldRanges['footer'].end,
+                text,
+              },
+            }),
+      })
+      rows.push({ text: texts[texts.length - 1] as PlacedText, font: 'footerfont', left: x })
+      // `addTextIf`'s own advance — `round(height * 1.1 * lines)` off the `"A"` probe.
+      move(
+        Math.round((rowProbe(footerSize, 'footerfont') + box) * ENGRAVE.lineSkipFactor * UNIT_PX) /
+          UNIT_PX,
+      )
+    }
+  }
 
   return { texts, height: y - from, advances, rows }
 }

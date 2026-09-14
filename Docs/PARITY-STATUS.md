@@ -66,11 +66,19 @@ direction fails.
 |---|---|---|
 | default, `responsive`, `viewport*`, `jazzchords`, `oneSvgPerLine`, `ariaLabel`, `germanAlphabet`, `accentAbove`, **`lineThickness`**, **`initialClef`**, **`expandToWidest`** | **0 of 685** | — |
 | `wrap` + `staffwidth` | **4** | **its floor** — 2 declined debug markers, 2 abcjs crashing in its own `wrapLines` |
-| `print`, `print + responsive` | 3 | last-digit rounding |
-| `scale 0.8` / `1.5`, `oneSvgPerLine + scale` | 1 / 2 / 1 | last-digit rounding |
+| `print`, `print + responsive` | 3 | one 23.5px page-cursor sum, two ULP — all three located |
+| `scale 0.8` / `1.5`, `oneSvgPerLine + scale` | 1 / 2 / 1 | a whole pixel from one 1/64-px bbox, and two ULP |
 | `minPadding` | **1** | two ULP in the root `width`, located to one step of the solve |
 | `add_classes` | **1** | one ending's measure counter, and its cause is measured |
 | `timeBasedLayout` | 669 | **unimplemented** — a SECOND layout algorithm (`layout/layout-in-grid.js`), spacing by TIME rather than by the spring solve. By far the largest thing outstanding in this repo. |
+
+**`%%footer` landed 2026-09-15** — print draws one and we drew none at all — and it moved no row
+count, because the only fixture with a `%%footer` differs 23px earlier for another reason.
+Differencing the ROW LIST, every `data-name`/`y` pair in order, is what found it: **a row count
+says nothing about which row.** The remaining `print` and `scale` rows are all last-digit now and
+each one is located to its term — see `scripts/zzopts.mjs`, which names the two that need a
+structural change (the page-width primitive, and measuring a box in the emitter rather than the
+layout) rather than more arithmetic.
 
 **`minPadding` went 4 → 1** on 2026-09-15, and the row turned out to be a ROD MAGNIFIER rather
 than a feature: both remaining rules were element WIDTHS, and a width only reaches the page when

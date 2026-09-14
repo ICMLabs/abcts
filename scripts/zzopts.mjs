@@ -80,10 +80,62 @@ const OPTIONS = [
   ['responsive resize', { responsive: 'resize' }, 0],
   ['responsive + scale 1.5', { responsive: 'resize', scale: 1.5 }, 0],
   ['responsive + scale 0.7', { responsive: 'resize', scale: 0.7 }, 0],
-  // 5 -> 3 when the pitch-space conversion landed (see the wrap row): `visual-parsing-08`
-  // and `-09` were both a last digit, and both were a fraction added in step space.
+  /**
+   * ⚠️ **THREE ROWS, THREE CAUSES, AND ALL THREE ARE NOW MEASURED TO THE TERM.** Shared with
+   * the `print` row below — the same three fixtures.
+   *
+   * 1. **`visual-options-01-fonts` — 23.54px, AND IT IS THE PAGE CURSOR AND NOT THE INK.**
+   *    Every drawn row through the FIRST SYSTEM matches to the digit; everything after it is
+   *    23.54 lower. Differencing both engines' `moveY` walks says why: our top block's row
+   *    ADVANCES are individually wrong — abcjs spends `… 68, 3.78, 38, 7.56, 18, 18, 67 …`
+   *    where we spend `… 50, 3.78, 38, 7.56, 19, 19, 62 …`, a net 21 short — and those
+   *    differences CANCEL in the rows' drawn ys, because a row's y and the page's cursor are
+   *    two accumulations here. The SYSTEM is placed by its own walk and lands right; the
+   *    trailing blocks are placed from the cursor and do not. ⚠️ **Removing any ONE of the
+   *    eighteen `%%…font` directives takes the delta to zero**, which is what says it is a
+   *    sum of many small term errors rather than one rule.
+   * 2. **`visual-svg-per-line-02-scaled` — ONE ULP** in a notehead path's x,
+   *    `325.912` against our `325.9119999999999`.
+   * 3. **`abcts-directives-tune3` — ONE ULP** in the print width, `%%rightmargin 40`.
+   *    ⚠️ **AND ITS CAUSE IS A SUM ORDER, WHICH IS FIXED FOR THE RATCHET AND NOT FOR THE
+   *    BASE.** abcjs writes `(maxwidth + padding.left) + padding.right`, left to right:
+   *    `(893.3333333333334 + 90.66666666666667) + 53.333333333333336` is `1037.3333333333333`
+   *    and `893.3333333333334 + (90.66666666666667 + 53.333333333333336)` is `…335`, which at
+   *    print's 0.75 are 778 and 778.0000000000001. `pageSides()` sums the two margins FIRST,
+   *    so it is the second form. The ratchet branch takes abcjs's order now; the base branch
+   *    is `systemWidth`, a PRE-SUMMED page width that the engine then subtracts the sides
+   *    back out of — **the wrong primitive**, where abcjs keeps the MUSIC width and adds the
+   *    margins once, at `setPaperSize`. Changing that is a refactor of the width primitive
+   *    with 691 byte goldens resting on its arithmetic, so it is its own landing.
+   *
+   * ✅ **AND `%%footer` LANDED HERE WITHOUT MOVING THE ROW** — print draws one and we drew
+   * none at all. `visual-options-01-fonts` is the only fixture with a `%%footer` and it
+   * differs 23px earlier, so this row said the same number before and after. It took
+   * DIFFERENCING THE ROW LIST — every `data-name`/`y` pair in order — to see a row abcjs has
+   * and we do not. **A row count says nothing about which row.**
+   */
   ['print + responsive', { print: true, responsive: 'resize' }, 3],
+  /**
+   * ⚠️ **ONE ROW, AND IT IS A WHOLE PIXEL FROM 1/64 OF ONE.** `visual-tablature-17`'s boxed
+   * jazzchord rect is `M 93` in abcjs and `M 94` here, and the terms line up exactly:
+   *
+   *     rawX 120.45443750000001   pad 1.3   bbox 51.3125    -> 93.49818750000001  abcjs
+   *     rawX 120.45443750000001   pad 1.3   bbox 51.296875  -> 93.5061875         ours
+   *
+   * — identical but for the measured bbox WIDTH, by 0.015625, which is **one 1/64-px
+   * quantum**: the same one `TextFont.x` exists for. abcjs rounds `hash.attr.x` and then
+   * measures the node it JUST DREW (`draw/text.js:63-69`), so its bbox is taken at the
+   * element's real, rounded x; ours is measured in the LAYOUT, where the chord's x is not yet
+   * known, so it is the x = 0 measurement. Landing on `.498` against `.506` turns that into a
+   * whole pixel.
+   *
+   * **The fix is to measure the box in the EMITTER, at the drawn x** — the same phase
+   * argument as the `add_classes` cache key, and its own landing.
+   */
   ['scale 0.8', { scale: 0.8 }, 1],
+  // ⚠️ TWO, both a last digit: `synth-flattener-32`'s tempo flag path x
+  // (`123.0705` against `123.07050000000001`) and `visual-directives-01`'s root `width`
+  // (`216.2` against `216.20000000000005`). The layout-unit family.
   ['scale 1.5', { scale: 1.5 }, 2],
   ['print', { print: true }, 3],
   ['jazzchords', { jazzchords: true }, 0],
@@ -91,8 +143,8 @@ const OPTIONS = [
   // `section 1` from a split that never split anything.
   ['oneSvgPerLine', { oneSvgPerLine: true }, 0, /section 2<\/title>/],
   ['oneSvgPerLine + resize', { oneSvgPerLine: true, responsive: 'resize' }, 0, /viewBox="0 [1-9]/],
-  // 4, and they are the SAME FOUR FIXTURES as the plain `scale 0.8` row above — measured
-  // by differencing the two sets, not inferred from a shared first-three. The split adds
+  // 1, and it is the SAME FIXTURE as the plain `scale 0.8` row above — measured by
+  // differencing the two sets, not inferred from a shared first entry. The split adds
   // nothing; it is inheriting the non-unit-scale geometry that row already declares.
   ['oneSvgPerLine + scale 0.8', { oneSvgPerLine: true, scale: 0.8 }, 1, /<div style="overflow: hidden;height:/],
   ['viewportHorizontal', { viewportHorizontal: true }, 0, /<div class="abcjs-inner" style="overflow: hidden/],

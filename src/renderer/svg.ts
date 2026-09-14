@@ -4675,11 +4675,19 @@ export function toSVG(
               // `class` before `data-name` (`bottom-text.js:48`, `draw/non-music.js:36-37`),
               // while its `richText` rows are handed `''` (`:57`). The STRING branch is the
               // other way round — no group at all and the klass on the text.
+              // …**AND `%%footer`'s IS THE TWO-KEY CALL** — a literal class and no
+              // `data-name` at all, written whether or not `add_classes` is on. See
+              // `PlacedText.groupLiteral`.
               out += `<g${
-                options.addClasses === true && row?.groupClass !== undefined
+                (options.addClasses === true || row?.groupLiteral === true) &&
+                row?.groupClass !== undefined
                   ? ` class="${escapeAttr(row.groupClass)}"`
                   : ""
-              } data-name="${escapeAttr(name ?? "")}"${groupAttrs.get(id) ?? ""}>`;
+              }${
+                row?.groupLiteral === true
+                  ? ""
+                  : ` data-name="${escapeAttr(name ?? "")}"`
+              }${groupAttrs.get(id) ?? ""}>`;
           }
           return out + markup;
         });
