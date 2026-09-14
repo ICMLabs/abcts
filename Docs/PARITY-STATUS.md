@@ -1,6 +1,6 @@
 # PARITY STATUS — abcts vs abcjs 6.7.0
 
-*Measured 2026-09-15, on commit `192a6df`, by running every gate in the repo plus both
+*Measured 2026-09-16, on commit `b37b6e2`, by running every gate in the repo plus both
 browser comparisons. Every number below is a re-run, not a carried-forward claim.*
 
 **The one-line answer: rendered with the options a page normally passes, abcts and abcjs
@@ -10,9 +10,11 @@ listed in §3, each of which is a case where abcjs itself produces broken output
 ✅ **AND §1a IS NO LONGER A QUALIFIER — IT IS A LAST-DIGIT TABLE.** The sentence above was
 written when every gate here rendered with default options, and this paragraph used to warn
 that three of abcjs's options were unimplemented FEATURES. As of 2026-09-15 none is:
-`zzopts` renders the whole corpus under each host option and **17 of its 17,810 comparisons
-differ**, across 12 fixtures, every one a last digit, a rounding boundary or a declared
-decision. The table in §1a says which, and each row names its own term.
+`zzopts` renders the whole corpus under each host option and **5 of its 17,810 comparisons
+differ**, across 3 fixtures — and FOUR of those five are `wrap + staffwidth` at its declared
+floor, which is two debug markers the owner declined and two tunes abcjs crashes on. What is
+left that is ours is ONE ULP in one root `width`. The table in §1a says which, and each row
+names its own term.
 
 This file is the plain-language status. `CLAUDE.md` carries the working history,
 `Docs/HANDOFF-<date>.md` the session state, `Docs/ABCJS-DIFFERENCES.md` the evidence behind
@@ -65,13 +67,36 @@ direction fails.
 
 | option | differ | what the remainder is |
 |---|---|---|
-| default, `responsive`, `viewport*`, `jazzchords`, `oneSvgPerLine`, `ariaLabel`, `germanAlphabet`, `accentAbove`, **`lineThickness`**, **`initialClef`**, **`expandToWidest`** | **0 of 685** | — |
+| default, `responsive`, `viewport*`, `jazzchords`, `oneSvgPerLine`, `ariaLabel`, `germanAlphabet`, `accentAbove`, `lineThickness`, `initialClef`, `expandToWidest`, **`print`**, **`print + responsive`**, **`scale 0.8`**, **`scale 1.5`**, **`oneSvgPerLine + scale 0.8`**, **`add_classes`**, **`timeBasedLayout`** | **0 of 685** | — |
 | `wrap` + `staffwidth` | **4** | **its floor** — 2 declined debug markers, 2 abcjs crashing in its own `wrapLines` |
-| `print`, `print + responsive` | 3 | one 23.5px page-cursor sum, two ULP — all three located |
-| `scale 0.8` / `1.5`, `oneSvgPerLine + scale` | 1 / 2 / 1 | a whole pixel from one 1/64-px bbox, and two ULP |
-| `minPadding` | **1** | two ULP in the root `width`, located to one step of the solve |
-| `add_classes` | **1** | one ending's measure counter, and its cause is measured |
-| `timeBasedLayout` | **1** | a bar rule stored by its CENTRE where abcjs stores the EDGE — one rounding boundary |
+| `minPadding` | **1** | two ULP in one root `width`, and the cause is a DOMAIN: abcjs's `er` carries a tail its pixel chain put there where this engine walks the line in staff spaces |
+
+🏁 **SEVEN ROWS CLOSED ON 2026-09-16, AND EVERY ONE WAS A REPRESENTATION RATHER THAN AN
+ARITHMETIC SLIP.** Each is named in `scripts/zzopts.mjs` at its own row:
+
+- **A rule is drawn from the EDGE it was given** — a barline or stem stored its centre and the
+  emitter took the half back off, which is not the same double on a `.xx5` boundary
+  (`timeBasedLayout` 1 → 0).
+- **The page width is abcjs's own sum, in abcjs's own pixels** — `(music + left) + right`,
+  where this engine held the summed page and subtracted the sides back out (`print` 3 → 2,
+  `scale 1.5` 2 → 1). **And the music width is a primitive too**, which was the last ULP on
+  both print rows.
+- **A declared `reserve` is a y, so it moves with its text** — the print `%%header`'s span was
+  left behind in the block's frame and read as the system's BOTTOM, so everything after the
+  first system sat 23.54px low (`print` 2 → 1).
+- **An ending takes the counters of the element it is added at**, like a triplet, where it had
+  derived them from its measure index (`add_classes` 1 → 0).
+- **The `text-anchor` travels with the x** into the drawn-node measurement, because it moves
+  the same sub-pixel phase (`scale 0.8` and `oneSvgPerLine + scale 0.8` 1 → 0).
+- **A tempo flag's offset is summed before the cursor is added**, which is abcjs's own
+  `abselem.x + xdelta` (`scale 1.5` 1 → 0).
+
+⚠️ **AND TWO RECORDED CAUSES ON THIS BOARD WERE WRONG**, both found by re-measuring rather than
+by reading: the 23.54px page-cursor row was attributed to eighteen `%%…font` directives (the
+probe had compared our NODE metrics with abcjs's BROWSER ones — in one WebKit page every advance
+is identical), and the 1/64-px box was attributed to a nested-tspan split on a fixture that
+contains no nested tspan at all. **A recorded cause is a hypothesis, however carefully it was
+written down.**
 
 🏁 **`timeBasedLayout` went 669 → 1** on 2026-09-15 — the whole second layout algorithm, and it
 is 83 lines. Every element's x comes from its MUSICAL TIME on a uniform grid, and the step is
@@ -90,10 +115,10 @@ grid did not break either of those; it revealed them, and both fixes are on the 
 **`%%footer` landed 2026-09-15** — print draws one and we drew none at all — and it moved no row
 count, because the only fixture with a `%%footer` differs 23px earlier for another reason.
 Differencing the ROW LIST, every `data-name`/`y` pair in order, is what found it: **a row count
-says nothing about which row.** The remaining `print` and `scale` rows are all last-digit now and
-each one is located to its term — see `scripts/zzopts.mjs`, which names the two that need a
-structural change (the page-width primitive, and measuring a box in the emitter rather than the
-layout) rather than more arithmetic.
+says nothing about which row.** The `print` and `scale` rows that remained after it were all
+last digits, each located to its term, and all of them closed on 2026-09-16 — including the two
+that needed a structural change, the page-width primitive and measuring a box in the emitter
+rather than in the layout.
 
 **`minPadding` went 4 → 1** on 2026-09-15, and the row turned out to be a ROD MAGNIFIER rather
 than a feature: both remaining rules were element WIDTHS, and a width only reaches the page when
