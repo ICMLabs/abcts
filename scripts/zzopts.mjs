@@ -151,14 +151,24 @@ const OPTIONS = [
    * goldens meaning what they meant. Byte-exact on boxes 1, 2 and 4 (51.3125, 106.546875,
    * 422.171875 against abcjs's own).
    *
-   * ⚠️ **THE FOURTH IS STILL 1/64 SHORT AND THE SIMPLE READING IS OUT.** Box 3 is
-   * `209.109375` against abcjs's `209.125` at the SAME rounded x (207.36) and the same font,
-   * where boxes 1, 2 and 4 all have fractional xs too and all now agree — so the quantum is
-   * not "fractional or not". What is left is a nested-tspan measurement: a `%%jazzchords`
-   * chord draws its modifier at `font-size:0.7em`, and box 3 is the one whose split differs.
-   * **A rule that fixes three of four is not the rule for the fourth.**
+   * ✅ **AND THE FOURTH CLOSED ON THE OTHER HALF OF THE SAME RULE: THE ANCHOR TRAVELS WITH
+   * THE x.** Box 3 was `209.109375` against abcjs's `209.125` at the SAME rounded x (207.36)
+   * and the same font, where boxes 1, 2 and 4 have fractional xs too and all agreed — so the
+   * quantum was not "fractional or not". ⚠️ **This entry guessed a nested-tspan measurement
+   * and that reading was out**: the fixture sets no `%%jazzchords` and draws no nested tspan
+   * at all — it is `G♭maj7` in Arial at five sizes.
+   *
+   * `text-anchor: middle` starts the glyph run half a width LEFT of the same x, so the ink
+   * lands on a different sub-pixel phase and quantises to a different 1/64. abcjs measures
+   * the node it DREW, which carries the anchor as well as the x (`draw/text.js:63-69`).
+   * Measured in WebKit on this fixture's own five boxes, each at its own real x:
+   *
+   *     size          13        27         53        107        173
+   *     x = 0     51.2969  106.5312   209.1094   422.1562   682.5469
+   *     + x       51.3125  106.5469   209.1094   422.1719   682.5469   <- 53 and 173 short
+   *     + anchor  51.3125  106.5469   209.1250   422.1719   682.5625   <- abcjs, every size
    */
-  ['scale 0.8', { scale: 0.8 }, 1],
+  ['scale 0.8', { scale: 0.8 }, 0],
   // ⚠️ ONE, a last digit: `synth-flattener-32`'s tempo flag path x, `123.0705` against
   // `123.07050000000001`. The layout-unit family.
   // ✅ `visual-directives-01`'s root `width` — `216.2` against `216.20000000000005` — closed
@@ -173,7 +183,7 @@ const OPTIONS = [
   // 1, and it is the SAME FIXTURE as the plain `scale 0.8` row above — measured by
   // differencing the two sets, not inferred from a shared first entry. The split adds
   // nothing; it is inheriting the non-unit-scale geometry that row already declares.
-  ['oneSvgPerLine + scale 0.8', { oneSvgPerLine: true, scale: 0.8 }, 1, /<div style="overflow: hidden;height:/],
+  ['oneSvgPerLine + scale 0.8', { oneSvgPerLine: true, scale: 0.8 }, 0, /<div style="overflow: hidden;height:/],
   ['viewportHorizontal', { viewportHorizontal: true }, 0, /<div class="abcjs-inner" style="overflow: hidden/],
   ['viewportHorizontal + scroll', { viewportHorizontal: true, scrollHorizontal: true }, 0, /overflow: auto hidden/],
   ['viewportVertical', { viewportVertical: true }, 0, /<div class="abcjs-inner scroll-amount"/],

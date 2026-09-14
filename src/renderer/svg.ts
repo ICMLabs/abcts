@@ -3713,7 +3713,15 @@ export function toSVG(
                 ? undefined
                 : t.boxMeasure === undefined
                   ? t.boxSize
-                  : (boxInkAt(t.boxMeasure, t.size, Number(round2(t.x * PX))) ?? t.boxSize);
+                  : (boxInkAt(
+                      t.boxMeasure,
+                      t.size,
+                      Number(round2(t.x * PX)),
+                      // …**AND THE ANCHOR GOES WITH THE x** — see `TextFont.anchor`. A
+                      // chord is `text-anchor: middle`, which starts the run half a width
+                      // left of the same x and quantises to a different 1/64.
+                      t.anchor,
+                    ) ?? t.boxSize);
             /**
              * **`renderText` BUILDS THE BASELINE AS THREE ADDS ONTO THE PAGE'S y, AND AN
              * ASSOCIATION IS A DECISION.**

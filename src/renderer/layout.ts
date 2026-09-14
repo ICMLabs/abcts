@@ -6204,11 +6204,18 @@ export const boxInkAt = (
   m: NonNullable<PlacedText['boxMeasure']>,
   size: number,
   x: number,
+  /**
+   * The `text-anchor` the emitter is about to write — see `TextFont.anchor`. It moves the
+   * ink's sub-pixel phase exactly as the x does, and abcjs's measurement is of the drawn
+   * node, which carries both.
+   */
+  anchor?: string,
 ): { width: number; height: number } | null => {
   if (getTextMeasurer() === null) return null
+  const font = anchor === undefined ? m.font : { ...m.font, anchor }
   return {
-    width: textWidth(m.widthText, size, m.font, x, true),
-    height: textHeight(size, m.heightText, m.font, x, true),
+    width: textWidth(m.widthText, size, font, x, true),
+    height: textHeight(size, m.heightText, font, x, true),
   }
 }
 

@@ -49,6 +49,27 @@ export interface TextFont {
    */
   readonly x?: number
   /**
+   * ⚠️ **THE `text-anchor` IT WILL BE DRAWN WITH, BECAUSE THAT MOVES THE INK'S SUB-PIXEL
+   * PHASE TOO.**
+   *
+   * The same reason `x` is here, and the other half of it: `text-anchor: middle` starts the
+   * glyph run at `x - width/2`, so the run lands on a different sub-pixel phase from the same
+   * x anchored at `start` — and the ink box a browser reports is quantised. MEASURED in
+   * WebKit on `visual-tablature-17`'s `G♭maj7` in Arial, at the five sizes it draws and each
+   * one's real x:
+   *
+   *     size          13        27         53        107        173
+   *     x = 0     51.2969  106.5312   209.1094   422.1562   682.5469
+   *     + x       51.3125  106.5469   209.1094   422.1719   682.5469   <- 53 and 173 short
+   *     + anchor  51.3125  106.5469   209.1250   422.1719   682.5625   <- abcjs, every size
+   *
+   * abcjs measures the element it JUST DREW and that element carries its anchor
+   * (`draw/text.js:63-69`), so the anchor travels with the x or the measurement is a
+   * different one. Its own x=0 PROBE has neither, which is why only the drawn-node
+   * measurement — `boxInkAt` — passes this.
+   */
+  readonly anchor?: string
+  /**
    * **A MEASUREMENT THIS ENGINE MAKES AND abcjs NEVER DOES — kept out of the cache.**
    *
    * abcjs measures a tempo's parts once, at DRAW time (`draw/tempo.js:20`, `:32`). We lay a
@@ -198,6 +219,10 @@ export const createDomTextMeasurer = (
           // whole of §3b.1: a fractional x measures 1/64 px wider, so a key without one
           // hands the second use of a string the first one's sub-pixel phase.
           ...(shared ? [] : [font.x]),
+          // …and the anchor when there is one, so an anchored measurement cannot be served
+          // from an unanchored one — see `TextFont.anchor`. Appended rather than always
+          // present, so every existing key is the string it already was.
+          ...(font.anchor === undefined ? [] : [font.anchor]),
         ])}`
     if (key !== null) {
       const hit = cache.get(key)
@@ -213,6 +238,9 @@ export const createDomTextMeasurer = (
     el.setAttribute('font-family', font.family)
     if (font.weight !== undefined) el.setAttribute('font-weight', font.weight)
     if (font.style !== undefined) el.setAttribute('font-style', font.style)
+    // …and the anchor, where the caller is measuring something it is about to DRAW — see
+    // `TextFont.anchor`.
+    if (font.anchor !== undefined) el.setAttribute('text-anchor', font.anchor)
     // One tspan per line, `dy="1.2em"` from the second on — the `text` builder, svg.js.
     const lines = str.split('\n')
     for (let i = 0; i < lines.length; i++) {

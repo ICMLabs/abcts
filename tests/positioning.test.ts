@@ -1161,13 +1161,17 @@ describe("a boxed row is measured at the x it is drawn at", () => {
   /** Every ask a render made, with the two fields that say which kind of ask it was. */
   const asksFor = (
     abc: string,
-  ): { asks: { text: string; x?: number; transient?: boolean }[]; svg: string } => {
-    const asks: { text: string; x?: number; transient?: boolean }[] = [];
+  ): {
+    asks: { text: string; x?: number; transient?: boolean; anchor?: string }[];
+    svg: string;
+  } => {
+    const asks: { text: string; x?: number; transient?: boolean; anchor?: string }[] = [];
     setTextMeasurer((text: string, font: TextFont) => {
       asks.push({
         text,
         ...(font.x === undefined ? {} : { x: font.x }),
         ...(font.transient === undefined ? {} : { transient: font.transient }),
+        ...(font.anchor === undefined ? {} : { anchor: font.anchor }),
       });
       // Deterministic and nothing like a real face: the assertions are about the CALL.
       return { width: text.length * font.size * 0.5, height: font.size * 1.2 };
@@ -1185,10 +1189,29 @@ describe("a boxed row is measured at the x it is drawn at", () => {
     const drawn = /<text[^>]*x="([\d.]+)"[^>]*data-name="chord"/.exec(svg)?.[1];
     expect(drawn).toBeDefined();
     const boxAsks = asks.filter((a) => a.text === "G" && a.transient === true);
+    // …and the anchor rides with the x — its own row below says why.
     expect(boxAsks).toEqual([
-      { text: "G", x: Number(drawn), transient: true },
-      { text: "G", x: Number(drawn), transient: true },
+      { text: "G", x: Number(drawn), transient: true, anchor: "middle" },
+      { text: "G", x: Number(drawn), transient: true, anchor: "middle" },
     ]);
+  });
+
+  /**
+   * ⭐ **AND THE ANCHOR GOES WITH THE x, BECAUSE IT MOVES THE SAME SUB-PIXEL PHASE.**
+   * `text-anchor: middle` starts the glyph run half a width left of the same x, so the ink
+   * box quantises differently — and abcjs measures the node it DREW, which carries both
+   * (`draw/text.js:63-69`). MEASURED in WebKit on `visual-tablature-17`'s `G♭maj7` in Arial
+   * at the five sizes it draws, each at its own real x: the x alone reproduces abcjs at 13,
+   * 27 and 107 and is 1/64 short at 53 and 173; with the anchor it is exact at all five.
+   * That fixture's box 3 was the last row of `zzopts`'s `scale 0.8`.
+   */
+  it("asks with the anchor it writes", () => {
+    const { asks, svg } = asksFor(BOXED);
+    const anchor = /<text[^>]*text-anchor="(\w+)"[^>]*data-name="chord"/.exec(svg)?.[1];
+    expect(anchor).toBe("middle");
+    expect(
+      asks.filter((a) => a.text === "G" && a.transient === true).map((a) => a.anchor),
+    ).toEqual([anchor, anchor]);
   });
 
   // ⭐⭐ AND THE ROD'S OWN ASK CARRIES NO x, because the layout cannot know one. A fix that
