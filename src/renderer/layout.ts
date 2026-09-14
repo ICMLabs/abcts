@@ -15587,6 +15587,8 @@ function layoutScoped(input: Score, options: LayoutOptions = {}): Layout {
         label: string
         startX: number
         measure: number
+        /** The element whose marker counters it takes — see `voltaElementOf`. */
+        element?: number
         /** Carried over a system break — no opening hook and no number. See `voltaCarried`. */
         continued?: boolean
       } | null = null
@@ -15678,7 +15680,9 @@ function layoutScoped(input: Score, options: LayoutOptions = {}): Layout {
           text: openVolta.label,
           group,
           groupClass: 'ending',
-          measure: openVolta.measure,
+          ...(openVolta.element === undefined
+            ? { measure: openVolta.measure }
+            : { measureElement: openVolta.element }),
           dataName: openVolta.label,
           font: 'repeatfont',
           // `%%repeatfont Helvetica 13 box` names a FACE — `renderText` reads the whole
@@ -15775,9 +15779,48 @@ function layoutScoped(input: Score, options: LayoutOptions = {}): Layout {
         (i > 0 ? barAnchor(i - 1, 'closing', 'endingStart') : null) ??
         startOf(i)
 
+      /**
+       * Where each block's elements begin in THIS VOICE's numbering — `base` below, kept so
+       * the volta can name the element its counters come from. See `voltaElementOf`.
+       */
+      const blockBase = new Map<number, number>()
+      /**
+       * **THE ELEMENT AN `EndingElem` IS ADDED AT, WHICH IS ITS OWN BARLINE** — the same
+       * choice `voltaStartOf` makes about WHICH bar carries the ending, in element indices
+       * instead of x. abcjs `addOther`s the ending ahead of that barline
+       * (`elements/voice-element.js:29-41`), so the markers already in `otherchildren` are
+       * the ones standing before it, which is exactly what `markerAt` holds.
+       *
+       * The counter was DERIVED — the measure's index within the line, minus one — and that
+       * derivation breaks where the wrap arc's did: **a measure that OPENS with a barline
+       * contributes TWO bar elements, not one.** `abcts-endings` tune 2 is the fixture:
+       * abcjs's second ending is added after TWO `'bar'` markers and the derivation said one.
+       *
+       * Null where no bar carries it, which falls back to the derivation.
+       */
+      const voltaElementOf = (i: number): number | null => {
+        const at = (j: number, bar: 'opening' | 'closing'): number | null => {
+          const b = plan.blocks[j]
+          const base = blockBase.get(j)
+          if (b === undefined || base === undefined) return null
+          const index = bar === 'opening' ? b.openingBarIndex : b.closingBarIndex
+          return index === null ? null : base + index
+        }
+        // …the same three arms as `voltaStartOf`, in the same order.
+        if (plan.blocks[i]?.voltaAtClose === true) {
+          const own = at(i, 'closing')
+          if (own !== null) return own
+        }
+        if (plan.blocks[i]?.voltaOnOpeningBar === true) {
+          const opening = at(i, 'opening')
+          if (opening !== null) return opening
+        }
+        return i > span.start ? at(i - 1, 'closing') : null
+      }
       for (let i = span.start; i < span.end; i++) {
         const block = plan.blocks[i]
         if (block !== undefined) {
+          blockBase.set(i, elements.length)
           // A CARRIED ending closes on this measure's OPENING bar when that bar ends one —
           // see `Block.opensAfterVolta`.
           // …**BUT NOT ON A BAR THE WRAP LEFT ON THE PREVIOUS SYSTEM.** That bar is drawn
@@ -15804,6 +15847,9 @@ function layoutScoped(input: Score, options: LayoutOptions = {}): Layout {
               label: block.volta,
               startX: voltaStartOf(i),
               measure: Math.max(0, i - span.start - 1),
+              // …and the ELEMENT it is added at, where a bar carries it — see
+              // `voltaElementOf`. The derivation above stays as the fallback.
+              ...(voltaElementOf(i) === null ? {} : { element: voltaElementOf(i)! }),
             }
             /**
              * ⚠️ **AND AN ENDING CAN CLOSE ON THE VERY BAR THAT FOLLOWS ITS OWN.**

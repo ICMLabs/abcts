@@ -983,6 +983,36 @@ describe("minPadding magnifies the rods, which is what exposes two widths", () =
  * markup agrees byte for byte there.
  */
 /**
+ * **AN ENDING'S COUNTERS COME FROM THE ELEMENT IT IS ADDED AT, NOT FROM ITS MEASURE INDEX.**
+ *
+ * abcjs `addOther`s an `EndingElem` ahead of its own barline
+ * (`elements/voice-element.js:29-41`), so its class carries the `'bar'` markers already in
+ * `otherchildren` — the same rule a TRIPLET follows, which is why a triplet already names its
+ * element and an ending derived a number instead.
+ *
+ * ⚠️ **AND THE DERIVATION BROKE WHERE THE WRAP ARC'S DID: a measure that OPENS with a barline
+ * contributes TWO bar elements, not one.** `abcts-endings` tune 3 is the fixture — a quoted
+ * ending label leaves a `]` behind, so each ending's measure opens with a bar. abcjs logs
+ * `other=[EndingElem, BAR, BAR, EndingElem, BAR, BAR, BAR]` in its own `drawVoice`: the second
+ * ending stands after TWO markers and "the measure's index within the line, minus one" said
+ * one.
+ */
+describe("an ending takes the counters of the element it is added at", () => {
+  const QUOTED_ENDINGS = 'X:3\nT:t\nL:1/8\nK:C\nC2|["first"] D2:|["second"] E2|]\n';
+
+  it("counts the bar markers standing before it, both of them", () => {
+    const host = { innerHTML: "" } as { innerHTML: string };
+    renderAbc(host, QUOTED_ENDINGS, { staffwidth: 670, add_classes: true });
+    expect(
+      [...host.innerHTML.matchAll(/class="([^"]*abcjs-ending[^"]*)"/g)].map((m) => m[1]),
+    ).toEqual([
+      "abcjs-ending abcjs-l0 abcjs-m0 abcjs-mm0 abcjs-v0",
+      "abcjs-ending abcjs-l0 abcjs-m2 abcjs-mm2 abcjs-v0",
+    ]);
+  });
+});
+
+/**
  * **THE PAGE IS abcjs'S OWN SUM, IN ITS OWN ORDER AND IN ITS OWN PIXELS.**
  *
  * `setPaperSize` writes `w = maxwidth + renderer.padding.left + renderer.padding.right`,

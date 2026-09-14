@@ -207,7 +207,7 @@ const OPTIONS = [
    *   wrap+staffwidth   60 — re-lining is implemented (`compat/wrap.ts`) and no gate had
    *                          ever rendered its OUTPUT beside abcjs's.
    *   add_classes       17 — the class scheme itself is gated by 111 sibling goldens; these
-   *                          are the rows those goldens do not reach. NOW 1.
+   *                          are the rows those goldens do not reach. NOW 0 — CLOSED.
    *   expandToWidest    14 — a line stiffer than the page widens the page to fit it. NOW 0 — CLOSED.
    *   accentAbove       13 — an `accent` joins the ABOVE stack instead of the below one
    *                          (`creation/decoration.js:20`), which moves every lane with it.
@@ -283,17 +283,17 @@ const OPTIONS = [
    *    The faithful key is unreachable (the class is the writer's, the measurement the
    *    layout's), so the cache is per-render under the flag.
    *
-   * ⚠️ **THE LAST ROW IS `abcts-endings` tune 2, AND ITS CAUSE IS MEASURED.** abcjs's second
-   * `EndingElem` is `addOther`'d after TWO `'bar'` markers and ours reports one:
-   * `other=[EndingElem, BAR, BAR, EndingElem, BAR, BAR, BAR]`, logged in abcjs's own
-   * `drawVoice`. The ending's counter is still DERIVED here —
-   * `measure: Math.max(0, i - span.start - 1)`, the measure index within the line minus one —
-   * where a TRIPLET already carries a `measureElement` and lets `markerAt` answer. **The
-   * derivation breaks exactly where the wrap arc's did: a measure that OPENS with a barline
-   * contributes TWO bar elements, not one.** Giving a volta the element index a triplet has
-   * is the fix and it is its own landing, not a term to bolt onto this one.
+   * ✅ **AND THE LAST ROW CLOSED THE WAY ITS NOTE SAID IT WOULD — `abcts-endings` tune 2.**
+   * abcjs's second `EndingElem` is `addOther`'d after TWO `'bar'` markers and ours reported
+   * one: `other=[EndingElem, BAR, BAR, EndingElem, BAR, BAR, BAR]`, logged in abcjs's own
+   * `drawVoice`. The ending's counter was DERIVED — `measure: Math.max(0, i - span.start - 1)`,
+   * the measure index within the line minus one — where a TRIPLET already carries a
+   * `measureElement` and lets `markerAt` answer. **The derivation broke exactly where the wrap
+   * arc's did: a measure that OPENS with a barline contributes TWO bar elements, not one.**
+   * A volta now names the element it is added at — the same bar `voltaStartOf` anchors it to,
+   * in element indices instead of x — and the derivation stays as the fallback.
    */
-  ['add_classes', { add_classes: true }, 1],
+  ['add_classes', { add_classes: true }, 0],
   // ✅ CLOSED — two `if`s, one in each decoration pass: `closeDecoration` skips the accent
   // (`creation/decoration.js:20`) and `stackedDecoration` picks it up with the ORNAMENT's
   // own placement (`:268-273`). The same sforzato is drawn either way; what changes is
