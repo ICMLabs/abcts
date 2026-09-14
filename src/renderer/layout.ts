@@ -16526,7 +16526,26 @@ function layoutScoped(input: Score, options: LayoutOptions = {}): Layout {
                 ...heading.map((el) => ({
                   ...el,
                   blockTop: offset,
-                  texts: el.texts.map((t) => ({ ...t, y: t.y + offset })),
+                  /**
+                   * ⚠️ **AND A DECLARED RESERVE IS A y, SO IT MOVES WITH THE TEXT.**
+                   * `PlacedText.reserve` is a span "in the same y-down staff spaces as
+                   * `y`" and this shifted the baseline alone, so the one row that declares
+                   * one — the print `%%header`, which reserves a zero-height span at the
+                   * block's own start so its ink cannot grow the block — was left behind
+                   * in the BLOCK's frame while its text moved into the STAFF's. A span at
+                   * +50.67 there is not the page's top margin, it is 50.67px BELOW the
+                   * middle line, and `verticalExtent` read it as the system's BOTTOM:
+                   * `-extent.bottomPitch` went 1.044 -> 13.075 pitch and the system spent
+                   * 46.62px it does not occupy. Everything after the first system on
+                   * `visual-options-01-fonts` sat 23.54px low for it.
+                   */
+                  texts: el.texts.map((t) => ({
+                    ...t,
+                    y: t.y + offset,
+                    ...(t.reserve === undefined
+                      ? {}
+                      : { reserve: [t.reserve[0] + offset, t.reserve[1] + offset] as const }),
+                  })),
                   // …AND THE BLOCK'S INK MOVES WITH ITS TEXT. A `%%sep` rule is a LINE on
                   // the same element and it was left where the block built it, so its x and
                   // its width were abcjs's and its y was not — 217.88 against 131 on a

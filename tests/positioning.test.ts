@@ -983,6 +983,44 @@ describe("minPadding magnifies the rods, which is what exposes two widths", () =
  * markup agrees byte for byte there.
  */
 /**
+ * **A PRINT `%%header` CHANGES NOTHING BELOW IT — abcjs's OWN COMMENT, AND IT IS A
+ * PROPERTY OF THE PAGE AND NOT ONLY OF THE BLOCK.**
+ *
+ * *"whether there is a header or not doesn't change any other positioning, so this doesn't
+ * change the Y-coordinate"* (`elements/top-text.js`): the header is drawn ABOVE the page's
+ * own margin, through a `marginTop: -headerTextHeight` row, and costs the block its three
+ * rows' NET and nothing else.
+ *
+ * ⚠️ **AND THE ROW THAT CARRIES THAT — A DECLARED `reserve` — IS A y, SO IT MUST MOVE WITH
+ * THE TEXT.** The header reserves a zero-height span at the block's own start so its ink
+ * cannot grow the block; the block's shift into the staff's frame moved the baseline and
+ * left the span behind, where `+50.67` is no longer the page's top margin but 50.67px
+ * BELOW the middle line. `verticalExtent` read it as the system's BOTTOM and the system
+ * spent 46.62px it does not occupy — every row after the FIRST SYSTEM sat low, by 23.54px
+ * on `visual-options-01-fonts`, which is the print row's largest remaining difference.
+ *
+ * ⚠️ **The recorded cause for that fixture was eighteen `%%…font` directives, and it was
+ * wrong**: re-measured here, removing any one of them leaves the delta at exactly 23.54 and
+ * removing `%%header` alone takes it to zero.
+ */
+describe("a print %%header does not move what is below it", () => {
+  const WITH = "X:1\n%%header H\nL:1/4\nK:C\nCDEF|\n%%text after\n";
+  const WITHOUT = "X:1\nL:1/4\nK:C\nCDEF|\n%%text after\n";
+  /** The first notehead's y and the free text's, from the drawn output. */
+  const gap = (abc: string): number => {
+    const host = { innerHTML: "" } as { innerHTML: string };
+    renderAbc(host, abc, { staffwidth: 670, print: true });
+    const head = /<path data-name="C" d="M [\d.]+ ([\d.]+)/.exec(host.innerHTML);
+    const text = /<text[^>]* y="([\d.]+)" data-name="free-text"/.exec(host.innerHTML);
+    return Number(text?.[1]) - Number(head?.[1]);
+  };
+
+  it("leaves the whole distance from the staff to the next block alone", () => {
+    expect(gap(WITH)).toBeCloseTo(gap(WITHOUT), 9);
+  });
+});
+
+/**
  * **AN ENDING'S COUNTERS COME FROM THE ELEMENT IT IS ADDED AT, NOT FROM ITS MEASURE INDEX.**
  *
  * abcjs `addOther`s an `EndingElem` ahead of its own barline

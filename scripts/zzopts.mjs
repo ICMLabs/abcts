@@ -81,20 +81,29 @@ const OPTIONS = [
   ['responsive + scale 1.5', { responsive: 'resize', scale: 1.5 }, 0],
   ['responsive + scale 0.7', { responsive: 'resize', scale: 0.7 }, 0],
   /**
-   * ⚠️ **TWO ROWS, AND BOTH ARE MEASURED TO THE TERM.** Shared with the `print` row below —
-   * the same fixtures. It was three until the page width became a PRIMITIVE rather than a
-   * recovery (3, below).
+   * ⚠️ **ONE ROW, AND IT IS ONE ULP.** Shared with the `print` row below — the same fixture.
+   * It was three: the page width became a PRIMITIVE rather than a recovery (3, below), and
+   * the page-cursor row closed on a `reserve` that did not travel with its text (1, below).
    *
-   * 1. **`visual-options-01-fonts` — 23.54px, AND IT IS THE PAGE CURSOR AND NOT THE INK.**
-   *    Every drawn row through the FIRST SYSTEM matches to the digit; everything after it is
-   *    23.54 lower. Differencing both engines' `moveY` walks says why: our top block's row
-   *    ADVANCES are individually wrong — abcjs spends `… 68, 3.78, 38, 7.56, 18, 18, 67 …`
-   *    where we spend `… 50, 3.78, 38, 7.56, 19, 19, 62 …`, a net 21 short — and those
-   *    differences CANCEL in the rows' drawn ys, because a row's y and the page's cursor are
-   *    two accumulations here. The SYSTEM is placed by its own walk and lands right; the
-   *    trailing blocks are placed from the cursor and do not. ⚠️ **Removing any ONE of the
-   *    eighteen `%%…font` directives takes the delta to zero**, which is what says it is a
-   *    sum of many small term errors rather than one rule.
+   * 1. ✅ **`visual-options-01-fonts` — CLOSED, AND THE RECORDED CAUSE WAS WRONG.** Every
+   *    drawn row through the FIRST SYSTEM matched to the digit and everything after it sat
+   *    23.54 lower. This entry said the cause was our top-block row ADVANCES, comparing
+   *    abcjs's `… 68, 3.78, 38, 7.56, 18, 18, 67 …` against our `… 50, 3.78, 38, 7.56, 19,
+   *    19, 62 …`, and said **removing any ONE of the eighteen `%%…font` directives takes the
+   *    delta to zero**. Both halves are false, and the first is the trap this board keeps
+   *    naming: **that probe measured OUR NODE METRICS against abcjs's BROWSER ones.** Read
+   *    off `tune.topText.rows` in the same WebKit page, every advance is identical. And
+   *    removing each font directive in turn leaves the delta at exactly 23.54; removing
+   *    `%%header` alone takes it to ZERO.
+   *
+   *    The real cause is one term: **a declared `reserve` is a y and did not move with its
+   *    text.** The print `%%header` reserves a zero-height span at the block's own start so
+   *    its ink cannot grow the block (abcjs draws it above the page margin and its own
+   *    comment says it "doesn't change the Y-coordinate"), and the block's shift into the
+   *    staff's frame moved the baseline and left the span behind. `+50.67` there is not the
+   *    page's top margin but 50.67px BELOW the middle line, so `verticalExtent` read it as
+   *    the system's BOTTOM: `-extent.bottomPitch` 1.044 -> 13.075 pitch, and the system
+   *    spent 46.62px it does not occupy. On this fixture that lands as 23.54.
    * 2. **`visual-svg-per-line-02-scaled` — ONE ULP** in a notehead path's x,
    *    `325.912` against our `325.9119999999999`.
    * 3. ✅ **`abcts-directives-tune3` — CLOSED.** ONE ULP in the print width,
@@ -120,7 +129,7 @@ const OPTIONS = [
    * DIFFERENCING THE ROW LIST — every `data-name`/`y` pair in order — to see a row abcjs has
    * and we do not. **A row count says nothing about which row.**
    */
-  ['print + responsive', { print: true, responsive: 'resize' }, 2],
+  ['print + responsive', { print: true, responsive: 'resize' }, 1],
   /**
    * ⚠️ **ONE ROW, AND IT IS A WHOLE PIXEL FROM 1/64 OF ONE.** `visual-tablature-17`'s boxed
    * jazzchord rect is `M 93` in abcjs and `M 94` here, and the terms line up exactly:
@@ -155,7 +164,7 @@ const OPTIONS = [
   // ✅ `visual-directives-01`'s root `width` — `216.2` against `216.20000000000005` — closed
   // with the print width: the same recovered page, at a `%%scale` instead of print's.
   ['scale 1.5', { scale: 1.5 }, 1],
-  ['print', { print: true }, 2],
+  ['print', { print: true }, 1],
   ['jazzchords', { jazzchords: true }, 0],
   // The witness for the split is the SECOND section: a one-`<g>` tune would produce
   // `section 1` from a split that never split anything.
