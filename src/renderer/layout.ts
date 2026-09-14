@@ -2380,7 +2380,8 @@ function layoutTempo(
           bold: false,
           italic: false,
           anchor: 'start',
-          x: cursor + headAdvance - spaces(ABCJS_PX.flagStemInset),
+          // …at the FLAG's own x, summed the way abcjs sums it — see the flag below.
+          x: cursor + (headAdvance - spaces(ABCJS_PX.flagStemInset)),
           // `params.y` is the staff origin — y 0 here — and our `y` carries abcjs's
           // `+= hash.font.size` already. Re-set after the mark is floated; see
           // `anchorAboveStaff`.
@@ -2389,7 +2390,15 @@ function layoutTempo(
       } else if (spec.flags > 0) {
         const flag = FLAG_GLYPHS[Math.min(spec.flags, FLAG_GLYPHS.length - 1)]?.[0]
         if (flag !== undefined) {
-          const flagX = cursor + headAdvance - spaces(ABCJS_PX.flagStemInset)
+          /**
+           * **AND THE OFFSET IS SUMMED BEFORE THE CURSOR IS ADDED, WHICH IS abcjs's OWN
+           * SHAPE.** `xdelta = headx + notehead.w - 0.6` is built first and the element's x
+           * is `abselem.x + xdelta` (`creation/create-note-head.js`), so it is
+           * `a + (b - c)` where this was `(a + b) - c`. The same terms, a different double:
+           * `synth-flattener-32`'s `flags.u8th` at `{scale: 1.5}` wrote
+           * `123.07050000000001` for abcjs's `123.0705`.
+           */
+          const flagX = cursor + (headAdvance - spaces(ABCJS_PX.flagStemInset))
           glyphs.push({
             name: flag,
             x: flagX,

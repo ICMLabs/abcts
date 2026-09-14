@@ -176,11 +176,14 @@ const OPTIONS = [
    *     + anchor  51.3125  106.5469   209.1250   422.1719   682.5625   <- abcjs, every size
    */
   ['scale 0.8', { scale: 0.8 }, 0],
-  // ⚠️ ONE, a last digit: `synth-flattener-32`'s tempo flag path x, `123.0705` against
-  // `123.07050000000001`. The layout-unit family.
-  // ✅ `visual-directives-01`'s root `width` — `216.2` against `216.20000000000005` — closed
-  // with the print width: the same recovered page, at a `%%scale` instead of print's.
-  ['scale 1.5', { scale: 1.5 }, 1],
+  // ✅ CLOSED, and both were a SUM ORDER.
+  // · `synth-flattener-32`'s tempo flag path x — `123.07050000000001` against `123.0705` —
+  //   because `xdelta = headx + notehead.w - 0.6` is summed BEFORE `abselem.x` is added
+  //   (`creation/create-note-head.js`), so abcjs writes `a + (b - c)` and this wrote
+  //   `(a + b) - c`.
+  // · `visual-directives-01`'s root `width` — `216.2` against `216.20000000000005` — with
+  //   the print width: the same recovered page, at a `%%scale` instead of print's.
+  ['scale 1.5', { scale: 1.5 }, 0],
   ['print', { print: true }, 0],
   ['jazzchords', { jazzchords: true }, 0],
   // The witness for the split is the SECOND section: a one-`<g>` tune would produce

@@ -983,6 +983,31 @@ describe("minPadding magnifies the rods, which is what exposes two widths", () =
  * markup agrees byte for byte there.
  */
 /**
+ * **A TEMPO FLAG'S OFFSET IS SUMMED BEFORE THE CURSOR IS ADDED.**
+ *
+ * `xdelta = headx + notehead.w - 0.6`, built first, and the element's x is
+ * `abselem.x + xdelta` (`creation/create-note-head.js`) — so it is `a + (b - c)` where this
+ * engine wrote `(a + b) - c`. The same terms and a different double:
+ * `synth-flattener-32-quarter-tone2`'s `flags.u8th` at `{scale: 1.5}` came out
+ * `123.07050000000001` for abcjs's `123.0705`, which was `zzopts`'s last `scale 1.5` row.
+ *
+ * The number below is abcjs's own on this shape, read out of it in WebKit — and ours agrees
+ * there byte for byte.
+ */
+describe("a tempo mark's flag sits where abcjs puts it", () => {
+  it("adds the cursor to the offset, not the offset to the cursor", () => {
+    const host = { innerHTML: "" } as { innerHTML: string };
+    renderAbc(host, "X:1\nT:t\nM:12/8\nQ:1/8=120\nK:C\nABc def|\n", {
+      staffwidth: 670,
+      scale: 1.5,
+    });
+    expect(/data-name="flags\.u8th" d="M ([\d.]+)/.exec(host.innerHTML)?.[1]).toBe(
+      "80.09249999999999",
+    );
+  });
+});
+
+/**
  * **THE MUSIC WIDTH IS A PRIMITIVE, NOT THE PAGE WITH THE SIDES TAKEN BACK OFF.**
  *
  * abcjs's `this.width` IS the music area, and `adjustNonScaledItems` divides it by the scale
