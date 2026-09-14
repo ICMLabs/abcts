@@ -81,9 +81,10 @@ const OPTIONS = [
   ['responsive + scale 1.5', { responsive: 'resize', scale: 1.5 }, 0],
   ['responsive + scale 0.7', { responsive: 'resize', scale: 0.7 }, 0],
   /**
-   * ⚠️ **ONE ROW, AND IT IS ONE ULP.** Shared with the `print` row below — the same fixture.
-   * It was three: the page width became a PRIMITIVE rather than a recovery (3, below), and
-   * the page-cursor row closed on a `reserve` that did not travel with its text (1, below).
+   * ✅ **CLOSED AT 0, AND IT OPENED AT THREE.** Shared with the `print` row below — the same
+   * fixtures. The page width became a PRIMITIVE rather than a recovery (3, below), the
+   * page-cursor row closed on a `reserve` that did not travel with its text (1), and the last
+   * ULP was the MUSIC width, the same primitive one step in (2).
    *
    * 1. ✅ **`visual-options-01-fonts` — CLOSED, AND THE RECORDED CAUSE WAS WRONG.** Every
    *    drawn row through the FIRST SYSTEM matched to the digit and everything after it sat
@@ -104,8 +105,14 @@ const OPTIONS = [
    *    page's top margin but 50.67px BELOW the middle line, so `verticalExtent` read it as
    *    the system's BOTTOM: `-extent.bottomPitch` 1.044 -> 13.075 pitch, and the system
    *    spent 46.62px it does not occupy. On this fixture that lands as 23.54.
-   * 2. **`visual-svg-per-line-02-scaled` — ONE ULP** in a notehead path's x,
-   *    `325.912` against our `325.9119999999999`.
+   * 2. ✅ **`visual-svg-per-line-02-scaled` — CLOSED.** ONE ULP in a notehead path's x,
+   *    `325.912` against our `325.9119999999999`, and it is the MUSIC width by the same
+   *    reasoning as the page width below: abcjs's `this.width` IS the music area, divided by
+   *    the scale once (`engraver-controller.js:125`), where this engine held the summed page
+   *    and recovered the music as `systemWidth - pageSides()`. On `%%staffwidth 400` in print
+   *    that is `533.3333333333333` against abcjs's `…334` and every element on the line
+   *    inherits it. Measured over 50 width/scale pairs: the recovery reproduces abcjs on 20,
+   *    the pixel primitive on 50.
    * 3. ✅ **`abcts-directives-tune3` — CLOSED.** ONE ULP in the print width,
    *    `%%rightmargin 40`, and its cause was a SUM ORDER. abcjs writes
    *    `(maxwidth + padding.left) + padding.right`, left to right:
@@ -129,7 +136,7 @@ const OPTIONS = [
    * DIFFERENCING THE ROW LIST — every `data-name`/`y` pair in order — to see a row abcjs has
    * and we do not. **A row count says nothing about which row.**
    */
-  ['print + responsive', { print: true, responsive: 'resize' }, 1],
+  ['print + responsive', { print: true, responsive: 'resize' }, 0],
   /**
    * ⚠️ **ONE ROW, AND IT IS A WHOLE PIXEL FROM 1/64 OF ONE.** `visual-tablature-17`'s boxed
    * jazzchord rect is `M 93` in abcjs and `M 94` here, and the terms line up exactly:
@@ -174,7 +181,7 @@ const OPTIONS = [
   // ✅ `visual-directives-01`'s root `width` — `216.2` against `216.20000000000005` — closed
   // with the print width: the same recovered page, at a `%%scale` instead of print's.
   ['scale 1.5', { scale: 1.5 }, 1],
-  ['print', { print: true }, 1],
+  ['print', { print: true }, 0],
   ['jazzchords', { jazzchords: true }, 0],
   // The witness for the split is the SECOND section: a one-`<g>` tune would produce
   // `section 1` from a split that never split anything.

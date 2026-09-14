@@ -983,6 +983,36 @@ describe("minPadding magnifies the rods, which is what exposes two widths", () =
  * markup agrees byte for byte there.
  */
 /**
+ * **THE MUSIC WIDTH IS A PRIMITIVE, NOT THE PAGE WITH THE SIDES TAKEN BACK OFF.**
+ *
+ * abcjs's `this.width` IS the music area, and `adjustNonScaledItems` divides it by the scale
+ * once (`engraver-controller.js:125`); the page is that plus the two margins, added at
+ * `setPaperSize`. This engine holds the summed page and recovered the music as
+ * `systemWidth - pageSides()` — the same quantity by a different association, and on
+ * `%%staffwidth 400` in print it is `533.3333333333333` against abcjs's `…334`. Every
+ * element on the line inherits that ULP, which is `visual-svg-per-line-02-scaled`'s third
+ * notehead: `325.9119999999999` against abcjs's `325.912`, the last difference on both print
+ * rows of `zzopts`.
+ *
+ * MEASURED over 50 width/scale pairs: the recovery reproduces abcjs on 20, the pixel
+ * primitive on all 50 — `(w / scale / UNIT_PX) * UNIT_PX` round-trips exactly where two
+ * subtractions do not.
+ */
+describe("the music width is abcjs's own, not the page minus its margins", () => {
+  const SCALED = "X:1\n%%staffwidth 400\nM:4/4\nL:1/16\nT: Scaled\nK: G\nCDEF|GABC||\ncdef|gabc||\n";
+
+  it("puts the line's noteheads on abcjs's own xs", () => {
+    const host = { innerHTML: "" } as { innerHTML: string };
+    renderAbc(host, SCALED, { staffwidth: 670, print: true });
+    const heads = [...host.innerHTML.matchAll(/data-name="([A-G])" d="M ([\d.]+)/g)].map(
+      (m) => m[2],
+    );
+    // abcjs's own, read out of it in WebKit. The third is the byte the print row differed on.
+    expect(heads.slice(0, 3)).toEqual(["170.85266666666666", "248.38233333333332", "325.912"]);
+  });
+});
+
+/**
  * **A PRINT `%%header` CHANGES NOTHING BELOW IT — abcjs's OWN COMMENT, AND IT IS A
  * PROPERTY OF THE PAGE AND NOT ONLY OF THE BLOCK.**
  *

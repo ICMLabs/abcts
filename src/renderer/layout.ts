@@ -6018,6 +6018,13 @@ const pageSides = (): number =>
  */
 let PAGE_WIDTH_PX: number | null = null
 
+/**
+ * **THE MUSIC AREA IN STAFF SPACES, AS A PRIMITIVE** — abcjs's `this.width / scale`, rather
+ * than the summed page with both margins taken back off. See where it is assigned. Null when
+ * this render cannot say, and then `musicArea` stands.
+ */
+let MUSIC_WIDTH: number | null = null
+
 /** 1 on screen; `%%scale`'s number, or `print`'s own 0.75 — see `LayoutOptions.print`. */
 let PRINT_SCALE = 1
 
@@ -13084,6 +13091,26 @@ function layoutScoped(input: Score, options: LayoutOptions = {}): Layout {
       : musicPx / printScale +
         marginPx('leftmargin', defaultPaddingPx) +
         marginPx('rightmargin', defaultPaddingPx)
+  /**
+   * **AND THE MUSIC WIDTH IS A PRIMITIVE TOO, NOT THE PAGE WITH THE SIDES TAKEN BACK OFF.**
+   *
+   * abcjs's `this.width` IS the music area and `adjustNonScaledItems` divides it by the scale
+   * once (`engraver-controller.js:125`); the page is that plus the margins. This engine holds
+   * the summed page and recovers the music as `musicArea`, which is the same
+   * quantity by a different association — and on `%%staffwidth 400` in print it is
+   * `533.3333333333333` against abcjs's `…334`, one ULP that every element on the line then
+   * inherits (`visual-svg-per-line-02-scaled`'s notehead, `325.9119999999999` against
+   * `325.912`).
+   *
+   * MEASURED over 50 width/scale pairs: the recovery reproduces abcjs on 20 of them, and the
+   * pixel primitive divided into spaces and multiplied back out reproduces it on 50 — the
+   * round trip `(w / scale / UNIT_PX) * UNIT_PX` is exact on every pair sampled, where the
+   * recovery's two subtractions are not.
+   *
+   * Null where the caller gave no pixel width, and the recovery stands — every direct
+   * `layout()` caller, which is what the 691 headless goldens are.
+   */
+  MUSIC_WIDTH = PAGE_WIDTH_PX === null || musicPx === null ? null : musicPx / printScale / UNIT_PX
   SPACING = score.measurements
   TITLE_LEFT = score.titleLeft
   FLAT_BEAMS = score.flatBeams
@@ -14453,7 +14480,9 @@ function layoutScoped(input: Score, options: LayoutOptions = {}): Layout {
    * `expandToWidest` would re-run the earlier lines at the final width; abcjs leaves it
    * off by default and so do we, which is why this is a forward-only ratchet.
    */
-  let pageWidth = systemWidth - pageSides()
+  /** The music area — `MUSIC_WIDTH` where the caller gave one, the recovery otherwise. */
+  const musicArea = MUSIC_WIDTH ?? systemWidth - pageSides()
+  let pageWidth = musicArea
   /**
    * …and whether it ever fired, because `(w - 2m) + 2m` is not `w` in floating point:
    * `%%staffwidth 200` came back 296.00000000000006 against abcjs's 296. When the ratchet
@@ -15273,9 +15302,9 @@ function layoutScoped(input: Score, options: LayoutOptions = {}): Layout {
                  * tune whose music runs to 1068. Four of the row's five fixtures were this
                  * one rule and the restart alone could not reach any of them.
                  */
-                EXPAND_TO_WIDEST && pageWidth > systemWidth - pageSides() + 1
+                EXPAND_TO_WIDEST && pageWidth > musicArea + 1
                   ? pageWidth
-                  : systemWidth - pageSides(),
+                  : musicArea,
                 score.textAbove,
                 score.fonts,
                 PAGE_TOP + PAGE_PADDING.top,
@@ -15303,7 +15332,7 @@ function layoutScoped(input: Score, options: LayoutOptions = {}): Layout {
             ? (() => {
                 const built = freeTextBlock(
                   midTune,
-                  systemWidth - pageSides(),
+                  musicArea,
                   score.fonts,
                   nonMusicRows,
                 )
@@ -17244,7 +17273,7 @@ function layoutScoped(input: Score, options: LayoutOptions = {}): Layout {
       ? undefined
       : topTextBlock(
           score.metadata,
-          systemWidth - pageSides(),
+          musicArea,
           score.textAbove,
           score.fonts,
           0,
@@ -17296,7 +17325,7 @@ function layoutScoped(input: Score, options: LayoutOptions = {}): Layout {
           trailing,
           trailingBlocks,
           0,
-          (systemWidth - pageSides()) / 2,
+          (musicArea) / 2,
           score.fonts,
           trailingRules,
           false,
@@ -17309,7 +17338,7 @@ function layoutScoped(input: Score, options: LayoutOptions = {}): Layout {
     score.metadata,
     score.fonts,
     bottomStart,
-    systemWidth - pageSides(),
+    musicArea,
   )
   const bottomText =
     bottomBlock.texts.length === 0 && trailing.length === 0
@@ -17427,9 +17456,9 @@ function layoutScoped(input: Score, options: LayoutOptions = {}): Layout {
       ? {}
       : {
           bottomLines: trailingRules.map((r) => ({
-            x1: (systemWidth - pageSides() - r.width) / 2,
+            x1: (musicArea - r.width) / 2,
             y1: r.y + bottom,
-            x2: (systemWidth - pageSides() + r.width) / 2,
+            x2: (musicArea + r.width) / 2,
             y2: r.y + bottom,
             thickness: 1 / UNIT_PX,
             role: 'separator' as const,
