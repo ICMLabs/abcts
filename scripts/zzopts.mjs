@@ -463,6 +463,20 @@ const OPTIONS = [
    * those chains was MUTE, because the probe logged abcjs's TRIAL x (before
    * `if (er < extraWidth) x += …`) against our FINAL one, which made all 23 rows read as
    * differing. **A probe that measures two different quantities is worse than none.**
+   *
+   * ⚠️ **AND IT IS NOT A SUM ORDER — 2026-09-14.** Both sides were instrumented at that
+   * element and the GROUPING already agrees: abcjs spends `x += extraWidth - er` as one term
+   * (`layout/voice-elements.js`) and so does this engine (`placed = x + (wants - room)`);
+   * `minx` is two adds on both sides. What differs is the DOMAIN the chain accumulates in.
+   * abcjs's own terms there, logged:
+   *
+   *     x(trial) 526.703   minx 507.51300000000003   er 19.18999999999994
+   *     extraWidth 56.95 (pad 40, extraw -16.95)  ->  X 564.4630000000001
+   *
+   * — its `er` carries a tail its PIXEL chain put there, where ours walks the same line in
+   * STAFF SPACES and multiplies once at the end. So closing this is a units decision about
+   * the solve, not a term to regroup, and it is worth less than it costs: two ULP in one
+   * root `width` on one fixture, with no element visibly moved.
    */
   ['minPadding', { minPadding: 40 }, 1],
   /**
