@@ -5467,9 +5467,11 @@ class Parser {
     }
   }
 
-  // ponytail: the Swift lexer streams; buffering one line's tokens into an array
-  // costs nothing at ABC line lengths and makes the lookahead in note assembly
-  // (octave marks, then length) plain indexing instead of a peek/rewind protocol.
+  // **DECIDED, NOT DEFERRED: this lexer BUFFERS a line's tokens where the Swift one
+  // streams.** It costs nothing at ABC line lengths and makes the lookahead in note
+  // assembly (octave marks, then length) plain indexing instead of a peek/rewind
+  // protocol. Nothing a caller can observe distinguishes the two, so there is no
+  // measurement that would reopen it.
   /** Whether the music line just read ended with a `\`, so the next continues it. */
   private lineContinued = false
   /**
@@ -6623,9 +6625,10 @@ class Parser {
            * `frere-jacques`, whose prose abcjs reads as music: the comma of "owners," is
            * its warning 16 and was our only missing one.
            *
-           * ponytail: the WARNING alone, not `unreadable` — the character-ownership gate is
-           * closed at 255,684 and nothing there stands on this path, so moving ownership
-           * would be a change with no oracle asking for it.
+           * **DECIDED, NOT DEFERRED: the WARNING alone, not `unreadable`.** The
+           * character-ownership gate is closed at 255,684 and nothing there stands on this
+           * path, so moving ownership would be a change with no oracle asking for it — and
+           * no output anywhere distinguishes the two.
            */
           /**
            * ⚠️ **AND SO IS EVERY OTHER CHARACTER THE LOOP CONSUMED NOTHING FOR.** abcjs's

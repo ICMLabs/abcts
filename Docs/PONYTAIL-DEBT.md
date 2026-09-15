@@ -1,12 +1,14 @@
 # `ponytail:` debt ledger — abcts
 
 Harvested by `/ponytail-debt` and re-triaged 2026-09-12. One row per deliberate shortcut.
-**Re-counted 2026-09-14: 94 markers**, the wrap arc having added three; the triage below is
-still the 2026-09-12 one and the three new rows are listed at the end.
+**Re-counted 2026-09-16: 85 markers.** It was 95: **section A's ten were RESTATED AS
+DECISIONS in the code on 2026-09-16** and are no longer debt — see §A, which now records
+what each one says instead.
 
 **62 markers** as triaged, 38 name a trigger. Of the 24 that do not,
 **10 already carry a MEASURED / RETIRED / MUTE annotation** and are resolved rather
-than owed — leaving **14 genuinely open**.
+than owed — leaving **14 genuinely open**, of which section A's are now closed by
+restatement and section B's remain.
 
 ⚠️ **THE FIRST COUNT THIS FILE CARRIED WAS 26 AND IT WAS WRONG.** The classifier read only
 FORWARD from each marker, so a resolution written ABOVE it — which is where several are —
@@ -123,19 +125,36 @@ on.** See `Docs/CODEBASE-EVALUATION-2026-09-12.md`.
 
 So work them in this order, and **write the deliberate break FIRST**:
 
-### A. NOT OBSERVABLE — restate as DECISIONS, do not write controls
+### A. NOT OBSERVABLE — ✅ RESTATED AS DECISIONS 2026-09-16
 
 These describe internal structure. No public output can distinguish the shortcut from the
-alternative, so there is nothing to measure and nothing to revisit. Calling them debt
-implies a repayment that cannot be demonstrated.
+alternative, so there is nothing to measure and nothing to revisit. Calling them debt implied
+a repayment that cannot be demonstrated — **so each now reads as a DECISION at its own site,
+and the `ponytail:` marker is gone with it.** 95 markers → 85.
 
-- `layout.ts:5887`, `:5926`, `:5955`, `:6014`, `:6070` — five module-level switches. ⚠️ The
-  architecture-level version of this is ALREADY measured and declined: threading them is
-  217 references, `HANDOFF-2026-09-08.md` §6. One decision, five markers.
-- `chord-grid.ts:657` — a local copy of `overlayVoices` rather than an export out of `audio/`.
-- `parser.ts:5470` — buffering a line's tokens rather than streaming.
-- `parser.ts:6617` — warning-only ownership; the marker itself says "no oracle asking for it".
-- `layout.ts:20035` — a loop removed rather than guarded.
+⚠️ **This is the only kind of marker it is right to retire by editing the comment.** A row in
+section B names a shape a fixture could exhibit; these name a structure nothing can observe.
+If a later session finds an output that DOES distinguish one of them, the decision is wrong
+and reopening it is a code change, not a marker.
+
+- **The render-scoped module `let`s — SIX markers, one decision.** `STRICT_TEXT_METRICS`,
+  `SPACING`, `PRINT`, `ABCJS_GAPS`, `LINE_WEIGHTS`, `SCORE_FONTS`. Each now points at
+  `RenderState`, which already carried the measurement and the ruling: threading them is
+  **217 references across ~100 functions** in the most byte-sensitive file in the repo, it
+  buys no safety (module state is per-realm, so workers each get their own copy), and the
+  save/restore wrapper defends every field individually with a test that fails if ONE line is
+  dropped. `HANDOFF-2026-09-08.md` §6.
+  ⭐ **And the wrapper gained two fields on 2026-09-16** — `PAGE_WIDTH_PX` and `MUSIC_WIDTH`,
+  added by the page-width primitive. Neither leak is reachable (both are assigned before
+  anything reads them), but "every field" is the rule this guard states, so they are in it.
+- **`chord-grid.ts` — a local copy of `overlayVoices`** rather than an export out of
+  `src/audio/`. The two are gated separately and no output can tell a copy from an import.
+- **`parser.ts` — the lexer BUFFERS a line's tokens** where the Swift one streams. It makes
+  note assembly's lookahead plain indexing instead of a peek/rewind protocol.
+- **`parser.ts` — a standalone octave mark WARNS and does not claim ownership.** The
+  character-ownership gate is closed at 255,684 and nothing there stands on this path.
+- **`layout.ts` — a loop REMOVED rather than guarded**, since nothing else read it: there is
+  no state in which a guarded one would behave differently.
 
 ### B. OBSERVABLE — controllable, in rough order of signal strength
 

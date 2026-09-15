@@ -5955,9 +5955,10 @@ const richHeight = (
 /**
  * Which of the two the current render measures with — set once per render from the mode.
  *
- * ponytail: a module-level switch rather than a `strict` argument threaded through
- * `textWidth`'s sixteen call sites, most of which do not have the mode in scope. Thread it
- * properly if a caller ever needs both metrics in one render.
+ * **DECIDED, NOT DEFERRED: render state lives in module `let`s** — see `RenderState`, which
+ * carries the measurement (217 references across ~100 functions) and the reason. Threading
+ * `strict` to `textWidth`'s sixteen call sites, most of which do not have the mode in scope,
+ * is part of that same change and not a smaller one.
  */
 /**
  * **PRINT SCALES THE PAGE MARGINS AND THE MUSIC WIDTH, AND NOTHING ELSE ABOUT THE PAGE.**
@@ -5991,9 +5992,9 @@ let PAGE_PADDING = {
  * default, which for the last two is ZERO: measured through abcjs, `%%vocalspace 30` and
  * `%%stafftopmargin 30` each grow the page by exactly 40px.
  *
- * ponytail: a module-level map, the seventh such switch, for the same reason as
- * `SCORE_FONTS` — these are read deep in the lane arithmetic and threading them would
- * touch every frame between.
+ * **DECIDED, NOT DEFERRED** — one of the render-scoped module `let`s, for the reason and
+ * the measurement at `RenderState`. These are read deep in the lane arithmetic and threading
+ * them would touch every frame between.
  */
 let SPACING: Readonly<Partial<Record<string, number>>> = {}
 
@@ -6043,7 +6044,8 @@ let PRINT_SCALE = 1
  * `draw/set-paper-size.js:5`) where the CSS transform and its divisions key on the SCALE.
  * A screen `%%scale 0.8` therefore took print's 30.24px lead and its page floor.
  *
- * ponytail: a module-level switch, the sixth beside `PRINT_SCALE` and `STRICT_TEXT_METRICS`.
+ * **DECIDED, NOT DEFERRED** — one of the render-scoped module `let`s, beside `PRINT_SCALE`
+ * and `STRICT_TEXT_METRICS`. See `RenderState` for the measurement and the reason.
  */
 let PRINT = false
 
@@ -6072,7 +6074,8 @@ let STRICT_TEXT_METRICS = true
  * `Docs/ABCJS-DIFFERENCES.md`: the three-quarter-tone accidental, tremolo bars, the two
  * `STRICT_UNDRAWN` decoration passes, and the melisma `_` with its extender.
  *
- * ponytail: a module-level switch, the seventh beside `STRICT_TEXT_METRICS` and `PRINT`.
+ * **DECIDED, NOT DEFERRED** — one of the render-scoped module `let`s, beside
+ * `STRICT_TEXT_METRICS` and `PRINT`. See `RenderState`.
  */
 let ABCJS_GAPS = true
 
@@ -6174,11 +6177,11 @@ let KEYWARN = true
 /**
  * LINE WEIGHTS for the current render — abcjs's in strict, Bravura's otherwise.
  *
- * ponytail: a module-level switch, the fifth beside `STRICT_TEXT_METRICS`, `JAZZ_CHORDS`,
- * `SCORE_FONTS` and `PERC_MAP`. Eight of the twenty-one sites are in functions with no
- * `strict` in scope — `ledgerLines`, `layoutBeam`, `staffLinesFor`, `buildCurve` and the
- * rest — and threading a boolean through eight signatures to reach a constant is a bigger
- * change than the one it enables. abcjs keeps the same thing on its renderer.
+ * **DECIDED, NOT DEFERRED** — one of the render-scoped module `let`s; see `RenderState`.
+ * Eight of the twenty-one sites are in functions with no `strict` in scope — `ledgerLines`,
+ * `layoutBeam`, `staffLinesFor`, `buildCurve` and the rest — so threading a boolean through
+ * eight signatures to reach a constant is a bigger change than the one it enables. abcjs
+ * keeps the same thing on its renderer.
  */
 let LINE_WEIGHTS = lineWeightsFor(true)
 
@@ -6267,8 +6270,9 @@ const markFontOf = (t: PlacedText): TextFont => ({
 /**
  * Every `%%<type>font` the tune set, for the current render — the same one-place switch.
  *
- * ponytail: a module-level map rather than a `fonts` argument threaded through the
- * measure, note and bar builders. abcjs keeps it on the controller for the same reason.
+ * **DECIDED, NOT DEFERRED** — one of the render-scoped module `let`s rather than a `fonts`
+ * argument threaded through the measure, note and bar builders; see `RenderState`. abcjs
+ * keeps it on the controller for the same reason.
  */
 let SCORE_FONTS: Score['fonts'] = {}
 /**
@@ -12895,6 +12899,11 @@ interface RenderState {
   lineWeights: typeof LINE_WEIGHTS
   scoreFonts: Score['fonts']
   scorePartsBox: boolean
+  // …and the two the page-width primitive added, restored with the rest — see
+  // `PAGE_WIDTH_PX`. Both are assigned before anything reads them, so no leak of theirs is
+  // reachable today; they are here because "every field" is the rule this guard states.
+  pageWidthPx: number | null
+  musicWidth: number | null
 }
 
 const captureRenderState = (): RenderState => ({
@@ -12920,6 +12929,8 @@ const captureRenderState = (): RenderState => ({
   lineWeights: LINE_WEIGHTS,
   scoreFonts: SCORE_FONTS,
   scorePartsBox: SCORE_PARTS_BOX,
+  pageWidthPx: PAGE_WIDTH_PX,
+  musicWidth: MUSIC_WIDTH,
 })
 
 const restoreRenderState = (s: RenderState): void => {
@@ -12945,6 +12956,8 @@ const restoreRenderState = (s: RenderState): void => {
   LINE_WEIGHTS = s.lineWeights
   SCORE_FONTS = s.scoreFonts
   SCORE_PARTS_BOX = s.scorePartsBox
+  PAGE_WIDTH_PX = s.pageWidthPx
+  MUSIC_WIDTH = s.musicWidth
 }
 
 /**
@@ -21243,7 +21256,8 @@ function verticalExtent(
   //
   // Ours added half a beam thickness past the stem tip — a flat 0.50 pitch — which is
   // exactly the `dBot = -0.50` that sat on 23 of `ragtime-nightingale`'s 46 staves.
-  // ponytail: the loop is gone rather than guarded, since nothing else read it.
+  // DECIDED, NOT DEFERRED: the loop is GONE rather than guarded, since nothing else read
+  // it. There is no state in which a guarded one would behave differently.
 
   /** LOWEST lyric baseline on the staff — the last verse of the lowest-offset voice. */
   let lyricBottom = Number.NEGATIVE_INFINITY

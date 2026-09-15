@@ -654,9 +654,10 @@ function gridVoices(score: Score): readonly Voice[] {
 }
 
 /**
- * ponytail: a local copy of the audio flattener's `overlayVoices`, reduced to what the grid
- * reads — measures with their barlines, part labels and events. Sharing the real one would
- * mean exporting it out of `src/audio/`, and the grid has no other business there.
+ * **DECIDED, NOT DEFERRED: a local copy of the audio flattener's `overlayVoices`**, reduced
+ * to what the grid reads — measures with their barlines, part labels and events. Sharing the
+ * real one would mean exporting it out of `src/audio/`, and the grid has no other business
+ * there. The two are gated separately and no output can tell a copy from an import.
  */
 function overlayVoicesOf(voices: readonly Voice[]): Voice[] {
   const out: Voice[] = []
