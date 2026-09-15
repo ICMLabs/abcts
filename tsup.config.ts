@@ -18,7 +18,17 @@ export default defineConfig([
     },
     format: ['esm', 'cjs'],
     dts: true,
-    sourcemap: true,
+    /**
+     * **NO SOURCEMAPS, AND THAT IS A PACKAGE DECISION (2026-09-16).** They were 12 files
+     * and ~22 MB of a 29 MB tarball — three quarters of what a consumer downloads, to
+     * resolve a stack trace into a build nobody debugs from source: the corpus gates read
+     * `dist` as an artifact and every engine question is answered in `src` with the suite.
+     *
+     * ⚠️ Turned OFF rather than excluded from `files`: excluding them would leave a
+     * `//# sourceMappingURL=` in every bundle pointing at a file the package does not
+     * carry, which is a 404 in the devtools of anyone who opens them.
+     */
+    sourcemap: false,
     clean: true,
     treeshake: true,
   },
@@ -30,7 +40,9 @@ export default defineConfig([
     format: ['iife'],
     globalName: 'ABCTS',
     dts: false,
-    sourcemap: true,
+    // …and the CDN bundle least of all: `unpkg`/`jsdelivr` point at this file, so its map
+    // was 4.4 MB fetched from a CDN by anyone who opened devtools. See above.
+    sourcemap: false,
     clean: false,
     treeshake: true,
     /**
