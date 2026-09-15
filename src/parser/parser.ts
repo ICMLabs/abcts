@@ -13,8 +13,10 @@
  * Also read: `U:` user-defined symbols, `P:` part labels, `w:`/`W:` lyrics, and the
  * `clef=` / `octave=` / `middle=` / `stafflines=` / `style=` modifiers on both `K:` and
  * `V:`.
- * ponytail: DEFERRED — part ORDER (a header `P:ABAB`, which is a different thing from the
- * body `P:` label), symbol lines (`s:`), and most `%%` directives.
+ * ponytail: DEFERRED — symbol lines (`s:`) and most `%%` directives.
+ * ⚖️ The header part ORDER (`P:ABAB`) was on this list and is NOT a parity item: measured
+ * 2026-09-16, abcjs carries it at `metaText.partOrder` and expands nothing, which is
+ * exactly what happens here. See `tests/part-order-header.test.ts`.
  * Each is a separate step driven by the corpus fixture that needs it; the lexer
  * already tokenizes all of them, so the work is parser-side only.
  */

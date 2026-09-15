@@ -1326,8 +1326,11 @@ export interface Measure {
    * A `P:` part label taking effect at this measure — "A", or "PART - VERSE, CHORUS".
    * Printed above the staff.
    *
-   * ponytail: BODY `P:` only. A `P:` in the header is a part ORDER ("ABAB"), a different
-   * thing entirely, and is still deferred.
+   * BODY `P:` only, and that is the whole of it: a `P:` in the HEADER is a part ORDER
+   * ("ABAB"), a different thing entirely. ✅ **MEASURED 2026-09-16 and it is NOT a parity
+   * gap** — abcjs records the order at `metaText.partOrder` and repeats no music for it,
+   * and so do we: the SVG and the MIDI are byte-identical on `P:ABAB`. Expanding it would
+   * be a NATIVE feature and a divergence FROM abcjs. `tests/part-order-header.test.ts`.
    */
   readonly partLabel: string | null
   readonly partLabelSourceRange: SourceRange | null

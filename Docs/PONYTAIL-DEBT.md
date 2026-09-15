@@ -156,29 +156,50 @@ and reopening it is a code change, not a marker.
 - **`layout.ts` — a loop REMOVED rather than guarded**, since nothing else read it: there is
   no state in which a guarded one would behave differently.
 
-### B. OBSERVABLE — controllable, in rough order of signal strength
+### B. OBSERVABLE — swept 2026-09-16, and FIVE OF SIX WERE ALREADY CLOSED
 
-- ✅ `layout.ts:20478` — **DONE 2026-09-12, and the marker was STALE.** A hairpin DOES reserve
-  below. Control in `tests/above-lane-order.test.ts`; it discriminates 139.052 from 166.177,
-  which is why it was the first non-mute one.
-- `layout.ts:16532` — `%%titleformat` / `%%writefields` / `%%aligncomposer` unimplemented.
-  Set the directive and compare; the signal is where a field lands in the block.
-- `parser.ts:5416` — a voice DECLARED after a header `K:` takes the clef's copy in abcjs.
-  Signal: that voice's clef.
-- `layout.ts:915`, `:3198` — quarter-tone accidentals in the non-strict modes. Signal: the
-  drawn glyph. ⚠️ Strict draws nothing either way, so the control must set the mode.
-- `layout.ts:9011`, `:9153`, `:9981` — slur and beamed-tuplet endpoint pitches. Signal: the
-  curve's own coordinates.
-- `layout.ts:19037` — abcjs rounds four edges to whole pixels and we do not. Signal: a
-  coordinate's fraction.
-- `compat/selectables.ts:319` — a `tempo` and a `part` produce no selectable row. Signal:
-  `zzselect` already renders this surface.
-- `core/model.ts:1313` — a HEADER `P:ABAB` part order is deferred. Signal: what is drawn.
-- `compat/index.ts:781` — `setUpAudio` / `millisecondsPerMeasure` / `getTotalTime` absent
-  from the tune object. Signal: the host API surface, which `compat-surface.test.ts` already
-  walks.
-- ⚠️ `parser.ts:3833`, `layout.ts:19520`, `flatten.ts:1888` — **ATTEMPTED AND MUTE.** Each
-  carries its failed probe at the site. Do not re-run those probes; find a different signal.
+⭐⭐ **EVERY ROW HERE WAS A PREDICTION NOBODY HAD RE-MEASURED, AND THE PREDICTIONS WERE
+MOSTLY WRONG.** Each was probed live against abcjs 6.7.0 in WebKit, each probe verified
+against its own break first. That is the finding: **a debt row ages into a claim about the
+code that the code has quietly stopped agreeing with**, and the cost of checking is minutes
+where the cost of believing is a session.
+
+- ✅ `layout.ts` hairpin reserve — **DONE 2026-09-12, and the marker was STALE.** A hairpin
+  DOES reserve below. Control in `tests/above-lane-order.test.ts`; it discriminates 139.052
+  from 166.177, which is why it was the first non-mute one.
+- ✅ `parser.ts` — a voice DECLARED after a header `K: transpose=` — **RETIRED 2026-09-16.**
+  The marker predicted we would take the voice's own default; both engines transpose and
+  agree byte for byte on `getMidiFile`. ⚠️ Its "✅ MEASURED byte-identical" was `zzledger`'s
+  SVG, and `transpose` is read by the SYNTH and never by the renderer — **that measurement
+  could not have failed.** `tests/voice-transpose-inherits.test.ts`.
+- ✅ `compat/selectables.ts` — a `tempo` and a `part` — **RETIRED 2026-09-16.** The lists
+  are identical entry for entry, source ranges included. The four cases harvested into
+  `corpus-selection/golden.json` write neither field, which is why 389 gated entries could
+  not say so. `tests/selectable-tempo-part.test.ts`.
+- ✅ `core/model.ts` — a HEADER `P:ABAB` — **NOT A PARITY GAP, measured 2026-09-16.** abcjs
+  carries the order at `metaText.partOrder` and expands no music for it; so do we, byte for
+  byte in both the SVG and the MIDI. Expanding it would be a NATIVE feature and a divergence
+  FROM abcjs. `tests/part-order-header.test.ts`.
+- ✅ `layout.ts` — `%%titleformat` / `%%writefields` / `%%aligncomposer` — already resolved
+  in the code on 2026-09-12: **abcjs implements none of the three.** Native extensions, not
+  parity work.
+- ⚠️ `layout.ts` `partBox` — abcjs rounds four edges to whole pixels and we do not.
+  **Probed 2026-09-16 and NOT REPRODUCED**: the fixture that draws one
+  (`visual-selection-01`) is byte-identical at six staff widths, fractional ones included.
+  A latent difference. Bring a width that shows it before paying for a px conversion in
+  space-domain geometry.
+- ⚖️ `compat/index.ts` — `millisecondsPerMeasure` / `getTotalTime` absent from the tune
+  object. **The marker says "flag it before doing it" and it is right**: hanging them on
+  `TuneObject` makes them part of the drop-in contract, which is an API decision and the
+  owner's. `setUpAudio`'s answer already exists (`src/audio/flatten.ts`); only the wiring is
+  missing.
+- `layout.ts` quarter-tone accidentals in the NON-STRICT modes. Signal: the drawn glyph.
+  ⚠️ Strict draws nothing either way, so abcjs cannot be the oracle and the control must set
+  the mode — this one is about our own extended mode, not parity.
+- `layout.ts` slur and beamed-tuplet endpoint pitches. Each already carries a probe saying
+  the branch is a no-op on every binding curve in both corpora.
+- ⚠️ `parser.ts`, `layout.ts`, `flatten.ts` — **ATTEMPTED AND MUTE.** Each carries its
+  failed probe at the site. Do not re-run those probes; find a different signal.
 
 
 ---

@@ -20236,9 +20236,14 @@ function anchorAboveStaff<
  * text plus one padding a side, where the reserved LANE is the text plus TWO. The
  * baseline sits one font size below the box's top plus that same padding.
  *
- * ponytail: abcjs rounds all four to whole pixels; we do not, so an edge can land half a
- * pixel off its. Sub-pixel, and rounding here would put a px-space conversion in geometry
- * that is otherwise in staff spaces throughout.
+ * ponytail: abcjs rounds all four to whole pixels; we do not, so an edge COULD land half a
+ * pixel off its. Rounding here would put a px-space conversion into geometry that is
+ * otherwise in staff spaces throughout.
+ * ⚠️ **AND IT HAS NOT BEEN SEEN — probed 2026-09-16** on the fixture that draws one
+ * (`visual-selection-01`, `%%partsfont box`) at six staff widths including fractional ones
+ * (670, 401, 337.5, 255.25, 512.125, 333.333): the whole `data-name="part"` group is
+ * byte-identical to abcjs's at every one. A latent difference, not an observed one — bring
+ * a width that shows it before paying the conversion.
  */
 function partBox(el: LayoutElement): PlacedLine[] {
   const t = el.texts[0]
