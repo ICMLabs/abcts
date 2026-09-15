@@ -9,7 +9,7 @@
  * until this existed, which is a divergence no gate could see: `deline` compares a staff's
  * fonts only to OURS, through `objEqual`.
  */
-import type { AbcFontType, LyricFont, RichPhrase, RichText } from "../core/model.js";
+import type { LyricFont, RichPhrase, RichText } from "../core/model.js";
 
 /**
  * **abcjs's OWN DEFAULT FONT TABLE, IN `initializeFonts`'s ORDER** — the twenty-one entries

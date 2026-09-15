@@ -45,7 +45,6 @@
  * One decoration per tune, so nothing stacks and a difference can only be that glyph's own.
  */
 import { describe, expect, it } from "vitest";
-import { renderAbc } from "../src/compat/index.js";
 import { renderAll } from "./render-all.js";
 import { absolutePixels } from "./pixel-geometry.js";
 

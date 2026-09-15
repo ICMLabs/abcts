@@ -19,7 +19,6 @@
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { renderAbc } from "../src/compat/index.js";
 import { renderAll } from "./render-all.js";
 import { corpusDir, goldensDir, loadCorpus } from "./corpus/corpus.js";
 import { absolutePixels } from "./pixel-geometry.js";

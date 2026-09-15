@@ -50,8 +50,6 @@ import {
   defaultClef,
   type MusicEvent,
   type FreeTextBlock,
-  plainText,
-  type RichPhrase,
   type RichText,
   type Score,
 } from "../core/model.js";

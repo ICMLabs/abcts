@@ -17,13 +17,10 @@
 import type {
   AbcFontType,
   Clef,
-  CompatibilityMode,
   FreeTextBlock,
   KeySignature,
   Meter,
   MusicEvent,
-  RichPhrase,
-  Score,
   SourceRange,
   Tempo,
 } from '../core/model.js'

@@ -26,7 +26,6 @@
 import { readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { renderAbc } from "../src/compat/index.js";
 import { renderAll } from "./render-all.js";
 import { corpusDir } from "./corpus/corpus.js";
 

@@ -94,11 +94,11 @@ export const valuesOfTune = (tune: {
     out.set(`L${li}`, JSON.stringify(canon(without(line, "staff"))));
     (line.staff ?? []).forEach((staff, si) => {
       out.set(`L${li}/s${si}`, JSON.stringify(canon(without(staff, "voices"))));
-      (staff.voices ?? []).forEach((voice, vi) =>
-        voice.forEach((el, ei) =>
-          out.set(`L${li}/s${si}/v${vi}/${ei}`, JSON.stringify(canon(el))),
-        ),
-      );
+      (staff.voices ?? []).forEach((voice, vi) => {
+        voice.forEach((el, ei) => {
+          out.set(`L${li}/s${si}/v${vi}/${ei}`, JSON.stringify(canon(el)));
+        });
+      });
     });
   });
   return out;

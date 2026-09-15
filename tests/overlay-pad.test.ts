@@ -45,16 +45,16 @@ describe("an `&` overlay pad", () => {
       staffwidth: 670,
     })[0];
     const rows: string[] = [];
-    (tune?.lines ?? []).forEach((line, l) =>
-      (line.staff ?? []).forEach((staff, s) =>
-        staff.voices.forEach((voice, v) =>
+    (tune?.lines ?? []).forEach((line, l) => {
+      (line.staff ?? []).forEach((staff, s) => {
+        staff.voices.forEach((voice, v) => {
           voice.forEach((el, i) => {
             if (el.el_type === "note" && el.rest?.type === "invisible")
               rows.push(`L${l}/s${s}/v${v}/${i}: ${String(el.averagepitch)}`);
-          }),
-        ),
-      ),
-    );
+          });
+        });
+      });
+    });
     expect(rows).toEqual(EXPECTED);
   });
 });

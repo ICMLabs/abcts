@@ -72,20 +72,6 @@ export interface Selectable {
   };
 }
 
-/**
- * `Selectables.canSelect` (`draw/selectables.js:31-45`) — and its DEFAULT is the
- * interesting arm: with no `selectTypes` at all only `el_type` `note` and `tabNumber` are
- * selectable, and abcjs's rests ARE note elements, so a barline, a clef and a key
- * signature carry neither attribute.
- */
-const canSelect = (elType: string, selectTypes: SelectTypes): boolean => {
-  if (selectTypes === false) return false;
-  if (selectTypes === true) return true;
-  if (selectTypes === undefined)
-    return elType === "note" || elType === "tabNumber";
-  return selectTypes.includes(elType);
-};
-
 const attrs = (
   pairs: readonly [string, string][],
 ): SelectableAttrs => ({
@@ -291,14 +277,6 @@ export function findSelectable(
     element,
   };
 }
-
-/** What a `duplicate` voice — any but the first on its staff — does not draw. */
-const DUPLICATE_HIDES: ReadonlySet<string> = new Set([
-  "bar",
-  "clef",
-  "keySignature",
-  "timeSignature",
-]);
 
 /** The two maps `projectionOf` hands back — see `abcelemOf`. */
 export interface ProjectionIndex {

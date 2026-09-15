@@ -17,7 +17,6 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { renderAbc } from "../src/compat/index.js";
 import { renderAll } from "./render-all.js";
 import { absolutePixels } from "./pixel-geometry.js";
 

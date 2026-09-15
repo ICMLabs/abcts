@@ -298,15 +298,15 @@ function sections(score: Score): Section[] {
   if (first === undefined) return []
   /** System index → the blocks standing above it. Taken from the driving voice. */
   const breaks = new Map<number, readonly FreeTextBlock[]>()
-  let systemOfMeasure: number[] = []
   let system = -1
+  // …and the measure → system map this walk used to build with it is GONE: nothing read it,
+  // and it was kept alive only by `systemOfMeasure = systemOfMeasure`, a self-assignment
+  // whose own comment said "only the break points are used". Only the break points are used.
   first.measures.forEach((measure, i) => {
     if (measure.startsSystem || i === 0) system += 1
-    systemOfMeasure[i] = system
     const blocks = measure.textBefore ?? []
     if (blocks.length > 0 && system > 0) breaks.set(system, blocks)
   })
-  systemOfMeasure = systemOfMeasure // keep the map local; only the break points are used
 
   const out: Section[] = []
   let runStart = 0

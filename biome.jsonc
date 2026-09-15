@@ -1,0 +1,55 @@
+{
+  "$schema": "https://biomejs.dev/schemas/2.5.4/schema.json",
+  // ⚠️ **THE IMPORT ORGANIZER IS OFF, AND IT IS COSMETICS AGAINST 48 FILES.** It sorts the
+  // NAMES inside a brace; nothing in this repo reads them in order, and the files it wants
+  // to rewrite are the ones every byte gate runs through. Turn it back on the day someone
+  // wants sorted headers badly enough to make it its own commit. (2026-09-16.)
+  "assist": { "actions": { "source": { "organizeImports": "off" } } },
+  // ⚠️ **THE GOLDENS ARE abcjs's OUTPUT AND ARE NOT OURS TO LINT OR FORMAT.** 691 of the
+  // 1,022 errors this config used to report were `noUnknownProperty` inside
+  // `tests/corpus-*/golden/*.svg` — `-khtml-user-select` in the `<style>` abcjs writes.
+  // Every one is a byte a gate compares, so the only thing a fix could do there is break
+  // a golden. Excluded outright rather than rule-by-rule: nothing in a harvested fixture
+  // is this repo's code. (2026-09-16.)
+  "files": {
+    "includes": ["**", "!tests/corpus-*/**", "!compare-output/**", "!dist/**"]
+  },
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "recommended": true,
+      // A KEY READ OUT OF AN abcjs BAG IS DATA, NOT A PROPERTY. `useLiteralKeys` fired
+      // 254 times and every one is an index-signature access into a
+      // `Record<string, unknown>` whose keys are abcjs's OWN field names —
+      // `abctune.formatting["bagpipes"]`, `params["fadeLength"]`. The brackets say so:
+      // the string is a name from the reference engine's API, not a property this
+      // codebase declares, and dot access would read as ours. OFF AS A DECISION, with
+      // the alternative measured — 254 mechanical edits through the most byte-sensitive
+      // files in the repo, buying nothing. (2026-09-16.)
+      "complexity": { "useLiteralKeys": "off" },
+      // **LAZY INITIALISATION IS AN IDIOM, NOT A SIDE EFFECT SMUGGLED INTO A CONDITION.**
+      // All 15 `noAssignInExpressions` findings are one of two shapes:
+      // `(seen ??= new Set()).add(name)` and `open[k] ?? (open[k] = [])`. Both say "make
+      // it if it is not there, then use it" in one place, which is clearer than the
+      // three-line expansion and is what the surrounding code does everywhere. The rule's
+      // real target — `if (a = b)` mistaken for `==` — does not appear. (2026-09-16.)
+      "suspicious": { "noAssignInExpressions": "off" }
+    }
+  },
+  // ⚠️ **THE FORMATTER HAS NEVER BEEN RUN AND IS OFF UNTIL SOMEONE DECIDES IT SHOULD BE.**
+  // 127 of this repo's own files disagree with it — effectively all of them — because the
+  // style below was declared and never applied: `layout.ts` writes no semicolons and single
+  // quotes, `svg.ts` writes both. Running it is a 127-file rewrite of the most
+  // byte-sensitive code in the repo, and `biome check --write` has already reformatted
+  // 1,500 lines beyond one edit once. Adopting a format is a deliberate exercise with its
+  // own commit, not something a lint run should do on the way past. (2026-09-16.)
+  "formatter": {
+    "enabled": false,
+    "indentStyle": "space",
+    "indentWidth": 2,
+    "lineWidth": 100
+  },
+  "javascript": {
+    "formatter": { "semicolons": "asNeeded", "quoteStyle": "single" }
+  }
+}

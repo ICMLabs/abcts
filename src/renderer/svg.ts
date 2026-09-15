@@ -53,7 +53,7 @@ const outlineHash = (parts: readonly string[]): string => {
   }
   return h.toString(36);
 };
-import { boxInkAt, ENGRAVE, stepToY } from "./layout.js";
+import { boxInkAt, ENGRAVE, } from "./layout.js";
 import type {
   ConnectorSpan,
   Layout,

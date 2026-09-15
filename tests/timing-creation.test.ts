@@ -15,7 +15,6 @@
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { renderAbc } from "../src/compat/index.js";
 import { renderAll } from "./render-all.js";
 import { parse } from "../src/parser/parser.js";
 

@@ -12,7 +12,7 @@ import type {
   SourceRange,
   Tempo,
 } from "../core/model.js";
-import { defaultClef, freeTextOf, plainText, ratToNumber, stepIndex } from "../core/model.js";
+import { defaultClef, freeTextOf, ratToNumber, stepIndex } from "../core/model.js";
 import { resolveOverlays, type OverlayLine } from "../core/overlays.js";
 import {
   abcjsFont,
@@ -872,10 +872,6 @@ const partElement = (
   byRange?.set(range.start, e);
   return e;
 };
-
-/** True when the range opens a LINE — i.e. the field was written on one of its own. */
-const fieldLine = (abc: string, range: SourceRange | null | undefined): boolean =>
-  range != null && (range.start === 0 || abc[range.start - 1] === "\n");
 
 /** `accMap` — the sign abcjs prefixes to a written note name (`abc_parse_settings.js:147`). */
 const ACCIDENTAL_NAME: Readonly<Record<number, string>> = {

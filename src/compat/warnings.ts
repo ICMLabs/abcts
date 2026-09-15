@@ -30,6 +30,9 @@ import type { Diagnostic, Score } from "../core/model.js";
 /** `encode` — `abc_parse.js:188-193`, whole. */
 const encode = (str: string): string =>
   str
+    // `\x12` is abcjs's OWN in-band marker, stripped here exactly as
+    // `abc_parse.js:188-193` strips it — the control character is the data, not a typo.
+    // biome-ignore lint/suspicious/noControlCharactersInRegex: abcjs's own marker byte
     .replace(/\x12/g, " ")
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")

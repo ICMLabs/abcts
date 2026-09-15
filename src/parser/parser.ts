@@ -1856,8 +1856,6 @@ class VoiceBuilder {
    * field written before the first note or bar is still ahead of it. See `noteStyle`.
    */
   private appendedSinceLineStart = false
-  /** Has a `style=` been seen AT ALL — abcjs's `if (multilineVars.style)`. */
-  private styleSeen = false
   /** The style this line opened with — see `push`. */
   private styleAtLineStart: NoteStyle | null = null
   /** The voice scale this line opened with — see `captureLineStyle`. */
@@ -1948,7 +1946,6 @@ class VoiceBuilder {
   /** `V:… style=` — this voice's own, and it opens the line where one is not open yet. */
   setVoiceStyle(style: NoteStyle): void {
     this.ownStyle = style
-    this.styleSeen = true
     if (!this.appendedSinceLineStart) {
       this.lineStyleCaptured = false
       this.captureLineStyle()
@@ -3631,8 +3628,6 @@ class Parser {
   private inTextBlock = false
   /** Lines gathered since `%%begintext`, closed into one block by `%%endtext`. */
   private textBlock: string[] = []
-  /** The `%%begintext` line's own start — abcjs's `iChar` does not advance inside a block. */
-  private textBlockStart = 0
   private lastFieldLetter: string | null = null
   /** A `w:`/`+:` line ended in `\`, so the lyric is not finished. See the handler. */
   private lyricContinues = false
@@ -3793,7 +3788,6 @@ class Parser {
     if (line.startsWith('%%begintext')) {
       this.inTextBlock = true
       this.textBlock = []
-      this.textBlockStart = start
       return
     }
 
@@ -4942,6 +4936,9 @@ class Parser {
          * there: every corpus `%%text` has music before it, which is the case that already
          * worked. A GATE'S REACH IS A PROPERTY OF ITS ENUMERATION.
          */
+        // …and the clause's own BLOCK, so the declaration below cannot be reached from a
+        // sibling `case` — `noSwitchDeclarations`, and the only one in the file.
+        {
         const beforeMusicBlock = !builder.musicStarted && builder.textAbove.length > 0
         if ((builder.musicStarted || beforeMusicBlock) && builder.titles.length > 0) {
           // …**AND IT GOES THROUGH `parseFontChangeLine` LIKE THE TITLE DOES** — see
@@ -4965,6 +4962,7 @@ class Parser {
             parseFontChangeLine(theReverser(decodeTextString(value)), builder.setfont),
           )
           builder.titleRanges.push(range)
+        }
         }
         return
       case 'C':

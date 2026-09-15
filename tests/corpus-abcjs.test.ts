@@ -29,7 +29,6 @@ import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
-import { renderAbc } from "../src/compat/index.js";
 import { renderAll } from "./render-all.js";
 import { parse } from "../src/parser/parser.js";
 import { absolutePixels, byClass } from "./pixel-geometry.js";

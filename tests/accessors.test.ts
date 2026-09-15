@@ -10,7 +10,6 @@ import {
   getBpm,
   getPickupLength,
   millisecondsPerMeasureOf,
-  timingsOf,
 } from "../src/audio/timing.js";
 import { parse } from "../src/parser/parser.js";
 import { renderAbc } from "../src/compat/index.js";

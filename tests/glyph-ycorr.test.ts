@@ -28,7 +28,6 @@
  * so strict drew the wrong outline AND missed the correction, up to 11.66px out.
  */
 import { describe, expect, it } from "vitest";
-import { renderAbc } from "../src/compat/index.js";
 import { renderAll } from "./render-all.js";
 import { absolutePixels } from "./pixel-geometry.js";
 
