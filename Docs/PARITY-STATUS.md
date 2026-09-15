@@ -1,6 +1,6 @@
 # PARITY STATUS — abcts vs abcjs 6.7.0
 
-*Measured 2026-09-16, on commit `b37b6e2`, by running every gate in the repo plus both
+*Measured 2026-09-16, on commit `3e31b24`, by running every gate in the repo plus both
 browser comparisons. Every number below is a re-run, not a carried-forward claim.*
 
 **The one-line answer: rendered with the options a page normally passes, abcts and abcjs
@@ -249,7 +249,17 @@ All at zero, re-run 2026-09-06. These are the parse and API surfaces rather than
 | `compat-surface` — abcjs's 64 public symbols | **0 absent** |
 | `selectables`, `dom`, `editor`, `synth-controller` | **0** |
 
-**Full suite: 89 files, 2,639 tests, no reds, no expected-fails.**
+**Full suite: 94 files, 2,693 tests, no reds, no expected-fails.**
+
+✅ **AND `npm run lint` IS A GATE NOW — 1,022 errors to 0** (2026-09-16), 33 warnings left
+reporting. Most of it was never this repo's code: **691** were `noUnknownProperty` inside
+abcjs's harvested goldens (`-khtml-user-select` in the `<style>` abcjs writes — fixing one
+would corrupt a byte golden), **254** were index-signature reads of abcjs's OWN field names,
+and **127 files** disagreed with a formatter that has never been run. Each is off with its
+reason written at the rule in `biome.jsonc`; the rest was fixed. ⚠️ **The formatter stays
+off** until adopting a format is someone's own commit. 🧨 And a `//` comment in `biome.json`
+makes biome silently ignore the WHOLE configuration — no error, it just falls back to
+defaults — which is why the config is `biome.jsonc`.
 
 ⚠️ **The file count fell by one on 2026-09-14** — `tests/zzk.test.ts` was a scratch probe
 from an earlier session that asserted NOTHING, only `console.log`. A test that cannot fail
@@ -310,9 +320,20 @@ Measured on 2026-09-06, not assumed.
 - **The `<script>` build is browser-verified**, not just built: `zzlive` loads
   `dist/abcts-browser.global.js` in WebKit and Chrome and diffs it against abcjs live —
   **including the minification**, so a minifier that broke something would show up on 685
-  byte comparisons rather than on someone's site. It is **666 KB raw, 175 KB brotli**
-  (abcjs's own min build is 122 KB brotli). The esm/cjs builds stay unminified, because a
-  consuming bundler minifies them with better information than we have.
+  byte comparisons rather than on someone's site. Re-measured 2026-09-16: **626 KB raw,
+  201 KB gzipped**, against abcjs's own min build at **499 KB raw, 145 KB gzipped** — so
+  **abcts is about 25% larger over the wire**, which is a real cost and is not measured
+  further here. Two plausible causes, neither yet instrumented: two glyph tables are
+  embedded (abcjs's for strict, Bravura's for extended), and extended is a second engraving
+  path abcjs does not have. The esm/cjs builds stay unminified, because a consuming bundler
+  minifies them with better information than we have.
+- **The PACKAGE is prepared and NOT published** (2026-09-16). `abcts` is unclaimed on the
+  npm registry. Version is **6.7.0**, naming the abcjs release this is byte-identical to —
+  ⚠️ which means abcts's own fixes move the patch digit and a new abcjs to match resets the
+  line. **Sourcemaps are off**: they were 12 files and ~22 MB of a 29 MB tarball, and
+  turning them OFF rather than excluding them from `files` is deliberate — an exclusion
+  leaves a `//# sourceMappingURL=` pointing at a file the package does not carry. The
+  tarball is **2.0 MB packed / 6.9 MB unpacked, 25 files**, from 8.2 / 29.0 / 37.
 - **The published artifacts are gated too** — `npm run test:dist` renders the whole corpus
   through `dist/` in ESM and CJS: 0 of 685 each.
 - **The audio-control CSS still applies.** `CreateSynthControl` emits abcjs's own class names

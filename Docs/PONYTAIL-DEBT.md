@@ -5,7 +5,13 @@ Harvested by `/ponytail-debt`. One row per deliberate shortcut.
 
 Two whole sections closed that day: **§A's ten were RESTATED AS DECISIONS in the code**, and
 **§B was swept against abcjs live — five of its six rows were already closed**, three of them
-now held by tests. What is genuinely open is smaller than this file has ever said.
+now held by tests. A per-file row with a real trigger went the same way: `midi-file.ts`'s
+compound-meter tempo branch said "the table will say so when a 6/8 case turns up", no
+harvested case is in 6/8, and running the trigger by hand over **28 meter × tempo
+combinations** found every one byte-identical — and abcjs's own tempo byte not moving between
+a compound meter and 4/4 either. What is genuinely open is smaller than this file has ever
+said, and **the one row that is genuinely the owner's** is
+`millisecondsPerMeasure`/`getTotalTime` on the tune object.
 
 ⚠️ **THIS FILE'S COUNT HAS BEEN WRONG THREE TIMES, AND EVERY TIME THE INSTRUMENT MOVED
 RATHER THAN THE CODE.** 26 came from a classifier that read only FORWARD from each marker, so

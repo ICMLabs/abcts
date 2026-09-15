@@ -1,6 +1,6 @@
 ---
-title: Checkpoint 2026-09-16 — seven rows, seven representations, and two recorded causes that were wrong
-state: zzopts 5 differing of 17,810 and FOUR of them are its floor · print/scale/add_classes/timeBasedLayout all 0 · suite 2,680 · every byte and browser gate at zero, WebKit and Chrome
+title: Checkpoint 2026-09-16 — seven rows, seven representations, a debt ledger that was mostly already closed, and a lint gate
+state: zzopts 5 differing of 17,810 and FOUR of them are its floor · suite 2,693 · lint 1,022 errors to 0 · every byte and browser gate at zero, WebKit and Chrome · package prepared at 6.7.0, NOT published
 ---
 
 # Checkpoint 2026-09-16

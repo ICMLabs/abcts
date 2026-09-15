@@ -20,7 +20,7 @@ persist between tool calls and the workspace ROOT collects every sibling repo's 
     cp -R ../abcMusicKit/Docs/References/abcjs/abcjs-6.7.0/src /tmp/gp/abcjs
 …then `cd` back into the repo — that `cd` resets the shell's CWD for the next call.
 
-    suite       90 files, 2,680 tests, no reds
+    suite       94 files, 2,693 tests, no reds
     svg-bytes   0 of 691 in-repo, 0 of 356 sibling
     mode-bytes  11 of 691 — every one DECLARED
     midi-bytes  0 of 691 — 19 ruled divergent
@@ -29,8 +29,12 @@ persist between tool calls and the workspace ROOT collects every sibling repo's 
     zzopts      26 rows, every one at its declared count. 5 differing of 17,810:
                 wrap+staffwidth 4 (THE FLOOR) · minPadding 1 · every other row 0
     warnings    0 of 815 · test:dist 0 of 685 ESM and CJS
-    lint        0 errors, 33 warnings — A GATE NOW (2026-09-16), and `biome.jsonc` says
-                why at every rule it turns off
+    lint        0 errors, 33 warnings — A GATE NOW, and `biome.jsonc` says why at every
+                rule it turns off. ⚠️ THE FORMATTER IS OFF ON PURPOSE — 127 files disagree
+                with it and adopting a format is its own commit, never a side effect.
+    package     2.0 MB packed / 6.9 MB unpacked, 25 files, version 6.7.0 — NOT PUBLISHED
+    debt        53 `ponytail:` markers, §A restated as decisions, §B swept — 5 of its 6
+                rows were ALREADY CLOSED
 
 🏁 `zzopts` IS FINISHED. Seven rows closed on 2026-09-16 — timeBasedLayout, add_classes,
 scale 0.8, oneSvgPerLine+scale 0.8, scale 1.5, print, print+responsive — and the only thing
@@ -73,23 +77,27 @@ by string replacement and inject it. Already in the scratch copy: `layoutInGrid`
 ⭐ AND `ZZWHERE=1` ON `zzopts` PRINTS THE FIRST DIFFERING BYTE PER FIXTURE. A slug list says
 WHICH fixture; the byte says WHAT. `node scripts/zzopts.mjs 1 <label>` re-measures one row.
 
-WHAT TO DO NEXT — the rendering board is done, so these are the choices:
-  1. **PUBLISH**, which is a decision and not a task — including whether to drop 20.7 MB of
-     sourcemaps. Nothing technical blocks it.
-  2. **`Docs/PONYTAIL-DEBT.md`** — the open markers, 8 of which should be RESTATED AS
-     DECISIONS rather than worked.
-  3. ✅ **`npm run lint` — DONE 2026-09-16, 1,022 errors to 0.** 691 were abcjs's own
-     goldens (`-khtml-user-select` in harvested SVG), 254 were index-signature reads of
-     abcjs's field names, 127 files were the formatter that has never been run, and the
-     rest were fixed. ⚠️ **The formatter is OFF and must stay a deliberate exercise**:
-     `biome check --write` reformatted 1,500 lines beyond one edit in an earlier session.
-     🧨 And a `//` comment in `biome.json` makes biome silently ignore the WHOLE config —
-     the file is `biome.jsonc` for that reason.
-  4. `minPadding`'s last ULP — ⚠️ **read the handoff first: it is a units DOMAIN, not a term
+WHAT TO DO NEXT — the board, the ledger and the lint are all done, so WHAT IS LEFT IS
+DECISIONS. Do not invent work here; ask.
+  1. **PUBLISH** — prepared and NOT run, because it is outward-facing and irreversible.
+     `npm publish` from this directory claims the unregistered name `abcts` and goes live on
+     unpkg/jsdelivr immediately. Version 6.7.0, sourcemaps dropped, 2.0 MB packed.
+  2. ⚖️ **`millisecondsPerMeasure` / `getTotalTime` on the tune object** — the one debt row
+     left, and its marker says "flag it before doing it": hanging them on `TuneObject`
+     widens the drop-in contract. `setUpAudio`'s answer already exists; the compound-meter
+     MIDI branch needs the same method, so the two are one job.
+  3. ⚖️ **`CLAUDE.md` — 2,354 lines, 170 KB, 1,549 of them blockquote** duplicating 60
+     handoffs and loaded in full every session. `Docs/CODEBASE-EVALUATION-2026-09-12.md`
+     argues it; nothing has been deleted.
+  4. 📏 **The bundle is ~25% bigger than abcjs over the wire** — 626 KB raw / 201 KB gzipped
+     against 499 / 145 — and NOBODY HAS INSTRUMENTED IT. Two plausible causes: two glyph
+     tables embedded (abcjs's for strict, Bravura's for extended), and extended being a
+     second engraving path. A reduction question, not a defect.
+  5. `minPadding`'s last ULP — ⚠️ **read the handoff first: it is a units DOMAIN, not a term
      to regroup.** Both sides are instrumented and the grouping already agrees; abcjs's `er`
      carries a tail its PIXEL chain put there where this engine walks the line in STAFF
-     SPACES. Two ULP in one root `width`, nothing visibly moved. It is the smallest thing on
-     this list and the most expensive.
+     SPACES. Two ULP in one root `width`, nothing visibly moved. Smallest thing on this
+     list and the most expensive.
 
 ⚖️ AND ONE DECISION IS STILL THE OWNER'S, untouched: `CLAUDE.md` is 2,300+ lines with over
 half of it blockquote narrative duplicating 60 handoffs, loaded in full every session. See
@@ -110,11 +118,20 @@ fixed afterwards without the force push the line above forbids.
 
 **Publish first, because nothing technical is in front of it any more.** The board that has
 driven the last six sessions is at its floor: every host option a page passes is byte-identical
-to abcjs except one root `width` that no element moves with.
+to abcjs except one root `width` that no element moves with. The debt ledger and the lint —
+the two items that used to sit here — are both closed, and the ledger's own sweep found that
+five of its six "observable" rows had been closed for some time without anyone checking.
 
-**The debt and the lint after it**, because both are bookkeeping that only gets more expensive
-as the repo grows, and both are explicitly "their own commit" work.
+**Then the two API/size questions**, because both are open questions rather than known work,
+and both want a decision before an hour is spent on them.
 
 **And `minPadding` last, or never.** It is the only open row and it is the one item on the list
 whose cost is not proportional to its value — see the handoff. A future session that changes
 the solve's units for a better reason will close it on the way past.
+
+⚠️ **A NOTE ON METHOD, EARNED FOUR TIMES THIS SESSION.** Every probe written here was MUTE on
+its first run — a 200-character MIDI prefix that is identical whatever the tune, a tempo byte
+that never moved, a filter that matched no element, a node-versus-browser comparison of text
+metrics. **Check a probe against its own deliberate break before believing what it says**,
+and re-measure a recorded cause before working it: two on the parity board and one in the debt
+ledger were wrong, each written confidently and each carrying numbers.
