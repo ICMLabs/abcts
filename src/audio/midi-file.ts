@@ -449,9 +449,17 @@ export function midiFile(score: Score, options: MidiFileOptions = {}): string {
 
   // ponytail: abcjs's COMPOUND-METER tempo fix is not ported — for `den === 8` with a
   // numerator other than 5 or 7 it recomputes the tempo from `millisecondsPerMeasure()`,
-  // which is a method on its laid-out tune and not on an event list. None of the three
-  // harvested cases is in 6/8; the table will say so when one is, and the fix belongs with
+  // which is a method on its laid-out tune and not on an event list. The fix belongs with
   // whatever else ends up needing `millisecondsPerMeasure`.
+  // ⚠️ **AND ITS TRIGGER HAS BEEN RUN: NOTHING IS REACHABLE THROUGH `getMidiFile`.** The
+  // marker said "the table will say so when a 6/8 case turns up", and none of the three
+  // harvested cases is in 6/8 — so it was measured directly instead, 2026-09-16, over 28
+  // meter × tempo combinations against abcjs 6.7.0 in WebKit: 6/8, 9/8, 12/8 and 3/8 (the
+  // branch's own meters), 5/8 and 7/8 (its exclusions by name) and 4/4, each at `Q:1/4=120`,
+  // `Q:3/8=60`, `Q:1/8=200` and no `Q:`. Every one is BYTE-IDENTICAL, and abcjs's own byte
+  // does not move between a compound meter and 4/4 at the same `Q:` either. A control that
+  // makes IT move is what this needs before anyone ports the branch.
+  // `tests/compound-meter-tempo.test.ts` holds the 28.
   /**
    * **AN EIGHTH-NOTE METER RECOMPUTES THE TEMPO FROM THE MEASURE'S DURATION, AND HALVES IT.**
    *
