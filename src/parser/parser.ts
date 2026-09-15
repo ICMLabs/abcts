@@ -5411,12 +5411,19 @@ class Parser {
          * — which is why a `K:C transpose=2` staff reports `clef.transpose: 2` where the
          * page is unmoved: the renderer never reads it and only the synth does.
          *
-         * ponytail: onto the voice in force, which for a header `K:` is the implicit one.
-         * A voice DECLARED after such a `K:` takes the clef's copy in abcjs (`:514-515`),
-         * where here it would take its own default; nothing in either corpus writes that
-         * pair, and `abcts-ledger-gaps` tune 4 is what named the field at all.
-         * ✅ MEASURED 2026-09-08: `K:C transpose=2` followed by a `V:1` declaration is
-         * byte-identical in both engines (`scripts/zzledger.mjs`).
+         * ✅ **RETIRED 2026-09-16 — THE DIVERGENCE THIS PREDICTED DOES NOT EXIST**, and the
+         * measurement that "confirmed" it could not have failed. This marker said a voice
+         * DECLARED after such a `K:` takes the clef's copy in abcjs (`:514-515`) "where
+         * here it would take its own default", and carried "✅ MEASURED 2026-09-08:
+         * byte-identical in both engines" — but that was `zzledger`'s SVG, and the line
+         * above says why it is mute: **`transpose` is read by the SYNTH and never by the
+         * renderer.** An SVG comparison cannot see this rule at all.
+         *
+         * Re-measured on `getMidiFile` against abcjs 6.7.0 in WebKit: both engines
+         * transpose, and agree byte for byte, on all four shapes —
+         * `K: transpose=` + `V:1`, `transpose=` on the `V:` itself, the implicit voice,
+         * and none. The rule is already implemented. `tests/voice-transpose-inherits.test.ts`
+         * holds it, and its last row is the break that proves the probe.
          */
         const keyShift = /\btranspose=\s*(-?\d+)/.exec(value)
         if (keyShift?.[1] !== undefined)
