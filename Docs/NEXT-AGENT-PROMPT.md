@@ -29,7 +29,8 @@ persist between tool calls and the workspace ROOT collects every sibling repo's 
     zzopts      26 rows, every one at its declared count. 5 differing of 17,810:
                 wrap+staffwidth 4 (THE FLOOR) · minPadding 1 · every other row 0
     warnings    0 of 815 · test:dist 0 of 685 ESM and CJS
-    lint        1,021 errors — PRE-EXISTING, not a gate, do not "fix" under other work
+    lint        0 errors, 33 warnings — A GATE NOW (2026-09-16), and `biome.jsonc` says
+                why at every rule it turns off
 
 🏁 `zzopts` IS FINISHED. Seven rows closed on 2026-09-16 — timeBasedLayout, add_classes,
 scale 0.8, oneSvgPerLine+scale 0.8, scale 1.5, print, print+responsive — and the only thing
@@ -77,9 +78,13 @@ WHAT TO DO NEXT — the rendering board is done, so these are the choices:
      sourcemaps. Nothing technical blocks it.
   2. **`Docs/PONYTAIL-DEBT.md`** — the open markers, 8 of which should be RESTATED AS
      DECISIONS rather than worked.
-  3. **`npm run lint`'s 1,021 pre-existing errors**, only ever as ITS OWN commit. ⚠️ And
-     `biome check --write` reformatted 1,500 lines beyond one edit in an earlier session:
-     never let a formatter run under other work.
+  3. ✅ **`npm run lint` — DONE 2026-09-16, 1,022 errors to 0.** 691 were abcjs's own
+     goldens (`-khtml-user-select` in harvested SVG), 254 were index-signature reads of
+     abcjs's field names, 127 files were the formatter that has never been run, and the
+     rest were fixed. ⚠️ **The formatter is OFF and must stay a deliberate exercise**:
+     `biome check --write` reformatted 1,500 lines beyond one edit in an earlier session.
+     🧨 And a `//` comment in `biome.json` makes biome silently ignore the WHOLE config —
+     the file is `biome.jsonc` for that reason.
   4. `minPadding`'s last ULP — ⚠️ **read the handoff first: it is a units DOMAIN, not a term
      to regroup.** Both sides are instrumented and the grouping already agrees; abcjs's `er`
      carries a tail its PIXEL chain put there where this engine walks the line in STAFF

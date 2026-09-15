@@ -121,8 +121,8 @@ floor. Off the board, unchanged by this session:
 
 - **`Docs/PONYTAIL-DEBT.md`** — the open markers, **8 of which should be RESTATED AS
   DECISIONS** rather than worked.
-- **`npm run lint`** — 1,021 pre-existing errors, only ever as its own commit. ⚠️ And
-  `biome check --write` reformats far beyond the edit.
+- ✅ **`npm run lint`** — CLOSED 2026-09-16, 1,022 errors to 0. See the commit: 691 were
+  abcjs's goldens, 254 an idiom, 127 files an unrun formatter. ⚠️ The formatter stays off.
 - **PUBLISH** — a decision, including whether to drop 20.7 MB of sourcemaps.
 - ⚖️ **`CLAUDE.md` is 2,300+ lines**, over half of it blockquote narrative duplicating 60
   handoffs, loaded in full every session. See `Docs/CODEBASE-EVALUATION-2026-09-12.md`.
