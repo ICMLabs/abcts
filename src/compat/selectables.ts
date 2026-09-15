@@ -294,12 +294,17 @@ export interface ProjectionIndex {
  * putting them in the voice's stream, so there is no stream element to be identical with
  * and they are built here from the model object the drawing was made from.
  *
- * ponytail: a `tempo` and a `part` ARE stream elements and have no source range in our
- * model — two of the six types `tests/lines.test.ts` already names — so they produce
- * nothing here, and because the gate compares row against row, every entry after one is
- * misaligned. That is the whole of what `selection-tempo` is still missing on the element
- * side; the ten `wrapSvgEl` sites are the other half of `selection-multiple`. Both are in
- * `Docs/HANDOFF-2026-08-16.md`.
+ * ✅ **RETIRED 2026-09-16.** This carried a `ponytail:` saying a `tempo` and a `part`
+ * "produce nothing here, and because the gate compares row against row, every entry after
+ * one is misaligned" — the element half of what `selection-tempo` was missing.
+ *
+ * Measured against abcjs 6.7.0 in WebKit, reading `engraver.selectables` out of both
+ * engines on `Q:1/4=120` + `P:A`: the lists are IDENTICAL entry for entry, ranges included
+ * — `partOrder[20..23]`, `tempo[10..19]`, then the notes and the bar. Nothing is missing
+ * and nothing is misaligned. ⚠️ The four harvested cases in `corpus-selection/golden.json`
+ * write neither field, which is why 389 gated entries could not say this either way: a
+ * gate's reach is a property of its enumeration. `tests/selectable-tempo-part.test.ts`
+ * holds it now, with the shorter list as its break.
  */
 export /**
  * **A PREFIX ELEMENT OWNS CHARACTERS ONLY WHEN A MID-TUNE FIELD WROTE IT.** The clef, key
