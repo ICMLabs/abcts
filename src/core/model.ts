@@ -2012,6 +2012,15 @@ export interface Score {
    */
   readonly measurements: Readonly<Partial<Record<string, number>>>
   /**
+   * `%%papersize legal|A4` and `%%landscape` — read ONCE, after the whole tune, to default
+   * `formatting.pagewidth`/`pageheight` when no `%%pagewidth`/`%%pageheight` set them
+   * (`abc_parse.js:579-594`): letter 612×792, legal 612×1008, A4 597.6×842.4, swapped by
+   * `landscape`. Nothing in the drawing reads them.
+   * ponytail: not carried from a FILE header to each tune the way `measurements` is.
+   */
+  readonly papersize?: string
+  readonly landscape?: boolean
+  /**
    * `%%titleleft` — the title and every subtitle anchored at the LEFT MARGIN rather than
    * centred on the page (`top-text.js:19-20`, `elements/subtitle.js:5-6`).
    */
@@ -2125,6 +2134,13 @@ export interface Score {
    * `pageheight`, which abcjs appends LAST whatever the source said.
    */
   readonly formattingOrder?: readonly string[]
+  /**
+   * `%%map`, `%%playtempo`, `%%auquality`, `%%continuous`, `%%nobarcheck` — abcjs records
+   * `tune.formatting[cmd] = restOfString` (the line after the command, comment stripped and
+   * trimmed) and implements none of them (`abc_parse_directive.js:1214-1220`). The value is
+   * published so `tune.formatting` serialises as abcjs's.
+   */
+  readonly recordedDirectives?: Readonly<Record<string, string>>
   readonly percMap: Readonly<Record<string, PercMapEntry>>
   /**
    * `%%MIDI drummap <abc-note> <midi>` — the written LETTER to a GM percussion pitch.

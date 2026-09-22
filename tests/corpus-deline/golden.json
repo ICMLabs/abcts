@@ -685,6 +685,22 @@
   "L0 s0 kept=meter,key,clef",
   "L0 s0 v0 note@30..33 note@33..36 bar@36..37 note@37..41 note@41..44 note@44..47 bar@47..48"
  ],
+ "repo/abcjs-synth-timing-13-a-b-c-d-e-f-g-tune0": [
+  "L0 s0 kept=meter,key,clef",
+  "L0 s0 v0 note@23..25 note@25..27 note@27..29 note@29..31 note@31..33 note@33..35 note@35..36"
+ ],
+ "repo/abcjs-synth-timing-13-a-b-c-d-e-f-g-tune0#breaks": [
+  "L0 s0 kept=meter,key,clef",
+  "L0 s0 v0 note@23..25 note@25..27 note@27..29 note@29..31 note@31..33 note@33..35 note@35..36"
+ ],
+ "repo/abcjs-synth-timing-14-a-b-c-d-e-f-g-tune0": [
+  "L0 s0 kept=meter,key,clef",
+  "L0 s0 v0 note@23..25 note@25..27 note@27..29 note@29..31 note@31..33 note@33..35 note@35..36"
+ ],
+ "repo/abcjs-synth-timing-14-a-b-c-d-e-f-g-tune0#breaks": [
+  "L0 s0 kept=meter,key,clef",
+  "L0 s0 v0 note@23..25 note@25..27 note@27..29 note@29..31 note@31..33 note@33..35 note@35..36"
+ ],
  "repo/abcjs-synth-timing-y02-tune0": [
   "L0 s0 kept=meter,key,clef",
   "L0 s0 v0 note@23..25 note@25..27 note@27..29 note@29..31 note@31..33 note@33..35 note@35..36"
@@ -834,6 +850,24 @@
   "L0 s0 kept=key,clef",
   "L0 s0 v0 stem@undefined..undefined color@undefined..undefined bar@63..65 note@65..70 note@70..71 note@71..74 note@74..75 note@75..76 note@76..77 note@77..78 bar@78..80 break@undefined..undefined stem@undefined..undefined color@undefined..undefined bar@81..83 note@83..88 note@88..89 note@89..90 note@90..92 note@92..94 note@94..95 bar@95..97",
   "L0 s0 v1 stem@undefined..undefined color@undefined..undefined bar@119..121 note@121..125 note@125..134 note@134..147 bar@147..149 break@undefined..undefined stem@undefined..undefined color@undefined..undefined bar@150..152 note@152..156 note@156..165 note@165..178 bar@178..180"
+ ],
+ "repo/abcjs-visual-layout-10-text-a-tune0": [
+  "L0 text",
+  "L1 text",
+  "L2 s0 kept=key,clef",
+  "L2 s0 v0 note@37..39 note@40..42",
+  "L3 text",
+  "L4 s0 kept=key,clef",
+  "L4 s0 v0 note@52..54"
+ ],
+ "repo/abcjs-visual-layout-10-text-a-tune0#breaks": [
+  "L0 text",
+  "L1 text",
+  "L2 s0 kept=key,clef",
+  "L2 s0 v0 note@37..39 break@undefined..undefined note@40..42",
+  "L3 text",
+  "L4 s0 kept=key,clef",
+  "L4 s0 v0 note@52..54"
  ],
  "repo/abcjs-visual-misc-01-barnumbers-1-tune0": [
   "L0 s0 kept=key,clef",
@@ -1173,15 +1207,49 @@
   "L0 s0 v0 stem@undefined..undefined note@26..27 bar@27..28 note@35..36 bar@36..37 note@44..45 bar@45..46",
   "L0 s0 v1 stem@undefined..undefined note@53..54 bar@54..55 note@62..63 bar@63..64 note@71..72 bar@72..73"
  ],
- "repo/abcjs-visual-parsing-10-song-tune0": [
+ "repo/abcjs-visual-parsing-10-main-tune0": [
+  "L0 s0 kept=meter,key,clef",
+  "L0 s0 v0 note@24..25 bar@25..26 keySignature@27..30 key@-1..-1 note@31..32 bar@32..33",
+  "L1 subtitle",
+  "L2 s0 kept=key,clef",
+  "L2 s0 v0 note@44..45 bar@45..46"
+ ],
+ "repo/abcjs-visual-parsing-10-main-tune0#breaks": [
+  "L0 s0 kept=meter,key,clef",
+  "L0 s0 v0 note@24..25 bar@25..26 keySignature@27..30 break@undefined..undefined key@-1..-1 note@31..32 bar@32..33",
+  "L1 subtitle",
+  "L2 s0 kept=key,clef",
+  "L2 s0 v0 note@44..45 bar@45..46"
+ ],
+ "repo/abcjs-visual-parsing-11-c2-d2-e2-f2-k-f-g2-a2-b2-c2-tune0": [
+  "L0 s0 kept=meter,key,clef",
+  "L0 s0 v0 note@27..30 note@30..33 note@33..36 note@36..38 bar@38..39 keySignature@40..45 note@45..49 note@49..52 note@52..55 note@55..57 bar@57..59 key@-1..-1 note@101..104 note@104..107 note@107..110 note@110..112 bar@112..113 keySignature@114..122 note@122..126 note@126..129 note@129..132 note@132..134 bar@134..136 key@-1..-1 note@181..184 note@184..187 note@187..190 note@190..192 bar@192..193 note@193..197 note@197..200 note@200..203 note@203..205 bar@205..207",
+  "L0 s1 kept=meter,key,clef",
+  "L0 s1 v0 note@64..67 note@67..70 note@70..73 note@73..75 bar@75..76 keySignature@77..82 note@82..86 note@86..89 note@89..92 note@92..94 bar@94..96 key@-1..-1 note@141..144 note@144..147 note@147..150 note@150..152 bar@152..153 keySignature@154..162 note@162..166 note@166..169 note@169..172 note@172..174 bar@174..176 key@-1..-1 note@212..215 note@215..218 note@218..221 note@221..223 bar@223..224 note@224..228 note@228..231 note@231..234 note@234..236 bar@236..238"
+ ],
+ "repo/abcjs-visual-parsing-11-c2-d2-e2-f2-k-f-g2-a2-b2-c2-tune0#breaks": [
+  "L0 s0 kept=meter,key,clef",
+  "L0 s0 v0 note@27..30 note@30..33 note@33..36 note@36..38 bar@38..39 keySignature@40..45 note@45..49 note@49..52 note@52..55 note@55..57 bar@57..59 break@undefined..undefined key@-1..-1 note@101..104 note@104..107 note@107..110 note@110..112 bar@112..113 keySignature@114..122 note@122..126 note@126..129 note@129..132 note@132..134 bar@134..136 break@undefined..undefined key@-1..-1 note@181..184 note@184..187 note@187..190 note@190..192 bar@192..193 note@193..197 note@197..200 note@200..203 note@203..205 bar@205..207",
+  "L0 s1 kept=meter,key,clef",
+  "L0 s1 v0 note@64..67 note@67..70 note@70..73 note@73..75 bar@75..76 keySignature@77..82 note@82..86 note@86..89 note@89..92 note@92..94 bar@94..96 break@undefined..undefined key@-1..-1 note@141..144 note@144..147 note@147..150 note@150..152 bar@152..153 keySignature@154..162 note@162..166 note@166..169 note@169..172 note@172..174 bar@174..176 break@undefined..undefined key@-1..-1 note@212..215 note@215..218 note@218..221 note@221..223 bar@223..224 note@224..228 note@228..231 note@231..234 note@234..236 bar@236..238"
+ ],
+ "repo/abcjs-visual-parsing-12-song-tune0": [
   "L0 subtitle",
   "L1 s0 kept=meter,key,clef",
   "L1 s0 v0 note@82..85 bar@85..87 note@87..91 bar@91..92"
  ],
- "repo/abcjs-visual-parsing-10-song-tune0#breaks": [
+ "repo/abcjs-visual-parsing-12-song-tune0#breaks": [
   "L0 subtitle",
   "L1 s0 kept=meter,key,clef",
   "L1 s0 v0 note@82..85 bar@85..87 note@87..91 bar@91..92"
+ ],
+ "repo/abcjs-visual-parsing-13-class-alice-a-class-bob-t-dfa-tune0": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@9..23 note@23..43"
+ ],
+ "repo/abcjs-visual-parsing-13-class-alice-a-class-bob-t-dfa-tune0#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@9..23 note@23..43"
  ],
  "repo/abcjs-visual-parsing-x10-tune0": [
   "L0 s0 kept=key,clef",
@@ -1809,6 +1877,556 @@
   "L0 s1 v0 stem@undefined..undefined note@170..173 note@173..175 note@175..177 note@177..179 note@179..183 bar@183..184 note@184..188 note@188..190 note@190..193 note@193..195 bar@195..196 note@196..199 note@199..202 note@202..206 note@206..210 bar@210..212",
   "L0 s1 v1 stem@undefined..undefined note@218..221 note@221..224 note@224..228 note@228..231 bar@231..232 note@232..236 note@236..239 note@239..242 note@242..246 note@246..250 bar@250..251 note@251..255 note@255..258 note@258..263 bar@263..265"
  ],
+ "repo/abcts-bars-graces-and-groups-tune0": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 bar@30..32 note@32..33 note@33..34 note@34..35 note@35..36 bar@36..38 note@39..40 note@40..41 note@41..42 note@42..43 bar@43..45"
+ ],
+ "repo/abcts-bars-graces-and-groups-tune1": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 bar@72..74 note@74..75 note@75..76 note@76..77 note@77..78 bar@78..80 note@80..81 note@81..82 note@82..83 note@83..84 bar@84..87 note@87..88 note@88..89 note@89..90 note@90..91 bar@91..93"
+ ],
+ "repo/abcts-bars-graces-and-groups-tune2": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 bar@123..125 note@125..126 note@126..127 note@127..128 note@128..129 bar@129..134 note@134..135 note@135..136 note@136..137 note@137..138 bar@138..142 note@142..143 note@143..144 note@144..145 note@145..146 bar@146..148"
+ ],
+ "repo/abcts-bars-graces-and-groups-tune3": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@180..181 note@181..182 bar@182..185 note@185..186 note@186..187 bar@187..188"
+ ],
+ "repo/abcts-bars-graces-and-groups-tune4": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@217..218 note@218..219 bar@219..221 note@221..222 note@222..223 bar@223..224"
+ ],
+ "repo/abcts-bars-graces-and-groups-tune5": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@253..254 note@254..255 note@255..256 note@256..257 bar@257..260"
+ ],
+ "repo/abcts-bars-graces-and-groups-tune6": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@290..298 note@298..299 note@299..300 note@300..301 bar@301..302"
+ ],
+ "repo/abcts-bars-graces-and-groups-tune7": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@331..341 note@341..342 note@342..343 note@343..344 bar@344..345"
+ ],
+ "repo/abcts-bars-graces-and-groups-tune8": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@382..387 note@387..388 note@388..389 note@389..390 bar@390..391"
+ ],
+ "repo/abcts-bars-graces-and-groups-tune9": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@432..441 note@441..442 note@442..443 note@443..444 bar@444..445"
+ ],
+ "repo/abcts-bars-graces-and-groups-tune10": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@478..483 note@483..484 note@484..485 note@485..486 bar@486..487"
+ ],
+ "repo/abcts-bars-graces-and-groups-tune11": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@517..522 note@522..523 note@523..524 note@524..525 bar@525..526"
+ ],
+ "repo/abcts-bars-graces-and-groups-tune12": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@557..563 note@563..564 note@564..565 note@565..566 bar@566..567"
+ ],
+ "repo/abcts-bars-graces-and-groups-tune13": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@600..611 note@611..612 note@612..613 note@613..614 bar@614..615"
+ ],
+ "repo/abcts-bars-graces-and-groups-tune14": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@648..656 note@656..657 note@657..658 note@658..659 bar@659..660"
+ ],
+ "repo/abcts-bars-graces-and-groups-tune15": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@700..710 note@710..711 note@711..712 note@712..713 bar@713..714"
+ ],
+ "repo/abcts-bars-graces-and-groups-tune16": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@750..755 note@755..761 note@761..762 note@762..763 bar@763..764"
+ ],
+ "repo/abcts-bars-graces-and-groups-tune17": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@803..810 note@810..811 note@811..812 note@812..813 note@813..814 bar@814..815"
+ ],
+ "repo/abcts-bars-graces-and-groups-tune18": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@851..854 note@854..855 note@855..857 note@857..858 note@858..859 note@859..860 note@860..861 bar@861..862"
+ ],
+ "repo/abcts-bars-graces-and-groups-tune19": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@899..902 note@902..903 bar@903..904 note@904..905 note@905..906 note@906..907 note@907..908 bar@908..909"
+ ],
+ "repo/abcts-bars-graces-and-groups-tune20": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@948..952 note@952..953 note@953..955 note@955..956 note@956..957 note@957..958 note@958..959 bar@959..960"
+ ],
+ "repo/abcts-bars-graces-and-groups-tune21": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@1010..1011 note@1011..1012 note@1012..1013 note@1013..1014 bar@1014..1015",
+  "L0 s1 kept=key,clef",
+  "L0 s1 v0 note@1020..1021 note@1021..1022 note@1022..1023 note@1023..1024 bar@1024..1025"
+ ],
+ "repo/abcts-bars-graces-and-groups-tune22": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@1077..1078 note@1078..1079 note@1079..1080 note@1080..1081 bar@1081..1082",
+  "L0 s1 kept=key,clef",
+  "L0 s1 v0 note@1087..1088 note@1088..1089 note@1089..1090 note@1090..1091 bar@1091..1092"
+ ],
+ "repo/abcts-bars-graces-and-groups-tune23": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 stem@undefined..undefined note@1145..1146 note@1146..1147 note@1147..1148 note@1148..1149 bar@1149..1150",
+  "L0 s0 v1 stem@undefined..undefined note@1155..1156 note@1156..1157 note@1157..1158 note@1158..1159 bar@1159..1160"
+ ],
+ "repo/abcts-bars-graces-and-groups-tune24": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@1216..1217 note@1217..1218 note@1218..1219 note@1219..1220 bar@1220..1221",
+  "L0 s1 kept=key,clef",
+  "L0 s1 v0 note@1226..1227 note@1227..1228 note@1228..1229 note@1229..1230 bar@1230..1231",
+  "L0 s2 kept=key,clef",
+  "L0 s2 v0 note@1236..1237 note@1237..1238 note@1238..1239 note@1239..1240 bar@1240..1241"
+ ],
+ "repo/abcts-bars-graces-and-groups-tune25": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@1278..1280 note@1280..1281 note@1281..1282 note@1282..1283 bar@1283..1284"
+ ],
+ "repo/abcts-bars-graces-and-groups-tune26": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@1317..1319 note@1319..1320 note@1320..1321 note@1321..1322 bar@1322..1323 note@1323..1324 note@1324..1325 note@1325..1326 note@1326..1327 bar@1327..1328"
+ ],
+ "repo/abcts-bars-graces-and-groups-tune27": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@1360..1365 note@1365..1367 note@1367..1368 note@1368..1369 bar@1369..1370"
+ ],
+ "repo/abcts-bars-graces-and-groups-tune28": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@1407..1408 note@1408..1409 note@1409..1410 note@1410..1413 bar@1413..1414 note@1414..1416 note@1416..1417 note@1417..1418 note@1418..1419 bar@1419..1420"
+ ],
+ "repo/abcts-bars-graces-and-groups-tune29": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@1453..1456 note@1456..1458 note@1458..1461 note@1461..1462 bar@1462..1463"
+ ],
+ "repo/abcts-bars-graces-and-groups-tune30": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@1501..1505 note@1505..1506 note@1506..1508 note@1508..1509 note@1509..1510 note@1510..1511 note@1511..1512 bar@1512..1513"
+ ],
+ "repo/abcts-bars-graces-and-groups-tune31": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@1551..1553 note@1553..1555 note@1555..1557 note@1557..1558 bar@1558..1559"
+ ],
+ "repo/abcts-bars-graces-and-groups-tune32": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@1606..1607 note@1607..1608 note@1608..1609 note@1609..1610 bar@1610..1611 note@1612..1613 note@1613..1614 note@1614..1615 note@1615..1616 bar@1616..1617"
+ ],
+ "repo/abcts-bars-graces-and-groups-tune33": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@1664..1665 note@1665..1666 note@1666..1667 note@1667..1668 bar@1668..1669",
+  "L0 s1 kept=key,clef",
+  "L0 s1 v0 note@1674..1675 note@1675..1676 note@1676..1677 note@1677..1678 bar@1678..1679"
+ ],
+ "repo/abcts-bars-graces-and-groups-tune34": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@1728..1729 note@1729..1730 note@1730..1731 note@1731..1732 bar@1732..1733 note@1733..1734 note@1734..1735 note@1735..1736 note@1736..1737 bar@1737..1738 note@1738..1739 note@1739..1740 note@1740..1741 note@1741..1742 bar@1742..1743"
+ ],
+ "repo/abcts-bars-graces-and-groups-tune35": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@1786..1787 note@1787..1788 note@1788..1789 note@1789..1790 bar@1790..1791 note@1791..1792 note@1792..1793 note@1793..1794 note@1794..1795 bar@1795..1796 note@1796..1797 note@1797..1798 note@1798..1799 note@1799..1800 bar@1800..1801"
+ ],
+ "repo/abcts-bars-graces-and-groups-tune36": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 bar@1836..1838 note@1838..1839 note@1839..1840 note@1840..1841 note@1841..1842 bar@1842..1846 note@1846..1847 note@1847..1848 note@1848..1849 note@1849..1850 bar@1850..1852"
+ ],
+ "repo/abcts-bars-graces-and-groups-tune37": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 bar@1884..1886 note@1886..1887 note@1887..1888 note@1888..1889 note@1889..1890 bar@1890..1892 note@1892..1893 note@1893..1894 note@1894..1895 note@1895..1896 bar@1896..1898"
+ ],
+ "repo/abcts-bars-graces-and-groups-tune38": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 bar@1930..1932 note@1932..1933 note@1933..1934 note@1934..1935 note@1935..1936 bar@1936..1938"
+ ],
+ "repo/abcts-bars-graces-and-groups-tune39": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 bar@1967..1969 note@1969..1970 note@1970..1971 note@1971..1972 note@1972..1973 bar@1973..1974 note@1974..1975 note@1975..1976 note@1976..1977 note@1977..1978 bar@1978..1979"
+ ],
+ "repo/abcts-bars-graces-and-groups-tune40": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 bar@2016..2018 note@2018..2019 note@2019..2020 note@2020..2021 note@2021..2022 bar@2022..2024 note@2025..2026 note@2026..2027 note@2027..2028 note@2028..2029 bar@2029..2031 note@2032..2033 note@2033..2034 note@2034..2035 note@2035..2036 bar@2036..2038"
+ ],
+ "repo/abcts-bars-graces-and-groups-tune0#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 bar@30..32 note@32..33 note@33..34 note@34..35 note@35..36 bar@36..38 note@39..40 note@40..41 note@41..42 note@42..43 bar@43..45"
+ ],
+ "repo/abcts-bars-graces-and-groups-tune1#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 bar@72..74 note@74..75 note@75..76 note@76..77 note@77..78 bar@78..80 note@80..81 note@81..82 note@82..83 note@83..84 bar@84..87 note@87..88 note@88..89 note@89..90 note@90..91 bar@91..93"
+ ],
+ "repo/abcts-bars-graces-and-groups-tune2#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 bar@123..125 note@125..126 note@126..127 note@127..128 note@128..129 bar@129..134 note@134..135 note@135..136 note@136..137 note@137..138 bar@138..142 note@142..143 note@143..144 note@144..145 note@145..146 bar@146..148"
+ ],
+ "repo/abcts-bars-graces-and-groups-tune3#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@180..181 note@181..182 bar@182..185 note@185..186 note@186..187 bar@187..188"
+ ],
+ "repo/abcts-bars-graces-and-groups-tune4#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@217..218 note@218..219 bar@219..221 note@221..222 note@222..223 bar@223..224"
+ ],
+ "repo/abcts-bars-graces-and-groups-tune5#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@253..254 note@254..255 note@255..256 note@256..257 bar@257..260"
+ ],
+ "repo/abcts-bars-graces-and-groups-tune6#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@290..298 note@298..299 note@299..300 note@300..301 bar@301..302"
+ ],
+ "repo/abcts-bars-graces-and-groups-tune7#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@331..341 note@341..342 note@342..343 note@343..344 bar@344..345"
+ ],
+ "repo/abcts-bars-graces-and-groups-tune8#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@382..387 note@387..388 note@388..389 note@389..390 bar@390..391"
+ ],
+ "repo/abcts-bars-graces-and-groups-tune9#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@432..441 note@441..442 note@442..443 note@443..444 bar@444..445"
+ ],
+ "repo/abcts-bars-graces-and-groups-tune10#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@478..483 note@483..484 note@484..485 note@485..486 bar@486..487"
+ ],
+ "repo/abcts-bars-graces-and-groups-tune11#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@517..522 note@522..523 note@523..524 note@524..525 bar@525..526"
+ ],
+ "repo/abcts-bars-graces-and-groups-tune12#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@557..563 note@563..564 note@564..565 note@565..566 bar@566..567"
+ ],
+ "repo/abcts-bars-graces-and-groups-tune13#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@600..611 note@611..612 note@612..613 note@613..614 bar@614..615"
+ ],
+ "repo/abcts-bars-graces-and-groups-tune14#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@648..656 note@656..657 note@657..658 note@658..659 bar@659..660"
+ ],
+ "repo/abcts-bars-graces-and-groups-tune15#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@700..710 note@710..711 note@711..712 note@712..713 bar@713..714"
+ ],
+ "repo/abcts-bars-graces-and-groups-tune16#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@750..755 note@755..761 note@761..762 note@762..763 bar@763..764"
+ ],
+ "repo/abcts-bars-graces-and-groups-tune17#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@803..810 note@810..811 note@811..812 note@812..813 note@813..814 bar@814..815"
+ ],
+ "repo/abcts-bars-graces-and-groups-tune18#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@851..854 note@854..855 note@855..857 note@857..858 note@858..859 note@859..860 note@860..861 bar@861..862"
+ ],
+ "repo/abcts-bars-graces-and-groups-tune19#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@899..902 note@902..903 bar@903..904 note@904..905 note@905..906 note@906..907 note@907..908 bar@908..909"
+ ],
+ "repo/abcts-bars-graces-and-groups-tune20#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@948..952 note@952..953 note@953..955 note@955..956 note@956..957 note@957..958 note@958..959 bar@959..960"
+ ],
+ "repo/abcts-bars-graces-and-groups-tune21#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@1010..1011 note@1011..1012 note@1012..1013 note@1013..1014 bar@1014..1015",
+  "L0 s1 kept=key,clef",
+  "L0 s1 v0 note@1020..1021 note@1021..1022 note@1022..1023 note@1023..1024 bar@1024..1025"
+ ],
+ "repo/abcts-bars-graces-and-groups-tune22#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@1077..1078 note@1078..1079 note@1079..1080 note@1080..1081 bar@1081..1082",
+  "L0 s1 kept=key,clef",
+  "L0 s1 v0 note@1087..1088 note@1088..1089 note@1089..1090 note@1090..1091 bar@1091..1092"
+ ],
+ "repo/abcts-bars-graces-and-groups-tune23#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 stem@undefined..undefined note@1145..1146 note@1146..1147 note@1147..1148 note@1148..1149 bar@1149..1150",
+  "L0 s0 v1 stem@undefined..undefined note@1155..1156 note@1156..1157 note@1157..1158 note@1158..1159 bar@1159..1160"
+ ],
+ "repo/abcts-bars-graces-and-groups-tune24#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@1216..1217 note@1217..1218 note@1218..1219 note@1219..1220 bar@1220..1221",
+  "L0 s1 kept=key,clef",
+  "L0 s1 v0 note@1226..1227 note@1227..1228 note@1228..1229 note@1229..1230 bar@1230..1231",
+  "L0 s2 kept=key,clef",
+  "L0 s2 v0 note@1236..1237 note@1237..1238 note@1238..1239 note@1239..1240 bar@1240..1241"
+ ],
+ "repo/abcts-bars-graces-and-groups-tune25#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@1278..1280 note@1280..1281 note@1281..1282 note@1282..1283 bar@1283..1284"
+ ],
+ "repo/abcts-bars-graces-and-groups-tune26#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@1317..1319 note@1319..1320 note@1320..1321 note@1321..1322 bar@1322..1323 note@1323..1324 note@1324..1325 note@1325..1326 note@1326..1327 bar@1327..1328"
+ ],
+ "repo/abcts-bars-graces-and-groups-tune27#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@1360..1365 note@1365..1367 note@1367..1368 note@1368..1369 bar@1369..1370"
+ ],
+ "repo/abcts-bars-graces-and-groups-tune28#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@1407..1408 note@1408..1409 note@1409..1410 note@1410..1413 bar@1413..1414 note@1414..1416 note@1416..1417 note@1417..1418 note@1418..1419 bar@1419..1420"
+ ],
+ "repo/abcts-bars-graces-and-groups-tune29#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@1453..1456 note@1456..1458 note@1458..1461 note@1461..1462 bar@1462..1463"
+ ],
+ "repo/abcts-bars-graces-and-groups-tune30#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@1501..1505 note@1505..1506 note@1506..1508 note@1508..1509 note@1509..1510 note@1510..1511 note@1511..1512 bar@1512..1513"
+ ],
+ "repo/abcts-bars-graces-and-groups-tune31#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@1551..1553 note@1553..1555 note@1555..1557 note@1557..1558 bar@1558..1559"
+ ],
+ "repo/abcts-bars-graces-and-groups-tune32#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@1606..1607 note@1607..1608 note@1608..1609 note@1609..1610 bar@1610..1611 break@undefined..undefined note@1612..1613 note@1613..1614 note@1614..1615 note@1615..1616 bar@1616..1617"
+ ],
+ "repo/abcts-bars-graces-and-groups-tune33#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@1664..1665 note@1665..1666 note@1666..1667 note@1667..1668 bar@1668..1669",
+  "L0 s1 kept=key,clef",
+  "L0 s1 v0 note@1674..1675 note@1675..1676 note@1676..1677 note@1677..1678 bar@1678..1679"
+ ],
+ "repo/abcts-bars-graces-and-groups-tune34#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@1728..1729 note@1729..1730 note@1730..1731 note@1731..1732 bar@1732..1733 break@undefined..undefined note@1733..1734 note@1734..1735 note@1735..1736 note@1736..1737 bar@1737..1738 break@undefined..undefined note@1738..1739 note@1739..1740 note@1740..1741 note@1741..1742 bar@1742..1743"
+ ],
+ "repo/abcts-bars-graces-and-groups-tune35#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@1786..1787 note@1787..1788 note@1788..1789 note@1789..1790 bar@1790..1791 note@1791..1792 note@1792..1793 note@1793..1794 note@1794..1795 bar@1795..1796 note@1796..1797 note@1797..1798 note@1798..1799 note@1799..1800 bar@1800..1801"
+ ],
+ "repo/abcts-bars-graces-and-groups-tune36#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 bar@1836..1838 note@1838..1839 note@1839..1840 note@1840..1841 note@1841..1842 bar@1842..1846 note@1846..1847 note@1847..1848 note@1848..1849 note@1849..1850 bar@1850..1852"
+ ],
+ "repo/abcts-bars-graces-and-groups-tune37#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 bar@1884..1886 note@1886..1887 note@1887..1888 note@1888..1889 note@1889..1890 bar@1890..1892 note@1892..1893 note@1893..1894 note@1894..1895 note@1895..1896 bar@1896..1898"
+ ],
+ "repo/abcts-bars-graces-and-groups-tune38#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 bar@1930..1932 note@1932..1933 note@1933..1934 note@1934..1935 note@1935..1936 bar@1936..1938"
+ ],
+ "repo/abcts-bars-graces-and-groups-tune39#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 bar@1967..1969 note@1969..1970 note@1970..1971 note@1971..1972 note@1972..1973 bar@1973..1974 note@1974..1975 note@1975..1976 note@1976..1977 note@1977..1978 bar@1978..1979"
+ ],
+ "repo/abcts-bars-graces-and-groups-tune40#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 bar@2016..2018 note@2018..2019 note@2019..2020 note@2020..2021 note@2021..2022 bar@2022..2024 note@2025..2026 note@2026..2027 note@2027..2028 note@2028..2029 bar@2029..2031 note@2032..2033 note@2033..2034 note@2034..2035 note@2035..2036 bar@2036..2038"
+ ],
+ "repo/abcts-clef-midmeasure-tune0": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@45..46 note@46..47 clef@47..57 keySignature@47..57 note@57..58 note@58..59 bar@59..60"
+ ],
+ "repo/abcts-clef-midmeasure-tune1": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@107..108 note@108..109 clef@109..124 keySignature@109..124 note@124..125 note@125..126 bar@126..127"
+ ],
+ "repo/abcts-clef-midmeasure-tune2": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@175..176 note@176..177 note@177..178 note@178..179 bar@179..180 clef@181..194 keySignature@181..194 clef@-1..-1 note@195..196 note@196..197 note@197..198 note@198..199 bar@199..200"
+ ],
+ "repo/abcts-clef-midmeasure-tune3": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@244..245 note@245..246 clef@246..258 keySignature@246..258 note@258..259 note@259..260 bar@260..261 note@261..262 note@262..263 clef@263..273 keySignature@263..273 note@273..274 note@274..275 bar@275..276"
+ ],
+ "repo/abcts-clef-midmeasure-tune4": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@336..337 note@337..338 note@338..339 note@339..340 bar@340..341"
+ ],
+ "repo/abcts-clef-midmeasure-tune5": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@388..389 note@389..390 note@390..391 clef@391..402 keySignature@391..402 note@402..403 bar@403..404"
+ ],
+ "repo/abcts-clef-midmeasure-tune6": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@449..450 note@450..451 clef@451..461 keySignature@451..461 note@461..462 note@462..463 bar@463..464 note@464..465 note@465..466 note@466..467 note@467..468 bar@468..469"
+ ],
+ "repo/abcts-clef-midmeasure-tune7": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@514..515 note@515..516 clef@516..526 keySignature@516..526 note@526..527 note@527..528 bar@528..529 clef@-1..-1 note@530..531 note@531..532 note@532..533 note@533..534 bar@534..535"
+ ],
+ "repo/abcts-clef-midmeasure-tune8": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@582..584 clef@584..594 keySignature@584..594 note@594..596 bar@596..597"
+ ],
+ "repo/abcts-clef-midmeasure-tune9": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@654..656 note@656..661 clef@661..671 keySignature@661..671 note@671..673 note@673..675 bar@675..676"
+ ],
+ "repo/abcts-clef-midmeasure-tune10": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@734..735 note@735..736 clef@736..746 keySignature@736..746 note@746..747 note@747..748 bar@748..749",
+  "L0 s1 kept=key,clef",
+  "L0 s1 v0 note@754..755 note@755..756 note@756..757 note@757..758 bar@758..759"
+ ],
+ "repo/abcts-clef-midmeasure-tune11": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@799..800 note@800..801 note@801..802 note@802..803 clef@803..813 keySignature@803..813 note@813..814 note@814..815 note@815..816 note@816..817 bar@817..818"
+ ],
+ "repo/abcts-clef-midmeasure-tune12": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@861..862 note@862..863 clef@863..873 keySignature@863..873 note@873..874 note@874..875 bar@875..876"
+ ],
+ "repo/abcts-clef-midmeasure-tune13": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@941..942 note@942..943 clef@943..955 keySignature@943..955 note@955..956 note@956..957 bar@957..958"
+ ],
+ "repo/abcts-clef-midmeasure-tune14": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@1006..1007 note@1007..1008 clef@1008..1023 keySignature@1008..1023 note@1023..1024 note@1024..1025 bar@1025..1026"
+ ],
+ "repo/abcts-clef-midmeasure-tune15": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@1070..1071 note@1071..1072 note@1072..1073 note@1073..1074 bar@1074..1075 clef@1076..1089 keySignature@1076..1089"
+ ],
+ "repo/abcts-clef-midmeasure-tune16": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@1129..1130 note@1130..1131 note@1131..1132 note@1132..1133 bar@1133..1134 clef@1134..1144 keySignature@1134..1144"
+ ],
+ "repo/abcts-clef-midmeasure-tune17": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@1198..1199 note@1199..1200 note@1200..1201 note@1201..1202 bar@1202..1203 clef@1204..1217 keySignature@1204..1217",
+  "L0 s1 kept=key,clef",
+  "L0 s1 v0 note@1222..1223 note@1223..1224 note@1224..1225 note@1225..1226 bar@1226..1227"
+ ],
+ "repo/abcts-clef-midmeasure-tune18": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@1276..1277 note@1277..1278 clef@1278..1288 keySignature@1278..1288 note@1288..1289 note@1289..1290 bar@1290..1291",
+  "L0 s1 kept=key,clef",
+  "L0 s1 v0 note@1296..1297 note@1297..1298 note@1298..1299 note@1299..1300 bar@1300..1301",
+  "L0 s2 kept=key,clef",
+  "L0 s2 v0 note@1306..1307 note@1307..1308 note@1308..1309 note@1309..1310 bar@1310..1311"
+ ],
+ "repo/abcts-clef-midmeasure-tune19": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@1404..1405 note@1405..1406 clef@1406..1416 keySignature@1406..1416 note@1416..1417 note@1417..1418 bar@1418..1419",
+  "L0 s1 kept=key,clef",
+  "L0 s1 v0 note@1424..1425 note@1425..1426 note@1426..1427 note@1427..1428 bar@1428..1429"
+ ],
+ "repo/abcts-clef-midmeasure-tune20": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@1476..1477 note@1477..1478 clef@1478..1488 keySignature@1478..1488 note@1488..1489 note@1489..1490 bar@1490..1491 clef@-1..-1 note@1506..1507 note@1507..1508 note@1508..1509 note@1509..1510 bar@1510..1511",
+  "L0 s1 kept=key,clef",
+  "L0 s1 v0 note@1496..1497 note@1497..1498 note@1498..1499 note@1499..1500 bar@1500..1501"
+ ],
+ "repo/abcts-clef-midmeasure-tune21": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@1559..1560 note@1560..1561 note@1561..1562 note@1562..1563 bar@1563..1564 keySignature@1565..1569"
+ ],
+ "repo/abcts-clef-midmeasure-tune0#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@45..46 note@46..47 clef@47..57 keySignature@47..57 note@57..58 note@58..59 bar@59..60"
+ ],
+ "repo/abcts-clef-midmeasure-tune1#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@107..108 note@108..109 clef@109..124 keySignature@109..124 note@124..125 note@125..126 bar@126..127"
+ ],
+ "repo/abcts-clef-midmeasure-tune2#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@175..176 note@176..177 note@177..178 note@178..179 bar@179..180 clef@181..194 keySignature@181..194 break@undefined..undefined clef@-1..-1 note@195..196 note@196..197 note@197..198 note@198..199 bar@199..200"
+ ],
+ "repo/abcts-clef-midmeasure-tune3#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@244..245 note@245..246 clef@246..258 keySignature@246..258 note@258..259 note@259..260 bar@260..261 note@261..262 note@262..263 clef@263..273 keySignature@263..273 note@273..274 note@274..275 bar@275..276"
+ ],
+ "repo/abcts-clef-midmeasure-tune4#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@336..337 note@337..338 note@338..339 note@339..340 bar@340..341"
+ ],
+ "repo/abcts-clef-midmeasure-tune5#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@388..389 note@389..390 note@390..391 clef@391..402 keySignature@391..402 note@402..403 bar@403..404"
+ ],
+ "repo/abcts-clef-midmeasure-tune6#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@449..450 note@450..451 clef@451..461 keySignature@451..461 note@461..462 note@462..463 bar@463..464 note@464..465 note@465..466 note@466..467 note@467..468 bar@468..469"
+ ],
+ "repo/abcts-clef-midmeasure-tune7#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@514..515 note@515..516 clef@516..526 keySignature@516..526 note@526..527 note@527..528 bar@528..529 break@undefined..undefined clef@-1..-1 note@530..531 note@531..532 note@532..533 note@533..534 bar@534..535"
+ ],
+ "repo/abcts-clef-midmeasure-tune8#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@582..584 clef@584..594 keySignature@584..594 note@594..596 bar@596..597"
+ ],
+ "repo/abcts-clef-midmeasure-tune9#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@654..656 note@656..661 clef@661..671 keySignature@661..671 note@671..673 note@673..675 bar@675..676"
+ ],
+ "repo/abcts-clef-midmeasure-tune10#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@734..735 note@735..736 clef@736..746 keySignature@736..746 note@746..747 note@747..748 bar@748..749",
+  "L0 s1 kept=key,clef",
+  "L0 s1 v0 note@754..755 note@755..756 note@756..757 note@757..758 bar@758..759"
+ ],
+ "repo/abcts-clef-midmeasure-tune11#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@799..800 note@800..801 note@801..802 note@802..803 clef@803..813 keySignature@803..813 note@813..814 note@814..815 note@815..816 note@816..817 bar@817..818"
+ ],
+ "repo/abcts-clef-midmeasure-tune12#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@861..862 note@862..863 clef@863..873 keySignature@863..873 note@873..874 note@874..875 bar@875..876"
+ ],
+ "repo/abcts-clef-midmeasure-tune13#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@941..942 note@942..943 clef@943..955 keySignature@943..955 note@955..956 note@956..957 bar@957..958"
+ ],
+ "repo/abcts-clef-midmeasure-tune14#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@1006..1007 note@1007..1008 clef@1008..1023 keySignature@1008..1023 note@1023..1024 note@1024..1025 bar@1025..1026"
+ ],
+ "repo/abcts-clef-midmeasure-tune15#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@1070..1071 note@1071..1072 note@1072..1073 note@1073..1074 bar@1074..1075 clef@1076..1089 keySignature@1076..1089"
+ ],
+ "repo/abcts-clef-midmeasure-tune16#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@1129..1130 note@1130..1131 note@1131..1132 note@1132..1133 bar@1133..1134 clef@1134..1144 keySignature@1134..1144"
+ ],
+ "repo/abcts-clef-midmeasure-tune17#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@1198..1199 note@1199..1200 note@1200..1201 note@1201..1202 bar@1202..1203 clef@1204..1217 keySignature@1204..1217",
+  "L0 s1 kept=key,clef",
+  "L0 s1 v0 note@1222..1223 note@1223..1224 note@1224..1225 note@1225..1226 bar@1226..1227"
+ ],
+ "repo/abcts-clef-midmeasure-tune18#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@1276..1277 note@1277..1278 clef@1278..1288 keySignature@1278..1288 note@1288..1289 note@1289..1290 bar@1290..1291",
+  "L0 s1 kept=key,clef",
+  "L0 s1 v0 note@1296..1297 note@1297..1298 note@1298..1299 note@1299..1300 bar@1300..1301",
+  "L0 s2 kept=key,clef",
+  "L0 s2 v0 note@1306..1307 note@1307..1308 note@1308..1309 note@1309..1310 bar@1310..1311"
+ ],
+ "repo/abcts-clef-midmeasure-tune19#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@1404..1405 note@1405..1406 clef@1406..1416 keySignature@1406..1416 note@1416..1417 note@1417..1418 bar@1418..1419",
+  "L0 s1 kept=key,clef",
+  "L0 s1 v0 note@1424..1425 note@1425..1426 note@1426..1427 note@1427..1428 bar@1428..1429"
+ ],
+ "repo/abcts-clef-midmeasure-tune20#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@1476..1477 note@1477..1478 clef@1478..1488 keySignature@1478..1488 note@1488..1489 note@1489..1490 bar@1490..1491 break@undefined..undefined clef@-1..-1 note@1506..1507 note@1507..1508 note@1508..1509 note@1509..1510 bar@1510..1511",
+  "L0 s1 kept=key,clef",
+  "L0 s1 v0 note@1496..1497 note@1497..1498 note@1498..1499 note@1499..1500 bar@1500..1501"
+ ],
+ "repo/abcts-clef-midmeasure-tune21#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@1559..1560 note@1560..1561 note@1561..1562 note@1562..1563 bar@1563..1564 keySignature@1565..1569"
+ ],
  "repo/abcts-decorations-tune0": [
   "L0 s0 kept=key,clef",
   "L0 s0 v0 note@22..31 note@31..32 note@32..33 note@33..34 bar@34..35 note@35..36 note@36..38 note@38..39 note@39..45 bar@45..46"
@@ -1989,6 +2607,492 @@
   "L1 s0 kept=meter,key,clef",
   "L1 s0 v0 note@1234..1235 note@1235..1236 note@1236..1237 note@1237..1238 bar@1238..1239 note@1239..1240 note@1240..1241 note@1241..1242 note@1242..1243 bar@1243..1244"
  ],
+ "repo/abcts-endings-tune0": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@356..358 bar@358..361 note@361..364 bar@364..368 note@368..371 bar@371..373"
+ ],
+ "repo/abcts-endings-tune1": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@448..450 bar@450..454 note@454..457 bar@457..459"
+ ],
+ "repo/abcts-endings-tune2": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@541..543 bar@543..552 bar@552..553 note@553..556 bar@556..567 bar@567..568 note@568..571 bar@571..573"
+ ],
+ "repo/abcts-endings-tune3": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@632..634 bar@634..636"
+ ],
+ "repo/abcts-endings-tune4": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@691..693 bar@693..695 bar@695..696"
+ ],
+ "repo/abcts-endings-tune5": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@779..781 bar@781..782 note@785..788 bar@788..790"
+ ],
+ "repo/abcts-endings-tune6": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@854..856 bar@856..857 note@857..863 bar@863..864"
+ ],
+ "repo/abcts-endings-tune7": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@912..914 bar@914..918 note@918..921 bar@921..926 note@926..929 bar@929..931"
+ ],
+ "repo/abcts-endings-tune0#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@356..358 bar@358..361 note@361..364 bar@364..368 note@368..371 bar@371..373"
+ ],
+ "repo/abcts-endings-tune1#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@448..450 bar@450..454 note@454..457 bar@457..459"
+ ],
+ "repo/abcts-endings-tune2#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@541..543 bar@543..552 bar@552..553 note@553..556 bar@556..567 bar@567..568 note@568..571 bar@571..573"
+ ],
+ "repo/abcts-endings-tune3#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@632..634 bar@634..636"
+ ],
+ "repo/abcts-endings-tune4#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@691..693 bar@693..695 bar@695..696"
+ ],
+ "repo/abcts-endings-tune5#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@779..781 bar@781..782 note@785..788 bar@788..790"
+ ],
+ "repo/abcts-endings-tune6#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@854..856 bar@856..857 note@857..863 bar@863..864"
+ ],
+ "repo/abcts-endings-tune7#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@912..914 bar@914..918 note@918..921 bar@921..926 note@926..929 bar@929..931"
+ ],
+ "repo/abcts-grace-order-and-lanes-tune0": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@32..44 note@44..45 note@45..46 note@46..47 bar@47..48"
+ ],
+ "repo/abcts-grace-order-and-lanes-tune1": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@82..94 note@94..95 note@95..96 note@96..97 bar@97..98"
+ ],
+ "repo/abcts-grace-order-and-lanes-tune2": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@131..142 note@142..143 note@143..144 note@144..145 bar@145..146"
+ ],
+ "repo/abcts-grace-order-and-lanes-tune3": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@176..184 note@184..185 note@185..186 note@186..187 bar@187..188"
+ ],
+ "repo/abcts-grace-order-and-lanes-tune4": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@222..229 note@229..230 note@230..231 note@231..232 bar@232..233"
+ ],
+ "repo/abcts-grace-order-and-lanes-tune5": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@268..283 note@283..284 note@284..285 note@285..286 bar@286..287"
+ ],
+ "repo/abcts-grace-order-and-lanes-tune6": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@321..331 note@331..332 note@332..333 note@333..334 bar@334..335"
+ ],
+ "repo/abcts-grace-order-and-lanes-tune7": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@370..387 note@387..388 note@388..389 note@389..390 bar@390..391"
+ ],
+ "repo/abcts-grace-order-and-lanes-tune8": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@427..434 note@434..435 note@435..436 note@436..437 bar@437..438"
+ ],
+ "repo/abcts-grace-order-and-lanes-tune9": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@481..485 note@485..486 note@486..487 note@487..488 bar@488..489"
+ ],
+ "repo/abcts-grace-order-and-lanes-tune10": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@536..541 note@541..546 note@546..547 note@547..548 bar@548..549"
+ ],
+ "repo/abcts-grace-order-and-lanes-tune11": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 part@597..600 note@601..605 note@605..606 note@606..607 note@607..608 bar@608..609"
+ ],
+ "repo/abcts-grace-order-and-lanes-tune12": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@653..657 note@657..658 note@658..659 note@659..660 bar@660..661"
+ ],
+ "repo/abcts-grace-order-and-lanes-tune13": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 part@710..713 note@714..725 note@725..726 note@726..727 note@727..728 bar@728..729"
+ ],
+ "repo/abcts-grace-order-and-lanes-tune14": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@765..769 note@769..770 note@770..771 note@771..772 bar@772..774 note@774..776 note@776..777 note@777..778 note@778..779 bar@779..782 note@782..784 note@784..785 note@785..786 note@786..787 bar@787..789"
+ ],
+ "repo/abcts-grace-order-and-lanes-tune15": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@820..821 note@821..822 note@822..823 note@823..824 bar@824..826 tempo@826..836 note@836..838 note@838..839 note@839..840 note@840..841 bar@841..844 note@844..846 note@846..847 note@847..848 note@848..849 bar@849..851"
+ ],
+ "repo/abcts-grace-order-and-lanes-tune16": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 stem@undefined..undefined note@904..915 note@915..916 note@916..917 note@917..918 bar@918..919",
+  "L0 s0 v1 stem@undefined..undefined note@924..928 note@928..929 note@929..930 note@930..931 bar@931..932"
+ ],
+ "repo/abcts-grace-order-and-lanes-tune17": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@968..969 note@969..970 note@970..971 note@971..972 bar@972..973"
+ ],
+ "repo/abcts-grace-order-and-lanes-tune18": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@1029..1033 note@1033..1034 note@1034..1038 note@1038..1040 bar@1040..1041"
+ ],
+ "repo/abcts-grace-order-and-lanes-tune19": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@1077..1089 note@1089..1091 note@1091..1092 note@1092..1093 bar@1093..1094"
+ ],
+ "repo/abcts-grace-order-and-lanes-tune20": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@1130..1133 note@1133..1136 note@1136..1137 note@1137..1138 bar@1138..1139"
+ ],
+ "repo/abcts-grace-order-and-lanes-tune21": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@1185..1191 note@1191..1194 note@1194..1195 note@1195..1196 bar@1196..1197"
+ ],
+ "repo/abcts-grace-order-and-lanes-tune22": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@1230..1247 note@1247..1248 note@1248..1249 note@1249..1250 bar@1250..1251"
+ ],
+ "repo/abcts-grace-order-and-lanes-tune23": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@1288..1301 note@1301..1302 note@1302..1303 note@1303..1304 bar@1304..1305"
+ ],
+ "repo/abcts-grace-order-and-lanes-tune24": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@1337..1360 note@1360..1361 note@1361..1362 note@1362..1363 bar@1363..1364"
+ ],
+ "repo/abcts-grace-order-and-lanes-tune25": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@1400..1427 note@1427..1428 note@1428..1429 note@1429..1430 bar@1430..1431"
+ ],
+ "repo/abcts-grace-order-and-lanes-tune26": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 part@1475..1478 note@1499..1504 note@1504..1506 note@1506..1507 note@1507..1508 bar@1508..1509"
+ ],
+ "repo/abcts-grace-order-and-lanes-tune27": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@1557..1561 note@1561..1562 note@1562..1564 note@1564..1567 note@1567..1568 note@1568..1569 bar@1569..1570"
+ ],
+ "repo/abcts-grace-order-and-lanes-tune28": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@1609..1617 note@1617..1618 note@1618..1621 note@1621..1624 note@1624..1625 note@1625..1626 bar@1626..1627"
+ ],
+ "repo/abcts-grace-order-and-lanes-tune0#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@32..44 note@44..45 note@45..46 note@46..47 bar@47..48"
+ ],
+ "repo/abcts-grace-order-and-lanes-tune1#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@82..94 note@94..95 note@95..96 note@96..97 bar@97..98"
+ ],
+ "repo/abcts-grace-order-and-lanes-tune2#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@131..142 note@142..143 note@143..144 note@144..145 bar@145..146"
+ ],
+ "repo/abcts-grace-order-and-lanes-tune3#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@176..184 note@184..185 note@185..186 note@186..187 bar@187..188"
+ ],
+ "repo/abcts-grace-order-and-lanes-tune4#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@222..229 note@229..230 note@230..231 note@231..232 bar@232..233"
+ ],
+ "repo/abcts-grace-order-and-lanes-tune5#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@268..283 note@283..284 note@284..285 note@285..286 bar@286..287"
+ ],
+ "repo/abcts-grace-order-and-lanes-tune6#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@321..331 note@331..332 note@332..333 note@333..334 bar@334..335"
+ ],
+ "repo/abcts-grace-order-and-lanes-tune7#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@370..387 note@387..388 note@388..389 note@389..390 bar@390..391"
+ ],
+ "repo/abcts-grace-order-and-lanes-tune8#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@427..434 note@434..435 note@435..436 note@436..437 bar@437..438"
+ ],
+ "repo/abcts-grace-order-and-lanes-tune9#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@481..485 note@485..486 note@486..487 note@487..488 bar@488..489"
+ ],
+ "repo/abcts-grace-order-and-lanes-tune10#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@536..541 note@541..546 note@546..547 note@547..548 bar@548..549"
+ ],
+ "repo/abcts-grace-order-and-lanes-tune11#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 part@597..600 note@601..605 note@605..606 note@606..607 note@607..608 bar@608..609"
+ ],
+ "repo/abcts-grace-order-and-lanes-tune12#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@653..657 note@657..658 note@658..659 note@659..660 bar@660..661"
+ ],
+ "repo/abcts-grace-order-and-lanes-tune13#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 part@710..713 note@714..725 note@725..726 note@726..727 note@727..728 bar@728..729"
+ ],
+ "repo/abcts-grace-order-and-lanes-tune14#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@765..769 note@769..770 note@770..771 note@771..772 bar@772..774 note@774..776 note@776..777 note@777..778 note@778..779 bar@779..782 note@782..784 note@784..785 note@785..786 note@786..787 bar@787..789"
+ ],
+ "repo/abcts-grace-order-and-lanes-tune15#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@820..821 note@821..822 note@822..823 note@823..824 bar@824..826 tempo@826..836 note@836..838 note@838..839 note@839..840 note@840..841 bar@841..844 note@844..846 note@846..847 note@847..848 note@848..849 bar@849..851"
+ ],
+ "repo/abcts-grace-order-and-lanes-tune16#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 stem@undefined..undefined note@904..915 note@915..916 note@916..917 note@917..918 bar@918..919",
+  "L0 s0 v1 stem@undefined..undefined note@924..928 note@928..929 note@929..930 note@930..931 bar@931..932"
+ ],
+ "repo/abcts-grace-order-and-lanes-tune17#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@968..969 note@969..970 note@970..971 note@971..972 bar@972..973"
+ ],
+ "repo/abcts-grace-order-and-lanes-tune18#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@1029..1033 note@1033..1034 note@1034..1038 note@1038..1040 bar@1040..1041"
+ ],
+ "repo/abcts-grace-order-and-lanes-tune19#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@1077..1089 note@1089..1091 note@1091..1092 note@1092..1093 bar@1093..1094"
+ ],
+ "repo/abcts-grace-order-and-lanes-tune20#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@1130..1133 note@1133..1136 note@1136..1137 note@1137..1138 bar@1138..1139"
+ ],
+ "repo/abcts-grace-order-and-lanes-tune21#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@1185..1191 note@1191..1194 note@1194..1195 note@1195..1196 bar@1196..1197"
+ ],
+ "repo/abcts-grace-order-and-lanes-tune22#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@1230..1247 note@1247..1248 note@1248..1249 note@1249..1250 bar@1250..1251"
+ ],
+ "repo/abcts-grace-order-and-lanes-tune23#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@1288..1301 note@1301..1302 note@1302..1303 note@1303..1304 bar@1304..1305"
+ ],
+ "repo/abcts-grace-order-and-lanes-tune24#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@1337..1360 note@1360..1361 note@1361..1362 note@1362..1363 bar@1363..1364"
+ ],
+ "repo/abcts-grace-order-and-lanes-tune25#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@1400..1427 note@1427..1428 note@1428..1429 note@1429..1430 bar@1430..1431"
+ ],
+ "repo/abcts-grace-order-and-lanes-tune26#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 part@1475..1478 note@1499..1504 note@1504..1506 note@1506..1507 note@1507..1508 bar@1508..1509"
+ ],
+ "repo/abcts-grace-order-and-lanes-tune27#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@1557..1561 note@1561..1562 note@1562..1564 note@1564..1567 note@1567..1568 note@1568..1569 bar@1569..1570"
+ ],
+ "repo/abcts-grace-order-and-lanes-tune28#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@1609..1617 note@1617..1618 note@1618..1621 note@1621..1624 note@1624..1625 note@1625..1626 bar@1626..1627"
+ ],
+ "repo/abcts-grace-tie-tune0": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@278..286 note@286..288 bar@288..289"
+ ],
+ "repo/abcts-grace-tie-tune1": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@346..356 note@356..358 bar@358..359"
+ ],
+ "repo/abcts-grace-tie-tune2": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@431..439 note@439..441 bar@441..442"
+ ],
+ "repo/abcts-grace-tie-tune3": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@494..501 note@501..506 bar@506..507"
+ ],
+ "repo/abcts-grace-tie-tune4": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@571..581 note@581..583 bar@583..584"
+ ],
+ "repo/abcts-grace-tie-tune5": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@625..637 note@637..639 bar@639..640"
+ ],
+ "repo/abcts-grace-tie-tune6": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@693..702 note@702..704 bar@704..705"
+ ],
+ "repo/abcts-grace-tie-tune7": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@766..776 note@776..778 bar@778..779"
+ ],
+ "repo/abcts-grace-tie-tune0#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@278..286 note@286..288 bar@288..289"
+ ],
+ "repo/abcts-grace-tie-tune1#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@346..356 note@356..358 bar@358..359"
+ ],
+ "repo/abcts-grace-tie-tune2#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@431..439 note@439..441 bar@441..442"
+ ],
+ "repo/abcts-grace-tie-tune3#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@494..501 note@501..506 bar@506..507"
+ ],
+ "repo/abcts-grace-tie-tune4#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@571..581 note@581..583 bar@583..584"
+ ],
+ "repo/abcts-grace-tie-tune5#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@625..637 note@637..639 bar@639..640"
+ ],
+ "repo/abcts-grace-tie-tune6#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@693..702 note@702..704 bar@704..705"
+ ],
+ "repo/abcts-grace-tie-tune7#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@766..776 note@776..778 bar@778..779"
+ ],
+ "repo/abcts-inline-fields-and-blocks-tune0": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@37..38 note@38..39 tempo@39..49 note@49..50 note@50..51 bar@51..52"
+ ],
+ "repo/abcts-inline-fields-and-blocks-tune1": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 tempo@87..97 note@97..98 note@98..99 note@99..100 note@100..101 bar@101..102"
+ ],
+ "repo/abcts-inline-fields-and-blocks-tune2": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@143..144 note@144..145 note@145..146 note@146..147 bar@147..148 tempo@148..158 note@158..159 note@159..160 note@160..161 note@161..162 bar@162..163"
+ ],
+ "repo/abcts-inline-fields-and-blocks-tune3": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@207..208 note@208..209 note@209..210 tempo@210..220 note@220..221 bar@221..222"
+ ],
+ "repo/abcts-inline-fields-and-blocks-tune4": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@259..260 note@260..261 tempo@261..271 note@271..272 note@272..273 bar@273..274"
+ ],
+ "repo/abcts-inline-fields-and-blocks-tune5": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@319..324 note@324..329 bar@329..330"
+ ],
+ "repo/abcts-inline-fields-and-blocks-tune6": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@369..374 bar@374..375"
+ ],
+ "repo/abcts-inline-fields-and-blocks-tune7": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@415..420 bar@420..421"
+ ],
+ "repo/abcts-inline-fields-and-blocks-tune8": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@460..465 note@465..470 bar@470..471"
+ ],
+ "repo/abcts-inline-fields-and-blocks-tune9": [],
+ "repo/abcts-inline-fields-and-blocks-tune10": [
+  "L0 text",
+  "L1 s0 kept=key,clef",
+  "L1 s0 v0 note@597..598 note@598..599 note@599..600 note@600..601 bar@601..602"
+ ],
+ "repo/abcts-inline-fields-and-blocks-tune11": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@643..644 note@644..645 note@645..646 note@646..647 bar@647..648",
+  "L1 text"
+ ],
+ "repo/abcts-inline-fields-and-blocks-tune12": [
+  "L0 text",
+  "L1 s0 kept=key,clef",
+  "L1 s0 v0 note@754..755 note@755..756 note@756..757 note@757..758 bar@758..759"
+ ],
+ "repo/abcts-inline-fields-and-blocks-tune13": [
+  "L0 text",
+  "L1 s0 kept=key,clef",
+  "L1 s0 v0 note@842..843 note@843..844 note@844..845 note@845..846 bar@846..847"
+ ],
+ "repo/abcts-inline-fields-and-blocks-tune14": [
+  "L0 text",
+  "L1 s0 kept=key,clef",
+  "L1 s0 v0 note@920..921 note@921..922 note@922..923 note@923..924 bar@924..925"
+ ],
+ "repo/abcts-inline-fields-and-blocks-tune0#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@37..38 note@38..39 tempo@39..49 note@49..50 note@50..51 bar@51..52"
+ ],
+ "repo/abcts-inline-fields-and-blocks-tune1#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 tempo@87..97 note@97..98 note@98..99 note@99..100 note@100..101 bar@101..102"
+ ],
+ "repo/abcts-inline-fields-and-blocks-tune2#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@143..144 note@144..145 note@145..146 note@146..147 bar@147..148 tempo@148..158 note@158..159 note@159..160 note@160..161 note@161..162 bar@162..163"
+ ],
+ "repo/abcts-inline-fields-and-blocks-tune3#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@207..208 note@208..209 note@209..210 tempo@210..220 note@220..221 bar@221..222"
+ ],
+ "repo/abcts-inline-fields-and-blocks-tune4#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@259..260 note@260..261 tempo@261..271 note@271..272 note@272..273 bar@273..274"
+ ],
+ "repo/abcts-inline-fields-and-blocks-tune5#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@319..324 note@324..329 bar@329..330"
+ ],
+ "repo/abcts-inline-fields-and-blocks-tune6#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@369..374 bar@374..375"
+ ],
+ "repo/abcts-inline-fields-and-blocks-tune7#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@415..420 bar@420..421"
+ ],
+ "repo/abcts-inline-fields-and-blocks-tune8#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@460..465 note@465..470 bar@470..471"
+ ],
+ "repo/abcts-inline-fields-and-blocks-tune9#breaks": [],
+ "repo/abcts-inline-fields-and-blocks-tune10#breaks": [
+  "L0 text",
+  "L1 s0 kept=key,clef",
+  "L1 s0 v0 note@597..598 note@598..599 note@599..600 note@600..601 bar@601..602"
+ ],
+ "repo/abcts-inline-fields-and-blocks-tune11#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@643..644 note@644..645 note@645..646 note@646..647 bar@647..648",
+  "L1 text"
+ ],
+ "repo/abcts-inline-fields-and-blocks-tune12#breaks": [
+  "L0 text",
+  "L1 s0 kept=key,clef",
+  "L1 s0 v0 note@754..755 note@755..756 note@756..757 note@757..758 bar@758..759"
+ ],
+ "repo/abcts-inline-fields-and-blocks-tune13#breaks": [
+  "L0 text",
+  "L1 s0 kept=key,clef",
+  "L1 s0 v0 note@842..843 note@843..844 note@844..845 note@845..846 bar@846..847"
+ ],
+ "repo/abcts-inline-fields-and-blocks-tune14#breaks": [
+  "L0 text",
+  "L1 s0 kept=key,clef",
+  "L1 s0 v0 note@920..921 note@921..922 note@922..923 note@923..924 bar@924..925"
+ ],
  "repo/abcts-key-modifiers-tune0": [
   "L0 s0 kept=key,clef",
   "L0 s0 v0 note@38..39 note@39..40 note@40..41 note@41..42 bar@42..43 note@43..44 note@44..45 note@45..46 note@46..52 bar@52..53"
@@ -2037,6 +3141,10 @@
   "L0 s0 kept=key,clef",
   "L0 s0 v0 note@698..699 note@699..700 note@700..701 note@701..702 bar@702..703 note@703..704 note@704..705 note@705..706 note@706..712 bar@712..713"
  ],
+ "repo/abcts-key-modifiers-tune12": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@756..757 note@757..758 note@758..759 note@759..760 bar@760..761 note@761..762 note@762..763 note@763..764 note@764..770 bar@770..771"
+ ],
  "repo/abcts-key-modifiers-tune0#breaks": [
   "L0 s0 kept=key,clef",
   "L0 s0 v0 note@38..39 note@39..40 note@40..41 note@41..42 bar@42..43 note@43..44 note@44..45 note@45..46 note@46..52 bar@52..53"
@@ -2084,6 +3192,10 @@
  "repo/abcts-key-modifiers-tune11#breaks": [
   "L0 s0 kept=key,clef",
   "L0 s0 v0 note@698..699 note@699..700 note@700..701 note@701..702 bar@702..703 note@703..704 note@704..705 note@705..706 note@706..712 bar@712..713"
+ ],
+ "repo/abcts-key-modifiers-tune12#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@756..757 note@757..758 note@758..759 note@759..760 bar@760..761 note@761..762 note@762..763 note@763..764 note@764..770 bar@770..771"
  ],
  "repo/abcts-keywarn-tune0": [
   "L0 s0 kept=meter,key,clef",
@@ -2380,6 +3492,106 @@
  "repo/abcts-ledger-gaps-tune5#breaks": [
   "L0 s0 kept=meter,key,clef",
   "L0 s0 v0 note@768..770 note@770..772 note@772..774 note@774..775 bar@775..776"
+ ],
+ "repo/abcts-lyric-verses-tune0": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@38..39 note@39..40 note@40..41 note@41..42 bar@42..43"
+ ],
+ "repo/abcts-lyric-verses-tune1": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@94..95 note@95..96 note@96..97 note@97..98 bar@98..99"
+ ],
+ "repo/abcts-lyric-verses-tune2": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@155..156 note@156..157 note@157..158 note@158..159 bar@159..160"
+ ],
+ "repo/abcts-lyric-verses-tune3": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@214..215 note@215..216 note@216..217 note@217..218 bar@218..219"
+ ],
+ "repo/abcts-lyric-verses-tune4": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@276..277 note@277..278 note@278..279 note@279..280 bar@280..281"
+ ],
+ "repo/abcts-lyric-verses-tune5": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@342..343 note@343..344 note@344..345 note@345..346 bar@346..347 note@347..348 note@348..349 note@349..350 note@350..351 bar@351..352"
+ ],
+ "repo/abcts-lyric-verses-tune6": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@417..418 note@418..420 note@420..422 bar@422..423"
+ ],
+ "repo/abcts-lyric-verses-tune7": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@478..479 note@479..480 note@480..481 note@481..482 bar@482..483"
+ ],
+ "repo/abcts-lyric-verses-tune8": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@536..537 note@537..538 note@538..539 note@539..540 bar@540..541"
+ ],
+ "repo/abcts-lyric-verses-tune9": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@596..597 note@597..598 note@598..599 note@599..600 bar@600..601"
+ ],
+ "repo/abcts-lyric-verses-tune10": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@665..666 note@666..667 note@667..668 note@668..669 bar@669..670"
+ ],
+ "repo/abcts-lyric-verses-tune11": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@738..739 note@739..740 note@740..741 note@741..742 bar@742..743",
+  "L0 s1 kept=key,clef",
+  "L0 s1 v0 note@764..765 note@765..766 note@766..767 note@767..768 bar@768..769"
+ ],
+ "repo/abcts-lyric-verses-tune0#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@38..39 note@39..40 note@40..41 note@41..42 bar@42..43"
+ ],
+ "repo/abcts-lyric-verses-tune1#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@94..95 note@95..96 note@96..97 note@97..98 bar@98..99"
+ ],
+ "repo/abcts-lyric-verses-tune2#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@155..156 note@156..157 note@157..158 note@158..159 bar@159..160"
+ ],
+ "repo/abcts-lyric-verses-tune3#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@214..215 note@215..216 note@216..217 note@217..218 bar@218..219"
+ ],
+ "repo/abcts-lyric-verses-tune4#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@276..277 note@277..278 note@278..279 note@279..280 bar@280..281"
+ ],
+ "repo/abcts-lyric-verses-tune5#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@342..343 note@343..344 note@344..345 note@345..346 bar@346..347 note@347..348 note@348..349 note@349..350 note@350..351 bar@351..352"
+ ],
+ "repo/abcts-lyric-verses-tune6#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@417..418 note@418..420 note@420..422 bar@422..423"
+ ],
+ "repo/abcts-lyric-verses-tune7#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@478..479 note@479..480 note@480..481 note@481..482 bar@482..483"
+ ],
+ "repo/abcts-lyric-verses-tune8#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@536..537 note@537..538 note@538..539 note@539..540 bar@540..541"
+ ],
+ "repo/abcts-lyric-verses-tune9#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@596..597 note@597..598 note@598..599 note@599..600 bar@600..601"
+ ],
+ "repo/abcts-lyric-verses-tune10#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@665..666 note@666..667 note@667..668 note@668..669 bar@669..670"
+ ],
+ "repo/abcts-lyric-verses-tune11#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@738..739 note@739..740 note@740..741 note@741..742 bar@742..743",
+  "L0 s1 kept=key,clef",
+  "L0 s1 v0 note@764..765 note@765..766 note@766..767 note@767..768 bar@768..769"
  ],
  "repo/abcts-midi-tune0": [
   "L0 s0 kept=meter,key,clef",
@@ -2901,6 +4113,70 @@
   "L0 s0 kept=meter,key,clef",
   "L0 s0 v0 note@1166..1174 note@1174..1176 note@1176..1178 note@1178..1179 bar@1179..1180"
  ],
+ "repo/abcts-pitch-style-tune0": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@385..408 note@408..423 bar@423..424"
+ ],
+ "repo/abcts-pitch-style-tune1": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@475..492 note@492..499 bar@499..500"
+ ],
+ "repo/abcts-pitch-style-tune2": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@542..574 note@574..580 bar@580..581"
+ ],
+ "repo/abcts-pitch-style-tune3": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@653..679 note@679..688 bar@688..689"
+ ],
+ "repo/abcts-pitch-style-tune4": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@754..777 note@777..783 bar@783..784"
+ ],
+ "repo/abcts-pitch-style-tune5": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@840..855 note@855..876 bar@876..877"
+ ],
+ "repo/abcts-pitch-style-tune6": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@932..949 note@949..956 bar@956..957"
+ ],
+ "repo/abcts-pitch-style-tune7": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@1022..1054 note@1054..1060 bar@1060..1061"
+ ],
+ "repo/abcts-pitch-style-tune0#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@385..408 note@408..423 bar@423..424"
+ ],
+ "repo/abcts-pitch-style-tune1#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@475..492 note@492..499 bar@499..500"
+ ],
+ "repo/abcts-pitch-style-tune2#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@542..574 note@574..580 bar@580..581"
+ ],
+ "repo/abcts-pitch-style-tune3#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@653..679 note@679..688 bar@688..689"
+ ],
+ "repo/abcts-pitch-style-tune4#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@754..777 note@777..783 bar@783..784"
+ ],
+ "repo/abcts-pitch-style-tune5#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@840..855 note@855..876 bar@876..877"
+ ],
+ "repo/abcts-pitch-style-tune6#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@932..949 note@949..956 bar@956..957"
+ ],
+ "repo/abcts-pitch-style-tune7#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@1022..1054 note@1054..1060 bar@1060..1061"
+ ],
  "repo/abcts-positioning-tune0": [
   "L0 s0 kept=key,clef",
   "L0 s0 v0 note@42..50 note@50..51 note@51..52 note@52..53 bar@53..54 note@54..55 note@55..56 note@56..57 note@57..58 bar@58..59"
@@ -2964,6 +4240,164 @@
  "repo/abcts-positioning-tune7#breaks": [
   "L0 s0 kept=key,clef",
   "L0 s0 v0 note@643..651 note@651..652 note@652..653 note@653..654 bar@654..655 break@undefined..undefined note@671..676 note@676..677 note@677..678 note@678..679 bar@679..680"
+ ],
+ "repo/abcts-rests-and-bars-tune0": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 bar@1719..1729 note@1729..1730 note@1730..1731 note@1731..1732 note@1732..1733 bar@1733..1734"
+ ],
+ "repo/abcts-rests-and-bars-tune1": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@1812..1814 note@1814..1816 note@1816..1817 bar@1817..1818"
+ ],
+ "repo/abcts-rests-and-bars-tune2": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@1880..1882 note@1882..1884 note@1884..1885 bar@1885..1886"
+ ],
+ "repo/abcts-rests-and-bars-tune3": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@1927..1937 note@1937..1939 bar@1939..1940"
+ ],
+ "repo/abcts-rests-and-bars-tune4": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@1982..1988 note@1988..1990 bar@1990..1991"
+ ],
+ "repo/abcts-rests-and-bars-tune5": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@2042..2043 note@2043..2044 keySignature@2044..2049 note@2049..2050 note@2050..2051 bar@2051..2052"
+ ],
+ "repo/abcts-rests-and-bars-tune6": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@2105..2106 note@2106..2107 timeSignature@2107..2114 note@2114..2115 note@2115..2116 bar@2116..2117"
+ ],
+ "repo/abcts-rests-and-bars-tune7": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@2182..2183 note@2183..2184 note@2184..2185 note@2185..2186 bar@2186..2187 bar@2187..2197 note@2197..2198 note@2198..2199 note@2199..2200 note@2200..2201 bar@2201..2202"
+ ],
+ "repo/abcts-rests-and-bars-tune8": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@2290..2301 note@2301..2304 bar@2304..2305"
+ ],
+ "repo/abcts-rests-and-bars-tune9": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@2370..2372 note@2372..2375 bar@2375..2376"
+ ],
+ "repo/abcts-rests-and-bars-tune10": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@2458..2463 bar@2463..2474 note@2474..2476 bar@2476..2487 note@2487..2489 bar@2489..2490"
+ ],
+ "repo/abcts-rests-and-bars-tune11": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@2564..2577 note@2577..2589 bar@2589..2590"
+ ],
+ "repo/abcts-rests-and-bars-tune12": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@2673..2677 note@2677..2680 bar@2680..2681"
+ ],
+ "repo/abcts-rests-and-bars-tune13": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@2737..2741 note@2741..2743 bar@2743..2744"
+ ],
+ "repo/abcts-rests-and-bars-tune14": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@2829..2833 note@2833..2836 bar@2836..2837"
+ ],
+ "repo/abcts-rests-and-bars-tune15": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@2913..2918 note@2918..2923 note@2923..2927 note@2927..2930 bar@2930..2931"
+ ],
+ "repo/abcts-rests-and-bars-tune0#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 bar@1719..1729 note@1729..1730 note@1730..1731 note@1731..1732 note@1732..1733 bar@1733..1734"
+ ],
+ "repo/abcts-rests-and-bars-tune1#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@1812..1814 note@1814..1816 note@1816..1817 bar@1817..1818"
+ ],
+ "repo/abcts-rests-and-bars-tune2#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@1880..1882 note@1882..1884 note@1884..1885 bar@1885..1886"
+ ],
+ "repo/abcts-rests-and-bars-tune3#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@1927..1937 note@1937..1939 bar@1939..1940"
+ ],
+ "repo/abcts-rests-and-bars-tune4#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@1982..1988 note@1988..1990 bar@1990..1991"
+ ],
+ "repo/abcts-rests-and-bars-tune5#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@2042..2043 note@2043..2044 keySignature@2044..2049 note@2049..2050 note@2050..2051 bar@2051..2052"
+ ],
+ "repo/abcts-rests-and-bars-tune6#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@2105..2106 note@2106..2107 timeSignature@2107..2114 note@2114..2115 note@2115..2116 bar@2116..2117"
+ ],
+ "repo/abcts-rests-and-bars-tune7#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@2182..2183 note@2183..2184 note@2184..2185 note@2185..2186 bar@2186..2187 bar@2187..2197 note@2197..2198 note@2198..2199 note@2199..2200 note@2200..2201 bar@2201..2202"
+ ],
+ "repo/abcts-rests-and-bars-tune8#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@2290..2301 note@2301..2304 bar@2304..2305"
+ ],
+ "repo/abcts-rests-and-bars-tune9#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@2370..2372 note@2372..2375 bar@2375..2376"
+ ],
+ "repo/abcts-rests-and-bars-tune10#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@2458..2463 bar@2463..2474 note@2474..2476 bar@2476..2487 note@2487..2489 bar@2489..2490"
+ ],
+ "repo/abcts-rests-and-bars-tune11#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@2564..2577 note@2577..2589 bar@2589..2590"
+ ],
+ "repo/abcts-rests-and-bars-tune12#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@2673..2677 note@2677..2680 bar@2680..2681"
+ ],
+ "repo/abcts-rests-and-bars-tune13#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@2737..2741 note@2741..2743 bar@2743..2744"
+ ],
+ "repo/abcts-rests-and-bars-tune14#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@2829..2833 note@2833..2836 bar@2836..2837"
+ ],
+ "repo/abcts-rests-and-bars-tune15#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@2913..2918 note@2918..2923 note@2923..2927 note@2927..2930 bar@2930..2931"
+ ],
+ "repo/abcts-shared-staff-rests-tune0": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 stem@undefined..undefined note@67..68 note@68..69 note@69..70 note@70..71 bar@71..72",
+  "L0 s0 v1 stem@undefined..undefined note@77..78 note@78..79 note@79..80 note@80..81 bar@81..82"
+ ],
+ "repo/abcts-shared-staff-rests-tune1": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 stem@undefined..undefined note@149..150 note@150..151 note@151..152 note@152..153 bar@153..154",
+  "L0 s0 v1 stem@undefined..undefined note@159..160 note@160..161 note@161..162 note@162..163 bar@163..164"
+ ],
+ "repo/abcts-shared-staff-rests-tune2": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 stem@undefined..undefined note@231..232 note@232..233 note@233..234 note@234..235 bar@235..236",
+  "L0 s0 v1 stem@undefined..undefined note@241..242 note@242..243 note@243..244 note@244..245 bar@245..246"
+ ],
+ "repo/abcts-shared-staff-rests-tune0#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 stem@undefined..undefined note@67..68 note@68..69 note@69..70 note@70..71 bar@71..72",
+  "L0 s0 v1 stem@undefined..undefined note@77..78 note@78..79 note@79..80 note@80..81 bar@81..82"
+ ],
+ "repo/abcts-shared-staff-rests-tune1#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 stem@undefined..undefined note@149..150 note@150..151 note@151..152 note@152..153 bar@153..154",
+  "L0 s0 v1 stem@undefined..undefined note@159..160 note@160..161 note@161..162 note@162..163 bar@163..164"
+ ],
+ "repo/abcts-shared-staff-rests-tune2#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 stem@undefined..undefined note@231..232 note@232..233 note@233..234 note@234..235 bar@235..236",
+  "L0 s0 v1 stem@undefined..undefined note@241..242 note@242..243 note@243..244 note@244..245 bar@245..246"
  ],
  "repo/abcts-slur-shapes-tune0": [
   "L0 s0 kept=meter,key,clef",
@@ -3045,6 +4479,578 @@
   "L0 s0 kept=meter,key,clef",
   "L0 s0 v0 note@1005..1008 note@1008..1013 bar@1013..1014"
  ],
+ "repo/abcts-stafflines-and-modifiers-tune0": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@46..47 note@47..48 note@48..49 note@49..50 bar@50..51"
+ ],
+ "repo/abcts-stafflines-and-modifiers-tune1": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@99..100 note@100..101 note@101..102 note@102..103 bar@103..104"
+ ],
+ "repo/abcts-stafflines-and-modifiers-tune2": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@152..153 note@153..154 note@154..155 note@155..156 bar@156..157"
+ ],
+ "repo/abcts-stafflines-and-modifiers-tune3": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@203..204 note@204..205 note@205..206 note@206..207 bar@207..208"
+ ],
+ "repo/abcts-stafflines-and-modifiers-tune4": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@245..246 note@246..247 note@247..248 note@248..249 bar@249..250 keySignature@251..269 clef@-1..-1 note@269..270 note@270..271 note@271..272 note@272..273 bar@273..274"
+ ],
+ "repo/abcts-stafflines-and-modifiers-tune5": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@339..340 note@340..341 note@341..342 note@342..343 bar@343..344",
+  "L0 s1 kept=key,clef",
+  "L0 s1 v0 note@349..350 note@350..351 note@351..352 note@352..353 bar@353..354"
+ ],
+ "repo/abcts-stafflines-and-modifiers-tune6": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@384..385 note@385..386 note@386..387 note@387..388 bar@388..389"
+ ],
+ "repo/abcts-stafflines-and-modifiers-tune7": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@425..426 note@426..427 note@427..428 note@428..429 bar@429..430"
+ ],
+ "repo/abcts-stafflines-and-modifiers-tune8": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@475..476 note@476..477 note@477..478 note@478..479 bar@479..480 note@480..481 note@481..482 note@482..483 note@483..484 bar@484..485"
+ ],
+ "repo/abcts-stafflines-and-modifiers-tune9": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@545..546 note@546..547 note@547..548 note@548..549 bar@549..550"
+ ],
+ "repo/abcts-stafflines-and-modifiers-tune10": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@618..619 note@619..620 note@620..621 note@621..622 bar@622..623"
+ ],
+ "repo/abcts-stafflines-and-modifiers-tune11": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@701..702 note@702..703 note@703..704 note@704..705 bar@705..706"
+ ],
+ "repo/abcts-stafflines-and-modifiers-tune12": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@761..762 note@762..763 note@763..764 note@764..765 bar@765..766"
+ ],
+ "repo/abcts-stafflines-and-modifiers-tune13": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@810..811 note@811..812 note@812..813 note@813..814 bar@814..815"
+ ],
+ "repo/abcts-stafflines-and-modifiers-tune14": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@872..873 note@873..874 note@874..875 note@875..876 bar@876..877 note@878..879 note@879..880 note@880..881 note@881..882 bar@882..883"
+ ],
+ "repo/abcts-stafflines-and-modifiers-tune15": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 stem@undefined..undefined note@923..924 note@924..928 note@928..929 note@929..930 bar@930..931"
+ ],
+ "repo/abcts-stafflines-and-modifiers-tune16": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 stem@undefined..undefined note@976..977 note@977..978 note@978..979 note@979..980 bar@980..981"
+ ],
+ "repo/abcts-stafflines-and-modifiers-tune17": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 scale@undefined..undefined note@1022..1023 note@1023..1024 note@1024..1025 note@1025..1026 bar@1026..1027"
+ ],
+ "repo/abcts-stafflines-and-modifiers-tune18": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@1068..1069 note@1069..1070 note@1070..1071 note@1071..1072 bar@1072..1073"
+ ],
+ "repo/abcts-stafflines-and-modifiers-tune19": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@1120..1121 note@1121..1122 note@1122..1123 note@1123..1124 bar@1124..1125"
+ ],
+ "repo/abcts-stafflines-and-modifiers-tune20": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 stem@undefined..undefined note@1156..1157 note@1157..1158 note@1158..1159 note@1159..1160 bar@1160..1161",
+  "L0 s0 v1 stem@undefined..undefined note@1172..1173 note@1173..1174 note@1174..1175 note@1175..1176 bar@1176..1177"
+ ],
+ "repo/abcts-stafflines-and-modifiers-tune21": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@1217..1218 note@1218..1219 note@1219..1220 note@1220..1221 bar@1221..1222"
+ ],
+ "repo/abcts-stafflines-and-modifiers-tune22": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@1261..1265 note@1265..1266 note@1266..1267 note@1267..1268 bar@1268..1269"
+ ],
+ "repo/abcts-stafflines-and-modifiers-tune23": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@1312..1314 note@1314..1315 note@1315..1316 note@1316..1317 bar@1317..1318"
+ ],
+ "repo/abcts-stafflines-and-modifiers-tune24": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@1356..1360 note@1360..1361 note@1361..1362 note@1362..1363 bar@1363..1364"
+ ],
+ "repo/abcts-stafflines-and-modifiers-tune25": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@1401..1403 note@1403..1404 note@1404..1405 note@1405..1406 bar@1406..1407"
+ ],
+ "repo/abcts-stafflines-and-modifiers-tune26": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@1461..1465 note@1465..1466 note@1466..1467 note@1467..1468 bar@1468..1469"
+ ],
+ "repo/abcts-stafflines-and-modifiers-tune27": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@1527..1528 note@1528..1529 note@1529..1530 note@1530..1531 bar@1531..1532"
+ ],
+ "repo/abcts-stafflines-and-modifiers-tune28": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@1585..1586 note@1586..1587 note@1587..1588 note@1588..1589 bar@1589..1590"
+ ],
+ "repo/abcts-stafflines-and-modifiers-tune29": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@1640..1641 note@1641..1642 note@1642..1643 note@1643..1644 bar@1644..1645"
+ ],
+ "repo/abcts-stafflines-and-modifiers-tune30": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@1683..1686 note@1686..1687 note@1687..1688 clef@1688..1698 keySignature@1688..1698 note@1698..1701 note@1701..1702 note@1702..1703 bar@1703..1704"
+ ],
+ "repo/abcts-stafflines-and-modifiers-tune31": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@1740..1742 note@1742..1743 clef@1743..1753 keySignature@1743..1753 note@1753..1754 note@1754..1756 bar@1756..1757"
+ ],
+ "repo/abcts-stafflines-and-modifiers-tune32": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@1792..1793 note@1793..1794 clef@1794..1804 keySignature@1794..1804 note@1804..1808 note@1808..1809 bar@1809..1810"
+ ],
+ "repo/abcts-stafflines-and-modifiers-tune33": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@1853..1854 note@1854..1855 note@1855..1856 note@1856..1857 bar@1857..1858",
+  "L0 s1 kept=key,clef",
+  "L0 s1 v0 note@1873..1874 note@1874..1875 note@1875..1876 note@1876..1877 bar@1877..1878"
+ ],
+ "repo/abcts-stafflines-and-modifiers-tune34": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@1924..1925 note@1925..1926 note@1926..1927 note@1927..1928 bar@1928..1930 tempo@1930..1940 note@1940..1941 note@1941..1942 note@1942..1943 note@1943..1944 bar@1944..1947 note@1947..1948 note@1948..1949 note@1949..1950 note@1950..1951 bar@1951..1953"
+ ],
+ "repo/abcts-stafflines-and-modifiers-tune35": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@1991..2001 note@2001..2009 bar@2009..2010"
+ ],
+ "repo/abcts-stafflines-and-modifiers-tune36": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@2049..2050 note@2050..2051 note@2051..2052 note@2052..2053 bar@2053..2054"
+ ],
+ "repo/abcts-stafflines-and-modifiers-tune37": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@2105..2106 note@2106..2107 note@2107..2108 note@2108..2109 bar@2109..2110"
+ ],
+ "repo/abcts-stafflines-and-modifiers-tune38": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@2148..2149 note@2149..2150 note@2150..2151 note@2151..2152 bar@2152..2153"
+ ],
+ "repo/abcts-stafflines-and-modifiers-tune39": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@2199..2200 note@2200..2201 note@2201..2202 note@2202..2203 bar@2203..2204"
+ ],
+ "repo/abcts-stafflines-and-modifiers-tune40": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@2250..2251 note@2251..2252 note@2252..2253 note@2253..2254 bar@2254..2255"
+ ],
+ "repo/abcts-stafflines-and-modifiers-tune41": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@2287..2288 note@2288..2289 note@2289..2290 note@2290..2291 bar@2291..2292 keySignature@2293..2309 clef@-1..-1 note@2310..2311 note@2311..2312 note@2312..2313 note@2313..2314 bar@2314..2315"
+ ],
+ "repo/abcts-stafflines-and-modifiers-tune42": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@2348..2349 note@2349..2350 keySignature@2350..2368 note@2368..2369 note@2369..2370 bar@2370..2371"
+ ],
+ "repo/abcts-stafflines-and-modifiers-tune43": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@2430..2431 note@2431..2432 note@2432..2433 note@2433..2434 bar@2434..2435"
+ ],
+ "repo/abcts-stafflines-and-modifiers-tune44": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@2462..2463 bar@2463..2464"
+ ],
+ "repo/abcts-stafflines-and-modifiers-tune45": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@2492..2494 note@2494..2495 bar@2495..2496"
+ ],
+ "repo/abcts-stafflines-and-modifiers-tune46": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@2527..2535 bar@2535..2536"
+ ],
+ "repo/abcts-stafflines-and-modifiers-tune47": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@2565..2575 bar@2575..2576"
+ ],
+ "repo/abcts-stafflines-and-modifiers-tune48": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@2598..2600 bar@2600..2601"
+ ],
+ "repo/abcts-stafflines-and-modifiers-tune49": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@2632..2634 note@2634..2635 bar@2635..2636"
+ ],
+ "repo/abcts-stafflines-and-modifiers-tune0#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@46..47 note@47..48 note@48..49 note@49..50 bar@50..51"
+ ],
+ "repo/abcts-stafflines-and-modifiers-tune1#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@99..100 note@100..101 note@101..102 note@102..103 bar@103..104"
+ ],
+ "repo/abcts-stafflines-and-modifiers-tune2#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@152..153 note@153..154 note@154..155 note@155..156 bar@156..157"
+ ],
+ "repo/abcts-stafflines-and-modifiers-tune3#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@203..204 note@204..205 note@205..206 note@206..207 bar@207..208"
+ ],
+ "repo/abcts-stafflines-and-modifiers-tune4#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@245..246 note@246..247 note@247..248 note@248..249 bar@249..250 keySignature@251..269 break@undefined..undefined clef@-1..-1 note@269..270 note@270..271 note@271..272 note@272..273 bar@273..274"
+ ],
+ "repo/abcts-stafflines-and-modifiers-tune5#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@339..340 note@340..341 note@341..342 note@342..343 bar@343..344",
+  "L0 s1 kept=key,clef",
+  "L0 s1 v0 note@349..350 note@350..351 note@351..352 note@352..353 bar@353..354"
+ ],
+ "repo/abcts-stafflines-and-modifiers-tune6#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@384..385 note@385..386 note@386..387 note@387..388 bar@388..389"
+ ],
+ "repo/abcts-stafflines-and-modifiers-tune7#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@425..426 note@426..427 note@427..428 note@428..429 bar@429..430"
+ ],
+ "repo/abcts-stafflines-and-modifiers-tune8#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@475..476 note@476..477 note@477..478 note@478..479 bar@479..480 note@480..481 note@481..482 note@482..483 note@483..484 bar@484..485"
+ ],
+ "repo/abcts-stafflines-and-modifiers-tune9#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@545..546 note@546..547 note@547..548 note@548..549 bar@549..550"
+ ],
+ "repo/abcts-stafflines-and-modifiers-tune10#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@618..619 note@619..620 note@620..621 note@621..622 bar@622..623"
+ ],
+ "repo/abcts-stafflines-and-modifiers-tune11#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@701..702 note@702..703 note@703..704 note@704..705 bar@705..706"
+ ],
+ "repo/abcts-stafflines-and-modifiers-tune12#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@761..762 note@762..763 note@763..764 note@764..765 bar@765..766"
+ ],
+ "repo/abcts-stafflines-and-modifiers-tune13#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@810..811 note@811..812 note@812..813 note@813..814 bar@814..815"
+ ],
+ "repo/abcts-stafflines-and-modifiers-tune14#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@872..873 note@873..874 note@874..875 note@875..876 bar@876..877 break@undefined..undefined note@878..879 note@879..880 note@880..881 note@881..882 bar@882..883"
+ ],
+ "repo/abcts-stafflines-and-modifiers-tune15#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 stem@undefined..undefined note@923..924 note@924..928 note@928..929 note@929..930 bar@930..931"
+ ],
+ "repo/abcts-stafflines-and-modifiers-tune16#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 stem@undefined..undefined note@976..977 note@977..978 note@978..979 note@979..980 bar@980..981"
+ ],
+ "repo/abcts-stafflines-and-modifiers-tune17#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 scale@undefined..undefined note@1022..1023 note@1023..1024 note@1024..1025 note@1025..1026 bar@1026..1027"
+ ],
+ "repo/abcts-stafflines-and-modifiers-tune18#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@1068..1069 note@1069..1070 note@1070..1071 note@1071..1072 bar@1072..1073"
+ ],
+ "repo/abcts-stafflines-and-modifiers-tune19#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@1120..1121 note@1121..1122 note@1122..1123 note@1123..1124 bar@1124..1125"
+ ],
+ "repo/abcts-stafflines-and-modifiers-tune20#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 stem@undefined..undefined note@1156..1157 note@1157..1158 note@1158..1159 note@1159..1160 bar@1160..1161",
+  "L0 s0 v1 stem@undefined..undefined note@1172..1173 note@1173..1174 note@1174..1175 note@1175..1176 bar@1176..1177"
+ ],
+ "repo/abcts-stafflines-and-modifiers-tune21#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@1217..1218 note@1218..1219 note@1219..1220 note@1220..1221 bar@1221..1222"
+ ],
+ "repo/abcts-stafflines-and-modifiers-tune22#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@1261..1265 note@1265..1266 note@1266..1267 note@1267..1268 bar@1268..1269"
+ ],
+ "repo/abcts-stafflines-and-modifiers-tune23#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@1312..1314 note@1314..1315 note@1315..1316 note@1316..1317 bar@1317..1318"
+ ],
+ "repo/abcts-stafflines-and-modifiers-tune24#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@1356..1360 note@1360..1361 note@1361..1362 note@1362..1363 bar@1363..1364"
+ ],
+ "repo/abcts-stafflines-and-modifiers-tune25#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@1401..1403 note@1403..1404 note@1404..1405 note@1405..1406 bar@1406..1407"
+ ],
+ "repo/abcts-stafflines-and-modifiers-tune26#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@1461..1465 note@1465..1466 note@1466..1467 note@1467..1468 bar@1468..1469"
+ ],
+ "repo/abcts-stafflines-and-modifiers-tune27#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@1527..1528 note@1528..1529 note@1529..1530 note@1530..1531 bar@1531..1532"
+ ],
+ "repo/abcts-stafflines-and-modifiers-tune28#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@1585..1586 note@1586..1587 note@1587..1588 note@1588..1589 bar@1589..1590"
+ ],
+ "repo/abcts-stafflines-and-modifiers-tune29#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@1640..1641 note@1641..1642 note@1642..1643 note@1643..1644 bar@1644..1645"
+ ],
+ "repo/abcts-stafflines-and-modifiers-tune30#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@1683..1686 note@1686..1687 note@1687..1688 clef@1688..1698 keySignature@1688..1698 note@1698..1701 note@1701..1702 note@1702..1703 bar@1703..1704"
+ ],
+ "repo/abcts-stafflines-and-modifiers-tune31#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@1740..1742 note@1742..1743 clef@1743..1753 keySignature@1743..1753 note@1753..1754 note@1754..1756 bar@1756..1757"
+ ],
+ "repo/abcts-stafflines-and-modifiers-tune32#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@1792..1793 note@1793..1794 clef@1794..1804 keySignature@1794..1804 note@1804..1808 note@1808..1809 bar@1809..1810"
+ ],
+ "repo/abcts-stafflines-and-modifiers-tune33#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@1853..1854 note@1854..1855 note@1855..1856 note@1856..1857 bar@1857..1858",
+  "L0 s1 kept=key,clef",
+  "L0 s1 v0 note@1873..1874 note@1874..1875 note@1875..1876 note@1876..1877 bar@1877..1878"
+ ],
+ "repo/abcts-stafflines-and-modifiers-tune34#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@1924..1925 note@1925..1926 note@1926..1927 note@1927..1928 bar@1928..1930 tempo@1930..1940 note@1940..1941 note@1941..1942 note@1942..1943 note@1943..1944 bar@1944..1947 note@1947..1948 note@1948..1949 note@1949..1950 note@1950..1951 bar@1951..1953"
+ ],
+ "repo/abcts-stafflines-and-modifiers-tune35#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@1991..2001 note@2001..2009 bar@2009..2010"
+ ],
+ "repo/abcts-stafflines-and-modifiers-tune36#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@2049..2050 note@2050..2051 note@2051..2052 note@2052..2053 bar@2053..2054"
+ ],
+ "repo/abcts-stafflines-and-modifiers-tune37#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@2105..2106 note@2106..2107 note@2107..2108 note@2108..2109 bar@2109..2110"
+ ],
+ "repo/abcts-stafflines-and-modifiers-tune38#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@2148..2149 note@2149..2150 note@2150..2151 note@2151..2152 bar@2152..2153"
+ ],
+ "repo/abcts-stafflines-and-modifiers-tune39#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@2199..2200 note@2200..2201 note@2201..2202 note@2202..2203 bar@2203..2204"
+ ],
+ "repo/abcts-stafflines-and-modifiers-tune40#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@2250..2251 note@2251..2252 note@2252..2253 note@2253..2254 bar@2254..2255"
+ ],
+ "repo/abcts-stafflines-and-modifiers-tune41#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@2287..2288 note@2288..2289 note@2289..2290 note@2290..2291 bar@2291..2292 keySignature@2293..2309 break@undefined..undefined clef@-1..-1 note@2310..2311 note@2311..2312 note@2312..2313 note@2313..2314 bar@2314..2315"
+ ],
+ "repo/abcts-stafflines-and-modifiers-tune42#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@2348..2349 note@2349..2350 keySignature@2350..2368 note@2368..2369 note@2369..2370 bar@2370..2371"
+ ],
+ "repo/abcts-stafflines-and-modifiers-tune43#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@2430..2431 note@2431..2432 note@2432..2433 note@2433..2434 bar@2434..2435"
+ ],
+ "repo/abcts-stafflines-and-modifiers-tune44#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@2462..2463 bar@2463..2464"
+ ],
+ "repo/abcts-stafflines-and-modifiers-tune45#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@2492..2494 note@2494..2495 bar@2495..2496"
+ ],
+ "repo/abcts-stafflines-and-modifiers-tune46#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@2527..2535 bar@2535..2536"
+ ],
+ "repo/abcts-stafflines-and-modifiers-tune47#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@2565..2575 bar@2575..2576"
+ ],
+ "repo/abcts-stafflines-and-modifiers-tune48#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@2598..2600 bar@2600..2601"
+ ],
+ "repo/abcts-stafflines-and-modifiers-tune49#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@2632..2634 note@2634..2635 bar@2635..2636"
+ ],
+ "repo/abcts-staffnonote-and-directives-tune0": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@47..48 note@48..49 note@49..50 note@50..51 bar@51..52"
+ ],
+ "repo/abcts-staffnonote-and-directives-tune1": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@95..96 note@96..97 note@97..98 note@98..99 bar@99..100",
+  "L0 s1 kept=key,clef",
+  "L0 s1 v0 note@105..106 note@106..107 note@107..108 note@108..109 bar@109..110"
+ ],
+ "repo/abcts-staffnonote-and-directives-tune2": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@161..162 note@162..163 note@163..164 note@164..165 bar@165..166",
+  "L0 s1 kept=key,clef",
+  "L0 s1 v0 note@171..172 note@172..173 note@173..174 note@174..175 bar@175..176"
+ ],
+ "repo/abcts-staffnonote-and-directives-tune3": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@230..231 note@231..232 note@232..233 note@233..234 bar@234..235",
+  "L0 s1 kept=key,clef",
+  "L0 s1 v0 note@240..244 note@244..245 note@245..246 note@246..247 bar@247..248"
+ ],
+ "repo/abcts-staffnonote-and-directives-tune4": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 stem@undefined..undefined note@313..314 note@314..315 note@315..316 note@316..317 bar@317..318",
+  "L0 s0 v1 stem@undefined..undefined note@323..324 note@324..325 note@325..326 note@326..327 bar@327..328"
+ ],
+ "repo/abcts-staffnonote-and-directives-tune5": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@379..380 note@380..381 note@381..382 note@382..383 bar@383..384",
+  "L0 s1 kept=key,clef",
+  "L0 s1 v0 note@399..400 note@400..401 note@401..402 note@402..403 bar@403..404"
+ ],
+ "repo/abcts-staffnonote-and-directives-tune6": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@452..453 note@453..454 note@454..455 note@455..456 bar@456..457",
+  "L0 s1 kept=key,clef",
+  "L0 s1 v0 note@462..463 note@463..464 note@464..465 note@465..466 bar@466..467"
+ ],
+ "repo/abcts-staffnonote-and-directives-tune7": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@517..518 note@518..519 note@519..520 note@520..521 bar@521..522"
+ ],
+ "repo/abcts-staffnonote-and-directives-tune8": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@575..576 note@576..577 note@577..578 note@578..579 bar@579..580"
+ ],
+ "repo/abcts-staffnonote-and-directives-tune9": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@624..625 note@625..626 note@626..627 note@627..628 bar@628..629"
+ ],
+ "repo/abcts-staffnonote-and-directives-tune10": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@671..672 note@672..673 note@673..674 note@674..675 bar@675..676"
+ ],
+ "repo/abcts-staffnonote-and-directives-tune11": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@717..718 note@718..719 note@719..720 note@720..721 bar@721..722"
+ ],
+ "repo/abcts-staffnonote-and-directives-tune12": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@767..768 note@768..769 note@769..770 note@770..771 bar@771..772"
+ ],
+ "repo/abcts-staffnonote-and-directives-tune13": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@828..829 note@829..830 note@830..831 note@831..832 bar@832..833"
+ ],
+ "repo/abcts-staffnonote-and-directives-tune14": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@889..890 note@890..891 note@891..892 note@892..893 bar@893..894"
+ ],
+ "repo/abcts-staffnonote-and-directives-tune15": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@952..953 note@953..954 note@954..955 note@955..956 bar@956..957"
+ ],
+ "repo/abcts-staffnonote-and-directives-tune16": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@1008..1009 note@1009..1010 note@1010..1011 note@1011..1012 bar@1012..1013"
+ ],
+ "repo/abcts-staffnonote-and-directives-tune0#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@47..48 note@48..49 note@49..50 note@50..51 bar@51..52"
+ ],
+ "repo/abcts-staffnonote-and-directives-tune1#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@95..96 note@96..97 note@97..98 note@98..99 bar@99..100",
+  "L0 s1 kept=key,clef",
+  "L0 s1 v0 note@105..106 note@106..107 note@107..108 note@108..109 bar@109..110"
+ ],
+ "repo/abcts-staffnonote-and-directives-tune2#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@161..162 note@162..163 note@163..164 note@164..165 bar@165..166",
+  "L0 s1 kept=key,clef",
+  "L0 s1 v0 note@171..172 note@172..173 note@173..174 note@174..175 bar@175..176"
+ ],
+ "repo/abcts-staffnonote-and-directives-tune3#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@230..231 note@231..232 note@232..233 note@233..234 bar@234..235",
+  "L0 s1 kept=key,clef",
+  "L0 s1 v0 note@240..244 note@244..245 note@245..246 note@246..247 bar@247..248"
+ ],
+ "repo/abcts-staffnonote-and-directives-tune4#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 stem@undefined..undefined note@313..314 note@314..315 note@315..316 note@316..317 bar@317..318",
+  "L0 s0 v1 stem@undefined..undefined note@323..324 note@324..325 note@325..326 note@326..327 bar@327..328"
+ ],
+ "repo/abcts-staffnonote-and-directives-tune5#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@379..380 note@380..381 note@381..382 note@382..383 bar@383..384",
+  "L0 s1 kept=key,clef",
+  "L0 s1 v0 note@399..400 note@400..401 note@401..402 note@402..403 bar@403..404"
+ ],
+ "repo/abcts-staffnonote-and-directives-tune6#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@452..453 note@453..454 note@454..455 note@455..456 bar@456..457",
+  "L0 s1 kept=key,clef",
+  "L0 s1 v0 note@462..463 note@463..464 note@464..465 note@465..466 bar@466..467"
+ ],
+ "repo/abcts-staffnonote-and-directives-tune7#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@517..518 note@518..519 note@519..520 note@520..521 bar@521..522"
+ ],
+ "repo/abcts-staffnonote-and-directives-tune8#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@575..576 note@576..577 note@577..578 note@578..579 bar@579..580"
+ ],
+ "repo/abcts-staffnonote-and-directives-tune9#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@624..625 note@625..626 note@626..627 note@627..628 bar@628..629"
+ ],
+ "repo/abcts-staffnonote-and-directives-tune10#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@671..672 note@672..673 note@673..674 note@674..675 bar@675..676"
+ ],
+ "repo/abcts-staffnonote-and-directives-tune11#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@717..718 note@718..719 note@719..720 note@720..721 bar@721..722"
+ ],
+ "repo/abcts-staffnonote-and-directives-tune12#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@767..768 note@768..769 note@769..770 note@770..771 bar@771..772"
+ ],
+ "repo/abcts-staffnonote-and-directives-tune13#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@828..829 note@829..830 note@830..831 note@831..832 bar@832..833"
+ ],
+ "repo/abcts-staffnonote-and-directives-tune14#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@889..890 note@890..891 note@891..892 note@892..893 bar@893..894"
+ ],
+ "repo/abcts-staffnonote-and-directives-tune15#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@952..953 note@953..954 note@954..955 note@955..956 bar@956..957"
+ ],
+ "repo/abcts-staffnonote-and-directives-tune16#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@1008..1009 note@1009..1010 note@1010..1011 note@1011..1012 bar@1012..1013"
+ ],
+ "repo/abcts-staffnonote-empty-staves-tune0": [],
+ "repo/abcts-staffnonote-empty-staves-tune1": [],
+ "repo/abcts-staffnonote-empty-staves-tune0#breaks": [],
+ "repo/abcts-staffnonote-empty-staves-tune1#breaks": [],
  "repo/abcts-start-char-tune0": [
   "L0 s0 kept=meter,key,clef",
   "L0 s0 v0 note@56..69 note@69..74 note@74..79 note@79..82 bar@82..83"
@@ -3102,6 +5108,616 @@
   "L0 s0 v0 note@456..457 break@undefined..undefined note@463..464 note@464..465 note@465..466 note@466..467 bar@467..468",
   "L0 s1 kept=meter,key,clef",
   "L0 s1 v0 note@474..477 bar@477..478"
+ ],
+ "repo/abcts-text-udef-parts-overlays-tune0": [
+  "L0 text",
+  "L1 s0 kept=key,clef",
+  "L1 s0 v0 note@40..41 note@41..42 note@42..43 note@43..44 bar@44..45"
+ ],
+ "repo/abcts-text-udef-parts-overlays-tune1": [
+  "L0 text",
+  "L1 s0 kept=key,clef",
+  "L1 s0 v0 note@86..87 note@87..88 note@88..89 note@89..90 bar@90..91"
+ ],
+ "repo/abcts-text-udef-parts-overlays-tune2": [
+  "L0 text",
+  "L1 s0 kept=key,clef",
+  "L1 s0 v0 note@127..128 note@128..129 note@129..130 note@130..131 bar@131..132"
+ ],
+ "repo/abcts-text-udef-parts-overlays-tune3": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@169..170 note@170..171 note@171..172 note@172..173 bar@173..174",
+  "L1 text",
+  "L2 s0 kept=key,clef",
+  "L2 s0 v0 note@190..191 note@191..192 note@192..193 note@193..194 bar@194..195"
+ ],
+ "repo/abcts-text-udef-parts-overlays-tune4": [
+  "L0 text",
+  "L1 text",
+  "L2 s0 kept=key,clef",
+  "L2 s0 v0 note@249..250 note@250..251 note@251..252 note@252..253 bar@253..254"
+ ],
+ "repo/abcts-text-udef-parts-overlays-tune5": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@300..301 note@301..302 note@302..303 note@303..304 bar@304..305",
+  "L0 s1 kept=key,clef",
+  "L0 s1 v0 note@310..311 note@311..312 note@312..313 note@313..314 bar@314..315"
+ ],
+ "repo/abcts-text-udef-parts-overlays-tune6": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@366..367 note@367..368 note@368..369 note@369..370 bar@370..371",
+  "L0 s1 kept=key,clef",
+  "L0 s1 v0 note@376..377 note@377..378 note@378..379 note@379..380 bar@380..381"
+ ],
+ "repo/abcts-text-udef-parts-overlays-tune7": [
+  "L0 text",
+  "L1 s0 kept=key,clef",
+  "L1 s0 v0 note@439..440 note@440..441 note@441..442 note@442..443 bar@443..444"
+ ],
+ "repo/abcts-text-udef-parts-overlays-tune8": [
+  "L0 text",
+  "L1 s0 kept=key,clef",
+  "L1 s0 v0 note@503..504 note@504..505 note@505..506 note@506..507 bar@507..508"
+ ],
+ "repo/abcts-text-udef-parts-overlays-tune9": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@554..555 note@555..556 note@556..557 note@557..558 bar@558..559"
+ ],
+ "repo/abcts-text-udef-parts-overlays-tune10": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@601..602 note@602..603 note@603..604 note@604..605 bar@605..606"
+ ],
+ "repo/abcts-text-udef-parts-overlays-tune11": [
+  "L0 subtitle",
+  "L1 s0 kept=key,clef",
+  "L1 s0 v0 note@656..657 note@657..658 note@658..659 note@659..660 bar@660..661"
+ ],
+ "repo/abcts-text-udef-parts-overlays-tune12": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@702..703 note@703..704 note@704..705 note@705..706 bar@706..707",
+  "L0 s1 kept=key,clef",
+  "L0 s1 v0 note@722..723 note@723..724 note@724..725 note@725..726 bar@726..727"
+ ],
+ "repo/abcts-text-udef-parts-overlays-tune13": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@781..782 note@782..783 note@783..784 note@784..785 bar@785..786",
+  "L0 s1 kept=key,clef",
+  "L0 s1 v0 note@791..792 note@792..793 note@793..794 note@794..795 bar@795..796"
+ ],
+ "repo/abcts-text-udef-parts-overlays-tune14": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 stem@undefined..undefined note@862..863 note@863..864 note@864..865 note@865..866 bar@866..867",
+  "L0 s0 v1 stem@undefined..undefined note@882..883 note@883..884 note@884..885 note@885..886 bar@886..887"
+ ],
+ "repo/abcts-text-udef-parts-overlays-tune15": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@926..927 note@927..928 note@928..929 note@929..930 bar@930..931 note@932..933 note@933..934 note@934..935 note@935..936 bar@936..937"
+ ],
+ "repo/abcts-text-udef-parts-overlays-tune16": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@990..992 note@992..993 note@993..994 note@994..995 bar@995..996"
+ ],
+ "repo/abcts-text-udef-parts-overlays-tune17": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@1043..1045 note@1045..1046 note@1046..1047 note@1047..1048 bar@1048..1049"
+ ],
+ "repo/abcts-text-udef-parts-overlays-tune18": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@1087..1089 note@1089..1090 note@1090..1091 note@1091..1092 bar@1092..1093"
+ ],
+ "repo/abcts-text-udef-parts-overlays-tune19": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@1137..1139 note@1139..1140 note@1140..1141 note@1141..1142 bar@1142..1143"
+ ],
+ "repo/abcts-text-udef-parts-overlays-tune20": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 part@1179..1182 note@1183..1184 note@1184..1185 note@1185..1186 note@1186..1187 bar@1187..1188 part@1189..1192 note@1193..1194 note@1194..1195 note@1195..1196 note@1196..1197 bar@1197..1198"
+ ],
+ "repo/abcts-text-udef-parts-overlays-tune21": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 part@1235..1238 note@1239..1240 note@1240..1241 note@1241..1242 note@1242..1243 bar@1243..1244 part@1245..1248 note@1249..1250 note@1250..1251 note@1251..1252 note@1252..1253 bar@1253..1254"
+ ],
+ "repo/abcts-text-udef-parts-overlays-tune22": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 part@1285..1290 note@1290..1291 note@1291..1292 note@1292..1293 note@1293..1294 bar@1294..1295 part@1295..1300 note@1300..1301 note@1301..1302 note@1302..1303 note@1303..1304 bar@1304..1305"
+ ],
+ "repo/abcts-text-udef-parts-overlays-tune23": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 part@1344..1347 note@1348..1349 note@1349..1350 note@1350..1351 note@1351..1352 bar@1352..1353 part@1354..1357 note@1358..1359 note@1359..1360 note@1360..1361 note@1361..1362 bar@1362..1363"
+ ],
+ "repo/abcts-text-udef-parts-overlays-tune24": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@1396..1397 note@1397..1398 note@1398..1399 note@1399..1400 stem@undefined..undefined bar@1400..1401 bar@1406..1407 stem@undefined..undefined",
+  "L0 s0 v1 stem@undefined..undefined note@1400..1401 bar@1400..1401 note@1402..1403 note@1403..1404 note@1404..1405 note@1405..1406 bar@1406..1407"
+ ],
+ "repo/abcts-text-udef-parts-overlays-tune25": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@1445..1446 note@1446..1447 note@1447..1448 note@1448..1449 stem@undefined..undefined bar@1449..1450 bar@1455..1456 stem@undefined..undefined",
+  "L0 s0 v1 stem@undefined..undefined note@1449..1450 bar@1449..1450 note@1451..1452 note@1452..1453 note@1453..1454 note@1454..1455 bar@1455..1456"
+ ],
+ "repo/abcts-text-udef-parts-overlays-tune26": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@1497..1498 note@1498..1499 note@1499..1500 note@1500..1501 stem@undefined..undefined bar@1501..1502 stem@undefined..undefined stem@undefined..undefined bar@1507..1508 bar@1513..1514 stem@undefined..undefined",
+  "L0 s0 v1 stem@undefined..undefined note@1501..1502 bar@1501..1502 note@1503..1504 note@1504..1505 note@1505..1506 note@1506..1507 bar@1507..1508 note@1509..1510 note@1510..1511 note@1511..1512 note@1512..1513 bar@1513..1514"
+ ],
+ "repo/abcts-text-udef-parts-overlays-tune27": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@1548..1549 note@1549..1550 note@1550..1551 note@1551..1552 stem@undefined..undefined bar@1552..1553 bar@1556..1557 stem@undefined..undefined",
+  "L0 s0 v1 stem@undefined..undefined note@1552..1553 bar@1552..1553 note@1554..1555 note@1555..1556 bar@1556..1557"
+ ],
+ "repo/abcts-text-udef-parts-overlays-tune28": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@1594..1595 note@1595..1596 clef@1596..1606 keySignature@1596..1606 note@1606..1607 note@1607..1608 stem@undefined..undefined bar@1608..1609 bar@1614..1615 stem@undefined..undefined",
+  "L0 s0 v1 stem@undefined..undefined note@1608..1609 bar@1608..1609 note@1610..1611 note@1611..1612 note@1612..1613 note@1613..1614 bar@1614..1615"
+ ],
+ "repo/abcts-text-udef-parts-overlays-tune29": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@1653..1657 note@1657..1658 note@1658..1659 note@1659..1660 stem@undefined..undefined bar@1660..1661 bar@1666..1667 stem@undefined..undefined",
+  "L0 s0 v1 stem@undefined..undefined note@1660..1661 bar@1660..1661 note@1662..1663 note@1663..1664 note@1664..1665 note@1665..1666 bar@1666..1667"
+ ],
+ "repo/abcts-text-udef-parts-overlays-tune30": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@1703..1704 note@1704..1705 note@1705..1706 note@1706..1707 stem@undefined..undefined bar@1707..1708 bar@1716..1717 stem@undefined..undefined",
+  "L0 s0 v1 stem@undefined..undefined note@1707..1708 bar@1707..1708 note@1709..1713 note@1713..1714 note@1714..1715 note@1715..1716 bar@1716..1717"
+ ],
+ "repo/abcts-text-udef-parts-overlays-tune31": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@1754..1755 note@1755..1756 note@1756..1757 note@1757..1758 note@1758..1759 note@1759..1760 note@1760..1761 note@1761..1762 stem@undefined..undefined bar@1762..1763 bar@1775..1776 stem@undefined..undefined",
+  "L0 s0 v1 stem@undefined..undefined note@1762..1763 bar@1762..1763 note@1764..1767 note@1767..1768 note@1768..1770 note@1770..1773 note@1773..1774 note@1774..1775 bar@1775..1776"
+ ],
+ "repo/abcts-text-udef-parts-overlays-tune32": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 part@1816..1819 note@1820..1821 note@1821..1822 note@1822..1823 note@1823..1824 bar@1824..1825 part@1836..1839 note@1840..1841 note@1841..1842 note@1842..1843 note@1843..1844 bar@1844..1845"
+ ],
+ "repo/abcts-text-udef-parts-overlays-tune33": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@1891..1896 note@1896..1897 note@1897..1898 note@1898..1899 bar@1899..1900"
+ ],
+ "repo/abcts-text-udef-parts-overlays-tune34": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@1942..1943 note@1943..1944 note@1944..1945 note@1945..1946 bar@1946..1947",
+  "L0 s1 kept=key,clef",
+  "L0 s1 v0 note@1963..1964 note@1964..1965 note@1965..1966 note@1966..1967 bar@1967..1968",
+  "L1 text"
+ ],
+ "repo/abcts-text-udef-parts-overlays-tune35": [
+  "L0 text",
+  "L1 s0 kept=key,clef",
+  "L1 s0 v0 note@2006..2007 note@2007..2008 note@2008..2009 note@2009..2010 bar@2010..2011"
+ ],
+ "repo/abcts-text-udef-parts-overlays-tune36": [
+  "L0 text",
+  "L1 s0 kept=key,clef",
+  "L1 s0 v0 note@2052..2053 note@2053..2054 note@2054..2055 note@2055..2056 bar@2056..2057"
+ ],
+ "repo/abcts-text-udef-parts-overlays-tune37": [
+  "L0 text",
+  "L1 text",
+  "L2 s0 kept=key,clef",
+  "L2 s0 v0 note@2107..2108 note@2108..2109 note@2109..2110 note@2110..2111 bar@2111..2112"
+ ],
+ "repo/abcts-text-udef-parts-overlays-tune38": [
+  "L0 text",
+  "L1 text",
+  "L2 s0 kept=key,clef",
+  "L2 s0 v0 note@2169..2170 note@2170..2171 note@2171..2172 note@2172..2173 bar@2173..2174"
+ ],
+ "repo/abcts-text-udef-parts-overlays-tune39": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@2212..2213 note@2213..2214 note@2214..2215 note@2215..2216 bar@2216..2217",
+  "L1 text",
+  "L2 s0 kept=key,clef",
+  "L2 s0 v0 note@2225..2226 note@2226..2227 note@2227..2228 note@2228..2229 bar@2229..2230"
+ ],
+ "repo/abcts-text-udef-parts-overlays-tune40": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@2274..2276 note@2276..2277 note@2277..2278 note@2278..2279 bar@2279..2280"
+ ],
+ "repo/abcts-text-udef-parts-overlays-tune41": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@2318..2330 note@2330..2331 note@2331..2332 note@2332..2333 bar@2333..2334"
+ ],
+ "repo/abcts-text-udef-parts-overlays-tune42": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@2366..2375 note@2375..2376 note@2376..2377 note@2377..2378 bar@2378..2379"
+ ],
+ "repo/abcts-text-udef-parts-overlays-tune43": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 bar@2415..2424 note@2425..2426 note@2426..2427 note@2427..2428 note@2428..2429 bar@2429..2430"
+ ],
+ "repo/abcts-text-udef-parts-overlays-tune44": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@2469..2470 note@2470..2471 note@2471..2472 note@2472..2473 bar@2473..2474 bar@2479..2488 note@2489..2490 note@2490..2491 note@2491..2492 note@2492..2493 bar@2493..2494"
+ ],
+ "repo/abcts-text-udef-parts-overlays-tune45": [
+  "L0 text",
+  "L1 s0 kept=key,clef",
+  "L1 s0 v0 note@2555..2556 note@2556..2557 note@2557..2558 note@2558..2559 bar@2559..2560"
+ ],
+ "repo/abcts-text-udef-parts-overlays-tune46": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@2601..2602 note@2602..2603 note@2603..2604 note@2604..2605 bar@2605..2606"
+ ],
+ "repo/abcts-text-udef-parts-overlays-tune47": [
+  "L0 text",
+  "L1 text",
+  "L2 s0 kept=key,clef",
+  "L2 s0 v0 note@2675..2676 note@2676..2677 note@2677..2678 note@2678..2679 bar@2679..2680"
+ ],
+ "repo/abcts-text-udef-parts-overlays-tune48": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@2718..2719 note@2719..2720 note@2720..2721 note@2721..2722 bar@2722..2723",
+  "L1 text",
+  "L2 s0 kept=key,clef",
+  "L2 s0 v0 note@2746..2747 note@2747..2748 note@2748..2749 note@2749..2750 bar@2750..2751"
+ ],
+ "repo/abcts-text-udef-parts-overlays-tune49": [
+  "L0 subtitle",
+  "L1 subtitle",
+  "L2 s0 kept=key,clef",
+  "L2 s0 v0 note@2811..2812 note@2812..2813 note@2813..2814 note@2814..2815 bar@2815..2816"
+ ],
+ "repo/abcts-text-udef-parts-overlays-tune50": [
+  "L0 subtitle",
+  "L1 subtitle",
+  "L2 s0 kept=key,clef",
+  "L2 s0 v0 note@2873..2874 note@2874..2875 note@2875..2876 note@2876..2877 bar@2877..2878"
+ ],
+ "repo/abcts-text-udef-parts-overlays-tune51": [
+  "L0 subtitle",
+  "L1 s0 kept=key,clef",
+  "L1 s0 v0 note@2928..2929 note@2929..2930 note@2930..2931 note@2931..2932 bar@2932..2933",
+  "L2 subtitle"
+ ],
+ "repo/abcts-text-udef-parts-overlays-tune52": [
+  "L0 subtitle",
+  "L1 subtitle",
+  "L2 s0 kept=key,clef",
+  "L2 s0 v0 note@2993..2994 note@2994..2995 note@2995..2996 note@2996..2997 bar@2997..2998"
+ ],
+ "repo/abcts-text-udef-parts-overlays-tune53": [
+  "L0 subtitle",
+  "L1 s0 kept=key,clef",
+  "L1 s0 v0 note@3045..3046 note@3046..3047 note@3047..3048 note@3048..3049 bar@3049..3050",
+  "L2 subtitle",
+  "L3 s0 kept=key,clef",
+  "L3 s0 v0 note@3057..3058 note@3058..3059 note@3059..3060 note@3060..3061 bar@3061..3062"
+ ],
+ "repo/abcts-text-udef-parts-overlays-tune54": [
+  "L0 subtitle",
+  "L1 subtitle",
+  "L2 s0 kept=key,clef",
+  "L2 s0 v0 note@3128..3129 note@3129..3130 note@3130..3131 note@3131..3132 bar@3132..3133"
+ ],
+ "repo/abcts-text-udef-parts-overlays-tune55": [
+  "L0 subtitle",
+  "L1 s0 kept=key,clef",
+  "L1 s0 v0 note@3179..3180 note@3180..3181 note@3181..3182 note@3182..3183 bar@3183..3184"
+ ],
+ "repo/abcts-text-udef-parts-overlays-tune0#breaks": [
+  "L0 text",
+  "L1 s0 kept=key,clef",
+  "L1 s0 v0 note@40..41 note@41..42 note@42..43 note@43..44 bar@44..45"
+ ],
+ "repo/abcts-text-udef-parts-overlays-tune1#breaks": [
+  "L0 text",
+  "L1 s0 kept=key,clef",
+  "L1 s0 v0 note@86..87 note@87..88 note@88..89 note@89..90 bar@90..91"
+ ],
+ "repo/abcts-text-udef-parts-overlays-tune2#breaks": [
+  "L0 text",
+  "L1 s0 kept=key,clef",
+  "L1 s0 v0 note@127..128 note@128..129 note@129..130 note@130..131 bar@131..132"
+ ],
+ "repo/abcts-text-udef-parts-overlays-tune3#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@169..170 note@170..171 note@171..172 note@172..173 bar@173..174",
+  "L1 text",
+  "L2 s0 kept=key,clef",
+  "L2 s0 v0 note@190..191 note@191..192 note@192..193 note@193..194 bar@194..195"
+ ],
+ "repo/abcts-text-udef-parts-overlays-tune4#breaks": [
+  "L0 text",
+  "L1 text",
+  "L2 s0 kept=key,clef",
+  "L2 s0 v0 note@249..250 note@250..251 note@251..252 note@252..253 bar@253..254"
+ ],
+ "repo/abcts-text-udef-parts-overlays-tune5#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@300..301 note@301..302 note@302..303 note@303..304 bar@304..305",
+  "L0 s1 kept=key,clef",
+  "L0 s1 v0 note@310..311 note@311..312 note@312..313 note@313..314 bar@314..315"
+ ],
+ "repo/abcts-text-udef-parts-overlays-tune6#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@366..367 note@367..368 note@368..369 note@369..370 bar@370..371",
+  "L0 s1 kept=key,clef",
+  "L0 s1 v0 note@376..377 note@377..378 note@378..379 note@379..380 bar@380..381"
+ ],
+ "repo/abcts-text-udef-parts-overlays-tune7#breaks": [
+  "L0 text",
+  "L1 s0 kept=key,clef",
+  "L1 s0 v0 note@439..440 note@440..441 note@441..442 note@442..443 bar@443..444"
+ ],
+ "repo/abcts-text-udef-parts-overlays-tune8#breaks": [
+  "L0 text",
+  "L1 s0 kept=key,clef",
+  "L1 s0 v0 note@503..504 note@504..505 note@505..506 note@506..507 bar@507..508"
+ ],
+ "repo/abcts-text-udef-parts-overlays-tune9#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@554..555 note@555..556 note@556..557 note@557..558 bar@558..559"
+ ],
+ "repo/abcts-text-udef-parts-overlays-tune10#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@601..602 note@602..603 note@603..604 note@604..605 bar@605..606"
+ ],
+ "repo/abcts-text-udef-parts-overlays-tune11#breaks": [
+  "L0 subtitle",
+  "L1 s0 kept=key,clef",
+  "L1 s0 v0 note@656..657 note@657..658 note@658..659 note@659..660 bar@660..661"
+ ],
+ "repo/abcts-text-udef-parts-overlays-tune12#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@702..703 note@703..704 note@704..705 note@705..706 bar@706..707",
+  "L0 s1 kept=key,clef",
+  "L0 s1 v0 note@722..723 note@723..724 note@724..725 note@725..726 bar@726..727"
+ ],
+ "repo/abcts-text-udef-parts-overlays-tune13#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@781..782 note@782..783 note@783..784 note@784..785 bar@785..786",
+  "L0 s1 kept=key,clef",
+  "L0 s1 v0 note@791..792 note@792..793 note@793..794 note@794..795 bar@795..796"
+ ],
+ "repo/abcts-text-udef-parts-overlays-tune14#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 stem@undefined..undefined note@862..863 note@863..864 note@864..865 note@865..866 bar@866..867",
+  "L0 s0 v1 stem@undefined..undefined note@882..883 note@883..884 note@884..885 note@885..886 bar@886..887"
+ ],
+ "repo/abcts-text-udef-parts-overlays-tune15#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@926..927 note@927..928 note@928..929 note@929..930 bar@930..931 break@undefined..undefined note@932..933 note@933..934 note@934..935 note@935..936 bar@936..937"
+ ],
+ "repo/abcts-text-udef-parts-overlays-tune16#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@990..992 note@992..993 note@993..994 note@994..995 bar@995..996"
+ ],
+ "repo/abcts-text-udef-parts-overlays-tune17#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@1043..1045 note@1045..1046 note@1046..1047 note@1047..1048 bar@1048..1049"
+ ],
+ "repo/abcts-text-udef-parts-overlays-tune18#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@1087..1089 note@1089..1090 note@1090..1091 note@1091..1092 bar@1092..1093"
+ ],
+ "repo/abcts-text-udef-parts-overlays-tune19#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@1137..1139 note@1139..1140 note@1140..1141 note@1141..1142 bar@1142..1143"
+ ],
+ "repo/abcts-text-udef-parts-overlays-tune20#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 part@1179..1182 note@1183..1184 note@1184..1185 note@1185..1186 note@1186..1187 bar@1187..1188 break@undefined..undefined part@1189..1192 note@1193..1194 note@1194..1195 note@1195..1196 note@1196..1197 bar@1197..1198"
+ ],
+ "repo/abcts-text-udef-parts-overlays-tune21#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 part@1235..1238 note@1239..1240 note@1240..1241 note@1241..1242 note@1242..1243 bar@1243..1244 break@undefined..undefined part@1245..1248 note@1249..1250 note@1250..1251 note@1251..1252 note@1252..1253 bar@1253..1254"
+ ],
+ "repo/abcts-text-udef-parts-overlays-tune22#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 part@1285..1290 note@1290..1291 note@1291..1292 note@1292..1293 note@1293..1294 bar@1294..1295 part@1295..1300 note@1300..1301 note@1301..1302 note@1302..1303 note@1303..1304 bar@1304..1305"
+ ],
+ "repo/abcts-text-udef-parts-overlays-tune23#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 part@1344..1347 note@1348..1349 note@1349..1350 note@1350..1351 note@1351..1352 bar@1352..1353 break@undefined..undefined part@1354..1357 note@1358..1359 note@1359..1360 note@1360..1361 note@1361..1362 bar@1362..1363"
+ ],
+ "repo/abcts-text-udef-parts-overlays-tune24#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@1396..1397 note@1397..1398 note@1398..1399 note@1399..1400 stem@undefined..undefined bar@1400..1401 bar@1406..1407 stem@undefined..undefined",
+  "L0 s0 v1 stem@undefined..undefined note@1400..1401 bar@1400..1401 note@1402..1403 note@1403..1404 note@1404..1405 note@1405..1406 bar@1406..1407"
+ ],
+ "repo/abcts-text-udef-parts-overlays-tune25#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@1445..1446 note@1446..1447 note@1447..1448 note@1448..1449 stem@undefined..undefined bar@1449..1450 bar@1455..1456 stem@undefined..undefined",
+  "L0 s0 v1 stem@undefined..undefined note@1449..1450 bar@1449..1450 note@1451..1452 note@1452..1453 note@1453..1454 note@1454..1455 bar@1455..1456"
+ ],
+ "repo/abcts-text-udef-parts-overlays-tune26#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@1497..1498 note@1498..1499 note@1499..1500 note@1500..1501 stem@undefined..undefined bar@1501..1502 stem@undefined..undefined stem@undefined..undefined bar@1507..1508 bar@1513..1514 stem@undefined..undefined",
+  "L0 s0 v1 stem@undefined..undefined note@1501..1502 bar@1501..1502 note@1503..1504 note@1504..1505 note@1505..1506 note@1506..1507 bar@1507..1508 note@1509..1510 note@1510..1511 note@1511..1512 note@1512..1513 bar@1513..1514"
+ ],
+ "repo/abcts-text-udef-parts-overlays-tune27#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@1548..1549 note@1549..1550 note@1550..1551 note@1551..1552 stem@undefined..undefined bar@1552..1553 bar@1556..1557 stem@undefined..undefined",
+  "L0 s0 v1 stem@undefined..undefined note@1552..1553 bar@1552..1553 note@1554..1555 note@1555..1556 bar@1556..1557"
+ ],
+ "repo/abcts-text-udef-parts-overlays-tune28#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@1594..1595 note@1595..1596 clef@1596..1606 keySignature@1596..1606 note@1606..1607 note@1607..1608 stem@undefined..undefined bar@1608..1609 bar@1614..1615 stem@undefined..undefined",
+  "L0 s0 v1 stem@undefined..undefined note@1608..1609 bar@1608..1609 note@1610..1611 note@1611..1612 note@1612..1613 note@1613..1614 bar@1614..1615"
+ ],
+ "repo/abcts-text-udef-parts-overlays-tune29#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@1653..1657 note@1657..1658 note@1658..1659 note@1659..1660 stem@undefined..undefined bar@1660..1661 bar@1666..1667 stem@undefined..undefined",
+  "L0 s0 v1 stem@undefined..undefined note@1660..1661 bar@1660..1661 note@1662..1663 note@1663..1664 note@1664..1665 note@1665..1666 bar@1666..1667"
+ ],
+ "repo/abcts-text-udef-parts-overlays-tune30#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@1703..1704 note@1704..1705 note@1705..1706 note@1706..1707 stem@undefined..undefined bar@1707..1708 bar@1716..1717 stem@undefined..undefined",
+  "L0 s0 v1 stem@undefined..undefined note@1707..1708 bar@1707..1708 note@1709..1713 note@1713..1714 note@1714..1715 note@1715..1716 bar@1716..1717"
+ ],
+ "repo/abcts-text-udef-parts-overlays-tune31#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@1754..1755 note@1755..1756 note@1756..1757 note@1757..1758 note@1758..1759 note@1759..1760 note@1760..1761 note@1761..1762 stem@undefined..undefined bar@1762..1763 bar@1775..1776 stem@undefined..undefined",
+  "L0 s0 v1 stem@undefined..undefined note@1762..1763 bar@1762..1763 note@1764..1767 note@1767..1768 note@1768..1770 note@1770..1773 note@1773..1774 note@1774..1775 bar@1775..1776"
+ ],
+ "repo/abcts-text-udef-parts-overlays-tune32#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 part@1816..1819 note@1820..1821 note@1821..1822 note@1822..1823 note@1823..1824 bar@1824..1825 break@undefined..undefined part@1836..1839 note@1840..1841 note@1841..1842 note@1842..1843 note@1843..1844 bar@1844..1845"
+ ],
+ "repo/abcts-text-udef-parts-overlays-tune33#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@1891..1896 note@1896..1897 note@1897..1898 note@1898..1899 bar@1899..1900"
+ ],
+ "repo/abcts-text-udef-parts-overlays-tune34#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@1942..1943 note@1943..1944 note@1944..1945 note@1945..1946 bar@1946..1947",
+  "L0 s1 kept=key,clef",
+  "L0 s1 v0 note@1963..1964 note@1964..1965 note@1965..1966 note@1966..1967 bar@1967..1968",
+  "L1 text"
+ ],
+ "repo/abcts-text-udef-parts-overlays-tune35#breaks": [
+  "L0 text",
+  "L1 s0 kept=key,clef",
+  "L1 s0 v0 note@2006..2007 note@2007..2008 note@2008..2009 note@2009..2010 bar@2010..2011"
+ ],
+ "repo/abcts-text-udef-parts-overlays-tune36#breaks": [
+  "L0 text",
+  "L1 s0 kept=key,clef",
+  "L1 s0 v0 note@2052..2053 note@2053..2054 note@2054..2055 note@2055..2056 bar@2056..2057"
+ ],
+ "repo/abcts-text-udef-parts-overlays-tune37#breaks": [
+  "L0 text",
+  "L1 text",
+  "L2 s0 kept=key,clef",
+  "L2 s0 v0 note@2107..2108 note@2108..2109 note@2109..2110 note@2110..2111 bar@2111..2112"
+ ],
+ "repo/abcts-text-udef-parts-overlays-tune38#breaks": [
+  "L0 text",
+  "L1 text",
+  "L2 s0 kept=key,clef",
+  "L2 s0 v0 note@2169..2170 note@2170..2171 note@2171..2172 note@2172..2173 bar@2173..2174"
+ ],
+ "repo/abcts-text-udef-parts-overlays-tune39#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@2212..2213 note@2213..2214 note@2214..2215 note@2215..2216 bar@2216..2217",
+  "L1 text",
+  "L2 s0 kept=key,clef",
+  "L2 s0 v0 note@2225..2226 note@2226..2227 note@2227..2228 note@2228..2229 bar@2229..2230"
+ ],
+ "repo/abcts-text-udef-parts-overlays-tune40#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@2274..2276 note@2276..2277 note@2277..2278 note@2278..2279 bar@2279..2280"
+ ],
+ "repo/abcts-text-udef-parts-overlays-tune41#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@2318..2330 note@2330..2331 note@2331..2332 note@2332..2333 bar@2333..2334"
+ ],
+ "repo/abcts-text-udef-parts-overlays-tune42#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@2366..2375 note@2375..2376 note@2376..2377 note@2377..2378 bar@2378..2379"
+ ],
+ "repo/abcts-text-udef-parts-overlays-tune43#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 bar@2415..2424 note@2425..2426 note@2426..2427 note@2427..2428 note@2428..2429 bar@2429..2430"
+ ],
+ "repo/abcts-text-udef-parts-overlays-tune44#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@2469..2470 note@2470..2471 note@2471..2472 note@2472..2473 bar@2473..2474 bar@2479..2488 note@2489..2490 note@2490..2491 note@2491..2492 note@2492..2493 bar@2493..2494"
+ ],
+ "repo/abcts-text-udef-parts-overlays-tune45#breaks": [
+  "L0 text",
+  "L1 s0 kept=key,clef",
+  "L1 s0 v0 note@2555..2556 note@2556..2557 note@2557..2558 note@2558..2559 bar@2559..2560"
+ ],
+ "repo/abcts-text-udef-parts-overlays-tune46#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@2601..2602 note@2602..2603 note@2603..2604 note@2604..2605 bar@2605..2606"
+ ],
+ "repo/abcts-text-udef-parts-overlays-tune47#breaks": [
+  "L0 text",
+  "L1 text",
+  "L2 s0 kept=key,clef",
+  "L2 s0 v0 note@2675..2676 note@2676..2677 note@2677..2678 note@2678..2679 bar@2679..2680"
+ ],
+ "repo/abcts-text-udef-parts-overlays-tune48#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@2718..2719 note@2719..2720 note@2720..2721 note@2721..2722 bar@2722..2723",
+  "L1 text",
+  "L2 s0 kept=key,clef",
+  "L2 s0 v0 note@2746..2747 note@2747..2748 note@2748..2749 note@2749..2750 bar@2750..2751"
+ ],
+ "repo/abcts-text-udef-parts-overlays-tune49#breaks": [
+  "L0 subtitle",
+  "L1 subtitle",
+  "L2 s0 kept=key,clef",
+  "L2 s0 v0 note@2811..2812 note@2812..2813 note@2813..2814 note@2814..2815 bar@2815..2816"
+ ],
+ "repo/abcts-text-udef-parts-overlays-tune50#breaks": [
+  "L0 subtitle",
+  "L1 subtitle",
+  "L2 s0 kept=key,clef",
+  "L2 s0 v0 note@2873..2874 note@2874..2875 note@2875..2876 note@2876..2877 bar@2877..2878"
+ ],
+ "repo/abcts-text-udef-parts-overlays-tune51#breaks": [
+  "L0 subtitle",
+  "L1 s0 kept=key,clef",
+  "L1 s0 v0 note@2928..2929 note@2929..2930 note@2930..2931 note@2931..2932 bar@2932..2933",
+  "L2 subtitle"
+ ],
+ "repo/abcts-text-udef-parts-overlays-tune52#breaks": [
+  "L0 subtitle",
+  "L1 subtitle",
+  "L2 s0 kept=key,clef",
+  "L2 s0 v0 note@2993..2994 note@2994..2995 note@2995..2996 note@2996..2997 bar@2997..2998"
+ ],
+ "repo/abcts-text-udef-parts-overlays-tune53#breaks": [
+  "L0 subtitle",
+  "L1 s0 kept=key,clef",
+  "L1 s0 v0 note@3045..3046 note@3046..3047 note@3047..3048 note@3048..3049 bar@3049..3050",
+  "L2 subtitle",
+  "L3 s0 kept=key,clef",
+  "L3 s0 v0 note@3057..3058 note@3058..3059 note@3059..3060 note@3060..3061 bar@3061..3062"
+ ],
+ "repo/abcts-text-udef-parts-overlays-tune54#breaks": [
+  "L0 subtitle",
+  "L1 subtitle",
+  "L2 s0 kept=key,clef",
+  "L2 s0 v0 note@3128..3129 note@3129..3130 note@3130..3131 note@3131..3132 bar@3132..3133"
+ ],
+ "repo/abcts-text-udef-parts-overlays-tune55#breaks": [
+  "L0 subtitle",
+  "L1 s0 kept=key,clef",
+  "L1 s0 v0 note@3179..3180 note@3180..3181 note@3181..3182 note@3182..3183 bar@3183..3184"
+ ],
+ "repo/abcts-unknown-clef-tune0": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@38..39 note@39..40 note@40..41 note@41..42 bar@42..43"
+ ],
+ "repo/abcts-unknown-clef-tune1": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@87..88 note@88..89 note@89..90 note@90..91 bar@91..92"
+ ],
+ "repo/abcts-unknown-clef-tune2": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@134..135 note@135..136 note@136..137 note@137..138 bar@138..139"
+ ],
+ "repo/abcts-unknown-clef-tune3": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@187..188 note@188..189 note@189..190 note@190..191 bar@191..192"
+ ],
+ "repo/abcts-unknown-clef-tune4": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@227..228 note@228..229 note@229..230 note@230..231 bar@231..232 clef@233..245 keySignature@233..245 clef@-1..-1 note@245..246 note@246..247 note@247..248 note@248..249 bar@249..250"
+ ],
+ "repo/abcts-unknown-clef-tune0#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@38..39 note@39..40 note@40..41 note@41..42 bar@42..43"
+ ],
+ "repo/abcts-unknown-clef-tune1#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@87..88 note@88..89 note@89..90 note@90..91 bar@91..92"
+ ],
+ "repo/abcts-unknown-clef-tune2#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@134..135 note@135..136 note@136..137 note@137..138 bar@138..139"
+ ],
+ "repo/abcts-unknown-clef-tune3#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@187..188 note@188..189 note@189..190 note@190..191 bar@191..192"
+ ],
+ "repo/abcts-unknown-clef-tune4#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@227..228 note@228..229 note@229..230 note@230..231 bar@231..232 clef@233..245 keySignature@233..245 break@undefined..undefined clef@-1..-1 note@245..246 note@246..247 note@247..248 note@248..249 bar@249..250"
  ],
  "repo/abcts-visualtranspose-tune0": [
   "L0 s0 kept=meter,key,clef",
@@ -3334,6 +5950,126 @@
  "repo/abcts-voice-style-tune4#breaks": [
   "L0 s0 kept=key,clef",
   "L0 s0 v0 style@undefined..undefined note@306..307 note@307..308 note@308..309 note@309..310 bar@310..311 note@311..312 note@312..313 note@313..314 note@314..315 bar@315..316"
+ ],
+ "repo/abcts-void-notes-and-stray-ties-tune0": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@24..26 bar@26..27 note@30..33 bar@33..35"
+ ],
+ "repo/abcts-void-notes-and-stray-ties-tune1": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@65..67 note@67..68 note@68..69 note@69..70 bar@70..71"
+ ],
+ "repo/abcts-void-notes-and-stray-ties-tune2": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@104..105 note@105..106 note@106..107 note@107..108 bar@108..109"
+ ],
+ "repo/abcts-void-notes-and-stray-ties-tune3": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@150..153 bar@153..154"
+ ],
+ "repo/abcts-void-notes-and-stray-ties-tune4": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@186..187 note@187..188 note@188..189 note@189..190 bar@190..191 note@191..193 note@193..194 note@194..195 note@195..196 bar@196..197"
+ ],
+ "repo/abcts-void-notes-and-stray-ties-tune5": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@224..226 note@226..228 note@228..229 note@229..230 bar@230..231"
+ ],
+ "repo/abcts-void-notes-and-stray-ties-tune6": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@266..269 note@269..271 bar@271..272"
+ ],
+ "repo/abcts-void-notes-and-stray-ties-tune7": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@315..318 bar@318..319"
+ ],
+ "repo/abcts-void-notes-and-stray-ties-tune8": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@352..357 note@357..359 bar@359..360"
+ ],
+ "repo/abcts-void-notes-and-stray-ties-tune9": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@395..398 note@399..401 bar@401..402"
+ ],
+ "repo/abcts-void-notes-and-stray-ties-tune10": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@434..438 bar@438..439 note@439..442 bar@442..443"
+ ],
+ "repo/abcts-void-notes-and-stray-ties-tune11": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@476..480 note@480..482 bar@482..483"
+ ],
+ "repo/abcts-void-notes-and-stray-ties-tune12": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@516..520 note@520..522 note@522..524 bar@524..525"
+ ],
+ "repo/abcts-void-notes-and-stray-ties-tune13": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@555..561 note@561..563 bar@563..564"
+ ],
+ "repo/abcts-void-notes-and-stray-ties-tune14": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@598..602 note@602..607 note@607..609 bar@609..610"
+ ],
+ "repo/abcts-void-notes-and-stray-ties-tune0#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@24..26 bar@26..27 note@30..33 bar@33..35"
+ ],
+ "repo/abcts-void-notes-and-stray-ties-tune1#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@65..67 note@67..68 note@68..69 note@69..70 bar@70..71"
+ ],
+ "repo/abcts-void-notes-and-stray-ties-tune2#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@104..105 note@105..106 note@106..107 note@107..108 bar@108..109"
+ ],
+ "repo/abcts-void-notes-and-stray-ties-tune3#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@150..153 bar@153..154"
+ ],
+ "repo/abcts-void-notes-and-stray-ties-tune4#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@186..187 note@187..188 note@188..189 note@189..190 bar@190..191 note@191..193 note@193..194 note@194..195 note@195..196 bar@196..197"
+ ],
+ "repo/abcts-void-notes-and-stray-ties-tune5#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@224..226 note@226..228 note@228..229 note@229..230 bar@230..231"
+ ],
+ "repo/abcts-void-notes-and-stray-ties-tune6#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@266..269 note@269..271 bar@271..272"
+ ],
+ "repo/abcts-void-notes-and-stray-ties-tune7#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@315..318 bar@318..319"
+ ],
+ "repo/abcts-void-notes-and-stray-ties-tune8#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@352..357 note@357..359 bar@359..360"
+ ],
+ "repo/abcts-void-notes-and-stray-ties-tune9#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@395..398 break@undefined..undefined note@399..401 bar@401..402"
+ ],
+ "repo/abcts-void-notes-and-stray-ties-tune10#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@434..438 bar@438..439 note@439..442 bar@442..443"
+ ],
+ "repo/abcts-void-notes-and-stray-ties-tune11#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@476..480 note@480..482 bar@482..483"
+ ],
+ "repo/abcts-void-notes-and-stray-ties-tune12#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@516..520 note@520..522 note@522..524 bar@524..525"
+ ],
+ "repo/abcts-void-notes-and-stray-ties-tune13#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@555..561 note@561..563 bar@563..564"
+ ],
+ "repo/abcts-void-notes-and-stray-ties-tune14#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@598..602 note@602..607 note@607..609 bar@609..610"
  ],
  "repo/abcts-vskip-tune0": [
   "L0 s0 kept=meter,key,clef",
@@ -4190,6 +6926,14 @@
   "L0 subtitle",
   "L1 s0 kept=meter,key,clef",
   "L1 s0 v0 part@347..376 note@377..382 note@382..385 note@385..386 bar@386..387 note@387..392 note@392..394 bar@394..395 note@395..401 note@401..404 note@404..405 bar@405..406 note@406..412 note@412..414 bar@414..415 break@undefined..undefined note@503..508 note@508..511 note@511..512 bar@512..513 note@513..518 note@518..520 bar@520..521 note@521..527 note@527..530 note@530..531 bar@531..532 note@532..538 note@538..540 bar@540..542"
+ ],
+ "sib/grace-note-placement-tune0": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@98..105 note@105..113 note@113..118 bar@118..119 note@120..127 note@127..134 note@134..140 bar@140..141"
+ ],
+ "sib/grace-note-placement-tune0#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@98..105 note@105..113 note@113..118 bar@118..119 break@undefined..undefined note@120..127 note@127..134 note@134..140 bar@140..141"
  ],
  "sib/grandstaff-inline-meter-tune0": [
   "L0 s0 kept=meter,key,clef",

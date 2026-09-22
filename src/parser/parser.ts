@@ -1956,7 +1956,26 @@ class VoiceBuilder {
 
   beginMusicLine(): void {
     this.lineNoteStart = this.noteCounter
+    /**
+     * **A BLOCK WRITTEN BETWEEN TWO LINES BELONGS TO THE LINE BELOW, NOT THE UNBARRED ONE
+     * ABOVE.** `%%text`, `%%vskip` and `%%newpage` standing before this line are already in
+     * the pending slots when it opens, and closing the previous line's unterminated measure
+     * here would let THAT measure claim them (`takeTextBefore` on a system-opening measure)
+     * — so `G,\n%%text C\nG,` put `C` above the second `G,` where abcjs `pushLine`s it
+     * after (`tune-builder.js:296-320`; abcjs 6.7.1's own `visual/layout` "text A"
+     * fixture). Held aside for the length of the close, which a barline-terminated line
+     * never needs because its last measure closed before the block was read.
+     */
+    const heldText = this.pendingTextBefore.blocks
+    const heldVskip = this.pendingVskip.value
+    const heldNewPage = this.pendingNewPage.value
+    this.pendingTextBefore.blocks = []
+    this.pendingVskip.value = null
+    this.pendingNewPage.value = null
     this.closeUnterminatedMeasure()
+    this.pendingTextBefore.blocks = heldText
+    this.pendingVskip.value = heldVskip
+    this.pendingNewPage.value = heldNewPage
     this.pendingLineStart = true
     this.wroteSinceLineStart = false
     this.appendedSinceLineStart = false
@@ -2917,6 +2936,8 @@ class ScoreBuilder {
   noteFormatting(key: string): void {
     if (!this.formattingOrder.includes(key)) this.formattingOrder.push(key)
   }
+  /** `%%map` and the four beside it — see `ScoreMetadata.recordedDirectives`. */
+  recordedDirectives: Record<string, string> = {}
   /** `%%header` / `%%footer` — see `ScoreMetadata.runningHead`. */
   runningHead: Partial<Record<'header' | 'footer', RunningHead>> = {}
   /** `metaTextInfo` — see `ScoreMetadata.fieldRanges`. `title` lives in `titleRanges`. */
@@ -3102,6 +3123,9 @@ class ScoreBuilder {
   musicSpace: number | null = null
   /** The other `oneParameterMeasurement` directives — see `ScoreMetadata.measurements`. */
   measurements: Record<string, number> = {}
+  /** `%%papersize` / `%%landscape` — see `ScoreMetadata.papersize`. */
+  papersize: string | null = null
+  landscape = false
   /** `%%titleleft` — see `ScoreMetadata.titleLeft`. */
   titleLeft = false
   /** `%%bagpipes` — see `ScoreMetadata.bagpipes`. */
@@ -3570,6 +3594,9 @@ class ScoreBuilder {
       staffSep: this.staffSep,
       musicSpace: this.musicSpace,
       measurements: this.measurements,
+      ...(this.papersize === null ? {} : { papersize: this.papersize }),
+      ...(Object.keys(this.recordedDirectives).length === 0 ? {} : { recordedDirectives: this.recordedDirectives }),
+      ...(this.landscape ? { landscape: true } : {}),
       titleLeft: this.titleLeft,
       bagpipes: this.bagpipes,
       flatBeams: this.flatBeams,
@@ -4321,11 +4348,24 @@ class Parser {
      * not "not implemented by abcjs"** — enumerating abcjs's own switch against this file
      * named eighteen such directives and SEVENTEEN were already byte-exact in the drawing.
      *
-     * `papersize` sets `multilineVars.papersize` and nothing reads it; the four `%%-` info
-     * fields are `-charset`, `-version`, `-creator` and `-edited-by`, which abcjs accepts
-     * and drops (`abc_parse_directive.js`, the arms beside `landscape`).
+     * The four `%%-` info fields are `-charset`, `-version`, `-creator` and `-edited-by`,
+     * which abcjs accepts and drops (`abc_parse_directive.js`, the arms beside `landscape`).
+     *
+     * `papersize` and `landscape` are NOT silent after all — this note once said "nothing
+     * reads it", and `abc_parse.js:579-594` reads both once the tune is parsed, to default
+     * `formatting.pagewidth`/`pageheight`. Found by the `formatting` gate the day the
+     * oracle widened to `abcts-staffnonote-and-directives` (2026-09-22).
      */
-    if (/^(papersize|-charset|-version|-creator|-edited-by)\b/.test(body)) return
+    if (/^(-charset|-version|-creator|-edited-by)\b/.test(body)) return
+    const paper = /^papersize\s+(\S*)/.exec(body)
+    if (paper !== null) {
+      this.ensureScore(start).papersize = paper[1] ?? ''
+      return
+    }
+    if (/^landscape\b/.test(body)) {
+      this.ensureScore(start).landscape = true
+      return
+    }
     /**
      * **`%%staffnonote` — AND THE SENSE OF THE BOOLEAN IS OPPOSITE.** abcjs's own comment
      * says so: *"The sense of the boolean is opposite here. `0` means true"*
@@ -4762,9 +4802,15 @@ class Parser {
      * RECORDED and unimplemented rather than unknown, and only `%%voicemap` beside them
      * warns. Ours warned on all five.
      */
-    const RECORDED_ONLY = /^(map|playtempo|auquality|continuous|nobarcheck)\b/.exec(body)
+    const RECORDED_ONLY = /^(map|playtempo|auquality|continuous|nobarcheck)\b(.*)$/.exec(body)
     if (RECORDED_ONLY !== null) {
-      this.ensureScore(start).noteFormatting(RECORDED_ONLY[1] as string)
+      const b = this.ensureScore(start)
+      b.noteFormatting(RECORDED_ONLY[1] as string)
+      // …and the VALUE is `restOfString` — the rest of the line, comment stripped, trimmed
+      // (`abc_parse_directive.js:755-756`, `abc_tokenizer.js:723-728`).
+      b.recordedDirectives[RECORDED_ONLY[1] as string] = (RECORDED_ONLY[2] ?? '')
+        .replace(/%.*$/, '')
+        .trim()
       return
     }
     this.info(

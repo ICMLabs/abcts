@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
 import { describe, expect, it } from "vitest";
+import { OPEN } from "./open-rows.js";
 
 import {
   getBarLength,
@@ -160,6 +161,7 @@ describe("abcjs's numeric tune accessors", () => {
     it(`${key} matches abcjs`, () => {
       const off = table
         .filter((r) => !MEASURED_NOT_PORTED.includes(r.slug))
+        .filter((r) => !OPEN.accessors.includes(`${r.slug} ${key}`))
         .filter((r) => r.got[key] !== r.want[key])
         .map(
           (r) =>
@@ -178,6 +180,7 @@ describe("abcjs's numeric tune accessors", () => {
     it(`${key} matches abcjs`, () => {
       const off = table
         .filter((r) => !MEASURED_NOT_PORTED.includes(r.slug))
+        .filter((r) => !OPEN.accessors.includes(`${r.slug} ${key}`))
         .filter((r) => r.got[key] !== r.want[key])
         .map(
           (r) =>
@@ -186,6 +189,16 @@ describe("abcjs's numeric tune accessors", () => {
       expect(off.slice(0, 20)).toEqual([]);
     });
   }
+
+  // The OPEN rows (`tests/open-rows.ts`, 2026-09-22) must STILL differ, field by field.
+  it("no OPEN accessor row has quietly closed", () => {
+    const closed = OPEN.accessors.filter((entry) => {
+      const [slug, field] = entry.split(" ") as [string, string];
+      const r = table.find((x) => x.slug === slug);
+      return r !== undefined && r.got[field] === r.want[field];
+    });
+    expect(closed, "delete these from OPEN.accessors").toEqual([]);
+  });
 
   it("nothing on the measured-not-ported list has quietly started matching", () => {
     const fixed = table

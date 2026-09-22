@@ -1,6 +1,6 @@
 # PARITY STATUS — abcts vs abcjs 6.7.1
 
-*Measured 2026-09-16, on commit `3e31b24`, by running every gate in the repo plus both
+*Measured 2026-09-16 on commit `3e31b24` (browser comparisons) and re-run 2026-09-22 after the abcjs 6.7.1 re-harvest (every headless gate), by running every gate in the repo plus both
 browser comparisons. Every number below is a re-run, not a carried-forward claim.*
 
 **The one-line answer: rendered with the options a page normally passes, abcts and abcjs
@@ -31,13 +31,13 @@ together they let a markup difference live forever.
 
 | gate | what it compares | result |
 |---|---|---|
-| `svg-bytes` | 691 in-repo tunes, rendered headless | **0 differ** (6 divergent) |
-| `svg-bytes-sibling` | 356 tunes from the 41-fixture corpus, in 5 flavours — plain, `--add-classes`, print, stacked, stacked-print | **0 differ** |
+| `svg-bytes` | 697 in-repo tunes, rendered headless | **0 differ** (6 divergent) |
+| `svg-bytes-sibling` | 359 tunes from the 47-fixture corpus, in 5 flavours — plain, `--add-classes`, print, stacked, stacked-print | **0 differ** |
 | `zzlive` (WebKit) | abcts and abcjs running **in the same browser page**, diffed live | **0 of 685** (6 divergent) |
 | `zzlive` (Chrome) | the same, in Blink | **0 of 685** (6 divergent) |
 | `dom-contract` | `class`, `data-name` and DOM depth over 25 tunes — what `querySelector` finds | **0 differ** |
-| `pixel-parity` | notehead/ledger/stem centres to 0.05px, against abcjs's own SVGs | **0 of 120** |
-| `corpus-ranked` (diagnostic, not a gate) | worst geometric axis per fixture | **1 of 231** — and it is `abcts-unknown-clef`, a declared divergence (§3) |
+| `pixel-parity` | notehead/ledger/stem centres to 0.05px, against abcjs's own SVGs | **0 of 121** |
+| `corpus-ranked` (diagnostic, not a gate) | worst geometric axis per fixture | **1 of 237** — and it is `abcts-unknown-clef`, a declared divergence (§3) |
 
 **Why the browser check matters and why it cannot be a stored golden.** abcjs does not agree
 with *itself* across browsers: 230 of 691 tunes render differently in WebKit and Blink,
@@ -179,7 +179,7 @@ disagree, and each of these has disagreed with the others at least once.
 
 | gate | what it compares | result |
 |---|---|---|
-| `midi-bytes` | the **MIDI file, byte for byte**, over all 691 tunes | **0 differ** (19 divergent) |
+| `midi-bytes` | the **MIDI file, byte for byte**, over all 697 tunes | **0 differ** (19 divergent) |
 | `audio-ranked` | the flattened event list — every note's pitch, start, duration, volume | **0 of 72** |
 | `timing-ranked` | `setTiming` — the clock a player follows | **0 of 38** |
 | `timing-elements` | `currentTrackMilliseconds` — which written element is lit | **0 of 13** |
@@ -225,6 +225,30 @@ down, with evidence, in `Docs/ABCJS-DIFFERENCES.md`, and its slug is in the gate
 | writes **`NaN` into the tempo** — `Math.round(60000000 / undefined)` is `NaN`, and `toHex(NaN, 6)` pads the *string* `"NaN"` and slices it into `%00%0N%aN`. Its own decoder reads those as 0 and 10, giving a tempo of ~2.6 microseconds per quarter note. We write the 180bpm default. | 16 |
 | **throws outright**, so a host gets no file at all — a rich `T:` reaching `charCodeAt` as an object, and two `Cannot read properties of undefined` | 3 |
 
+### 3b. OPEN — measured 2026-09-22, named, not yet fixed
+
+Not divergences: **defects on the tune-object surfaces that the widened oracles named**, on
+hand-written `abcts-*` control tunes that no tune-object oracle had ever covered. Each is
+listed by exact slug in `tests/open-rows.ts`; every gate asserts zero over everything NOT
+named there and asserts each named row STILL differs, so a row cannot rot — fixing one makes
+the gate demand its name be deleted. The families, from the ranked tables:
+
+| family | fixtures | what differs |
+|---|---|---|
+| mid-measure `[K: clef=]` | `abcts-clef-midmeasure` tunes 10, 15–18, 20, 21 | `tune.lines`: the clef element / `verticalPos` of the notes after it (`lines`, `deline`, `parse-only`, `parse-values`, `render-values`) |
+| `%%stafflines` / voice modifiers | `abcts-stafflines-and-modifiers` 4, 15, 41, 42 (34: `totalTime`) | key-signature element shape carrying `stafflines`; a `stem` element; span of a graced note |
+| `%%staffnonote` | `abcts-staffnonote-and-directives` 0, 5, 7; `-empty-staves` 0, 1 | notes on the silent staff appear in our stream and not abcjs's |
+| tie into a rest / void note | `abcts-void-notes-and-stray-ties` 0, 1, 4, 7–14 | `pitches.endTie` on the note after; one `sequence` row |
+| `%%vskip` / `%%text` line rows | `abcts-text-udef-parts-overlays` 2, 7, 30, 34, 36–39, 45, 47–49, 54 | `line.vskip`, `line.text`, a `nonMusic` line; a `stem` element (30) |
+| `clef=x` | `abcts-unknown-clef` 0–4 | the ruled divergence (§3) seen from the tune object: abcjs's `type: "x"` and debug marker |
+| one-offs | `abcts-endings` 5, `abcts-rests-and-bars` 1 / 14, `abcts-tempo-rung` 2, `abcts-grace-order-and-lanes` 15, `abcts-inline-fields-and-blocks` 2 | a `rest` value; `pickupLength`; `totalTime`/`totalBeats` |
+
+Two of the widened oracle's findings WERE fixed the same day, both on a new upstream
+fixture: a `%%text` between two UNBARRED music lines was claimed by the line above
+(`beginMusicLine` closing the previous measure after the block was pending — `visual-layout-10-text-a`, which also moved the SVG's height), and `%%papersize`/`%%landscape` were
+documented as "nothing reads it" while `abc_parse.js:579-594` sizes `formatting.pagewidth`
+/`pageheight` from them; `%%map` and its four siblings now publish their `restOfString`.
+
 ### And one abcjs bug we decline to reproduce because it is a hang
 
 `%%beginps` with a non-empty body **never returns**: the reader advances the tokenizer but
@@ -237,15 +261,23 @@ user-supplied input is a denial of service, not a rendering difference.
 
 ## 4. Everything else that is measured
 
-All at zero, re-run 2026-09-06. These are the parse and API surfaces rather than the output.
+Re-run 2026-09-22, after the abcjs 6.7.1 re-harvest. These are the parse and API surfaces
+rather than the output. ⚠️ **The oracles WIDENED that day**: every tune-object harvester
+enumerates the whole fixture directory, and most had last been run at 507 tunes while the
+directory had grown to 822 with the `abcts-*` control ladders — so 315 tunes were being asked
+these questions for the first time. What they answered is §3b; every row common to the old
+and new oracle is byte-identical, so none of it is a 6.7.1 change.
 
 | surface | result |
 |---|---|
-| `tune.lines` — every element's source span | **0 of 499 tunes; 607,177 of 607,177 characters** |
-| `parse-values` — every value of every element | **0 of 13,314** |
-| `parse-only`, `voices-array`, `deline`, `extract-measures`, `setupevents` | **0** on 507 / 215 / 998 / 274 / 180 cases |
-| `tune.warnings` — the strings a host shows | **0 of 815 tunes**, 542 warnings across 93 |
-| `metaText` / `metaTextInfo` / `formatting` / `tuneMetrics` | **0** |
+| `tune.lines` — every element's source span | **12 of 814 tunes OPEN (§3b); 1,204,877 of 1,204,999 characters** |
+| `parse-values` — every value of every element | **88 of 16,223 OPEN**, on 46 tunes (§3b) |
+| `render-values` — every value of every rendered element | **71 of 16,223 OPEN**, on 48 tunes (§3b) |
+| `parse-only`, `voices-array`, `deline`, `extract-measures`, `setupevents` | 28 / 0 / 24 / 0 / 0 OPEN on 822 / 237 / 1,644 / 284 / 186 cases |
+| `sequence` | **1 of 237 OPEN** |
+| `accessors` — the nine numeric tune accessors | **9 field-rows OPEN** of 822 tunes × 9 |
+| `tune.warnings` — the strings a host shows | **0 of 822 tunes**, 542 warnings across 93 |
+| `metaText` / `metaTextInfo` / `formatting` / `tuneMetrics` / `toptext` / `timing-callbacks` / `tunebook` | **0** on 822 / 822 / 822 / 284 / 822 / 140 / 259 |
 | `compat-surface` — abcjs's 64 public symbols | **0 absent** |
 | `selectables`, `dom`, `editor`, `synth-controller` | **0** |
 

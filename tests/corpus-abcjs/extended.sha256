@@ -83,6 +83,8 @@ c968d334dc84ee8a  abcjs-synth-timing-09-f-c-2d-2-e-4-g-6-a-2-g-4-e-4
 2e059672e069f15c  abcjs-synth-timing-10-stretchlast-1
 eddd23a33cf52dbd  abcjs-synth-timing-11-stretchlast-1
 833a131e913eba69  abcjs-synth-timing-12-stretchlast-1
+c4becbc997ab4830  abcjs-synth-timing-13-a-b-c-d-e-f-g
+21d4a76017594e88  abcjs-synth-timing-14-a-b-c-d-e-f-g
 c4becbc997ab4830  abcjs-synth-timing-y02
 21d4a76017594e88  abcjs-synth-timing-y03
 31606d50922cac21  abcjs-visual-decorations-01-score-s-a-b
@@ -98,6 +100,7 @@ a5713d0e285d90a0  abcjs-visual-layout-01-barlabelfont-times-bold-18-box
 880448c4e590d2cf  abcjs-visual-layout-07-v-1-b2-a2
 d840da8f3a5fcbd1  abcjs-visual-layout-08-staffwidth-100
 e60c776ec2da1461  abcjs-visual-layout-09-endings
+69d08137756ef88d  abcjs-visual-layout-10-text-a
 8ac46551fc95b0e0  abcjs-visual-misc-01-barnumbers-1
 a9aad9f3771edeb9  abcjs-visual-misc-02-title
 a33cf8bb42cf14cd  abcjs-visual-misc-03-jazzchords
@@ -133,7 +136,10 @@ e82addd089ae1cd1  abcjs-visual-parsing-02-sx
 03d87be1ddf662f0  abcjs-visual-parsing-07-score-t-b
 97f54f2c167f1fbc  abcjs-visual-parsing-08-score-t-b
 9f2f299046c36f06  abcjs-visual-parsing-09-score-t-b
-bf0a7f7406424ca4  abcjs-visual-parsing-10-song
+64812beaa98b92ef  abcjs-visual-parsing-10-main
+ddd7398785386090  abcjs-visual-parsing-11-c2-d2-e2-f2-k-f-g2-a2-b2-c2
+bf0a7f7406424ca4  abcjs-visual-parsing-12-song
+de4a6b8edc93a61a  abcjs-visual-parsing-13-class-alice-a-class-bob-t-dfa
 07ac0bcb546e242e  abcjs-visual-parsing-x10
 64812beaa98b92ef  abcjs-visual-parsing-x11
 ddd7398785386090  abcjs-visual-parsing-x12

@@ -479,10 +479,14 @@ const WITHIN: Readonly<Record<string, number>> = {
   // AND the lane, which is the same ruling the note longer than a breve already has. See
   // `Docs/ABCJS-DIFFERENCES.md` and `svg-bytes`'s `DIVERGENT`.
   // …and `abcts-grace-order-and-lanes`, 24 lane-boundary shapes plus the grace ladder.
-  "0.05": 230,
-  "1": 230,
-  "5": 230,
-  "25": 231,
+  // …and the 2026-09-22 re-harvest from abcjs 6.7.1: six new upstream tunes (two
+  // `synth/timing`, one `visual/layout`, three `visual/parsing`), all at ZERO — the
+  // `layout-10-text-a` one after a parser fix (a `%%text` between two UNBARRED lines was
+  // claimed by the line above).
+  "0.05": 236,
+  "1": 236,
+  "5": 236,
+  "25": 237,
 };
 
 const names = readdirSync(fixturesDir)

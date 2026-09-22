@@ -697,6 +697,14 @@
   "topText": [],
   "bottomText": []
  },
+ "repo/abcjs-synth-timing-13-a-b-c-d-e-f-g-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "repo/abcjs-synth-timing-14-a-b-c-d-e-f-g-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
  "repo/abcjs-synth-timing-y02-tune0": {
   "topText": [],
   "bottomText": []
@@ -805,6 +813,10 @@
     "move": 33
    }
   ],
+  "bottomText": []
+ },
+ "repo/abcjs-visual-layout-10-text-a-tune0": {
+  "topText": [],
   "bottomText": []
  },
  "repo/abcjs-visual-misc-01-barnumbers-1-tune0": {
@@ -1993,7 +2005,32 @@
   "topText": [],
   "bottomText": []
  },
- "repo/abcjs-visual-parsing-10-song-tune0": {
+ "repo/abcjs-visual-parsing-10-main-tune0": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Main",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 4,
+    "endChar": 10,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcjs-visual-parsing-11-c2-d2-e2-f2-k-f-g2-a2-b2-c2-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "repo/abcjs-visual-parsing-12-song-tune0": {
   "topText": [
    {
     "move": 7.56
@@ -2044,6 +2081,10 @@
     "move": 23
    }
   ],
+  "bottomText": []
+ },
+ "repo/abcjs-visual-parsing-13-class-alice-a-class-bob-t-dfa-tune0": {
+  "topText": [],
   "bottomText": []
  },
  "repo/abcjs-visual-parsing-x10-tune0": {
@@ -3344,6 +3385,1329 @@
   "topText": [],
   "bottomText": []
  },
+ "repo/abcts-bars-graces-and-groups-tune0": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Double Repeat",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 4,
+    "endChar": 19,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-bars-graces-and-groups-tune1": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Ending 3",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 51,
+    "endChar": 61,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-bars-graces-and-groups-tune2": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Ending List",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 99,
+    "endChar": 112,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-bars-graces-and-groups-tune3": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Invisible Bar",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 154,
+    "endChar": 169,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-bars-graces-and-groups-tune4": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Dotted Bar",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 194,
+    "endChar": 206,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-bars-graces-and-groups-tune5": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Thick Thin",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 230,
+    "endChar": 242,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-bars-graces-and-groups-tune6": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Grace Chord",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 266,
+    "endChar": 279,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-bars-graces-and-groups-tune7": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Grace Long",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 308,
+    "endChar": 320,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-bars-graces-and-groups-tune8": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Grace Acciaccatura",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 351,
+    "endChar": 371,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-bars-graces-and-groups-tune9": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Grace With Accidental",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 398,
+    "endChar": 421,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-bars-graces-and-groups-tune10": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Grace On Rest",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 452,
+    "endChar": 467,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-bars-graces-and-groups-tune11": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Grace Tied",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 494,
+    "endChar": 506,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-bars-graces-and-groups-tune12": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Chord Slash",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 533,
+    "endChar": 546,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-bars-graces-and-groups-tune13": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Chord Complex",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 574,
+    "endChar": 589,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-bars-graces-and-groups-tune14": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Chord Newline",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 622,
+    "endChar": 637,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-bars-graces-and-groups-tune15": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Chord And Annotation",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 667,
+    "endChar": 689,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-bars-graces-and-groups-tune16": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Chord Flat Sharp",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 721,
+    "endChar": 739,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-bars-graces-and-groups-tune17": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Tuplet Nested Ratio",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 771,
+    "endChar": 792,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-bars-graces-and-groups-tune18": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Tuplet With Rest",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 822,
+    "endChar": 840,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-bars-graces-and-groups-tune19": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Tuplet Across Bar",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 869,
+    "endChar": 888,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-bars-graces-and-groups-tune20": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Tuplet Beamed Mixed",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 916,
+    "endChar": 937,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-bars-graces-and-groups-tune21": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Score Braces",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 967,
+    "endChar": 981,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-bars-graces-and-groups-tune22": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Score Brackets",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 1032,
+    "endChar": 1048,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-bars-graces-and-groups-tune23": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Score Continued",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 1099,
+    "endChar": 1116,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-bars-graces-and-groups-tune24": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Staves Nested",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 1167,
+    "endChar": 1182,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-bars-graces-and-groups-tune25": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Acc Across Octave",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 1248,
+    "endChar": 1267,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-bars-graces-and-groups-tune26": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Acc After Bar",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 1291,
+    "endChar": 1306,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-bars-graces-and-groups-tune27": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Acc In Chord",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 1335,
+    "endChar": 1349,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-bars-graces-and-groups-tune28": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Acc Tied Over Bar",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 1377,
+    "endChar": 1396,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-bars-graces-and-groups-tune29": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Broken Double",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 1427,
+    "endChar": 1442,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-bars-graces-and-groups-tune30": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Broken With Tuplet",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 1470,
+    "endChar": 1490,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-bars-graces-and-groups-tune31": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Broken Across Rest",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 1520,
+    "endChar": 1540,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-bars-graces-and-groups-tune32": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Stretchlast",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 1566,
+    "endChar": 1579,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-bars-graces-and-groups-tune33": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Maxstaves",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 1624,
+    "endChar": 1635,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-bars-graces-and-groups-tune34": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Barsperstaff",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 1686,
+    "endChar": 1700,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-bars-graces-and-groups-tune35": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Measurenb",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 1750,
+    "endChar": 1761,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-bars-graces-and-groups-tune36": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Close Then Open",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 1808,
+    "endChar": 1825,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-bars-graces-and-groups-tune37": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Double Colon",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 1859,
+    "endChar": 1873,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-bars-graces-and-groups-tune38": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Plain Repeat",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 1905,
+    "endChar": 1919,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-bars-graces-and-groups-tune39": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Open Only",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 1945,
+    "endChar": 1956,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-bars-graces-and-groups-tune40": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Colon Bar Colon 3",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 1986,
+    "endChar": 2005,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-clef-midmeasure-tune0": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Inline Clef Mid Measure Bass",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 4,
+    "endChar": 34,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-clef-midmeasure-tune1": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Inline Clef Mid Measure Alto",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 66,
+    "endChar": 96,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-clef-midmeasure-tune2": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Standalone Clef Line Mid Tune",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 133,
+    "endChar": 164,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-clef-midmeasure-tune3": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Two Inline Clefs One Line",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 206,
+    "endChar": 233,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-clef-midmeasure-tune4": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Inline Clef Leading Its Measure",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 282,
+    "endChar": 315,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-clef-midmeasure-tune5": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Inline Clef Before Last Note",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 347,
+    "endChar": 377,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-clef-midmeasure-tune6": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Inline Clef Then Plain Bar",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 410,
+    "endChar": 438,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-clef-midmeasure-tune7": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Inline Clef Then Next Line",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 475,
+    "endChar": 503,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-clef-midmeasure-tune8": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Inline Clef Perc Mid Measure",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 541,
+    "endChar": 571,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-clef-midmeasure-tune9": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Inline Clef With Chord And Accidental",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 604,
+    "endChar": 643,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-clef-midmeasure-tune10": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Inline Clef Mid Measure Two Voices",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 683,
+    "endChar": 719,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-clef-midmeasure-tune11": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Inline Clef Mid Beam",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 766,
+    "endChar": 788,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-clef-midmeasure-tune12": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Inline Clef With Lyrics",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 825,
+    "endChar": 850,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-clef-midmeasure-tune13": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Inline Clef Octave Shift",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 904,
+    "endChar": 930,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-clef-midmeasure-tune14": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Inline Clef None Mid Measure",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 965,
+    "endChar": 995,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-clef-midmeasure-tune15": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Trailing Standalone Clef",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 1033,
+    "endChar": 1059,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-clef-midmeasure-tune16": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Trailing Inline Clef",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 1096,
+    "endChar": 1118,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-clef-midmeasure-tune17": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Standalone Clef Between Voices",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 1151,
+    "endChar": 1183,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-clef-midmeasure-tune18": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Three Voices Running Clef",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 1234,
+    "endChar": 1261,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-clef-midmeasure-tune19": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Declared Clefs Resist The Running One",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 1318,
+    "endChar": 1357,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-clef-midmeasure-tune20": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Voice Order Interleaved",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 1436,
+    "endChar": 1461,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-clef-midmeasure-tune21": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Trailing Standalone Key Only",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 1518,
+    "endChar": 1548,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
  "repo/abcts-decorations-tune0": {
   "topText": [
    {
@@ -3875,6 +5239,1305 @@
   ],
   "bottomText": []
  },
+ "repo/abcts-endings-tune0": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "a bracketted ending number",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 317,
+    "endChar": 345,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-endings-tune1": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "whitespace before the bracket, which is absorbed with it",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 379,
+    "endChar": 437,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-endings-tune2": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "a quoted ending label, whose closing bracket is its own barline",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 465,
+    "endChar": 530,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-endings-tune3": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "an ending with nothing whatever after it",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 579,
+    "endChar": 621,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-endings-tune4": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "an ending whose measure never closes",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 642,
+    "endChar": 680,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-endings-tune5": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "a leading dash is not an ending, and the bracket reverts with it",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 702,
+    "endChar": 768,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-endings-tune6": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "a real chord after a barline is not an ending",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 796,
+    "endChar": 843,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-endings-tune7": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "one ending for several passes",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 870,
+    "endChar": 901,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-grace-order-and-lanes-tune0": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Grace Then Deco",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 4,
+    "endChar": 21,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-grace-order-and-lanes-tune1": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Deco Then Grace",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 54,
+    "endChar": 71,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-grace-order-and-lanes-tune2": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "One Grace Deco",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 104,
+    "endChar": 120,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-grace-order-and-lanes-tune3": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Grace Chord",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 152,
+    "endChar": 165,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-grace-order-and-lanes-tune4": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "One Grace Chord",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 194,
+    "endChar": 211,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-grace-order-and-lanes-tune5": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Grace Chord Deco",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 239,
+    "endChar": 257,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-grace-order-and-lanes-tune6": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Chord And Annot",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 293,
+    "endChar": 310,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-grace-order-and-lanes-tune7": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Chord Annot Deco",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 341,
+    "endChar": 359,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-grace-order-and-lanes-tune8": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Annot Below Lyric",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 397,
+    "endChar": 416,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-grace-order-and-lanes-tune9": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Dyn And Lyric",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 455,
+    "endChar": 470,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-grace-order-and-lanes-tune10": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Dyn Lyric Hairpin",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 506,
+    "endChar": 525,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-grace-order-and-lanes-tune11": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Part And Chord",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 566,
+    "endChar": 582,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   },
+   {
+    "left": 15,
+    "text": "A",
+    "font": "partsfont",
+    "anchor": "start",
+    "startChar": 589,
+    "endChar": 592,
+    "absElemType": "partOrder",
+    "name": "part-order"
+   },
+   {
+    "move": 24
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-grace-order-and-lanes-tune12": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Tempo And Chord",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 616,
+    "endChar": 633,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-grace-order-and-lanes-tune13": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Tempo Part Chord",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 668,
+    "endChar": 686,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   },
+   {
+    "left": 15,
+    "text": "A",
+    "font": "partsfont",
+    "anchor": "start",
+    "startChar": 702,
+    "endChar": 705,
+    "absElemType": "partOrder",
+    "name": "part-order"
+   },
+   {
+    "move": 24
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-grace-order-and-lanes-tune14": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Ending And Chord",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 736,
+    "endChar": 754,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-grace-order-and-lanes-tune15": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Volta Tempo",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 796,
+    "endChar": 809,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-grace-order-and-lanes-tune16": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Two Voice Lanes",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 858,
+    "endChar": 875,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-grace-order-and-lanes-tune17": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Lyric Two Verses",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 939,
+    "endChar": 957,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-grace-order-and-lanes-tune18": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Slur Over Chord",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 1000,
+    "endChar": 1017,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-grace-order-and-lanes-tune19": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Grace Deco Slur",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 1048,
+    "endChar": 1065,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-grace-order-and-lanes-tune20": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Ledger And Lyric",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 1101,
+    "endChar": 1119,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-grace-order-and-lanes-tune21": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Ledger And Chord",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 1156,
+    "endChar": 1174,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-grace-order-and-lanes-tune22": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Annot 4 Stack",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 1204,
+    "endChar": 1219,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-grace-order-and-lanes-tune23": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Annot Below Stack",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 1258,
+    "endChar": 1277,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-grace-order-and-lanes-tune24": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Deco Stack 3",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 1312,
+    "endChar": 1326,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-grace-order-and-lanes-tune25": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Deco Below Stack",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 1371,
+    "endChar": 1389,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-grace-order-and-lanes-tune26": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "All At Once",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 1438,
+    "endChar": 1451,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   },
+   {
+    "left": 15,
+    "text": "A",
+    "font": "partsfont",
+    "anchor": "start",
+    "startChar": 1467,
+    "endChar": 1470,
+    "absElemType": "partOrder",
+    "name": "part-order"
+   },
+   {
+    "move": 24
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-grace-order-and-lanes-tune27": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Tuplet And Chord",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 1526,
+    "endChar": 1544,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-grace-order-and-lanes-tune28": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Tuplet Slur Deco",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 1577,
+    "endChar": 1595,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-grace-tie-tune0": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "two graces tied",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 250,
+    "endChar": 267,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-grace-tie-tune1": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "three graces, the middle one both ends",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 295,
+    "endChar": 335,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-grace-tie-tune2": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "tied across two different pitches, which draws a SLUR",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 365,
+    "endChar": 420,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-grace-tie-tune3": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "a startTie the group never closes",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 448,
+    "endChar": 483,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-grace-tie-tune4": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "a tie inside a group that also carries a slur",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 513,
+    "endChar": 560,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-grace-tie-tune5": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "tied graces on a chord",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 590,
+    "endChar": 614,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-grace-tie-tune6": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "a tied pair beside an acciaccatura",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 646,
+    "endChar": 682,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-grace-tie-tune7": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "tied graces in a group long enough to beam",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 711,
+    "endChar": 755,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-inline-fields-and-blocks-tune0": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Inline Q Mid Measure",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 4,
+    "endChar": 26,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-inline-fields-and-blocks-tune1": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Inline Q Leading",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 58,
+    "endChar": 76,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-inline-fields-and-blocks-tune2": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Inline Q After Barline",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 108,
+    "endChar": 132,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-inline-fields-and-blocks-tune3": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Inline Q Before Last Note",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 169,
+    "endChar": 196,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-inline-fields-and-blocks-tune4": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Inline Q With Text",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 228,
+    "endChar": 248,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-inline-fields-and-blocks-tune5": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Left And Right Annotations",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 280,
+    "endChar": 308,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-inline-fields-and-blocks-tune6": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Left Annotation Only",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 336,
+    "endChar": 358,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-inline-fields-and-blocks-tune7": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Right Annotation Only",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 381,
+    "endChar": 404,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-inline-fields-and-blocks-tune8": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Two Left Annotations",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 427,
+    "endChar": 449,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-inline-fields-and-blocks-tune9": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Both Sides One Note",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 478,
+    "endChar": 499,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-inline-fields-and-blocks-tune10": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Begintext Before Music",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 526,
+    "endChar": 550,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-inline-fields-and-blocks-tune11": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Begintext After Music",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 609,
+    "endChar": 632,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-inline-fields-and-blocks-tune12": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Begintext In Header",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 685,
+    "endChar": 706,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-inline-fields-and-blocks-tune13": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Begintext Three Lines",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 766,
+    "endChar": 789,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-inline-fields-and-blocks-tune14": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Begintext Align",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 854,
+    "endChar": 871,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
  "repo/abcts-key-modifiers-tune0": {
   "topText": [
    {
@@ -4118,6 +6781,27 @@
     "anchor": "middle",
     "startChar": 657,
     "endChar": 676,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-key-modifiers-tune12": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Key Clef None",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 720,
+    "endChar": 735,
     "absElemType": "title",
     "name": "title"
    },
@@ -4859,6 +7543,258 @@
     "anchor": "middle",
     "startChar": 720,
     "endChar": 739,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-lyric-verses-tune0": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Short Verse Then Long",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 4,
+    "endChar": 27,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-lyric-verses-tune1": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Short Short Long",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 65,
+    "endChar": 83,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-lyric-verses-tune2": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Stars Then Full",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 127,
+    "endChar": 144,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-lyric-verses-tune3": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Long Then Short",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 186,
+    "endChar": 203,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-lyric-verses-tune4": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Hyphenated First Verse",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 241,
+    "endChar": 265,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-lyric-verses-tune5": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Two Bars Uneven Verses",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 307,
+    "endChar": 331,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-lyric-verses-tune6": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Held Note One Syllable",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 382,
+    "endChar": 406,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-lyric-verses-tune7": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Standalone Melisma Holds",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 441,
+    "endChar": 467,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-lyric-verses-tune8": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Attached Melisma Divider",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 499,
+    "endChar": 525,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-lyric-verses-tune9": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Standalone Hold Mid Line",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 559,
+    "endChar": 585,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-lyric-verses-tune10": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Standalone Holds With Second Verse",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 618,
+    "endChar": 654,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-lyric-verses-tune11": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Verses On A Second Voice",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 697,
+    "endChar": 723,
     "absElemType": "title",
     "name": "title"
    },
@@ -6233,6 +9169,174 @@
   ],
   "bottomText": []
  },
+ "repo/abcts-pitch-style-tune0": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "style on the lowest head",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 348,
+    "endChar": 374,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-pitch-style-tune1": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "style on a head needing a ledger",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 430,
+    "endChar": 464,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-pitch-style-tune2": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "two styles in one chord",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 506,
+    "endChar": 531,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-pitch-style-tune3": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "a style beside an ordinary decoration on another head",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 587,
+    "endChar": 642,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-pitch-style-tune4": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "down-stemmed, where heads[0] is not the stem's",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 695,
+    "endChar": 743,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-pitch-style-tune5": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "a style on a whole note and on a half",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 790,
+    "endChar": 829,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-pitch-style-tune6": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "a styled head under a tie and a slur",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 883,
+    "endChar": 921,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-pitch-style-tune7": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "a style with the element's own style beside it",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 963,
+    "endChar": 1011,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
  "repo/abcts-positioning-tune0": {
   "topText": [
    {
@@ -6392,6 +9496,405 @@
     "anchor": "middle",
     "startChar": 615,
     "endChar": 632,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-rests-and-bars-tune0": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "a decoration on a barline, drawn after the barline's own rule",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 1645,
+    "endChar": 1708,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-rests-and-bars-tune1": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "a tie into a rest, which never closes and runs off the line",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 1740,
+    "endChar": 1801,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-rests-and-bars-tune2": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "the same tie with no rest, which does close",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 1824,
+    "endChar": 1869,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-rests-and-bars-tune3": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "a decoration on a rest",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 1892,
+    "endChar": 1916,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-rests-and-bars-tune4": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "a grace group on a rest",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 1946,
+    "endChar": 1971,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-rests-and-bars-tune5": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "an inline key change mid-measure",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 1997,
+    "endChar": 2031,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-rests-and-bars-tune6": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "an inline meter change mid-measure",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 2058,
+    "endChar": 2094,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-rests-and-bars-tune7": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "a decoration on a barline that opens a measure",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 2123,
+    "endChar": 2171,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-rests-and-bars-tune8": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "a decorated multimeasure rest, whose count comes between bar and mark",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 2208,
+    "endChar": 2279,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-rests-and-bars-tune9": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "a multimeasure rest with no decoration at all",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 2312,
+    "endChar": 2359,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-rests-and-bars-tune10": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "an arpeggio on a barline, which abcjs parses and does not draw",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 2383,
+    "endChar": 2447,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-rests-and-bars-tune11": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "an arpeggio on a rest, whose min and max pitch are one",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 2497,
+    "endChar": 2553,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-rests-and-bars-tune12": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "a duration no notehead and dots can spell, which is still drawn",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 2597,
+    "endChar": 2662,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-rests-and-bars-tune13": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "the breve boundary either side of it",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 2688,
+    "endChar": 2726,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-rests-and-bars-tune14": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "a note longer than a breve, which abcjs marks with a debug string",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 2751,
+    "endChar": 2818,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-rests-and-bars-tune15": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "a note shorter than a 64th, whose flag table has run out",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 2844,
+    "endChar": 2902,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-shared-staff-rests-tune0": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Shared Staff Shared No Directive",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 4,
+    "endChar": 38,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-shared-staff-rests-tune1": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Shared Staff Shared Both Notes",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 88,
+    "endChar": 120,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-shared-staff-rests-tune2": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Shared Staff Shared Rests Only",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 170,
+    "endChar": 202,
     "absElemType": "title",
     "name": "title"
    },
@@ -6602,6 +10105,1455 @@
     "anchor": "middle",
     "startChar": 932,
     "endChar": 988,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-stafflines-and-modifiers-tune0": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Stafflines 1",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 4,
+    "endChar": 18,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-stafflines-and-modifiers-tune1": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Stafflines 0",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 57,
+    "endChar": 71,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-stafflines-and-modifiers-tune2": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Stafflines 3",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 110,
+    "endChar": 124,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-stafflines-and-modifiers-tune3": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Stafflines Key",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 163,
+    "endChar": 179,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-stafflines-and-modifiers-tune4": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Stafflines Midtune",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 214,
+    "endChar": 234,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-stafflines-and-modifiers-tune5": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Stafflines Two Voices",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 280,
+    "endChar": 303,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-stafflines-and-modifiers-tune6": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Repeat Bare",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 360,
+    "endChar": 373,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-stafflines-and-modifiers-tune7": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Repeat N",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 404,
+    "endChar": 414,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-stafflines-and-modifiers-tune8": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Repeat Two Bars",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 447,
+    "endChar": 464,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-stafflines-and-modifiers-tune9": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Percmap",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 505,
+    "endChar": 514,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-stafflines-and-modifiers-tune10": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Map Plain",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 557,
+    "endChar": 568,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-stafflines-and-modifiers-tune11": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Map Allnotes",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 630,
+    "endChar": 644,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-stafflines-and-modifiers-tune12": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Percmap Name",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 713,
+    "endChar": 727,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-stafflines-and-modifiers-tune13": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "V Name",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 773,
+    "endChar": 781,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-stafflines-and-modifiers-tune14": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "V Sname",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 822,
+    "endChar": 831,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-stafflines-and-modifiers-tune15": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "V Gstem",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 890,
+    "endChar": 899,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-stafflines-and-modifiers-tune16": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "V Stem Down",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 938,
+    "endChar": 951,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-stafflines-and-modifiers-tune17": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "V Scale",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 988,
+    "endChar": 997,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-stafflines-and-modifiers-tune18": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "V Octave",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 1034,
+    "endChar": 1044,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-stafflines-and-modifiers-tune19": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "V Transpose",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 1080,
+    "endChar": 1093,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-stafflines-and-modifiers-tune20": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "V Merge",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 1132,
+    "endChar": 1141,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-stafflines-and-modifiers-tune21": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "V Space",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 1184,
+    "endChar": 1193,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-stafflines-and-modifiers-tune22": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Micro Quarter Sharp",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 1229,
+    "endChar": 1250,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-stafflines-and-modifiers-tune23": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Micro Three Quarter",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 1276,
+    "endChar": 1297,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-stafflines-and-modifiers-tune24": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Micro Quarter Flat",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 1325,
+    "endChar": 1345,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-stafflines-and-modifiers-tune25": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Micro Numeric",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 1371,
+    "endChar": 1386,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-stafflines-and-modifiers-tune26": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Midi Gchord",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 1414,
+    "endChar": 1427,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-stafflines-and-modifiers-tune27": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Midi Drum",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 1476,
+    "endChar": 1487,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-stafflines-and-modifiers-tune28": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Midi Transpose",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 1539,
+    "endChar": 1555,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-stafflines-and-modifiers-tune29": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Midi Channel",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 1597,
+    "endChar": 1611,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-stafflines-and-modifiers-tune30": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Tuplet Across Clef",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 1652,
+    "endChar": 1672,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-stafflines-and-modifiers-tune31": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Slur Across Clef",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 1711,
+    "endChar": 1729,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-stafflines-and-modifiers-tune32": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Grace With Clef",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 1764,
+    "endChar": 1781,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-stafflines-and-modifiers-tune33": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Lyric Across Voices",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 1817,
+    "endChar": 1838,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-stafflines-and-modifiers-tune34": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Volta With Tempo",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 1895,
+    "endChar": 1913,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-stafflines-and-modifiers-tune35": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Decoration On Rest",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 1960,
+    "endChar": 1980,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-stafflines-and-modifiers-tune36": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "K Zero",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 2017,
+    "endChar": 2025,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-stafflines-and-modifiers-tune37": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Inline K Zero",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 2061,
+    "endChar": 2076,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-stafflines-and-modifiers-tune38": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "K One",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 2117,
+    "endChar": 2124,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-stafflines-and-modifiers-tune39": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Inline 1",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 2160,
+    "endChar": 2170,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-stafflines-and-modifiers-tune40": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Inline 3",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 2211,
+    "endChar": 2221,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-stafflines-and-modifiers-tune41": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Standalone 1",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 2262,
+    "endChar": 2276,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-stafflines-and-modifiers-tune42": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Inline Midbar",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 2322,
+    "endChar": 2337,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-stafflines-and-modifiers-tune43": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Inline With Clef",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 2378,
+    "endChar": 2396,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-stafflines-and-modifiers-tune44": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Plain Z",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 2442,
+    "endChar": 2451,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-stafflines-and-modifiers-tune45": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Z Then Z",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 2471,
+    "endChar": 2481,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-stafflines-and-modifiers-tune46": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Decorated Z",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 2503,
+    "endChar": 2516,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-stafflines-and-modifiers-tune47": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Fermata Z",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 2543,
+    "endChar": 2554,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-stafflines-and-modifiers-tune48": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Z4",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 2583,
+    "endChar": 2587,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-stafflines-and-modifiers-tune49": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Note Then Z",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 2608,
+    "endChar": 2621,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-staffnonote-and-directives-tune0": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Rest Voice",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 4,
+    "endChar": 16,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-staffnonote-and-directives-tune1": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Default On",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 68,
+    "endChar": 80,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-staffnonote-and-directives-tune2": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Explicit One",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 116,
+    "endChar": 130,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-staffnonote-and-directives-tune3": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Rest With Chord",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 182,
+    "endChar": 199,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-staffnonote-and-directives-tune4": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Shared Staff",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 254,
+    "endChar": 268,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-staffnonote-and-directives-tune5": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Three Voices",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 334,
+    "endChar": 348,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-staffnonote-and-directives-tune6": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Bad Param",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 410,
+    "endChar": 421,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-staffnonote-and-directives-tune7": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Staffnonote",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 473,
+    "endChar": 486,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-staffnonote-and-directives-tune8": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Papersize",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 538,
+    "endChar": 549,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-staffnonote-and-directives-tune9": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Charset",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 587,
+    "endChar": 596,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-staffnonote-and-directives-tune10": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Version",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 636,
+    "endChar": 645,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-staffnonote-and-directives-tune11": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Creator",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 683,
+    "endChar": 692,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-staffnonote-and-directives-tune12": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Edited By",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 729,
+    "endChar": 740,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-staffnonote-and-directives-tune13": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Tabgracefont",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 779,
+    "endChar": 793,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-staffnonote-and-directives-tune14": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Tablabelfont",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 840,
+    "endChar": 854,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-staffnonote-and-directives-tune15": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Tabnumberfont",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 901,
+    "endChar": 916,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-staffnonote-and-directives-tune16": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Beginps Empty",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 964,
+    "endChar": 979,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-staffnonote-empty-staves-tune0": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Both Rests",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 4,
+    "endChar": 16,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-staffnonote-empty-staves-tune1": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Single Voice Rest",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 68,
+    "endChar": 87,
     "absElemType": "title",
     "name": "title"
    },
@@ -6835,6 +11787,1531 @@
    },
    {
     "move": 23
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-text-udef-parts-overlays-tune0": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Text Plain",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 4,
+    "endChar": 16,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-text-udef-parts-overlays-tune1": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Center",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 51,
+    "endChar": 59,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-text-udef-parts-overlays-tune2": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Text Empty",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 97,
+    "endChar": 109,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-text-udef-parts-overlays-tune3": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Text Between Lines",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 138,
+    "endChar": 158,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-text-udef-parts-overlays-tune4": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Center And Text",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 201,
+    "endChar": 218,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-text-udef-parts-overlays-tune5": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Staffsep",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 260,
+    "endChar": 270,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-text-udef-parts-overlays-tune6": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Sysstaffsep",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 321,
+    "endChar": 334,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-text-udef-parts-overlays-tune7": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Vskip Then Text",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 387,
+    "endChar": 404,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-text-udef-parts-overlays-tune8": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Text Then Vskip",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 450,
+    "endChar": 467,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-text-udef-parts-overlays-tune9": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Musicspace",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 515,
+    "endChar": 527,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-text-udef-parts-overlays-tune10": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Topspace",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 566,
+    "endChar": 576,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-text-udef-parts-overlays-tune11": {
+  "topText": [
+   {
+    "move": 40
+   },
+   {
+    "left": 350,
+    "text": "Titlespace",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 613,
+    "endChar": 625,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   },
+   {
+    "move": 3.78
+   },
+   {
+    "left": 350,
+    "text": "t",
+    "font": "subtitlefont",
+    "anchor": "middle",
+    "startChar": 626,
+    "endChar": 629,
+    "absElemType": "subtitle",
+    "name": "subtitle"
+   },
+   {
+    "move": 26
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-text-udef-parts-overlays-tune12": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Lyrics Two Voices",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 668,
+    "endChar": 687,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-text-udef-parts-overlays-tune13": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Lyric On Second Only",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 744,
+    "endChar": 766,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-text-udef-parts-overlays-tune14": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Lyric Shared Staff",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 813,
+    "endChar": 833,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-text-udef-parts-overlays-tune15": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Lyric Second System",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 894,
+    "endChar": 915,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-text-udef-parts-overlays-tune16": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Udef Simple",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 954,
+    "endChar": 967,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-text-udef-parts-overlays-tune17": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Udef Override",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 1003,
+    "endChar": 1018,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-text-udef-parts-overlays-tune18": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Udef Nil",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 1056,
+    "endChar": 1066,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-text-udef-parts-overlays-tune19": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Udef Unknown",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 1100,
+    "endChar": 1114,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-text-udef-parts-overlays-tune20": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Part Simple",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 1150,
+    "endChar": 1163,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   },
+   {
+    "left": 15,
+    "text": "AB",
+    "font": "partsfont",
+    "anchor": "start",
+    "startChar": 1170,
+    "endChar": 1174,
+    "absElemType": "partOrder",
+    "name": "part-order"
+   },
+   {
+    "move": 24
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-text-udef-parts-overlays-tune21": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Part Repeat",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 1205,
+    "endChar": 1218,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   },
+   {
+    "left": 15,
+    "text": "A2B",
+    "font": "partsfont",
+    "anchor": "start",
+    "startChar": 1225,
+    "endChar": 1230,
+    "absElemType": "partOrder",
+    "name": "part-order"
+   },
+   {
+    "move": 24
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-text-udef-parts-overlays-tune22": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Part Inline",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 1261,
+    "endChar": 1274,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-text-udef-parts-overlays-tune23": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Part Parens",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 1312,
+    "endChar": 1325,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   },
+   {
+    "left": 15,
+    "text": "(AB)2",
+    "font": "partsfont",
+    "anchor": "start",
+    "startChar": 1332,
+    "endChar": 1339,
+    "absElemType": "partOrder",
+    "name": "part-order"
+   },
+   {
+    "move": 24
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-text-udef-parts-overlays-tune24": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Overlay Plain",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 1370,
+    "endChar": 1385,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-text-udef-parts-overlays-tune25": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Overlay With Lyric",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 1414,
+    "endChar": 1434,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-text-udef-parts-overlays-tune26": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Overlay Two",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 1473,
+    "endChar": 1486,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-text-udef-parts-overlays-tune27": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Overlay Uneven",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 1521,
+    "endChar": 1537,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-text-udef-parts-overlays-tune28": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Overlay With Clef",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 1564,
+    "endChar": 1583,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-text-udef-parts-overlays-tune29": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Overlay With Chord",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 1622,
+    "endChar": 1642,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-text-udef-parts-overlays-tune30": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Grace In Overlay",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 1674,
+    "endChar": 1692,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-text-udef-parts-overlays-tune31": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Tuplet In Overlay",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 1724,
+    "endChar": 1743,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-text-udef-parts-overlays-tune32": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Part With Lyric",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 1783,
+    "endChar": 1800,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   },
+   {
+    "left": 15,
+    "text": "AB",
+    "font": "partsfont",
+    "anchor": "start",
+    "startChar": 1807,
+    "endChar": 1811,
+    "absElemType": "partOrder",
+    "name": "part-order"
+   },
+   {
+    "move": 24
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-text-udef-parts-overlays-tune33": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Udef In Chord",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 1852,
+    "endChar": 1867,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-text-udef-parts-overlays-tune34": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Text In Multivoice",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 1907,
+    "endChar": 1927,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-text-udef-parts-overlays-tune35": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Text Space",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 1975,
+    "endChar": 1987,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-text-udef-parts-overlays-tune36": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Center Empty",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 2018,
+    "endChar": 2032,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-text-udef-parts-overlays-tune37": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Text Empty Twice",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 2064,
+    "endChar": 2082,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-text-udef-parts-overlays-tune38": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Text Empty Then Full",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 2119,
+    "endChar": 2141,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-text-udef-parts-overlays-tune39": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Text Empty Midtune",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 2181,
+    "endChar": 2201,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-text-udef-parts-overlays-tune40": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Udef Header",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 2237,
+    "endChar": 2250,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-text-udef-parts-overlays-tune41": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Plain Accent Chord",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 2287,
+    "endChar": 2307,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-text-udef-parts-overlays-tune42": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Plain Accent",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 2341,
+    "endChar": 2355,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-text-udef-parts-overlays-tune43": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Inline Udef",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 2386,
+    "endChar": 2399,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-text-udef-parts-overlays-tune44": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Inline Udef Midline",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 2437,
+    "endChar": 2458,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-text-udef-parts-overlays-tune45": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Vskip Then Center",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 2501,
+    "endChar": 2520,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-text-udef-parts-overlays-tune46": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Vskip Only",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 2567,
+    "endChar": 2579,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-text-udef-parts-overlays-tune47": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Vskip Then Two Texts",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 2613,
+    "endChar": 2635,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-text-udef-parts-overlays-tune48": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Vskip Midtune Text",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 2687,
+    "endChar": 2707,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-text-udef-parts-overlays-tune49": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Vskip Then Subtitle",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 2758,
+    "endChar": 2779,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   },
+   {
+    "move": 3.78
+   },
+   {
+    "left": 350,
+    "text": "t",
+    "font": "subtitlefont",
+    "anchor": "middle",
+    "startChar": 2780,
+    "endChar": 2783,
+    "absElemType": "subtitle",
+    "name": "subtitle"
+   },
+   {
+    "move": 26
+   },
+   {
+    "move": 3.78
+   },
+   {
+    "left": 350,
+    "text": "sub",
+    "font": "subtitlefont",
+    "anchor": "middle",
+    "startChar": 2805,
+    "endChar": 2810,
+    "absElemType": "subtitle",
+    "name": "subtitle"
+   },
+   {
+    "move": 26
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-text-udef-parts-overlays-tune50": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Vskip Subtitle Before Music",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 2823,
+    "endChar": 2852,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   },
+   {
+    "move": 3.78
+   },
+   {
+    "left": 350,
+    "text": "t",
+    "font": "subtitlefont",
+    "anchor": "middle",
+    "startChar": 2853,
+    "endChar": 2856,
+    "absElemType": "subtitle",
+    "name": "subtitle"
+   },
+   {
+    "move": 26
+   },
+   {
+    "move": 3.78
+   },
+   {
+    "left": 350,
+    "text": "sub",
+    "font": "subtitlefont",
+    "anchor": "middle",
+    "startChar": 2867,
+    "endChar": 2872,
+    "absElemType": "subtitle",
+    "name": "subtitle"
+   },
+   {
+    "move": 26
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-text-udef-parts-overlays-tune51": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Vskip Subtitle After Music",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 2885,
+    "endChar": 2913,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   },
+   {
+    "move": 3.78
+   },
+   {
+    "left": 350,
+    "text": "t",
+    "font": "subtitlefont",
+    "anchor": "middle",
+    "startChar": 2914,
+    "endChar": 2917,
+    "absElemType": "subtitle",
+    "name": "subtitle"
+   },
+   {
+    "move": 26
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-text-udef-parts-overlays-tune52": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Vskip Subtitle In Header",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 2946,
+    "endChar": 2972,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   },
+   {
+    "move": 3.78
+   },
+   {
+    "left": 350,
+    "text": "t",
+    "font": "subtitlefont",
+    "anchor": "middle",
+    "startChar": 2973,
+    "endChar": 2976,
+    "absElemType": "subtitle",
+    "name": "subtitle"
+   },
+   {
+    "move": 26
+   },
+   {
+    "move": 3.78
+   },
+   {
+    "left": 350,
+    "text": "sub",
+    "font": "subtitlefont",
+    "anchor": "middle",
+    "startChar": 2977,
+    "endChar": 2982,
+    "absElemType": "subtitle",
+    "name": "subtitle"
+   },
+   {
+    "move": 26
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-text-udef-parts-overlays-tune53": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Vskip Subtitle Mid Tune",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 3005,
+    "endChar": 3030,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   },
+   {
+    "move": 3.78
+   },
+   {
+    "left": 350,
+    "text": "t",
+    "font": "subtitlefont",
+    "anchor": "middle",
+    "startChar": 3031,
+    "endChar": 3034,
+    "absElemType": "subtitle",
+    "name": "subtitle"
+   },
+   {
+    "move": 26
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-text-udef-parts-overlays-tune54": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Vskip Vskip Then Subtitle",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 3069,
+    "endChar": 3096,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   },
+   {
+    "move": 3.78
+   },
+   {
+    "left": 350,
+    "text": "t",
+    "font": "subtitlefont",
+    "anchor": "middle",
+    "startChar": 3097,
+    "endChar": 3100,
+    "absElemType": "subtitle",
+    "name": "subtitle"
+   },
+   {
+    "move": 26
+   },
+   {
+    "move": 3.78
+   },
+   {
+    "left": 350,
+    "text": "sub",
+    "font": "subtitlefont",
+    "anchor": "middle",
+    "startChar": 3122,
+    "endChar": 3127,
+    "absElemType": "subtitle",
+    "name": "subtitle"
+   },
+   {
+    "move": 26
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-text-udef-parts-overlays-tune55": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Vskip No Main Title",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 3140,
+    "endChar": 3161,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   },
+   {
+    "move": 3.78
+   },
+   {
+    "left": 350,
+    "text": "only",
+    "font": "subtitlefont",
+    "anchor": "middle",
+    "startChar": 3172,
+    "endChar": 3178,
+    "absElemType": "subtitle",
+    "name": "subtitle"
+   },
+   {
+    "move": 26
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-unknown-clef-tune0": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Unknown Clef X",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 4,
+    "endChar": 20,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-unknown-clef-tune1": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Unknown Clef Zzz",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 49,
+    "endChar": 67,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-unknown-clef-tune2": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Unknown Clef Q2",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 98,
+    "endChar": 115,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-unknown-clef-tune3": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Unknown Clef Voice",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 145,
+    "endChar": 165,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-unknown-clef-tune4": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Unknown Clef Mid",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 198,
+    "endChar": 216,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
    }
   ],
   "bottomText": []
@@ -7376,6 +13853,321 @@
     "anchor": "middle",
     "startChar": 258,
     "endChar": 278,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-void-notes-and-stray-ties-tune0": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "The Row",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 4,
+    "endChar": 13,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-void-notes-and-stray-ties-tune1": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Leading Tie",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 41,
+    "endChar": 54,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-void-notes-and-stray-ties-tune2": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Leading Digit",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 77,
+    "endChar": 92,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-void-notes-and-stray-ties-tune3": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Bare Digit Between",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 115,
+    "endChar": 135,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-void-notes-and-stray-ties-tune4": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Tie After Bar",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 160,
+    "endChar": 175,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-void-notes-and-stray-ties-tune5": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Real Tie",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 203,
+    "endChar": 213,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-void-notes-and-stray-ties-tune6": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Digit After Note",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 237,
+    "endChar": 255,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-void-notes-and-stray-ties-tune7": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Bare Tie Then Digit",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 278,
+    "endChar": 299,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-void-notes-and-stray-ties-tune8": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Tie Then Space",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 325,
+    "endChar": 341,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-void-notes-and-stray-ties-tune9": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Tie At Line End",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 367,
+    "endChar": 384,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-void-notes-and-stray-ties-tune10": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Tie Then Bar",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 409,
+    "endChar": 423,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-void-notes-and-stray-ties-tune11": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Tie Then Note",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 450,
+    "endChar": 465,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-void-notes-and-stray-ties-tune12": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Tie Then Rest",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 490,
+    "endChar": 505,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-void-notes-and-stray-ties-tune13": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Double Tie",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 532,
+    "endChar": 544,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-void-notes-and-stray-ties-tune14": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Tie Then Chord",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 571,
+    "endChar": 587,
     "absElemType": "title",
     "name": "title"
    },
@@ -10297,6 +17089,25 @@
    },
    {
     "move": 77
+   }
+  ]
+ },
+ "sib/grace-note-placement-tune0": {
+  "topText": [],
+  "bottomText": [
+   {
+    "left": 15,
+    "text": "Notes:\ntest this in Safari by\nchanging the browser\nmagnification",
+    "font": "historyfont",
+    "anchor": "start",
+    "startChar": -2,
+    "endChar": -2,
+    "dominant-baseline": "middle",
+    "absElemType": "extraText",
+    "name": "description"
+   },
+   {
+    "move": 102
    }
   ]
  },

@@ -1384,6 +1384,20 @@
    "hasPickup": false
   }
  ],
+ "repo/abcjs-synth-timing-13-a-b-c-d-e-f-g": [
+  {
+   "header": "X:1\nK: D\n",
+   "measures": [],
+   "hasPickup": true
+  }
+ ],
+ "repo/abcjs-synth-timing-14-a-b-c-d-e-f-g": [
+  {
+   "header": "X:1\nK: D\n",
+   "measures": [],
+   "hasPickup": true
+  }
+ ],
  "repo/abcjs-synth-timing-y02": [
   {
    "header": "X:1\nK: D\n",
@@ -1552,6 +1566,13 @@
     }
    ],
    "hasPickup": false
+  }
+ ],
+ "repo/abcjs-visual-layout-10-text-a": [
+  {
+   "header": "X:1\nK: C clef=bass\n",
+   "measures": [],
+   "hasPickup": true
   }
  ],
  "repo/abcjs-visual-misc-01-barnumbers-1": [
@@ -1874,7 +1895,50 @@
  "repo/abcjs-visual-parsing-09-score-t-b": {
   "throws": "Cannot read properties of undefined (reading 'split')"
  },
- "repo/abcjs-visual-parsing-10-song": [
+ "repo/abcjs-visual-parsing-10-main": [
+  {
+   "header": "X:1\nT:Main\nM: 3/4\nK: Eb\n",
+   "measures": [
+    {
+     "abc": "G|"
+    },
+    {
+     "abc": "K:F\nB|"
+    },
+    {
+     "abc": "d|"
+    }
+   ],
+   "hasPickup": true
+  }
+ ],
+ "repo/abcjs-visual-parsing-11-c2-d2-e2-f2-k-f-g2-a2-b2-c2": [
+  {
+   "header": "X:1\nM:4/4\nL:1/8\nK:Edor\n",
+   "measures": [
+    {
+     "abc": "C2 D2 E2 F2|"
+    },
+    {
+     "abc": "[K:F] G2 A2 B2 c2|]"
+    },
+    {
+     "abc": "C2 D2 E2 F2|"
+    },
+    {
+     "abc": "[K:Bb^f] G2 A2 B2 c2|]"
+    },
+    {
+     "abc": "C2 D2 E2 F2|"
+    },
+    {
+     "abc": " G2 A2 B2 c2|]"
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
+ "repo/abcjs-visual-parsing-12-song": [
   {
    "header": "X:1\nT:song\nT:subtitle\nC:composer\nL:1/4\nM:2/4\nK:BbMaj\n",
    "measures": [
@@ -1886,6 +1950,13 @@
     }
    ],
    "hasPickup": false
+  }
+ ],
+ "repo/abcjs-visual-parsing-13-class-alice-a-class-bob-t-dfa": [
+  {
+   "header": "X:1\nK: C\n",
+   "measures": [],
+   "hasPickup": true
   }
  ],
  "repo/abcjs-visual-parsing-x10": [
@@ -9902,6 +9973,20 @@
     }
    ],
    "hasPickup": false
+  }
+ ],
+ "sib/grace-note-placement": [
+  {
+   "header": "X:1\nL:1/4\n%%staffwidth 200\nN: test this in Safari by\nN: changing the browser\nN: magnification\nK:C\n",
+   "measures": [
+    {
+     "abc": "{G,}A, {/C/2}D {EF}G|"
+    },
+    {
+     "abc": "{G,}A, {C/2}D {/EF}G|"
+    }
+   ],
+   "hasPickup": true
   }
  ],
  "sib/grandstaff-inline-meter": {

@@ -31,9 +31,9 @@ const require = createRequire(join(root, config.goldens, '..', 'package.json'))
 // `getBBox` stub, without which abcjs lays a tune out 1.78px differently.
 const { JSDOM } = require('jsdom')
 process.env.DEBUG_TOOLS = process.env.DEBUG_TOOLS ?? join(root, config.goldens, '..')
-const patch = require('/tmp/gp/bbox-stub.js')
+const patch = require(join(root, 'scripts', 'bbox-stub.cjs'))
 const dom = new JSDOM('<!DOCTYPE html><html><body><div id="paper"></div></body></html>')
-patch(dom.window.document)
+patch(dom.window.document, join(root, config.goldens, '..'))
 global.document = dom.window.document
 global.window = dom.window
 const ABCJS = require(join(root, config.abcjsRef, 'index'))

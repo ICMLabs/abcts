@@ -233,7 +233,7 @@ const PASSING: readonly string[] = [
   "repo/abcjs-visual-parsing-07-score-t-b-tune0",
   "repo/abcjs-visual-parsing-08-score-t-b-tune0",
   "repo/abcjs-visual-parsing-09-score-t-b-tune0",
-  "repo/abcjs-visual-parsing-10-song-tune0",
+  "repo/abcjs-visual-parsing-12-song-tune0",
   "repo/abcjs-visual-selection-01-selection-test-tune0",
   "repo/abcjs-visual-selection-02-g4-q-left-1-4-170-right-a4-tune0",
   "repo/abcjs-visual-selection-03-c4-tune0",
@@ -342,6 +342,28 @@ const PASSING: readonly string[] = [
   "sib/vree-slurs-and-triplets-tune0",
   "sib/vree-ties-across-bars-tune0",
   "sib/zocharti-loch-tune0",
+  // 2026-09-22: the abcjs 6.7.1 re-harvest widened the oracle to every fixture in the
+  // directory (it had been harvested at 261 tunes); these twenty arrived exact.
+  "repo/abcjs-synth-timing-13-a-b-c-d-e-f-g-tune0",
+  "repo/abcjs-synth-timing-14-a-b-c-d-e-f-g-tune0",
+  "repo/abcjs-visual-layout-10-text-a-tune0",
+  "repo/abcjs-visual-parsing-10-main-tune0",
+  "repo/abcjs-visual-parsing-11-c2-d2-e2-f2-k-f-g2-a2-b2-c2-tune0",
+  "repo/abcjs-visual-parsing-13-class-alice-a-class-bob-t-dfa-tune0",
+  "repo/abcts-bars-graces-and-groups-tune0",
+  "repo/abcts-clef-midmeasure-tune0",
+  "repo/abcts-endings-tune0",
+  "repo/abcts-grace-order-and-lanes-tune0",
+  "repo/abcts-grace-tie-tune0",
+  "repo/abcts-inline-fields-and-blocks-tune0",
+  "repo/abcts-lyric-verses-tune0",
+  "repo/abcts-rests-and-bars-tune0",
+  "repo/abcts-shared-staff-rests-tune0",
+  "repo/abcts-stafflines-and-modifiers-tune0",
+  "repo/abcts-staffnonote-and-directives-tune0",
+  "repo/abcts-text-udef-parts-overlays-tune0",
+  "repo/abcts-void-notes-and-stray-ties-tune0",
+  "sib/grace-note-placement-tune0",
 ];
 
 describe("tuneMetrics — each measure's minimum width", () => {

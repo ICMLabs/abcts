@@ -752,6 +752,8 @@ const formattingOf = (score: Score): Record<string, unknown> => {
     // (`abc_parse_directive.js:796-805`).
     else if (key === "graceSlurs") out[key] = score.graceSlurs;
     else if (key === "percmap") out[key] = score.percMap;
+    else if (score.recordedDirectives?.[key] !== undefined)
+      out[key] = score.recordedDirectives[key];
     else if (key === "midi")
       out[key] = {
         ...score.midi,
@@ -760,9 +762,26 @@ const formattingOf = (score: Score): Record<string, unknown> => {
           : { drummap: score.drumMap }),
       };
   }
-  // **LAST, WHATEVER THE SOURCE SAID** — abcjs writes them after every directive has run.
-  out.pagewidth = 612;
-  out.pageheight = 792;
+  // **LAST, WHATEVER THE SOURCE SAID** — abcjs writes them after every directive has run,
+  // and only where nothing set them: `if (!tune.formatting.pagewidth)` (`abc_parse.js:579-594`),
+  // sized by `%%papersize` and swapped by `%%landscape`. Falsy test, as abcjs's is.
+  let ph = 11 * 72;
+  let pl = 8.5 * 72;
+  switch (score.papersize) {
+    case "legal":
+      ph = 14 * 72;
+      pl = 8.5 * 72;
+      break;
+    case "A4":
+      ph = 11.7 * 72;
+      pl = 8.3 * 72;
+      break;
+    default:
+      break;
+  }
+  if (score.landscape === true) [ph, pl] = [pl, ph];
+  if (!out.pagewidth) out.pagewidth = pl;
+  if (!out.pageheight) out.pageheight = ph;
   return out;
 };
 

@@ -393,6 +393,26 @@
  "repo/abcjs-synth-timing-10-stretchlast-1-tune0": {},
  "repo/abcjs-synth-timing-11-stretchlast-1-tune0": {},
  "repo/abcjs-synth-timing-12-stretchlast-1-tune0": {},
+ "repo/abcjs-synth-timing-13-a-b-c-d-e-f-g-tune0": {
+  "tempo": {
+   "startChar": 16,
+   "endChar": 22,
+   "duration": [
+    0.25
+   ],
+   "bpm": 100
+  }
+ },
+ "repo/abcjs-synth-timing-14-a-b-c-d-e-f-g-tune0": {
+  "tempo": {
+   "startChar": 16,
+   "endChar": 22,
+   "duration": [
+    0.25
+   ],
+   "bpm": 200
+  }
+ },
  "repo/abcjs-synth-timing-y02-tune0": {
   "tempo": {
    "startChar": 16,
@@ -430,6 +450,7 @@
  "repo/abcjs-visual-layout-09-endings-tune0": {
   "title": "endings"
  },
+ "repo/abcjs-visual-layout-10-text-a-tune0": {},
  "repo/abcjs-visual-misc-01-barnumbers-1-tune0": {},
  "repo/abcjs-visual-misc-02-title-tune0": {
   "title": "Title"
@@ -714,10 +735,15 @@
  "repo/abcjs-visual-parsing-07-score-t-b-tune0": {},
  "repo/abcjs-visual-parsing-08-score-t-b-tune0": {},
  "repo/abcjs-visual-parsing-09-score-t-b-tune0": {},
- "repo/abcjs-visual-parsing-10-song-tune0": {
+ "repo/abcjs-visual-parsing-10-main-tune0": {
+  "title": "Main"
+ },
+ "repo/abcjs-visual-parsing-11-c2-d2-e2-f2-k-f-g2-a2-b2-c2-tune0": {},
+ "repo/abcjs-visual-parsing-12-song-tune0": {
   "title": "song",
   "composer": "composer"
  },
+ "repo/abcjs-visual-parsing-13-class-alice-a-class-bob-t-dfa-tune0": {},
  "repo/abcjs-visual-parsing-x10-tune0": {},
  "repo/abcjs-visual-parsing-x11-tune0": {
   "title": "Main"
@@ -918,6 +944,195 @@
   "title": "wrap quartet"
  },
  "repo/abcjs-visual-wrap-05-score-1-2-3-4-tune0": {},
+ "repo/abcts-bars-graces-and-groups-tune0": {
+  "title": "Double Repeat"
+ },
+ "repo/abcts-bars-graces-and-groups-tune1": {
+  "title": "Ending 3"
+ },
+ "repo/abcts-bars-graces-and-groups-tune2": {
+  "title": "Ending List"
+ },
+ "repo/abcts-bars-graces-and-groups-tune3": {
+  "title": "Invisible Bar"
+ },
+ "repo/abcts-bars-graces-and-groups-tune4": {
+  "title": "Dotted Bar"
+ },
+ "repo/abcts-bars-graces-and-groups-tune5": {
+  "title": "Thick Thin"
+ },
+ "repo/abcts-bars-graces-and-groups-tune6": {
+  "title": "Grace Chord"
+ },
+ "repo/abcts-bars-graces-and-groups-tune7": {
+  "title": "Grace Long"
+ },
+ "repo/abcts-bars-graces-and-groups-tune8": {
+  "title": "Grace Acciaccatura"
+ },
+ "repo/abcts-bars-graces-and-groups-tune9": {
+  "title": "Grace With Accidental"
+ },
+ "repo/abcts-bars-graces-and-groups-tune10": {
+  "title": "Grace On Rest"
+ },
+ "repo/abcts-bars-graces-and-groups-tune11": {
+  "title": "Grace Tied"
+ },
+ "repo/abcts-bars-graces-and-groups-tune12": {
+  "title": "Chord Slash"
+ },
+ "repo/abcts-bars-graces-and-groups-tune13": {
+  "title": "Chord Complex"
+ },
+ "repo/abcts-bars-graces-and-groups-tune14": {
+  "title": "Chord Newline"
+ },
+ "repo/abcts-bars-graces-and-groups-tune15": {
+  "title": "Chord And Annotation"
+ },
+ "repo/abcts-bars-graces-and-groups-tune16": {
+  "title": "Chord Flat Sharp"
+ },
+ "repo/abcts-bars-graces-and-groups-tune17": {
+  "title": "Tuplet Nested Ratio"
+ },
+ "repo/abcts-bars-graces-and-groups-tune18": {
+  "title": "Tuplet With Rest"
+ },
+ "repo/abcts-bars-graces-and-groups-tune19": {
+  "title": "Tuplet Across Bar"
+ },
+ "repo/abcts-bars-graces-and-groups-tune20": {
+  "title": "Tuplet Beamed Mixed"
+ },
+ "repo/abcts-bars-graces-and-groups-tune21": {
+  "title": "Score Braces"
+ },
+ "repo/abcts-bars-graces-and-groups-tune22": {
+  "title": "Score Brackets"
+ },
+ "repo/abcts-bars-graces-and-groups-tune23": {
+  "title": "Score Continued"
+ },
+ "repo/abcts-bars-graces-and-groups-tune24": {
+  "title": "Staves Nested"
+ },
+ "repo/abcts-bars-graces-and-groups-tune25": {
+  "title": "Acc Across Octave"
+ },
+ "repo/abcts-bars-graces-and-groups-tune26": {
+  "title": "Acc After Bar"
+ },
+ "repo/abcts-bars-graces-and-groups-tune27": {
+  "title": "Acc In Chord"
+ },
+ "repo/abcts-bars-graces-and-groups-tune28": {
+  "title": "Acc Tied Over Bar"
+ },
+ "repo/abcts-bars-graces-and-groups-tune29": {
+  "title": "Broken Double"
+ },
+ "repo/abcts-bars-graces-and-groups-tune30": {
+  "title": "Broken With Tuplet"
+ },
+ "repo/abcts-bars-graces-and-groups-tune31": {
+  "title": "Broken Across Rest"
+ },
+ "repo/abcts-bars-graces-and-groups-tune32": {
+  "title": "Stretchlast"
+ },
+ "repo/abcts-bars-graces-and-groups-tune33": {
+  "title": "Maxstaves"
+ },
+ "repo/abcts-bars-graces-and-groups-tune34": {
+  "title": "Barsperstaff"
+ },
+ "repo/abcts-bars-graces-and-groups-tune35": {
+  "title": "Measurenb"
+ },
+ "repo/abcts-bars-graces-and-groups-tune36": {
+  "title": "Close Then Open"
+ },
+ "repo/abcts-bars-graces-and-groups-tune37": {
+  "title": "Double Colon"
+ },
+ "repo/abcts-bars-graces-and-groups-tune38": {
+  "title": "Plain Repeat"
+ },
+ "repo/abcts-bars-graces-and-groups-tune39": {
+  "title": "Open Only"
+ },
+ "repo/abcts-bars-graces-and-groups-tune40": {
+  "title": "Colon Bar Colon 3"
+ },
+ "repo/abcts-clef-midmeasure-tune0": {
+  "title": "Inline Clef Mid Measure Bass"
+ },
+ "repo/abcts-clef-midmeasure-tune1": {
+  "title": "Inline Clef Mid Measure Alto"
+ },
+ "repo/abcts-clef-midmeasure-tune2": {
+  "title": "Standalone Clef Line Mid Tune"
+ },
+ "repo/abcts-clef-midmeasure-tune3": {
+  "title": "Two Inline Clefs One Line"
+ },
+ "repo/abcts-clef-midmeasure-tune4": {
+  "title": "Inline Clef Leading Its Measure"
+ },
+ "repo/abcts-clef-midmeasure-tune5": {
+  "title": "Inline Clef Before Last Note"
+ },
+ "repo/abcts-clef-midmeasure-tune6": {
+  "title": "Inline Clef Then Plain Bar"
+ },
+ "repo/abcts-clef-midmeasure-tune7": {
+  "title": "Inline Clef Then Next Line"
+ },
+ "repo/abcts-clef-midmeasure-tune8": {
+  "title": "Inline Clef Perc Mid Measure"
+ },
+ "repo/abcts-clef-midmeasure-tune9": {
+  "title": "Inline Clef With Chord And Accidental"
+ },
+ "repo/abcts-clef-midmeasure-tune10": {
+  "title": "Inline Clef Mid Measure Two Voices"
+ },
+ "repo/abcts-clef-midmeasure-tune11": {
+  "title": "Inline Clef Mid Beam"
+ },
+ "repo/abcts-clef-midmeasure-tune12": {
+  "title": "Inline Clef With Lyrics"
+ },
+ "repo/abcts-clef-midmeasure-tune13": {
+  "title": "Inline Clef Octave Shift"
+ },
+ "repo/abcts-clef-midmeasure-tune14": {
+  "title": "Inline Clef None Mid Measure"
+ },
+ "repo/abcts-clef-midmeasure-tune15": {
+  "title": "Trailing Standalone Clef"
+ },
+ "repo/abcts-clef-midmeasure-tune16": {
+  "title": "Trailing Inline Clef"
+ },
+ "repo/abcts-clef-midmeasure-tune17": {
+  "title": "Standalone Clef Between Voices"
+ },
+ "repo/abcts-clef-midmeasure-tune18": {
+  "title": "Three Voices Running Clef"
+ },
+ "repo/abcts-clef-midmeasure-tune19": {
+  "title": "Declared Clefs Resist The Running One"
+ },
+ "repo/abcts-clef-midmeasure-tune20": {
+  "title": "Voice Order Interleaved"
+ },
+ "repo/abcts-clef-midmeasure-tune21": {
+  "title": "Trailing Standalone Key Only"
+ },
  "repo/abcts-decorations-tune0": {
   "title": "Slide"
  },
@@ -988,6 +1203,213 @@
  "repo/abcts-directives-tune9": {
   "title": "newpage"
  },
+ "repo/abcts-endings-tune0": {
+  "title": "a bracketted ending number"
+ },
+ "repo/abcts-endings-tune1": {
+  "title": "whitespace before the bracket, which is absorbed with it"
+ },
+ "repo/abcts-endings-tune2": {
+  "title": "a quoted ending label, whose closing bracket is its own barline"
+ },
+ "repo/abcts-endings-tune3": {
+  "title": "an ending with nothing whatever after it"
+ },
+ "repo/abcts-endings-tune4": {
+  "title": "an ending whose measure never closes"
+ },
+ "repo/abcts-endings-tune5": {
+  "title": "a leading dash is not an ending, and the bracket reverts with it"
+ },
+ "repo/abcts-endings-tune6": {
+  "title": "a real chord after a barline is not an ending"
+ },
+ "repo/abcts-endings-tune7": {
+  "title": "one ending for several passes"
+ },
+ "repo/abcts-grace-order-and-lanes-tune0": {
+  "title": "Grace Then Deco"
+ },
+ "repo/abcts-grace-order-and-lanes-tune1": {
+  "title": "Deco Then Grace"
+ },
+ "repo/abcts-grace-order-and-lanes-tune2": {
+  "title": "One Grace Deco"
+ },
+ "repo/abcts-grace-order-and-lanes-tune3": {
+  "title": "Grace Chord"
+ },
+ "repo/abcts-grace-order-and-lanes-tune4": {
+  "title": "One Grace Chord"
+ },
+ "repo/abcts-grace-order-and-lanes-tune5": {
+  "title": "Grace Chord Deco"
+ },
+ "repo/abcts-grace-order-and-lanes-tune6": {
+  "title": "Chord And Annot"
+ },
+ "repo/abcts-grace-order-and-lanes-tune7": {
+  "title": "Chord Annot Deco"
+ },
+ "repo/abcts-grace-order-and-lanes-tune8": {
+  "title": "Annot Below Lyric"
+ },
+ "repo/abcts-grace-order-and-lanes-tune9": {
+  "title": "Dyn And Lyric"
+ },
+ "repo/abcts-grace-order-and-lanes-tune10": {
+  "title": "Dyn Lyric Hairpin"
+ },
+ "repo/abcts-grace-order-and-lanes-tune11": {
+  "title": "Part And Chord",
+  "partOrder": "A"
+ },
+ "repo/abcts-grace-order-and-lanes-tune12": {
+  "title": "Tempo And Chord",
+  "tempo": {
+   "startChar": 640,
+   "endChar": 648,
+   "duration": [
+    0.25
+   ],
+   "bpm": 90
+  }
+ },
+ "repo/abcts-grace-order-and-lanes-tune13": {
+  "title": "Tempo Part Chord",
+  "tempo": {
+   "startChar": 693,
+   "endChar": 701,
+   "duration": [
+    0.25
+   ],
+   "bpm": 90
+  },
+  "partOrder": "A"
+ },
+ "repo/abcts-grace-order-and-lanes-tune14": {
+  "title": "Ending And Chord"
+ },
+ "repo/abcts-grace-order-and-lanes-tune15": {
+  "title": "Volta Tempo"
+ },
+ "repo/abcts-grace-order-and-lanes-tune16": {
+  "title": "Two Voice Lanes"
+ },
+ "repo/abcts-grace-order-and-lanes-tune17": {
+  "title": "Lyric Two Verses"
+ },
+ "repo/abcts-grace-order-and-lanes-tune18": {
+  "title": "Slur Over Chord"
+ },
+ "repo/abcts-grace-order-and-lanes-tune19": {
+  "title": "Grace Deco Slur"
+ },
+ "repo/abcts-grace-order-and-lanes-tune20": {
+  "title": "Ledger And Lyric"
+ },
+ "repo/abcts-grace-order-and-lanes-tune21": {
+  "title": "Ledger And Chord"
+ },
+ "repo/abcts-grace-order-and-lanes-tune22": {
+  "title": "Annot 4 Stack"
+ },
+ "repo/abcts-grace-order-and-lanes-tune23": {
+  "title": "Annot Below Stack"
+ },
+ "repo/abcts-grace-order-and-lanes-tune24": {
+  "title": "Deco Stack 3"
+ },
+ "repo/abcts-grace-order-and-lanes-tune25": {
+  "title": "Deco Below Stack"
+ },
+ "repo/abcts-grace-order-and-lanes-tune26": {
+  "title": "All At Once",
+  "tempo": {
+   "startChar": 1458,
+   "endChar": 1466,
+   "duration": [
+    0.25
+   ],
+   "bpm": 90
+  },
+  "partOrder": "A"
+ },
+ "repo/abcts-grace-order-and-lanes-tune27": {
+  "title": "Tuplet And Chord"
+ },
+ "repo/abcts-grace-order-and-lanes-tune28": {
+  "title": "Tuplet Slur Deco"
+ },
+ "repo/abcts-grace-tie-tune0": {
+  "title": "two graces tied"
+ },
+ "repo/abcts-grace-tie-tune1": {
+  "title": "three graces, the middle one both ends"
+ },
+ "repo/abcts-grace-tie-tune2": {
+  "title": "tied across two different pitches, which draws a SLUR"
+ },
+ "repo/abcts-grace-tie-tune3": {
+  "title": "a startTie the group never closes"
+ },
+ "repo/abcts-grace-tie-tune4": {
+  "title": "a tie inside a group that also carries a slur"
+ },
+ "repo/abcts-grace-tie-tune5": {
+  "title": "tied graces on a chord"
+ },
+ "repo/abcts-grace-tie-tune6": {
+  "title": "a tied pair beside an acciaccatura"
+ },
+ "repo/abcts-grace-tie-tune7": {
+  "title": "tied graces in a group long enough to beam"
+ },
+ "repo/abcts-inline-fields-and-blocks-tune0": {
+  "title": "Inline Q Mid Measure"
+ },
+ "repo/abcts-inline-fields-and-blocks-tune1": {
+  "title": "Inline Q Leading"
+ },
+ "repo/abcts-inline-fields-and-blocks-tune2": {
+  "title": "Inline Q After Barline"
+ },
+ "repo/abcts-inline-fields-and-blocks-tune3": {
+  "title": "Inline Q Before Last Note"
+ },
+ "repo/abcts-inline-fields-and-blocks-tune4": {
+  "title": "Inline Q With Text"
+ },
+ "repo/abcts-inline-fields-and-blocks-tune5": {
+  "title": "Left And Right Annotations"
+ },
+ "repo/abcts-inline-fields-and-blocks-tune6": {
+  "title": "Left Annotation Only"
+ },
+ "repo/abcts-inline-fields-and-blocks-tune7": {
+  "title": "Right Annotation Only"
+ },
+ "repo/abcts-inline-fields-and-blocks-tune8": {
+  "title": "Two Left Annotations"
+ },
+ "repo/abcts-inline-fields-and-blocks-tune9": {
+  "title": "Both Sides One Note"
+ },
+ "repo/abcts-inline-fields-and-blocks-tune10": {
+  "title": "Begintext Before Music"
+ },
+ "repo/abcts-inline-fields-and-blocks-tune11": {
+  "title": "Begintext After Music"
+ },
+ "repo/abcts-inline-fields-and-blocks-tune12": {
+  "title": "Begintext In Header"
+ },
+ "repo/abcts-inline-fields-and-blocks-tune13": {
+  "title": "Begintext Three Lines"
+ },
+ "repo/abcts-inline-fields-and-blocks-tune14": {
+  "title": "Begintext Align"
+ },
  "repo/abcts-key-modifiers-tune0": {
   "title": "Key Minor Natural"
  },
@@ -1023,6 +1445,9 @@
  },
  "repo/abcts-key-modifiers-tune11": {
   "title": "Key Clef Alto Two"
+ },
+ "repo/abcts-key-modifiers-tune12": {
+  "title": "Key Clef None"
  },
  "repo/abcts-keywarn-tune0": {
   "title": "keywarn absent"
@@ -1127,6 +1552,42 @@
  },
  "repo/abcts-ledger-gaps-tune5": {
   "title": "a scale directive"
+ },
+ "repo/abcts-lyric-verses-tune0": {
+  "title": "Short Verse Then Long"
+ },
+ "repo/abcts-lyric-verses-tune1": {
+  "title": "Short Short Long"
+ },
+ "repo/abcts-lyric-verses-tune2": {
+  "title": "Stars Then Full"
+ },
+ "repo/abcts-lyric-verses-tune3": {
+  "title": "Long Then Short"
+ },
+ "repo/abcts-lyric-verses-tune4": {
+  "title": "Hyphenated First Verse"
+ },
+ "repo/abcts-lyric-verses-tune5": {
+  "title": "Two Bars Uneven Verses"
+ },
+ "repo/abcts-lyric-verses-tune6": {
+  "title": "Held Note One Syllable"
+ },
+ "repo/abcts-lyric-verses-tune7": {
+  "title": "Standalone Melisma Holds"
+ },
+ "repo/abcts-lyric-verses-tune8": {
+  "title": "Attached Melisma Divider"
+ },
+ "repo/abcts-lyric-verses-tune9": {
+  "title": "Standalone Hold Mid Line"
+ },
+ "repo/abcts-lyric-verses-tune10": {
+  "title": "Standalone Holds With Second Verse"
+ },
+ "repo/abcts-lyric-verses-tune11": {
+  "title": "Verses On A Second Voice"
  },
  "repo/abcts-midi-tune0": {
   "title": "Probe",
@@ -1771,6 +2232,30 @@
  "repo/abcts-model-gaps-tune8": {
   "title": "a slash before a grace note that is not the first"
  },
+ "repo/abcts-pitch-style-tune0": {
+  "title": "style on the lowest head"
+ },
+ "repo/abcts-pitch-style-tune1": {
+  "title": "style on a head needing a ledger"
+ },
+ "repo/abcts-pitch-style-tune2": {
+  "title": "two styles in one chord"
+ },
+ "repo/abcts-pitch-style-tune3": {
+  "title": "a style beside an ordinary decoration on another head"
+ },
+ "repo/abcts-pitch-style-tune4": {
+  "title": "down-stemmed, where heads[0] is not the stem's"
+ },
+ "repo/abcts-pitch-style-tune5": {
+  "title": "a style on a whole note and on a half"
+ },
+ "repo/abcts-pitch-style-tune6": {
+  "title": "a styled head under a tie and a slur"
+ },
+ "repo/abcts-pitch-style-tune7": {
+  "title": "a style with the element's own style beside it"
+ },
  "repo/abcts-positioning-tune0": {
   "title": "Vocal Above"
  },
@@ -1794,6 +2279,63 @@
  },
  "repo/abcts-positioning-tune7": {
   "title": "Mid Tune Change"
+ },
+ "repo/abcts-rests-and-bars-tune0": {
+  "title": "a decoration on a barline, drawn after the barline's own rule"
+ },
+ "repo/abcts-rests-and-bars-tune1": {
+  "title": "a tie into a rest, which never closes and runs off the line"
+ },
+ "repo/abcts-rests-and-bars-tune2": {
+  "title": "the same tie with no rest, which does close"
+ },
+ "repo/abcts-rests-and-bars-tune3": {
+  "title": "a decoration on a rest"
+ },
+ "repo/abcts-rests-and-bars-tune4": {
+  "title": "a grace group on a rest"
+ },
+ "repo/abcts-rests-and-bars-tune5": {
+  "title": "an inline key change mid-measure"
+ },
+ "repo/abcts-rests-and-bars-tune6": {
+  "title": "an inline meter change mid-measure"
+ },
+ "repo/abcts-rests-and-bars-tune7": {
+  "title": "a decoration on a barline that opens a measure"
+ },
+ "repo/abcts-rests-and-bars-tune8": {
+  "title": "a decorated multimeasure rest, whose count comes between bar and mark"
+ },
+ "repo/abcts-rests-and-bars-tune9": {
+  "title": "a multimeasure rest with no decoration at all"
+ },
+ "repo/abcts-rests-and-bars-tune10": {
+  "title": "an arpeggio on a barline, which abcjs parses and does not draw"
+ },
+ "repo/abcts-rests-and-bars-tune11": {
+  "title": "an arpeggio on a rest, whose min and max pitch are one"
+ },
+ "repo/abcts-rests-and-bars-tune12": {
+  "title": "a duration no notehead and dots can spell, which is still drawn"
+ },
+ "repo/abcts-rests-and-bars-tune13": {
+  "title": "the breve boundary either side of it"
+ },
+ "repo/abcts-rests-and-bars-tune14": {
+  "title": "a note longer than a breve, which abcjs marks with a debug string"
+ },
+ "repo/abcts-rests-and-bars-tune15": {
+  "title": "a note shorter than a 64th, whose flag table has run out"
+ },
+ "repo/abcts-shared-staff-rests-tune0": {
+  "title": "Shared Staff Shared No Directive"
+ },
+ "repo/abcts-shared-staff-rests-tune1": {
+  "title": "Shared Staff Shared Both Notes"
+ },
+ "repo/abcts-shared-staff-rests-tune2": {
+  "title": "Shared Staff Shared Rests Only"
  },
  "repo/abcts-slur-shapes-tune0": {
   "title": "slur two notes"
@@ -1824,6 +2366,213 @@
  },
  "repo/abcts-slur-shapes-tune9": {
   "title": "a close after a grace group reaches the note before it"
+ },
+ "repo/abcts-stafflines-and-modifiers-tune0": {
+  "title": "Stafflines 1"
+ },
+ "repo/abcts-stafflines-and-modifiers-tune1": {
+  "title": "Stafflines 0"
+ },
+ "repo/abcts-stafflines-and-modifiers-tune2": {
+  "title": "Stafflines 3"
+ },
+ "repo/abcts-stafflines-and-modifiers-tune3": {
+  "title": "Stafflines Key"
+ },
+ "repo/abcts-stafflines-and-modifiers-tune4": {
+  "title": "Stafflines Midtune"
+ },
+ "repo/abcts-stafflines-and-modifiers-tune5": {
+  "title": "Stafflines Two Voices"
+ },
+ "repo/abcts-stafflines-and-modifiers-tune6": {
+  "title": "Repeat Bare"
+ },
+ "repo/abcts-stafflines-and-modifiers-tune7": {
+  "title": "Repeat N"
+ },
+ "repo/abcts-stafflines-and-modifiers-tune8": {
+  "title": "Repeat Two Bars"
+ },
+ "repo/abcts-stafflines-and-modifiers-tune9": {
+  "title": "Percmap"
+ },
+ "repo/abcts-stafflines-and-modifiers-tune10": {
+  "title": "Map Plain"
+ },
+ "repo/abcts-stafflines-and-modifiers-tune11": {
+  "title": "Map Allnotes"
+ },
+ "repo/abcts-stafflines-and-modifiers-tune12": {
+  "title": "Percmap Name"
+ },
+ "repo/abcts-stafflines-and-modifiers-tune13": {
+  "title": "V Name"
+ },
+ "repo/abcts-stafflines-and-modifiers-tune14": {
+  "title": "V Sname"
+ },
+ "repo/abcts-stafflines-and-modifiers-tune15": {
+  "title": "V Gstem"
+ },
+ "repo/abcts-stafflines-and-modifiers-tune16": {
+  "title": "V Stem Down"
+ },
+ "repo/abcts-stafflines-and-modifiers-tune17": {
+  "title": "V Scale"
+ },
+ "repo/abcts-stafflines-and-modifiers-tune18": {
+  "title": "V Octave"
+ },
+ "repo/abcts-stafflines-and-modifiers-tune19": {
+  "title": "V Transpose"
+ },
+ "repo/abcts-stafflines-and-modifiers-tune20": {
+  "title": "V Merge"
+ },
+ "repo/abcts-stafflines-and-modifiers-tune21": {
+  "title": "V Space"
+ },
+ "repo/abcts-stafflines-and-modifiers-tune22": {
+  "title": "Micro Quarter Sharp"
+ },
+ "repo/abcts-stafflines-and-modifiers-tune23": {
+  "title": "Micro Three Quarter"
+ },
+ "repo/abcts-stafflines-and-modifiers-tune24": {
+  "title": "Micro Quarter Flat"
+ },
+ "repo/abcts-stafflines-and-modifiers-tune25": {
+  "title": "Micro Numeric"
+ },
+ "repo/abcts-stafflines-and-modifiers-tune26": {
+  "title": "Midi Gchord"
+ },
+ "repo/abcts-stafflines-and-modifiers-tune27": {
+  "title": "Midi Drum"
+ },
+ "repo/abcts-stafflines-and-modifiers-tune28": {
+  "title": "Midi Transpose"
+ },
+ "repo/abcts-stafflines-and-modifiers-tune29": {
+  "title": "Midi Channel"
+ },
+ "repo/abcts-stafflines-and-modifiers-tune30": {
+  "title": "Tuplet Across Clef"
+ },
+ "repo/abcts-stafflines-and-modifiers-tune31": {
+  "title": "Slur Across Clef"
+ },
+ "repo/abcts-stafflines-and-modifiers-tune32": {
+  "title": "Grace With Clef"
+ },
+ "repo/abcts-stafflines-and-modifiers-tune33": {
+  "title": "Lyric Across Voices"
+ },
+ "repo/abcts-stafflines-and-modifiers-tune34": {
+  "title": "Volta With Tempo"
+ },
+ "repo/abcts-stafflines-and-modifiers-tune35": {
+  "title": "Decoration On Rest"
+ },
+ "repo/abcts-stafflines-and-modifiers-tune36": {
+  "title": "K Zero"
+ },
+ "repo/abcts-stafflines-and-modifiers-tune37": {
+  "title": "Inline K Zero"
+ },
+ "repo/abcts-stafflines-and-modifiers-tune38": {
+  "title": "K One"
+ },
+ "repo/abcts-stafflines-and-modifiers-tune39": {
+  "title": "Inline 1"
+ },
+ "repo/abcts-stafflines-and-modifiers-tune40": {
+  "title": "Inline 3"
+ },
+ "repo/abcts-stafflines-and-modifiers-tune41": {
+  "title": "Standalone 1"
+ },
+ "repo/abcts-stafflines-and-modifiers-tune42": {
+  "title": "Inline Midbar"
+ },
+ "repo/abcts-stafflines-and-modifiers-tune43": {
+  "title": "Inline With Clef"
+ },
+ "repo/abcts-stafflines-and-modifiers-tune44": {
+  "title": "Plain Z"
+ },
+ "repo/abcts-stafflines-and-modifiers-tune45": {
+  "title": "Z Then Z"
+ },
+ "repo/abcts-stafflines-and-modifiers-tune46": {
+  "title": "Decorated Z"
+ },
+ "repo/abcts-stafflines-and-modifiers-tune47": {
+  "title": "Fermata Z"
+ },
+ "repo/abcts-stafflines-and-modifiers-tune48": {
+  "title": "Z4"
+ },
+ "repo/abcts-stafflines-and-modifiers-tune49": {
+  "title": "Note Then Z"
+ },
+ "repo/abcts-staffnonote-and-directives-tune0": {
+  "title": "Rest Voice"
+ },
+ "repo/abcts-staffnonote-and-directives-tune1": {
+  "title": "Default On"
+ },
+ "repo/abcts-staffnonote-and-directives-tune2": {
+  "title": "Explicit One"
+ },
+ "repo/abcts-staffnonote-and-directives-tune3": {
+  "title": "Rest With Chord"
+ },
+ "repo/abcts-staffnonote-and-directives-tune4": {
+  "title": "Shared Staff"
+ },
+ "repo/abcts-staffnonote-and-directives-tune5": {
+  "title": "Three Voices"
+ },
+ "repo/abcts-staffnonote-and-directives-tune6": {
+  "title": "Bad Param"
+ },
+ "repo/abcts-staffnonote-and-directives-tune7": {
+  "title": "Staffnonote"
+ },
+ "repo/abcts-staffnonote-and-directives-tune8": {
+  "title": "Papersize"
+ },
+ "repo/abcts-staffnonote-and-directives-tune9": {
+  "title": "Charset"
+ },
+ "repo/abcts-staffnonote-and-directives-tune10": {
+  "title": "Version"
+ },
+ "repo/abcts-staffnonote-and-directives-tune11": {
+  "title": "Creator"
+ },
+ "repo/abcts-staffnonote-and-directives-tune12": {
+  "title": "Edited By"
+ },
+ "repo/abcts-staffnonote-and-directives-tune13": {
+  "title": "Tabgracefont"
+ },
+ "repo/abcts-staffnonote-and-directives-tune14": {
+  "title": "Tablabelfont"
+ },
+ "repo/abcts-staffnonote-and-directives-tune15": {
+  "title": "Tabnumberfont"
+ },
+ "repo/abcts-staffnonote-and-directives-tune16": {
+  "title": "Beginps Empty"
+ },
+ "repo/abcts-staffnonote-empty-staves-tune0": {
+  "title": "Both Rests"
+ },
+ "repo/abcts-staffnonote-empty-staves-tune1": {
+  "title": "Single Voice Rest"
  },
  "repo/abcts-start-char-tune0": {},
  "repo/abcts-tempo-rung-tune0": {
@@ -1878,6 +2627,193 @@
    ],
    "bpm": 120
   }
+ },
+ "repo/abcts-text-udef-parts-overlays-tune0": {
+  "title": "Text Plain"
+ },
+ "repo/abcts-text-udef-parts-overlays-tune1": {
+  "title": "Center"
+ },
+ "repo/abcts-text-udef-parts-overlays-tune2": {
+  "title": "Text Empty"
+ },
+ "repo/abcts-text-udef-parts-overlays-tune3": {
+  "title": "Text Between Lines"
+ },
+ "repo/abcts-text-udef-parts-overlays-tune4": {
+  "title": "Center And Text"
+ },
+ "repo/abcts-text-udef-parts-overlays-tune5": {
+  "title": "Staffsep"
+ },
+ "repo/abcts-text-udef-parts-overlays-tune6": {
+  "title": "Sysstaffsep"
+ },
+ "repo/abcts-text-udef-parts-overlays-tune7": {
+  "title": "Vskip Then Text"
+ },
+ "repo/abcts-text-udef-parts-overlays-tune8": {
+  "title": "Text Then Vskip"
+ },
+ "repo/abcts-text-udef-parts-overlays-tune9": {
+  "title": "Musicspace"
+ },
+ "repo/abcts-text-udef-parts-overlays-tune10": {
+  "title": "Topspace"
+ },
+ "repo/abcts-text-udef-parts-overlays-tune11": {
+  "title": "Titlespace"
+ },
+ "repo/abcts-text-udef-parts-overlays-tune12": {
+  "title": "Lyrics Two Voices"
+ },
+ "repo/abcts-text-udef-parts-overlays-tune13": {
+  "title": "Lyric On Second Only"
+ },
+ "repo/abcts-text-udef-parts-overlays-tune14": {
+  "title": "Lyric Shared Staff"
+ },
+ "repo/abcts-text-udef-parts-overlays-tune15": {
+  "title": "Lyric Second System"
+ },
+ "repo/abcts-text-udef-parts-overlays-tune16": {
+  "title": "Udef Simple"
+ },
+ "repo/abcts-text-udef-parts-overlays-tune17": {
+  "title": "Udef Override"
+ },
+ "repo/abcts-text-udef-parts-overlays-tune18": {
+  "title": "Udef Nil"
+ },
+ "repo/abcts-text-udef-parts-overlays-tune19": {
+  "title": "Udef Unknown"
+ },
+ "repo/abcts-text-udef-parts-overlays-tune20": {
+  "title": "Part Simple",
+  "partOrder": "AB"
+ },
+ "repo/abcts-text-udef-parts-overlays-tune21": {
+  "title": "Part Repeat",
+  "partOrder": "A2B"
+ },
+ "repo/abcts-text-udef-parts-overlays-tune22": {
+  "title": "Part Inline"
+ },
+ "repo/abcts-text-udef-parts-overlays-tune23": {
+  "title": "Part Parens",
+  "partOrder": "(AB)2"
+ },
+ "repo/abcts-text-udef-parts-overlays-tune24": {
+  "title": "Overlay Plain"
+ },
+ "repo/abcts-text-udef-parts-overlays-tune25": {
+  "title": "Overlay With Lyric"
+ },
+ "repo/abcts-text-udef-parts-overlays-tune26": {
+  "title": "Overlay Two"
+ },
+ "repo/abcts-text-udef-parts-overlays-tune27": {
+  "title": "Overlay Uneven"
+ },
+ "repo/abcts-text-udef-parts-overlays-tune28": {
+  "title": "Overlay With Clef"
+ },
+ "repo/abcts-text-udef-parts-overlays-tune29": {
+  "title": "Overlay With Chord"
+ },
+ "repo/abcts-text-udef-parts-overlays-tune30": {
+  "title": "Grace In Overlay"
+ },
+ "repo/abcts-text-udef-parts-overlays-tune31": {
+  "title": "Tuplet In Overlay"
+ },
+ "repo/abcts-text-udef-parts-overlays-tune32": {
+  "title": "Part With Lyric",
+  "partOrder": "AB"
+ },
+ "repo/abcts-text-udef-parts-overlays-tune33": {
+  "title": "Udef In Chord"
+ },
+ "repo/abcts-text-udef-parts-overlays-tune34": {
+  "title": "Text In Multivoice"
+ },
+ "repo/abcts-text-udef-parts-overlays-tune35": {
+  "title": "Text Space"
+ },
+ "repo/abcts-text-udef-parts-overlays-tune36": {
+  "title": "Center Empty"
+ },
+ "repo/abcts-text-udef-parts-overlays-tune37": {
+  "title": "Text Empty Twice"
+ },
+ "repo/abcts-text-udef-parts-overlays-tune38": {
+  "title": "Text Empty Then Full"
+ },
+ "repo/abcts-text-udef-parts-overlays-tune39": {
+  "title": "Text Empty Midtune"
+ },
+ "repo/abcts-text-udef-parts-overlays-tune40": {
+  "title": "Udef Header"
+ },
+ "repo/abcts-text-udef-parts-overlays-tune41": {
+  "title": "Plain Accent Chord"
+ },
+ "repo/abcts-text-udef-parts-overlays-tune42": {
+  "title": "Plain Accent"
+ },
+ "repo/abcts-text-udef-parts-overlays-tune43": {
+  "title": "Inline Udef"
+ },
+ "repo/abcts-text-udef-parts-overlays-tune44": {
+  "title": "Inline Udef Midline"
+ },
+ "repo/abcts-text-udef-parts-overlays-tune45": {
+  "title": "Vskip Then Center"
+ },
+ "repo/abcts-text-udef-parts-overlays-tune46": {
+  "title": "Vskip Only"
+ },
+ "repo/abcts-text-udef-parts-overlays-tune47": {
+  "title": "Vskip Then Two Texts"
+ },
+ "repo/abcts-text-udef-parts-overlays-tune48": {
+  "title": "Vskip Midtune Text"
+ },
+ "repo/abcts-text-udef-parts-overlays-tune49": {
+  "title": "Vskip Then Subtitle"
+ },
+ "repo/abcts-text-udef-parts-overlays-tune50": {
+  "title": "Vskip Subtitle Before Music"
+ },
+ "repo/abcts-text-udef-parts-overlays-tune51": {
+  "title": "Vskip Subtitle After Music"
+ },
+ "repo/abcts-text-udef-parts-overlays-tune52": {
+  "title": "Vskip Subtitle In Header"
+ },
+ "repo/abcts-text-udef-parts-overlays-tune53": {
+  "title": "Vskip Subtitle Mid Tune"
+ },
+ "repo/abcts-text-udef-parts-overlays-tune54": {
+  "title": "Vskip Vskip Then Subtitle"
+ },
+ "repo/abcts-text-udef-parts-overlays-tune55": {
+  "title": "Vskip No Main Title"
+ },
+ "repo/abcts-unknown-clef-tune0": {
+  "title": "Unknown Clef X"
+ },
+ "repo/abcts-unknown-clef-tune1": {
+  "title": "Unknown Clef Zzz"
+ },
+ "repo/abcts-unknown-clef-tune2": {
+  "title": "Unknown Clef Q2"
+ },
+ "repo/abcts-unknown-clef-tune3": {
+  "title": "Unknown Clef Voice"
+ },
+ "repo/abcts-unknown-clef-tune4": {
+  "title": "Unknown Clef Mid"
  },
  "repo/abcts-visualtranspose-tune0": {
   "title": "visualTranspose 0 — the control's control"
@@ -1956,6 +2892,51 @@
  },
  "repo/abcts-voice-style-tune4": {
   "title": "Voice Style Normal"
+ },
+ "repo/abcts-void-notes-and-stray-ties-tune0": {
+  "title": "The Row"
+ },
+ "repo/abcts-void-notes-and-stray-ties-tune1": {
+  "title": "Leading Tie"
+ },
+ "repo/abcts-void-notes-and-stray-ties-tune2": {
+  "title": "Leading Digit"
+ },
+ "repo/abcts-void-notes-and-stray-ties-tune3": {
+  "title": "Bare Digit Between"
+ },
+ "repo/abcts-void-notes-and-stray-ties-tune4": {
+  "title": "Tie After Bar"
+ },
+ "repo/abcts-void-notes-and-stray-ties-tune5": {
+  "title": "Real Tie"
+ },
+ "repo/abcts-void-notes-and-stray-ties-tune6": {
+  "title": "Digit After Note"
+ },
+ "repo/abcts-void-notes-and-stray-ties-tune7": {
+  "title": "Bare Tie Then Digit"
+ },
+ "repo/abcts-void-notes-and-stray-ties-tune8": {
+  "title": "Tie Then Space"
+ },
+ "repo/abcts-void-notes-and-stray-ties-tune9": {
+  "title": "Tie At Line End"
+ },
+ "repo/abcts-void-notes-and-stray-ties-tune10": {
+  "title": "Tie Then Bar"
+ },
+ "repo/abcts-void-notes-and-stray-ties-tune11": {
+  "title": "Tie Then Note"
+ },
+ "repo/abcts-void-notes-and-stray-ties-tune12": {
+  "title": "Tie Then Rest"
+ },
+ "repo/abcts-void-notes-and-stray-ties-tune13": {
+  "title": "Double Tie"
+ },
+ "repo/abcts-void-notes-and-stray-ties-tune14": {
+  "title": "Tie Then Chord"
  },
  "repo/abcts-vskip-tune0": {
   "title": "vskip between lines"
@@ -2406,6 +3387,9 @@
    "Here we have another verse, another verse, another verse.",
    "Now we have reached the end - this is the last verse of this song."
   ]
+ },
+ "sib/grace-note-placement-tune0": {
+  "notes": "test this in Safari by\nchanging the browser\nmagnification"
  },
  "sib/grandstaff-inline-meter-tune0": {
   "title": "Grand staff inline meter"
