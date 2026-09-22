@@ -228,7 +228,18 @@ export function absolutePixels(svg: string): PixelDoc {
     // every point of that outline sits relative to the origin, which is exactly what the
     // box centre is. abcjs's own outlines are in ITS pixels, so every one of them carries
     // `scale(1/7.75)`; ignoring it put the box offset 7.75x too far out.
-    const sc = /transform="[^"]*scale\(\s*([-\d.]+)/.exec(attrs);
+    // abcjs 6.7.1 spells a SCALED GLYPH as `transform="translate(x y) scale(s,s)
+    // translate(-x -y)"` (`draw/relative.js:74-78`) — a scale ABOUT A PIVOT on a `d` that is
+    // already absolute, which is neither a placement translate (space, not comma, so `tr`
+    // does not match it) nor a scale about the origin. 6.7.0 wrote the same pivot as a CSS
+    // `style`, which this parser never read; reading the new attribute as an origin scale
+    // moved every grace glyph's box by 40% of its page position.
+    const pivot =
+      /transform="translate\(\s*([-\d.]+)\s+([-\d.]+)\s*\)\s*scale\(\s*([-\d.]+)/.exec(
+        attrs,
+      );
+    const sc =
+      pivot === null ? /transform="[^"]*scale\(\s*([-\d.]+)/.exec(attrs) : null;
     const scale = sc?.[1] !== undefined ? +sc[1] : 1;
     const top = stack[stack.length - 1] ?? { x: 0, y: 0 };
     const here =
@@ -275,7 +286,15 @@ export function absolutePixels(svg: string): PixelDoc {
       // a notehead, its top against its centre, a 4.035px bias that read as agreement.
       const d = /\sd="([^"]+)"/.exec(attrs)?.[1];
       const box = d === undefined ? null : pathBox(d);
-      if (box !== null) {
+      if (box !== null && pivot?.[1] !== undefined && pivot[2] !== undefined && pivot[3] !== undefined) {
+        const px = +pivot[1];
+        const py = +pivot[2];
+        const ps = +pivot[3];
+        lx = px + (box.x - px) * ps;
+        ly = py + (box.y - py) * ps;
+        lw = box.w * ps;
+        lh = box.h * ps;
+      } else if (box !== null) {
         lx = box.x * scale;
         ly = box.y * scale;
         lw = box.w * scale;

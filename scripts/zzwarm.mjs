@@ -20,7 +20,7 @@ import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 const require0 = createRequire(import.meta.url)
 const { webkit } = require0(process.env.PW)
-const ABCJS='/Users/lrettberg/ICMLabs/Code/abcMusicKit/Docs/References/abcjs/abcjs-6.7.0/dist/abcjs-basic-min.js'
+const ABCJS='/Users/lrettberg/ICMLabs/Code/abcMusicKit/Docs/References/abcjs/abcjs-6.7.1/dist/abcjs-basic-min.js'
 const repo='/Users/lrettberg/ICMLabs/Code/abcts'
 const OURS=join(repo,'dist','abcts-browser.global.js')
 const fixtures=join(repo,'tests','corpus-abcjs','fixtures')

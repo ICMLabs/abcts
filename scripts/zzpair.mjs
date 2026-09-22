@@ -22,7 +22,7 @@ const PW = process.env.PW ?? '/tmp/gp/pw/node_modules/playwright-core/index.js'
 const { webkit, chromium } = require0(PW)
 
 const ABCJS =
-  '/Users/lrettberg/ICMLabs/Code/abcMusicKit/Docs/References/abcjs/abcjs-6.7.0/dist/abcjs-basic-min.js'
+  '/Users/lrettberg/ICMLabs/Code/abcMusicKit/Docs/References/abcjs/abcjs-6.7.1/dist/abcjs-basic-min.js'
 const repo = join(import.meta.dirname, '..')
 const OURS = join(repo, 'dist', 'abcts-browser.global.js')
 if (!existsSync(OURS)) throw new Error(`no ${OURS} — run npm run build`)

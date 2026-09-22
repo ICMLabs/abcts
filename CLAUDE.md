@@ -2224,10 +2224,20 @@ READ the diff and commit baselines with the code change.
 > that — so absolute pixels throughout is the next arc, and the two go together.
 
 ## Parity targets, by mode
-`abcjs-strict` is measured against **abcjs 6.7.0 itself** — its parse trees, element dumps
+`abcjs-strict` is measured against **abcjs 6.7.1 itself** — its parse trees, element dumps
 and SVG goldens. 100% is the bar; a divergence is a defect, not a tolerance. It was 6.6.3
-until 2026-08-08; every citation written before that date names a 6.6.3 line number, and
-the two trees are both vendored, so a stale citation can be checked rather than guessed at.
+until 2026-08-08 and 6.7.0 until 2026-09-22; every citation written before those dates names
+the older line numbers, and all three trees are vendored, so a stale citation can be checked
+rather than guessed at.
+
+> 🔀 **THE TARGET IS abcjs 6.7.1 AS OF 2026-09-22.** 6.7.1 is a two-bug patch release and its
+> ONE behavioural change is `draw/relative.js:74-78` `scaleExistingElem`: a scaled glyph now
+> carries `transform="translate(x y) scale(sx,sy) translate(-x -y)"` instead of
+> `style="transform:scale(…);transform-origin:…"` — same pivot, same numbers, different
+> attribute. Ported at the one emitter site in `svg.ts`; every changed golden differs on
+> `transform` lines only (verified by script). `abcts.config.json`'s `abcjsRef`, `package.json`'s
+> `version` and `compat`'s `signature` all say 6.7.1. The sibling `dump-svg.js` defaults to
+> 6.7.1 now, so `ABCJS_VERSION` is only needed to run an OLDER tree.
 
 `abcjs-extended` is measured against the OTHER engines, since abcjs is wrong or
 absent for much of what it covers. Golden sets exist in `../abcMusicKit` (v1),

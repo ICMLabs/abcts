@@ -1,4 +1,4 @@
-# PARITY STATUS — abcts vs abcjs 6.7.0
+# PARITY STATUS — abcts vs abcjs 6.7.1
 
 *Measured 2026-09-16, on commit `3e31b24`, by running every gate in the repo plus both
 browser comparisons. Every number below is a re-run, not a carried-forward claim.*
@@ -312,9 +312,9 @@ Measured on 2026-09-06, not assumed.
 **What is already true**
 
 - **Zero missing symbols.** All 64 of abcjs's public symbols exist and behave;
-  `Object.keys` on the built CJS bundle against abcjs 6.7.0's shows *nothing* abcjs has that
+  `Object.keys` on the built CJS bundle against abcjs 6.7.1's shows *nothing* abcjs has that
   we lack. We add a few extras, which is harmless.
-- **`signature` reports `abcjs-basic v6.7.0`**, because a host that version-sniffs is
+- **`signature` reports `abcjs-basic v6.7.1`**, because a host that version-sniffs is
   sniffing for a behaviour contract we meet. `abctsSignature` says which engine it really is.
 - **Zero runtime dependencies.**
 - **The `<script>` build is browser-verified**, not just built: `zzlive` loads
@@ -328,7 +328,7 @@ Measured on 2026-09-06, not assumed.
   path abcjs does not have. The esm/cjs builds stay unminified, because a consuming bundler
   minifies them with better information than we have.
 - **The PACKAGE is prepared and NOT published** (2026-09-16). `abcts` is unclaimed on the
-  npm registry. Version is **6.7.0**, naming the abcjs release this is byte-identical to —
+  npm registry. Version is **6.7.1**, naming the abcjs release this is byte-identical to —
   ⚠️ which means abcts's own fixes move the patch digit and a new abcjs to match resets the
   line. **Sourcemaps are off**: they were 12 files and ~22 MB of a 29 MB tarball, and
   turning them OFF rather than excluding them from `files` is deliberate — an exclusion
@@ -349,7 +349,7 @@ drift several percent between runs.
 
 **A static score page** — `renderAbc` and nothing else:
 
-| | abcjs 6.7.0 | abcts | ratio |
+| | abcjs 6.7.1 | abcts | ratio |
 |---|---|---|---|
 | WebKit, whole corpus (warm) | 240 ms | 293 ms | **1.22x** |
 | Chrome, whole corpus (warm) | 175 ms | 242 ms | **1.38x** |

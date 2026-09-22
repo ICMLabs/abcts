@@ -569,10 +569,10 @@ the golden tables. Recorded here so it is not re-argued as an obvious improvemen
 
 ---
 
-## THE STANDING GOAL: `abcjs-strict` OUTPUT IS BYTE-EQUAL TO abcjs 6.7.0
+## THE STANDING GOAL: `abcjs-strict` OUTPUT IS BYTE-EQUAL TO abcjs 6.7.1
 
 **Lance, 2026-08-09b: abcts exists to build an abcjs-modern whose output — the SVG FILE and
-the AUDIO — is 100% byte-equal to abcjs 6.7.0.** A tolerance is therefore not a compromise
+the AUDIO — is 100% byte-equal to abcjs 6.7.1** (6.7.0 when written; the pin moved 2026-09-22). A tolerance is therefore not a compromise
 to be balanced against effort; it is a defect that has not been written down yet.
 
 Where that stands:

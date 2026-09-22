@@ -57,7 +57,7 @@ for (const name of names) {
   const want = join(dir, `${name}.abcjs.svg`)
   execFileSync('node', [join(tools, 'dump-svg.js'), '--file', abc, '--output', want], {
     stdio: ['ignore', 'ignore', 'inherit'],
-    env: { ...process.env, ABCJS_VERSION: '6.7.0' },
+    env: { ...process.env, ABCJS_VERSION: '6.7.1' },
   })
   if (statSync(want).size === 0) throw new Error(`${name}: abcjs wrote NOTHING — check the path`)
   const reference = readFileSync(want, 'utf-8')

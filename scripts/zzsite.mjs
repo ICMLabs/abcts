@@ -148,7 +148,7 @@ const PAGE = (slug) => `<!doctype html>
 </defs></svg>
 
 <header>
-  <strong>abcjs 6.7.0 vs abcts</strong>
+  <strong>abcjs 6.7.1 vs abcts</strong>
   <select id="fixture">${fixtures
     .map((f) => `<option${f === slug ? ' selected' : ''}>${f}</option>`)
     .join('')}</select>

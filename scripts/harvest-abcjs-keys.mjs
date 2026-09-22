@@ -31,7 +31,7 @@ import { readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 const require0 = createRequire(import.meta.url)
 const { webkit } = require0(process.env.PW ?? '/tmp/gp/pw/node_modules/playwright-core/index.js')
-const ABCJS = '/Users/lrettberg/ICMLabs/Code/abcMusicKit/Docs/References/abcjs/abcjs-6.7.0/dist/abcjs-basic-min.js'
+const ABCJS = '/Users/lrettberg/ICMLabs/Code/abcMusicKit/Docs/References/abcjs/abcjs-6.7.1/dist/abcjs-basic-min.js'
 
 const ROOTS = ['A', 'B', 'C', 'D', 'E', 'F', 'G']
 const ACCS = ['', '#', 'b']

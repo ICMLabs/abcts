@@ -19,7 +19,7 @@ import { existsSync, readFileSync, readdirSync, writeFileSync, mkdirSync } from 
 import { join } from 'node:path'
 
 const CHROME = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'
-const ABCJS = '/Users/lrettberg/ICMLabs/Code/abcMusicKit/Docs/References/abcjs/abcjs-6.7.0/dist/abcjs-basic-min.js'
+const ABCJS = '/Users/lrettberg/ICMLabs/Code/abcMusicKit/Docs/References/abcjs/abcjs-6.7.1/dist/abcjs-basic-min.js'
 const root = join(import.meta.dirname, '..')
 const fixtures = join(root, 'tests', 'corpus-abcjs', 'fixtures')
 const goldens = join(root, 'tests', 'corpus-abcjs', 'golden')
@@ -132,7 +132,7 @@ if (args[0] === '--all') {
                dh: h(got) && h(want) ? (Number(h(got)) - Number(h(want))).toFixed(4) : '?' })
   }
   const lines = [
-    `abcjs 6.7.0 in real Chrome vs the jsdom-harvested goldens`,
+    `abcjs 6.7.1 in real Chrome vs the jsdom-harvested goldens`,
     `${off.length} of ${cases.length} differ`,
     '',
     ...off.map((o) => `  ${o.slug.padEnd(46)} byte ${String(o.at).padStart(6)}  height ${o.chrome} vs ${o.jsdom}  Δ${o.dh}`),

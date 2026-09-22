@@ -1,6 +1,6 @@
 {
   "name": "abcts",
-  "version": "6.7.0",
+  "version": "6.7.1",
   "description": "Modern TypeScript ABC notation library \u2014 community successor to abcjs",
   "keywords": [
     "abc",

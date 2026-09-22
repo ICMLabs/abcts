@@ -105,6 +105,6 @@ const dir = join(root, 'tests', 'corpus-tunebook')
 mkdirSync(dir, { recursive: true })
 writeFileSync(
   join(dir, 'golden.json'),
-  `${JSON.stringify({ abcjs: '6.7.0', generatedBy: 'scripts/harvest-abcjs-tunebook.mjs', cases: out }, null, 1)}\n`,
+  `${JSON.stringify({ abcjs: '6.7.1', generatedBy: 'scripts/harvest-abcjs-tunebook.mjs', cases: out }, null, 1)}\n`,
 )
 console.log(`${Object.keys(out).length} cases -> ${join(dir, 'golden.json')}`)

@@ -1464,27 +1464,31 @@ export function toSVG(
             ? (/ class="[^"]*"/.exec(attributes)?.[0] ?? "")
             : "";
         /**
-         * **A SCALED GLYPH IS CSS-SCALED, NOT DRAWN SMALL.** `drawRelativeElement` ends
-         * with `if (params.scalex !== 1) scaleExistingElem(…)`, which sets
-         * `style="transform:scale(sx,sy);transform-origin:Xpx Ypx;"` on the element it
-         * just made (`draw/relative.js:68-76`). That is the other half of the finding
-         * that abcjs never applies a glyph's scale to its PATH: the outline really is
-         * byte-identical to a full-size one, and a `style` attribute shrinks it.
+         * **A SCALED GLYPH IS TRANSFORM-SCALED, NOT DRAWN SMALL.** `drawRelativeElement`
+         * ends with `if (params.scalex !== 1) scaleExistingElem(…)`, which sets
+         * `transform="translate(X Y) scale(sx,sy) translate(-X -Y)"` on the element it
+         * just made (6.7.1 `draw/relative.js:70-78`; 6.7.0 wrote the same pivot as a
+         * CSS `style="transform:scale(…);transform-origin:…"`, the Safari-zoom fix being
+         * 6.7.1's one behavioural change). That is the other half of the finding that
+         * abcjs never applies a glyph's scale to its PATH: the outline really is
+         * byte-identical to a full-size one, and the attribute shrinks it.
          *
          * The origin is `params.x` and `renderer.calcY(params.pitch)` — the RAW pitch,
          * before `getYCorr`, because `drawRelativeElement` computes that `y` at its top
-         * and `printSymbol` applies the correction on its own. And like the notehead's
-         * class it is a late `setAttribute`, so it serialises AFTER the `d`.
+         * and `printSymbol` applies the correction on its own. Raw JS number formatting
+         * and raw `"-" + x` concatenation, so a negative origin would read `--`. And like
+         * the notehead's class it is a late `setAttribute`, so it serialises AFTER the `d`.
          */
+        // …**AND THE PIVOT IS THE DECLARED PITCH WHERE THE PRODUCER STATES ONE** —
+        // `calcY(params.pitch)`, before `getYCorr`. See `PlacedGlyph.originPitch`.
+        const originX = x * PX;
+        const originY =
+          originPitch === undefined ? y * PX + oy : -spacesOfPitch(originPitch) * PX + oy;
         const styleAttr =
           scale === undefined || scale === 1
             ? ""
-            : ` style="transform:scale(${scale},${scale});transform-origin:` +
-              `${x * PX}px ${
-                // …**AND THE PIVOT IS THE DECLARED PITCH WHERE THE PRODUCER STATES ONE** —
-                // `calcY(params.pitch)`, before `getYCorr`. See `PlacedGlyph.originPitch`.
-                originPitch === undefined ? y * PX + oy : -spacesOfPitch(originPitch) * PX + oy
-              }px;"`;
+            : ` transform="translate(${originX} ${originY}) scale(${scale},${scale})` +
+              ` translate(-${originX} -${originY})"`;
         return (
           `<path${late ? attributes.replace(late, "") : attributes}${named ? ` data-name="${named}"` : ""} ` +
           `d="M ${px} ${py}${ink.path.slice(head[0].length)}"${styleAttr}${late}${trailing}></path>`

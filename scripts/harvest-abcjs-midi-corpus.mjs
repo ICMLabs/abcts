@@ -30,7 +30,7 @@ import { readdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 
 const require0 = createRequire(import.meta.url)
-const ABCJS_VERSION = '6.7.0'
+const ABCJS_VERSION = '6.7.1'
 const ABCJS_PATH = `/Users/lrettberg/ICMLabs/Code/abcMusicKit/Docs/References/abcjs/abcjs-${ABCJS_VERSION}/dist/abcjs-basic-min.js`
 const abcjs = require0(ABCJS_PATH)
 

@@ -5,7 +5,7 @@
 
 ## Parity status
 
-As of 2026-09-06, abcts matches abcjs 6.7.0 on every axis this repo has built a way to
+As of 2026-09-22, abcts matches abcjs 6.7.1 (the reference moved from 6.7.0 that day; the only output change was the scaled-glyph `transform` spelling) on every axis this repo has built a way to
 measure — the **SVG file byte for byte** (headless, and live in both WebKit and Chrome), the
 **MIDI file byte for byte**, the audio event list and timings, the parse tree, and the whole
 public API surface.

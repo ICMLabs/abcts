@@ -25,7 +25,7 @@ const require0 = createRequire(import.meta.url)
 const PW = process.env.PW ?? '/tmp/gp/pw/node_modules/playwright-core/index.js'
 const { webkit, chromium } = require0(PW)
 
-const ABCJS = '/Users/lrettberg/ICMLabs/Code/abcMusicKit/Docs/References/abcjs/abcjs-6.7.0/dist/abcjs-basic-min.js'
+const ABCJS = '/Users/lrettberg/ICMLabs/Code/abcMusicKit/Docs/References/abcjs/abcjs-6.7.1/dist/abcjs-basic-min.js'
 const repo = join(import.meta.dirname, '..')
 const fixtures = join(repo, 'tests', 'corpus-abcjs', 'fixtures')
 const goldens = join(repo, 'tests', 'corpus-abcjs', 'golden')
@@ -94,7 +94,7 @@ for (const c of cases) {
     rows.push(`  ${c.slug.padEnd(50)} wk${dwg ? '≠' : '='}g bl${dbg ? '≠' : '='}g wk${dwb ? '≠' : '='}bl   h ${h(a)} / ${h(b)} / ${h(want)}`)
 }
 const head = [
-  `abcjs 6.7.0 — WebKit vs Blink vs the jsdom harvest, ${cases.length} cases`,
+  `abcjs 6.7.1 — WebKit vs Blink vs the jsdom harvest, ${cases.length} cases`,
   ``,
   `  WebKit differs from the golden : ${wkVsGolden}`,
   `  Chrome differs from the golden : ${blVsGolden}`,

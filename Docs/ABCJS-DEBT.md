@@ -2,7 +2,7 @@
 
 **This is not a bug list and not `ABCJS-DIFFERENCES.md`.** Those two say where abcts is
 WRONG and where it deliberately DIVERGES. This one says where abcts is deliberately
-**worse-shaped than it needs to be** because byte parity with abcjs 6.7.0 demands abcjs's
+**worse-shaped than it needs to be** because byte parity with abcjs 6.7.1 demands abcjs's
 arithmetic, its order, or its data model rather than the better one.
 
 > **The ruling it exists to serve** (Lance, 2026-08-11): *"abcjs behavior is what we're

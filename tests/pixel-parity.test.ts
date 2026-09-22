@@ -269,6 +269,10 @@ const EXPECTED: Record<
   // abcjs does not either: `printSymbol` takes `scalex`/`scaley` and passes neither on.
   // At ZERO on all four axes.
   "vree-grace-notes": { heads: 7, dy: 0.0, dx: 0.0, oy: 0.0, ox: 0.0 },
+  // abcjs 6.7.1's own `tests/visual/svg.test.js` grace-note-placement tune, added to the
+  // sibling corpus 2026-09-22. `{/C/2}` and `{/EF}` slash ONLY the first grace, as abcjs
+  // does. At ZERO on all four axes on its first run.
+  "grace-note-placement": { heads: 14, dy: 0.0, dx: 0.0, oy: 0.0, ox: 0.0 },
   // oy 0.06 -> 0.0: a sharp DECLARES 20.15 where its ink box is 20.19, and a key
   // signature of them was the extra 0.04px on top of the clef's systemic 0.03.
   "vree-sharps": { heads: 4, dy: 0.0, dx: 0.0, oy: 0.0, ox: 0.0 },

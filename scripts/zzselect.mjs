@@ -35,7 +35,7 @@ const require0 = createRequire(import.meta.url)
 const PW = process.env.PW ?? '/tmp/gp/pw/node_modules/playwright-core/index.js'
 const { webkit, chromium } = require0(PW)
 
-const ABCJS = '/Users/lrettberg/ICMLabs/Code/abcMusicKit/Docs/References/abcjs/abcjs-6.7.0/dist/abcjs-basic-min.js'
+const ABCJS = '/Users/lrettberg/ICMLabs/Code/abcMusicKit/Docs/References/abcjs/abcjs-6.7.1/dist/abcjs-basic-min.js'
 const repo = join(import.meta.dirname, '..')
 const OURS = join(repo, 'dist', 'abcts-browser.global.js')
 if (!existsSync(OURS)) throw new Error(`no ${OURS} — run npm run build`)
@@ -111,7 +111,7 @@ for (const c of cases) {
 await browser.close()
 
 const head = [
-  `abcts vs abcjs 6.7.0 with selectTypes ON, both live in ${engine.name}, ${cases.length} cases`,
+  `abcts vs abcjs 6.7.1 with selectTypes ON, both live in ${engine.name}, ${cases.length} cases`,
   `${off} of ${cases.length - DIVERGENT.size} differ (${DIVERGENT.size} ruled divergent)`,
   ``,
 ]

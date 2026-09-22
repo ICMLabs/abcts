@@ -155,7 +155,7 @@ export interface PlacedGlyph {
   /**
    * **THE PITCH A CSS SCALE PIVOTS ABOUT — abcjs's RAW `params.pitch`, BEFORE `getYCorr`.**
    *
-   * `scaleExistingElem` takes `transform-origin: params.x, renderer.calcY(params.pitch)`
+   * `scaleExistingElem` pivots on `params.x, renderer.calcY(params.pitch)`
    * (`draw/relative.js:68-76`), and `printSymbol` applies the correction on its OWN, so the
    * pivot sits where the element was declared rather than where its outline was drawn.
    *

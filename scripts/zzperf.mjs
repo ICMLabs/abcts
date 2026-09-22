@@ -43,7 +43,7 @@ const require0 = createRequire(import.meta.url)
 const PW = process.env.PW ?? '/tmp/gp/pw/node_modules/playwright-core/index.js'
 const { webkit, chromium } = require0(PW)
 
-const ABCJS = '/Users/lrettberg/ICMLabs/Code/abcMusicKit/Docs/References/abcjs/abcjs-6.7.0/dist/abcjs-basic-min.js'
+const ABCJS = '/Users/lrettberg/ICMLabs/Code/abcMusicKit/Docs/References/abcjs/abcjs-6.7.1/dist/abcjs-basic-min.js'
 const repo = join(import.meta.dirname, '..')
 const OURS = join(repo, 'dist', 'abcts-browser.global.js')
 if (!existsSync(OURS)) throw new Error(`no ${OURS} — run npm run build`)
@@ -144,7 +144,7 @@ const median = ratios[Math.floor(ratios.length / 2)]
 // future corpus of trivial tunes cannot quietly fill the table with noise.
 const measurable = perTune.filter((p) => p.js > 0.02 && p.ts > 0.02)
 const lines = [
-  `abcts vs abcjs 6.7.0, both live in ${engine.name}, ${cases.length} files, ${REPS} reps${HOST ? '  [HOST: + lines + noteTimings]' : ''}`,
+  `abcts vs abcjs 6.7.1, both live in ${engine.name}, ${cases.length} files, ${REPS} reps${HOST ? '  [HOST: + lines + noteTimings]' : ''}`,
   ``,
   `  COLD (first rep, compilation included)   abcjs ${cold.js.toFixed(0)}ms   abcts ${cold.ts.toFixed(0)}ms   ${(cold.ts / cold.js).toFixed(2)}x`,
   `  WARM (mean of ${warm.length})                      abcjs ${jsWarm.toFixed(0)}ms   abcts ${tsWarm.toFixed(0)}ms   ${(tsWarm / jsWarm).toFixed(2)}x`,

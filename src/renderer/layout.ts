@@ -3845,7 +3845,7 @@ function layoutNoteheads(
       // …**AND `V:… scale=` IS A CSS SCALE ON THE HEAD, NOT A REDRAWN OUTLINE.** abcjs
       // passes `scale: this.voiceScale` into `createNoteHead` (`abstract-engraver.js:723`)
       // and `drawRelativeElement` ends with `if (params.scalex !== 1)
-      // scaleExistingElem(…)` — a `style="transform:scale(…)"` on the element it just made
+      // scaleExistingElem(…)` — a `transform="translate(x y) scale(…) translate(-x -y)"` on the element it just made (6.7.1; 6.7.0 wrote a CSS `style`)
       // (`draw/relative.js:68-76`). Its `d` is byte-identical to the unscaled one, which
       // abcjs's own golden confirms.
       ...(voiceScale === 1 ? {} : { scale: voiceScale }),

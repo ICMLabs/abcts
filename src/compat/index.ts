@@ -203,7 +203,7 @@ const SCREEN_PADDING = 15;
  * (`index.js:32`, `version.js`). A host that feature-detects on it must not break because
  * it is running abcts; abcts's own identity goes under `abctsSignature`.
  */
-export const signature = "abcjs-basic v6.7.0";
+export const signature = "abcjs-basic v6.7.1";
 
 /** abcts's own, for a host that wants to know what it is really talking to. */
 export const abctsSignature = "abcts (abcjs-compatible)";
