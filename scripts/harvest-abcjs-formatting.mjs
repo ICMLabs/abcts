@@ -1,6 +1,6 @@
 /**
  * Harvest abcjs's `tune.formatting` — the `%%` settings it collected — over both corpora,
- * by RUNNING abcjs 6.7.0 rather than reading its source.
+ * by RUNNING abcjs 6.7.1 rather than reading its source.
  *
  * ── WHAT IS IN IT ───────────────────────────────────────────────────────────
  * TWENTY-ONE FONT OBJECTS, always present, seeded by `initFormatting` before any directive

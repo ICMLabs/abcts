@@ -37,7 +37,13 @@ import { fileURLToPath } from 'node:url'
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
 const config = JSON.parse(readFileSync(join(root, 'abcts.config.json'), 'utf-8'))
-const abcjsRoot = join(root, config.abcjsRef ?? '../abcMusicKit/Docs/References/abcjs/abcjs-6.7.0')
+// ⚠️ **A STALE FALLBACK IS THE ORACLE-VERSION TRAP IN MINIATURE** — this read 6.7.0 after
+// the repo moved to 6.7.1 (2026-09-22), inert only because `abcts.config.json` sets
+// `abcjsRef`. The same shape as `dump-svg.js` defaulting to 6.6.3, which once accused the
+// branch it already ported of a defect it does not have. ⚠️ AND THIS CORPUS WAS NOT PART OF
+// THE 6.7.1 RE-HARVEST: `tests/corpus-chord-grid`'s goldens are still the ones harvested
+// from 6.7.0, unverified against 6.7.1. Re-run this to change that.
+const abcjsRoot = join(root, config.abcjsRef ?? '../abcMusicKit/Docs/References/abcjs/abcjs-6.7.1')
 const SOURCE = join(abcjsRoot, 'tests/visual/chord-grid.test.js')
 const outDir = join(root, 'tests', 'corpus-chord-grid')
 

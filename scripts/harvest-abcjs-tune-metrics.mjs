@@ -1,5 +1,5 @@
 /**
- * Harvest abcjs's `tuneMetrics` — each measure's MINIMUM width — by RUNNING abcjs 6.7.0
+ * Harvest abcjs's `tuneMetrics` — each measure's MINIMUM width — by RUNNING abcjs 6.7.1
  * over every fixture of both corpora.
  *
  * ── WHAT IT RECORDS ─────────────────────────────────────────────────────────

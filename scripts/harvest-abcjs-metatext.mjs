@@ -1,6 +1,6 @@
 /**
  * Harvest abcjs's `metaText` — the tune's FIELD VALUES — over both corpora, by RUNNING
- * abcjs 6.7.0 rather than reading its source.
+ * abcjs 6.7.1 rather than reading its source.
  *
  * ── WHY IT IS A GATE ────────────────────────────────────────────────────────
  * `metaTextInfo` says WHERE each field was written and `metaText` says WHAT it said, and

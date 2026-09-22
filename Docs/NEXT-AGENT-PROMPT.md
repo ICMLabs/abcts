@@ -1,15 +1,22 @@
-# NEXT AGENT PROMPT — abcts, 2026-09-16
+# NEXT AGENT PROMPT — abcts, 2026-09-22
 
 Paste the block below.
 
 ---
 
 ```
-start here: abcts/Docs/CHECKPOINT-2026-09-16.md — §3 is the rules this session produced and
-TWO OF THEM ARE CORRECTIONS to causes this repo had written down and had wrong. Then
-HANDOFF-2026-09-16.md, whose §WHAT IS LEFT is now ONE ULP and a floor. `Docs/PARITY-STATUS.md`
-§1a is the same table in plain language and is the file to hand anyone asking how close this
-is. -09-15 and -09-14 are history: their "what is left" lists are closed.
+start here: **`Docs/PARITY-STATUS.md`** — it is the only file re-measured after the abcjs
+**6.7.1** re-harvest (2026-09-21/22) and is current; §3b is a class the older docs predate,
+the NAMED OPEN ROWS of the tune-object oracles. Then `tests/open-rows.ts`, whose header says
+what each row is. Then CHECKPOINT-2026-09-16.md §3 for the rules — two are CORRECTIONS to
+causes this repo had written down and had wrong — and HANDOFF-2026-09-16.md for the traps.
+⚠️ **Both of those carry 6.7.0-era NUMBERS and are bannered as such**; take numbers from
+PARITY-STATUS or from a gate you ran. -09-15 and earlier are history.
+
+⚠️ **THE ORACLE IS abcjs 6.7.1 AND THE VERSION IS PART OF THE GATE.** `abcts.config.json`
+pins it, `signature` reports it, the package version IS it. The one behavioural change is a
+scaled element carrying `transform="translate() scale() translate()"` where 6.7.0 wrote a CSS
+style transform (`draw/relative.js:74-78`).
 
 Work in /Users/lrettberg/ICMLabs/Code/abcts. Run every command from there — `cd` does not
 persist between tool calls and the workspace ROOT collects every sibling repo's tests.
@@ -17,22 +24,27 @@ persist between tool calls and the workspace ROOT collects every sibling repo's 
 ⚠️ FIRST: `/tmp` IS CLEANED BETWEEN SESSIONS. Restore before any browser gate:
     mkdir -p /tmp/gp/pw && cd /tmp/gp/pw && npm init -y && npm i playwright-core@1.61
 …and for instrumenting abcjs (CommonJS, no build needed, and it EARNED ITS KEEP AGAIN):
-    cp -R ../abcMusicKit/Docs/References/abcjs/abcjs-6.7.0/src /tmp/gp/abcjs
+    cp -R ../abcMusicKit/Docs/References/abcjs/abcjs-6.7.1/src /tmp/gp/abcjs
 …then `cd` back into the repo — that `cd` resets the shell's CWD for the next call.
 
-    suite       94 files, 2,693 tests, no reds
-    svg-bytes   0 of 691 in-repo, 0 of 356 sibling
-    mode-bytes  11 of 691 — every one DECLARED
-    midi-bytes  0 of 691 — 19 ruled divergent
-    zzlive      0 of 685  WebKit AND Chrome        zzselect 0 of 685  WebKit AND Chrome
-    zzclick     1 of 685 DECLARED ×3               zzledger 0 differ, 0 KNOWN, 41 agree
-    zzopts      26 rows, every one at its declared count. 5 differing of 17,810:
+    suite       95 files, 2,722 tests, no reds
+    svg-bytes   0 of 697 in-repo, 0 of 359 sibling
+    mode-bytes  11 — every one DECLARED
+    midi-bytes  0 of 697 — 19 ruled divergent
+    zzlive      0 of 691  WebKit AND Chrome        zzselect 0 of 691  WebKit AND Chrome
+    zzclick     1 of 691 DECLARED ×3               zzledger 0 differ, 0 KNOWN, 41 agree
+    zzopts      26 rows, every one at its declared count. 5 differing of 17,966:
                 wrap+staffwidth 4 (THE FLOOR) · minPadding 1 · every other row 0
+    open rows   NEW 2026-09-22 — `tests/open-rows.ts`. The tune-object oracles widened from
+                507 tunes to 822 and 315 tunes had never been asked: 12 of 814 `tune.lines`,
+                88 of 16,223 parse-values, 71 render-values. NAMED, not fixed — each gate
+                asserts zero elsewhere AND that every named row still differs, so fixing one
+                without deleting its name FAILS the gate.
     warnings    0 of 815 · test:dist 0 of 685 ESM and CJS
     lint        0 errors, 33 warnings — A GATE NOW, and `biome.jsonc` says why at every
                 rule it turns off. ⚠️ THE FORMATTER IS OFF ON PURPOSE — 127 files disagree
                 with it and adopting a format is its own commit, never a side effect.
-    package     2.0 MB packed / 6.9 MB unpacked, 25 files, version 6.7.0 — NOT PUBLISHED
+    package     2.0 MB packed / 6.9 MB unpacked, 25 files, version 6.7.1 — NOT PUBLISHED
     debt        53 `ponytail:` markers, §A restated as decisions, §B swept — 5 of its 6
                 rows were ALREADY CLOSED
 
@@ -81,7 +93,10 @@ WHAT TO DO NEXT — the board, the ledger and the lint are all done, so WHAT IS 
 DECISIONS. Do not invent work here; ask.
   1. **PUBLISH** — prepared and NOT run, because it is outward-facing and irreversible.
      `npm publish` from this directory claims the unregistered name `abcts` and goes live on
-     unpkg/jsdelivr immediately. Version 6.7.0, sourcemaps dropped, 2.0 MB packed.
+     unpkg/jsdelivr immediately. Version **6.7.1**, sourcemaps dropped, 2.0 MB packed.
+     ⚠️ The version tracks the abcjs release this is byte-identical to, so it MOVED WITH THE
+     RE-HARVEST — which is the scheme working, and also the reason abcts's own fixes have to
+     take the patch digit.
   2. ⚖️ **`millisecondsPerMeasure` / `getTotalTime` on the tune object** — the one debt row
      left, and its marker says "flag it before doing it": hanging them on `TuneObject`
      widens the drop-in contract. `setUpAudio`'s answer already exists; the compound-meter
@@ -93,7 +108,10 @@ DECISIONS. Do not invent work here; ask.
      against 499 / 145 — and NOBODY HAS INSTRUMENTED IT. Two plausible causes: two glyph
      tables embedded (abcjs's for strict, Bravura's for extended), and extended being a
      second engraving path. A reduction question, not a defect.
-  5. `minPadding`'s last ULP — ⚠️ **read the handoff first: it is a units DOMAIN, not a term
+  5. **The named OPEN ROWS** (`tests/open-rows.ts`) — 12 + 88 + 71 rows on hand-written
+     control ladders, each measured and none a 6.7.1 change. They are the only rendering-
+     adjacent work left that is not a decision, and the gate tells you when one is fixed.
+  6. `minPadding`'s last ULP — ⚠️ **read the handoff first: it is a units DOMAIN, not a term
      to regroup.** Both sides are instrumented and the grouping already agrees; abcjs's `er`
      carries a tail its PIXEL chain put there where this engine walks the line in STAFF
      SPACES. Two ULP in one root `width`, nothing visibly moved. Smallest thing on this

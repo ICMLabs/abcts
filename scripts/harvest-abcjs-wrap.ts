@@ -1,6 +1,6 @@
 /**
  * Harvest abcjs's `wrap` answer — `tune.explanation` and `tune.lineBreaks` — by RUNNING
- * abcjs 6.7.0 over its OWN wrap inputs.
+ * abcjs 6.7.1 over its OWN wrap inputs.
  *
  * ⚠️ **THE ORACLE IS WHAT abcjs DOES, NOT WHAT ITS SUITE ASSERTS.** `tests/visual/
  * wrap.test.js` carries expected literals beside each input; those are NOT copied. The

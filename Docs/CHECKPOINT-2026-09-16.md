@@ -5,6 +5,14 @@ state: zzopts 5 differing of 17,810 and FOUR of them are its floor · suite 2,69
 
 # Checkpoint 2026-09-16
 
+> ⚠️ **SUPERSEDED IN PART BY THE abcjs 6.7.1 RE-HARVEST (2026-09-21/22), WHICH IS NOT THIS
+> SESSION'S WORK.** Every gate NUMBER below is 6.7.0-era and the corpus has since grown from
+> 691 tunes to 697 in-repo (822 in the fixture directory): the suite is 2,722, `zzopts` is
+> 5 differing of **17,966** rather than 17,810, and the tune-object oracles — widened from
+> 507 tunes to 822 — now carry **named OPEN ROWS** (`tests/open-rows.ts`), which is a class
+> this document predates and does not mention. `Docs/PARITY-STATUS.md` is current; read it
+> for any number. The findings and traps below stand as written.
+
 ## 1. WHERE THIS SITS
 
 `zzopts` — 26 rows × 685 tunes, 17,810 comparisons — is at **5 differing**, and **four of

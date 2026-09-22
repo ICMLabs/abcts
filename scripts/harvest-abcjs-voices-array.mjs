@@ -1,6 +1,6 @@
 /**
  * Harvest abcjs's `tune.makeVoicesArray()` — the LAYOUT elements it hands a host — by
- * RUNNING abcjs 6.7.0 over every in-repo fixture.
+ * RUNNING abcjs 6.7.1 over every in-repo fixture.
  *
  * ── WHAT IT RECORDS ─────────────────────────────────────────────────────────
  * Every row of every voice, as ten columns:

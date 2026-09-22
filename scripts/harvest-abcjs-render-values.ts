@@ -1,6 +1,6 @@
 /**
  * Harvest THE VALUES of every line, staff and element of a RENDERED tune, by RUNNING
- * abcjs 6.7.0 over both corpora. The reduction is `tests/parse-values-script.ts`'s own —
+ * abcjs 6.7.1 over both corpora. The reduction is `tests/parse-values-script.ts`'s own —
  * a SHARED SCRIPT, never a copy — and what differs is the ENTRY POINT.
  *
  * ⚠️ **AND THE ENTRY POINT IS PART OF THE EXPERIMENT.** `parse-values` compares a

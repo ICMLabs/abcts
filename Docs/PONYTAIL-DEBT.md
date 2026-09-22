@@ -1,5 +1,12 @@
 # `ponytail:` debt ledger — abcts
 
+> ⚠️ **§B's sweep was measured against abcjs 6.7.0, before the 6.7.1 re-harvest of
+> 2026-09-21/22.** 6.7.1's one behavioural change is a scaled element's `transform`
+> attribute (`draw/relative.js:74-78`) and none of the swept rows touches it — the transpose
+> rows are MIDI, the selectables and part order are element lists, the part box was compared
+> as a whole group — so the conclusions stand. The rows are dated; re-measure rather than
+> assume if one of them matters again.
+
 Harvested by `/ponytail-debt`. One row per deliberate shortcut.
 **Re-harvested 2026-09-16: 53 markers**, 21 naming no trigger, 16 carrying a resolution.
 

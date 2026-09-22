@@ -1,7 +1,16 @@
 # PARITY STATUS — abcts vs abcjs 6.7.1
 
-*Measured 2026-09-16 on commit `3e31b24` (browser comparisons) and re-run 2026-09-22 after the abcjs 6.7.1 re-harvest (every headless gate), by running every gate in the repo plus both
-browser comparisons. Every number below is a re-run, not a carried-forward claim.*
+*Measured 2026-09-22 after the abcjs 6.7.1 re-harvest — every headless gate, and then the
+BROWSER gates too, in WebKit and Chrome, against the widened corpus. Every number below is a
+re-run, not a carried-forward claim.*
+
+⚠️ **The browser gates were the last thing to be re-measured and they had been left at their
+6.7.0 numbers for a day** — 685 where the corpus is now 691 comparable tunes. They agree
+(0 of 691 in both engines), so nothing moved; the point is that a file claiming "every number
+is a re-run" is one gate away from not meaning it. 🧨 **And `zzlive`'s own report line said
+`abcts vs abcjs 6.7.0` while LOADING 6.7.1** — the label, not the oracle, but a report naming
+the wrong reference version is exactly the trap `dump-svg.js` defaulting to 6.6.3 already
+cost this repo once. Fixed.
 
 **The one-line answer: rendered with the options a page normally passes, abcts and abcjs
 produce identical output — the same SVG bytes and the same MIDI bytes — with the exceptions
@@ -10,8 +19,8 @@ listed in §3, each of which is a case where abcjs itself produces broken output
 ✅ **AND §1a IS NO LONGER A QUALIFIER — IT IS A LAST-DIGIT TABLE.** The sentence above was
 written when every gate here rendered with default options, and this paragraph used to warn
 that three of abcjs's options were unimplemented FEATURES. As of 2026-09-15 none is:
-`zzopts` renders the whole corpus under each host option and **5 of its 17,810 comparisons
-differ**, across 3 fixtures — and FOUR of those five are `wrap + staffwidth` at its declared
+`zzopts` renders the whole corpus under each host option and **5 of its 17,966 comparisons
+differ** (26 rows × 691 tunes), across 3 fixtures — and FOUR of those five are `wrap + staffwidth` at its declared
 floor, which is two debug markers the owner declined and two tunes abcjs crashes on. What is
 left that is ours is ONE ULP in one root `width`. The table in §1a says which, and each row
 names its own term.
@@ -33,8 +42,8 @@ together they let a markup difference live forever.
 |---|---|---|
 | `svg-bytes` | 697 in-repo tunes, rendered headless | **0 differ** (6 divergent) |
 | `svg-bytes-sibling` | 359 tunes from the 47-fixture corpus, in 5 flavours — plain, `--add-classes`, print, stacked, stacked-print | **0 differ** |
-| `zzlive` (WebKit) | abcts and abcjs running **in the same browser page**, diffed live | **0 of 685** (6 divergent) |
-| `zzlive` (Chrome) | the same, in Blink | **0 of 685** (6 divergent) |
+| `zzlive` (WebKit) | abcts and abcjs running **in the same browser page**, diffed live | **0 of 691** (6 divergent) |
+| `zzlive` (Chrome) | the same, in Blink | **0 of 691** (6 divergent) |
 | `dom-contract` | `class`, `data-name` and DOM depth over 25 tunes — what `querySelector` finds | **0 differ** |
 | `pixel-parity` | notehead/ledger/stem centres to 0.05px, against abcjs's own SVGs | **0 of 121** |
 | `corpus-ranked` (diagnostic, not a gate) | worst geometric axis per fixture | **1 of 237** — and it is `abcts-unknown-clef`, a declared divergence (§3) |
@@ -56,7 +65,7 @@ thing.
 
 ## 1a. Rendering under the HOST'S options
 
-`zzopts` renders all 685 comparable tunes under each option a drop-in host actually passes,
+`zzopts` renders all 691 comparable tunes under each option a drop-in host actually passes,
 and compares the **container as well as the SVG** — `outerHTML` — because half of what
 `setPaperSize` does is assign styles to the parent node, which no emitted string carries.
 
@@ -67,7 +76,7 @@ direction fails.
 
 | option | differ | what the remainder is |
 |---|---|---|
-| default, `responsive`, `viewport*`, `jazzchords`, `oneSvgPerLine`, `ariaLabel`, `germanAlphabet`, `accentAbove`, `lineThickness`, `initialClef`, `expandToWidest`, **`print`**, **`print + responsive`**, **`scale 0.8`**, **`scale 1.5`**, **`oneSvgPerLine + scale 0.8`**, **`add_classes`**, **`timeBasedLayout`** | **0 of 685** | — |
+| default, `responsive`, `viewport*`, `jazzchords`, `oneSvgPerLine`, `ariaLabel`, `germanAlphabet`, `accentAbove`, `lineThickness`, `initialClef`, `expandToWidest`, **`print`**, **`print + responsive`**, **`scale 0.8`**, **`scale 1.5`**, **`oneSvgPerLine + scale 0.8`**, **`add_classes`**, **`timeBasedLayout`** | **0 of 691** | — |
 | `wrap` + `staffwidth` | **4** | **its floor** — 2 declined debug markers, 2 abcjs crashing in its own `wrapLines` |
 | `minPadding` | **1** | two ULP in one root `width`, and the cause is a DOMAIN: abcjs's `er` carries a tail its pixel chain put there where this engine walks the line in staff spaces |
 

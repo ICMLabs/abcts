@@ -1,6 +1,6 @@
 /**
  * Harvest abcjs's `tune.deline()` — its MERGED line list — over both corpora, by RUNNING
- * abcjs 6.7.0 rather than reading its source. abcjs's own suite asserts it nowhere.
+ * abcjs 6.7.1 rather than reading its source. abcjs's own suite asserts it nowhere.
  *
  * ── WHAT `deline` IS ────────────────────────────────────────────────────────
  * `tune.lines` is one line per DRAWN system. `deline` merges every consecutive music line

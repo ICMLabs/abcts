@@ -1,6 +1,6 @@
 /**
  * Harvest THE SHAPE OF `parseOnly`'s TUNE — which FIELDS an unengraved tune carries — by
- * RUNNING abcjs 6.7.0 over both corpora.
+ * RUNNING abcjs 6.7.1 over both corpora.
  *
  * ── WHY THIS GATE EXISTS ────────────────────────────────────────────────────
  * abcjs's `parseOnly` is `renderEngine` with a callback that does nothing

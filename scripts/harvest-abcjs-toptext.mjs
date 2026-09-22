@@ -1,6 +1,6 @@
 /**
  * Harvest abcjs's `topText.rows` and `bottomText.rows` — THE INTERMEDIATE ROW LIST the page
- * cursor walks — over both corpora, by RUNNING abcjs 6.7.0.
+ * cursor walks — over both corpora, by RUNNING abcjs 6.7.1.
  *
  * ── WHAT IT IS ──────────────────────────────────────────────────────────────
  * `new TopText(metaText, metaTextInfo, formatting, lines, width, isPrint, paddingLeft,

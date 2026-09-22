@@ -1,5 +1,5 @@
 /**
- * Harvest abcjs's `tune.warnings` — the strings a host SHOWS — by RUNNING abcjs 6.7.0's
+ * Harvest abcjs's `tune.warnings` — the strings a host SHOWS — by RUNNING abcjs 6.7.1's
  * parser over every fixture of BOTH corpora.
  *
  * ── WHAT IT RECORDS ─────────────────────────────────────────────────────────

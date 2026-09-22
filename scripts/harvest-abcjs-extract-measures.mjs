@@ -1,6 +1,6 @@
 /**
  * Harvest abcjs's `extractMeasures(abc)` — the tune cut into MEASURES OF ABC TEXT — over
- * both corpora, by RUNNING abcjs 6.7.0.
+ * both corpora, by RUNNING abcjs 6.7.1.
  *
  * ── WHAT IT IS ──────────────────────────────────────────────────────────────
  * `[{header, measures: [{abc, lastChord?, startEnding?, endEnding?}], hasPickup}]`, one

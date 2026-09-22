@@ -1,5 +1,5 @@
 /**
- * Harvest THE VALUES of every element of a `parseOnly` tune, by RUNNING abcjs 6.7.0 over
+ * Harvest THE VALUES of every element of a `parseOnly` tune, by RUNNING abcjs 6.7.1 over
  * both corpora. See `tests/parse-values-script.ts` for what is reduced and why.
  *
  * ⚠️ Nothing renders, so there is no `document` to stub — that is the point of the file.

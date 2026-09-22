@@ -1,6 +1,6 @@
 /**
  * Harvest abcjs's `TuneBook` and `numberOfTunes` — the METADATA a host reads BEFORE it
- * parses anything — by RUNNING abcjs 6.7.0 rather than reading its source.
+ * parses anything — by RUNNING abcjs 6.7.1 rather than reading its source.
  *
  * ── WHY IT IS A GATE, AND WHY THE OLD TEST WAS NOT ONE ──────────────────────
  * `TuneBook` is what a site calls to list a file's tunes: id, title, and the byte offsets

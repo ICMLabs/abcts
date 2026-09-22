@@ -1,5 +1,5 @@
 /**
- * Harvest abcjs's `Editor` — THE TEXTAREA BINDING, DRIVEN — by RUNNING abcjs 6.7.0 into a
+ * Harvest abcjs's `Editor` — THE TEXTAREA BINDING, DRIVEN — by RUNNING abcjs 6.7.1 into a
  * jsdom page with its clock replaced.
  *
  * ── WHAT IT RECORDS ─────────────────────────────────────────────────────────

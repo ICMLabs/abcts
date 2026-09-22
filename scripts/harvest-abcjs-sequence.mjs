@@ -1,6 +1,6 @@
 /**
  * Harvest abcjs's `synth.sequence` — the INTERMEDIATE between the parse tree and the midi
- * event list — by RUNNING abcjs 6.7.0 over every fixture of both corpora.
+ * event list — by RUNNING abcjs 6.7.1 over every fixture of both corpora.
  *
  * ── WHAT IT IS ──────────────────────────────────────────────────────────────
  * `sequence(tune, options)` walks `tune.lines[].staff[].voices[]` — the very elements a

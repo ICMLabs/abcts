@@ -102,7 +102,7 @@ for (const c of cases) {
 await browser.close()
 
 const head = [
-  `abcts vs abcjs 6.7.0, both live in ${engine.name}, ${cases.length} cases`,
+  `abcts vs abcjs 6.7.1, both live in ${engine.name}, ${cases.length} cases`,
   `${off} of ${cases.length - DIVERGENT.size} differ (${DIVERGENT.size} ruled divergent)`,
   ``,
 ]

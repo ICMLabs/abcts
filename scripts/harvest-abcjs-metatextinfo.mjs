@@ -1,6 +1,6 @@
 /**
  * Harvest abcjs's `metaTextInfo` — WHERE each `metaText` field was written — over both
- * corpora, by RUNNING abcjs 6.7.0 rather than reading its source.
+ * corpora, by RUNNING abcjs 6.7.1 rather than reading its source.
  *
  * ── WHY IT IS A GATE ────────────────────────────────────────────────────────
  * The range is the FIELD LINE'S OWN SPAN, `{startChar: iChar, endChar: iChar + line.length}`

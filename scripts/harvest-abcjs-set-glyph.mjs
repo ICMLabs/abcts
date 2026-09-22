@@ -1,5 +1,5 @@
 /**
- * Harvest abcjs's `setGlyph` — a host REPLACING an outline — by RUNNING abcjs 6.7.0 with
+ * Harvest abcjs's `setGlyph` — a host REPLACING an outline — by RUNNING abcjs 6.7.1 with
  * one glyph swapped and dumping the SVG it then draws.
  *
  * ── WHAT IT PROVES ──────────────────────────────────────────────────────────
