@@ -244,9 +244,8 @@ the gate demand its name be deleted. The families, from the ranked tables:
 
 | family | fixtures | what differs |
 |---|---|---|
-| `%%text` before a system | `abcts-text-udef-parts-overlays` 36 | the `nonMusic` block a RENDERED line carries (`render-values` only) |
 | `clef=x` | `abcts-unknown-clef` 0–4 | the ruled divergence (§3) seen from the tune object: abcjs's `type: "x"` and debug marker |
-| one-offs | `abcts-rests-and-bars` 14, `abcts-tempo-rung` 2, `abcts-grace-order-and-lanes` 15, `abcts-inline-fields-and-blocks` 2 | `pickupLength`; `totalTime`/`totalBeats` |
+| one-offs | `abcts-rests-and-bars` 14, `abcts-tempo-rung` 2, `abcts-grace-order-and-lanes` 15, `abcts-inline-fields-and-blocks` 2 | the §3 debug-string divergence seen as element values; `pickupLength`; `totalTime`/`totalBeats` |
 
 ✅ **`mid-measure [K: clef=]` (`abcts-clef-midmeasure`, 7 tunes × 5 gates) CLOSED
 2026-09-22 — and it was TWO causes, not one.** (1) A `K:` written after the last music still
@@ -258,6 +257,15 @@ measured"; it had measured the ink. (2) The clef is ONE tune-level variable ever
 shares (`abc_parse_music.js:961`), so `V:1 CD[K:C bass]EF|` then `V:2 GABc|` opens voice 2
 in bass; ours seeded each voice from the header's clef in two places, and fixing one left
 every note 12 pitch out with the staff already right. `tests/clef-midmeasure.test.ts`.
+
+✅ **AND WITH THE EMPTY `%%center`, EVERY TUNE-OBJECT GATE IS AT ZERO BUT THE RULED
+DIVERGENCE.** An empty `%%center` publishes a ROW and draws NOTHING: its text reaches
+`FreeText` as an ARRAY, so it falls to the final `else`, which writes a row and moves
+`getTextSize.calc('')` — zero — and then `nonMusic`'s `else if (row.text || row.phrases)`
+(`draw/non-music.js:12`) is a JS FALSY test that never draws it. **Ours swallowed the row
+and DREW the text**, two errors in opposite directions, which is why the page height
+agreed and `svg-bytes` stayed green until the row started being published. The last row
+anywhere is `abcts-rests-and-bars-tune14`, which is §3's debug-string divergence.
 
 ✅ **AND THE `%%vskip` / `%%text` LINE-ROW FAMILY IS DOWN TO ONE ROW — twelve of its
 thirteen tunes closed on FOUR rules, and `tune.lines`, `parse-only`, `parse-values` and
@@ -359,7 +367,7 @@ and new oracle is byte-identical, so none of it is a 6.7.1 change.
 |---|---|
 | `tune.lines` — every element's source span | **0 of 814 tunes; 1,204,999 of 1,204,999 characters** |
 | `parse-values` — every value of every element | **0 of 16,223** |
-| `render-values` — every value of every rendered element | **3 of 16,223 OPEN**, on 2 tunes (§3b) |
+| `render-values` — every value of every rendered element | **2 of 16,223 OPEN**, on 1 tune — the §3 divergence |
 | `parse-only`, `voices-array`, `deline`, `extract-measures`, `setupevents` | 0 / 0 / 0 / 0 / 0 on 822 / 237 / 1,628 / 284 / 186 cases |
 | `sequence` | **0 of 237** |
 | `accessors` — the nine numeric tune accessors | **9 field-rows OPEN** of 822 tunes × 9 |

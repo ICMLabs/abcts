@@ -118,6 +118,20 @@
  * ⚠️ **ONE RUNG MEASURED AND NOT LANDED**: `%%newpage` takes the pending vskip too; no
  * fixture writes that pair, so it is an `it.fails` rather than two more model fields.
  *
+ * ✅ **AND THE LAST ROW OF THAT FAMILY WENT WITH THE EMPTY `%%center` — SO EVERY
+ * TUNE-OBJECT GATE IS AT ZERO BUT THE RULED DIVERGENCE.** An empty `%%center` publishes a
+ * ROW and draws NOTHING: its text reaches `FreeText` as an ARRAY, so it falls past every
+ * `text === ""` arm to the final `else`, which writes a row and moves
+ * `getTextSize.calc('')` — zero — and `nonMusic`'s own arm is
+ * `else if (row.text || row.phrases)` (`draw/non-music.js:12`), a JS FALSY test that never
+ * draws it. **Ours swallowed the row AND drew the text**: two errors in opposite
+ * directions, which is why the page height agreed and `svg-bytes` stayed green until the
+ * row started being published — and then went red the same minute, which is the gate doing
+ * its job. Three pieces: the layout publishes the row and spends 0, the `\u00A0`
+ * substitution is narrowed to a `%%begintext` block (where `renderText`'s
+ * `^\n` → `\xA0\n` rule actually fires), and the emitter drops both the text and the
+ * `<g>` when nothing is drawn.
+ *
  * ⭐ **AND THE SESSION'S RULE IS THAT THREE OF THE FOUR FAMILIES WERE RULES THIS REPO HAD
  * ALREADY PORTED, AT THE SITE THAT NAMED THEM.** The renderer knew `%%staffnonote` and
  * `Measure.clefChangeSilent`; the grace path knew the tie carry was positional. Each was
@@ -125,15 +139,20 @@
  * tune-object row looks like a missing feature, grep this repo for the rule first.
  */
 
-const textUdef = (n: number[]) =>
-  n.map((i) => `repo/abcts-text-udef-parts-overlays-tune${i}`);
 
 export const OPEN = {
   lines: [] as readonly string[],
   deline: [] as readonly string[],
   parseOnly: [] as readonly string[],
   parseValues: [] as readonly string[],
-  renderValues: ["repo/abcts-rests-and-bars-tune14", ...textUdef([36])],
+  /**
+   * ⚠️ **THE ONE ROW LEFT ANYWHERE, AND IT IS THE RULED DIVERGENCE OF §3** —
+   * `abcts-rests-and-bars-tune14` is a note longer than a breve, which abcjs marks with a
+   * red DEBUG STRING in its shipped output (`chartable.note` running out one entry past
+   * it). We decline to reproduce an internal error message as music, so the note's
+   * `pitches`/`minpitch`/`maxpitch`/`averagepitch` differ by construction.
+   */
+  renderValues: ["repo/abcts-rests-and-bars-tune14"],
   /** `sequence` is keyed by FIXTURE, not tune. Empty since the tie family closed. */
   sequence: [] as readonly string[],
   /** `accessors`: `slug field`. */

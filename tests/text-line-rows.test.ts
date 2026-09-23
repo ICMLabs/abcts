@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseOnly } from "../src/compat/index.js";
+import { parseOnly, renderAbc } from "../src/compat/index.js";
 import type { AbcLine } from "../src/compat/lines.js";
 
 const linesOf = (music: string, head = "X:1\nT:t\nL:1/4\nK:C\n"): string[] =>
@@ -151,5 +151,57 @@ describe("an & layer whose first note carries an attachment", () => {
     ['CDEF|&.GABc|', ["C D E F stem bar bar stem", "stem z bar G A B c bar"]],
   ])("%s keeps the layer whole", (music, expected) => {
     expect(voicesOf(music)).toEqual(expected);
+  });
+});
+
+/**
+ * **AN EMPTY `%%center` PUBLISHES A ROW AND DRAWS NOTHING.** Its text reaches `FreeText`
+ * as an ARRAY, so it falls past every `text === ""` arm to the final `else`, which writes
+ * one row and moves `getTextSize.calc('')` — zero. Then `nonMusic`'s arm is
+ * `else if (row.text || row.phrases)` (`draw/non-music.js:12`), a JS FALSY test, so the
+ * published row reaches no `renderText` at all.
+ *
+ * Ours swallowed the row and drew an `<text>` for it — **the two halves were wrong in
+ * opposite directions**, which is why the page height agreed and `svg-bytes` stayed green
+ * until the row started being published.
+ */
+describe("an empty %%center", () => {
+  const rowsOf = (music: string): unknown[] => {
+    const line = (parseOnly(`X:1\nT:t\nL:1/4\nK:C\n${music}\n`)[0]?.lines ?? []).find(
+      (l) => (l as { text?: unknown }).text !== undefined,
+    );
+    return ((line as { nonMusic?: { rows?: unknown[] } })?.nonMusic?.rows ?? []) as unknown[];
+  };
+
+  it("publishes a text row and a zero move", () => {
+    const [tune] = renderAbc("*", "X:1\nT:t\nL:1/4\nK:C\n%%center\nCDEF|\n");
+    const line = (tune?.lines ?? []).find(
+      (l) => (l as { text?: unknown }).text !== undefined,
+    ) as { nonMusic?: { rows?: Record<string, unknown>[] } } | undefined;
+    expect(line?.nonMusic?.rows).toEqual([
+      {
+        left: 370,
+        text: "",
+        font: "textfont",
+        klass: "defined-text",
+        anchor: "middle",
+        absElemType: "freeText",
+        name: "free-text",
+      },
+      { move: 0 },
+    ]);
+  });
+
+  it("…and draws no element for it", () => {
+    const [tune] = renderAbc("*", "X:1\nT:t\nL:1/4\nK:C\n%%center\nCDEF|\n");
+    // The title is the only `<text>` on the page; the empty row adds none, and no empty
+    // `<g></g>` either.
+    expect((tune?.svg ?? "").match(/<text/g)?.length).toBe(1);
+    expect(tune?.svg ?? "").not.toContain("<g></g>");
+  });
+
+  /** A parse-only tune has no `nonMusic` at all — abcjs's own split. */
+  it("…and a parseOnly tune publishes no rows", () => {
+    expect(rowsOf("%%center\nCDEF|")).toEqual([]);
   });
 });

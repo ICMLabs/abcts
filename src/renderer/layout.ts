@@ -18660,7 +18660,9 @@ function appendFreeText(
      * mechanism that agrees while there is text to measure and vanishes when there is not.
      * See the `heading` guard, which now admits a block with HEIGHT and no ink.
      */
-    if (block.fromBlock !== true && block.lines.length === 1 && (block.lines[0] ?? '') === '') {
+    const emptyOneLiner =
+      block.fromBlock !== true && block.lines.length === 1 && (block.lines[0] ?? '') === ''
+    if (emptyOneLiner && block.align === 'left') {
       /**
        * ⚠️ **AND AN EMPTY `%%center` IS THE OTHER ARM AND COSTS NOTHING.** `addCentered`
        * pushes `{text: [{text: str, center: true}]}` — an ARRAY — so `info.text` is
@@ -18672,11 +18674,20 @@ function appendFreeText(
        * at all — where an empty `%%text` gives 198.119. **Two spellings of "nothing to
        * say" that differ by 42px**, and the ARRAY is the whole reason.
        */
+      /**
+       * ⚠️ **AND THAT `else` STILL WRITES A ROW — this branch used to swallow it.** The
+       * move is zero, so the PAGE agreed and `svg-bytes` stayed at zero either way; what
+       * abcjs publishes on the line is `{left: width/2, text: "", font: "textfont",
+       * klass: "defined-text", anchor: "middle", …}` followed by `{move: 0}`, and ours
+       * published the move alone. An empty `%%center` therefore falls through to the
+       * ordinary centred path below, whose measured height for `""` is the same zero.
+       * `abcts-text-udef-parts-overlays` tune 36, the last row of `render-values`.
+       */
       // ⚠️ **AND A `%%begintext` BLOCK IS NEVER THIS ARM.** Its text is a STRING that abcjs
       // builds as `textBlock += line.trim() + "\n"` per line (`abc_parse_directive.js:948`),
       // so a block of one blank line is `"\n"` and not `""` — it takes the
       // `typeof text === 'string'` arm and measures. See `FreeTextBlock.fromBlock`.
-      spend(block.align === 'center' ? 0 : textSize * 2)
+      spend(textSize * 2)
       continue
     }
     if (block.align === 'left') spend(textSize / 2)
@@ -18696,7 +18707,15 @@ function appendFreeText(
         // `text.replace(/^\n/, "\xA0\n")` on every row it draws (`draw/text.js:46`), so
         // `%%begintext / %% / %%endtext` writes `&nbsp;` where an empty string would
         // collapse. The character is what the row's own height then measures.
-        text: index === 0 && line === '' ? '\u00A0' : line,
+        /**
+         * ⚠️ **AND THAT IS A `%%begintext` RULE, NOT AN EMPTY `%%center`'s.** `renderText`
+         * runs `text.replace(/^\n/, "\xA0\n")` on the row it DRAWS (`draw/text.js:46`),
+         * which needs a leading NEWLINE to fire — a block of one blank line is `"\n"`.
+         * An empty `%%center` is the empty STRING, which abcjs never draws at all
+         * (`draw/non-music.js:12`'s falsy test), and giving it a non-breaking space drew
+         * an element abcjs has not got.
+         */
+        text: index === 0 && line === '' && block.fromBlock === true ? '\u00A0' : line,
         role: 'title',
         dataName: 'free-text',
         ...tag,
@@ -18770,6 +18789,18 @@ function appendFreeText(
      * computed form, which handles the blank rows correctly today.
      */
     const everyLineInked = block.lines.length > 0 && block.lines.every((l) => l.trim() !== '')
+    /**
+     * ⚠️ **AND AN EMPTY `%%center` MEASURES ZERO AND MOVES ZERO.** Its text reaches
+     * `FreeText` as an ARRAY, so it falls past every `text === ""` arm to the final
+     * `else`, which writes a row and moves `getTextSize.calc('')` — and that is `{0, 0}`
+     * (`svg.js:311-312`). The ROW is published either way; only the move differs, which
+     * is why the page agreed while `nonMusic.rows` did not. See the empty-one-liner arm
+     * above, which is the `%%text` spelling of the same thing and costs `size * 2`.
+     */
+    if (emptyOneLiner) {
+      spend(0)
+      continue
+    }
     spend(
       live !== null && everyLineInked
         ? textHeight(textSize, block.lines.join('\n'), blockFont) + boxOf('textfont')

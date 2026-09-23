@@ -2018,10 +2018,28 @@ export function toSVG(
             t.pageY === undefined ? t.y * PX + oy : t.pageY * PX,
             t.size * PX,
           );
+        /**
+         * ⚠️ **AND A ROW WITH AN EMPTY STRING IS PUBLISHED AND NEVER DRAWN.** `nonMusic`'s
+         * arm is `else if (row.text || row.phrases)` (`draw/non-music.js:12`) — a JS
+         * FALSY test — so an empty `%%center` puts a `{left, text: "", …}` row on
+         * `abcLine.nonMusic` and reaches no `renderText` at all, falling past every
+         * remaining arm to nothing. Ours drew `<text></text>`, which `svg-bytes` caught
+         * the moment the row started being published.
+         */
+        /**
+         * ⚠️ **AND A ROW WITH AN EMPTY STRING IS PUBLISHED AND NEVER DRAWN.** `nonMusic`'s
+         * arm is `else if (row.text || row.phrases)` (`draw/non-music.js:12`) — a JS FALSY
+         * test — so an empty `%%center` puts a `{left, text: "", …}` row on
+         * `abcLine.nonMusic` and reaches no `renderText` at all, falling past every
+         * remaining arm to nothing. Ours drew `<text></text>`, which `svg-bytes` caught the
+         * moment the row started being published.
+         */
         const renderRow = (b: { t?: PlacedText; s?: () => string }): string =>
           b.s !== undefined || b.t === undefined
             ? (b.s?.() ?? "")
-            : b.t.phrases !== undefined
+            : b.t.phrases === undefined && b.t.text === ""
+              ? ""
+              : b.t.phrases !== undefined
               ? richTextLine(
                   b.t.phrases,
                   raw(b.t.x * PX),
@@ -2173,8 +2191,15 @@ export function toSVG(
           // every line it walks (`draw/draw.js:30-31`), so the FIRST `%%text` is `abcjs-l0`.
           classes.incrLine();
           const rows = block.filter((b) => b.nonMusicIndex === i);
-          if (rows.length > 0)
-            parts.push(`<g${klassOf(true)}>${rows.map(renderRow).join("")}</g>`);
+          /**
+           * …**AND A LINE WHOSE ROWS ALL DRAW NOTHING GETS NO GROUP EITHER.** The `<g>` is
+           * OURS — abcjs's `nonMusic` opens none and the markup comes from `renderText`
+           * itself — so a row that fails its falsy test (`draw/non-music.js:12`, an empty
+           * `%%center`) left us an empty `<g></g>` abcjs has not got. Keyed on the drawn
+           * STRING rather than on the row count, which is the thing that can be empty.
+           */
+          const drawn = rows.map(renderRow).join("");
+          if (drawn !== "") parts.push(`<g${klassOf(true)}>${drawn}</g>`);
         }
       }
 
