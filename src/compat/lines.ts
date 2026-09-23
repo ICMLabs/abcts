@@ -141,7 +141,12 @@ export interface AbcElement {
   value?: readonly { num: string; den: string }[];
   // ── a note (and a rest, which abcjs also calls a note) ──
   pitches?: AbcPitch[];
-  rest?: { type: string; text?: string | number };
+  /**
+   * …and a REST CLOSES A TIE like any other element — `el.rest.endTie`
+   * (`abc_parse_music.js:533`), the one field a rest shares with a pitch. See
+   * `markTieEnds`.
+   */
+  rest?: { type: string; text?: string | number; endTie?: boolean };
   duration?: number | readonly number[];
   decoration?: readonly string[];
   chord?: readonly {
@@ -1335,7 +1340,7 @@ function voiceElements(
    * left the second note without its `endTie` — 13 rows of the `sequence` gate, and
    * invisible to every other one because a tie's END is drawn from the START's geometry.
    */
-  openTies: { pitches: number[] } = { pitches: [] },
+  openTies: { element: boolean; chord: boolean[] } = { element: false, chord: [] },
   /** The meter in force where this line opens — the bar's own LENGTH, in whole notes. */
   meterIn?: Meter | null,
   /** The key in force where this line opens — what its first change cancels. See `keyAt`. */
@@ -1895,21 +1900,65 @@ function voiceElements(
 }
 
 /**
- * **A TIE'S CLOSING HEAD IS MARKED TOO** — `endTie: true` on the pitch of the NEXT element
- * that carries the same note, which is what tells a host (and abcjs's own engraver) which
- * head a curve arrives at. Matched by pitch, because a chord ties head by head.
+ * **A TIE'S CLOSING HEAD IS MARKED TOO** — `endTie: true`, which is what tells a host (and
+ * abcjs's own engraver) where a curve arrives.
+ *
+ * ⚠️ **AND THE CARRY IS POSITIONAL, NOT PITCH-MATCHED — `isInTie` IS A BOOLEAN.** It lands
+ * on the very NEXT element whatever it holds (`abc_parse_music.js:93-103`, `:529-538`), so
+ * `C-D|` closes on the D and `C-z C|` closes on the REST and leaves the C bare. The only
+ * thing it skips is a SPACER (`el.rest.type !== 'spacer'`), which is why `C-y C|` reaches
+ * the C and `C-x C|` does not. This engine matched on PITCH and therefore drew the tie only
+ * where the two ends happened to agree — which they do in ordinary music, which is why it
+ * survived: eleven of the fourteen `abcts-void-notes-and-stray-ties` tunes and two others.
+ *
+ * ⭐ **AND THE GRACE PATH ALREADY HAD THE RULE** (`Note.startTie`'s own note: "the carry is
+ * positional and nothing compares them"). A rule ported at the site that named it is not a
+ * rule ported — the fourth time on this branch.
+ *
+ * **A CHORD IS TWO CARRIES AT ONCE.** `inTieChord[position]` is separate state written as
+ * each head is read (`:381-386`), so `[C-E-][CEG]` closes its first TWO heads by POSITION
+ * with the element-level boolean never opening at all; the element-level one, opened by a
+ * `-` AFTER the bracket (`:427-428`), closes EVERY head of the next chord.
  */
+/** `core.startTie || el.startTie` — a rest never carries one here. See `Rest`. */
+const tiesOut = (event: MusicEvent): boolean =>
+  event.type !== "rest" && event.tiedToNext === true;
+
 function markTieEnds(
   notes: readonly { event: MusicEvent; e: AbcElement }[],
-  openTies: { pitches: number[] },
+  openTies: { element: boolean; chord: boolean[] },
 ): void {
-  for (const { e } of notes) {
+  for (const { event, e } of notes) {
+    /**
+     * …**AND A `-` WRITTEN BEFORE THE ELEMENT OPENS THE CARRY THAT THE ELEMENT ITSELF THEN
+     * CLOSES** — abcjs sets `inTie` from `el.endTie` at `:495`, above the test at `:529`.
+     *
+     * ⚠️ **EXCEPT BEFORE A REST, WHERE IT IS SWALLOWED WHOLE — MEASURED, NOT DERIVED.**
+     * `-z C|` marks NEITHER the rest nor the C in abcjs, while `C2 -z D2|` marks the rest,
+     * so it is the LEADING `-` that dies and not the rest that refuses. Reading the source
+     * predicts the opposite; the ladder in `tests/stray-tie.test.ts` is the evidence, and
+     * the mechanism is worth finding before anything else is built on it.
+     */
+    if (event.tieLeading === true && event.type !== "rest") openTies.element = true;
     const pitches = e.pitches;
-    if (pitches === undefined) continue;
-    for (const p of pitches) if (openTies.pitches.includes(p.pitch)) p.endTie = true;
-    openTies.pitches = pitches
-      .filter((p) => p.startTie !== undefined)
-      .map((p) => p.pitch);
+    const rest = e.rest;
+    if (pitches !== undefined && event.type === "chord") {
+      const carried = openTies.chord;
+      pitches.forEach((p, k) => {
+        if (carried[k] === true) p.endTie = true;
+      });
+      openTies.chord = pitches.map((p) => p.startTie !== undefined);
+    } else if (pitches !== undefined || rest !== undefined) openTies.chord = [];
+    if (!openTies.element) {
+      if (tiesOut(event)) openTies.element = true;
+      continue;
+    }
+    if (pitches !== undefined) {
+      if (event.type === "chord") for (const p of pitches) p.endTie = true;
+      else if (pitches[0] !== undefined) pitches[0].endTie = true;
+    } else if (rest !== undefined && rest.type !== "spacer") rest.endTie = true;
+    else continue;
+    openTies.element = tiesOut(event);
   }
 }
 
@@ -2463,7 +2512,7 @@ export function projectionOf(
     return meter;
   };
   /** …and the tie's open pitches, per voice, for the same reason. */
-  const openTies: { pitches: number[] }[] = [];
+  const openTies: { element: boolean; chord: boolean[] }[] = [];
   /**
    * **A NON-MUSIC LINE IS A LINE, AND ITS POSITION IN THE LIST IS LOAD-BEARING.** A `T:`
    * after the first, a `%%text`, a `%%center`, a `%%begintext` block and a `%%sep` are
@@ -3172,7 +3221,7 @@ const VOICE_FURNITURE = new Set(["style", "stem", "color", "scale"]);
         score.drumMap,
         // …**AND IT IS THE CLEF IN FORCE, NOT THE VOICE'S OWN.** See `clefAt`.
         clefAt(v, from),
-        openTies[k] ?? (openTies[k] = { pitches: [] }),
+        openTies[k] ?? (openTies[k] = { element: false, chord: [] }),
         // The meter this line OPENS in — every change inside it is walked from here.
         meterAt(v, from) ?? score.meter,
         // …and the key, for the same reason.

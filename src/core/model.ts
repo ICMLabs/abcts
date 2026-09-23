@@ -609,6 +609,20 @@ export const isCompoundMeter = (m: Meter): boolean =>
   m.numerator % 3 === 0 && m.numerator > 3 && [4, 8, 16].includes(m.denominator)
 
 export interface Note {
+  /**
+   * **A `-` WRITTEN BEFORE THIS EVENT RATHER THAN AFTER THE ONE BEFORE IT.** `getCoreNote`
+   * starting on a `-` is in state `startSlur`, and its arm does TWO things
+   * (`abc_parse_music.js:1221-1226`): `addTieToLastNote` — which is `tieLast` here — and
+   * `el.endTie = true` on the element it is building. The caller turns that into
+   * `setIsInTie(true)` BEFORE it tests `isInTie` for the same element
+   * (`:495`, `:529`), so **the note the `-` precedes closes the tie itself**, whether or
+   * not anything opened one.
+   *
+   * That is what makes `-CDEF|`, `CDEF|-GABc|`, `C2 -D2|` and `C2|[-1 D2|]` all give the
+   * note after the `-` an `endTie` — a whole family of the tune-object oracles. The back
+   * half (`tieLast`) was ported when the row was about the C; this is the forward half.
+   */
+  readonly tieLeading?: true
   readonly type: 'note'
   readonly pitch: Pitch
   /** Sounding duration — includes tuplet scaling. */
@@ -832,6 +846,8 @@ export interface GracePitch extends Pitch {
 export type RestKind = 'normal' | 'invisible' | 'multiMeasure' | 'invisibleMultiMeasure' | 'spacer'
 
 export interface Rest {
+  /** A `-` written BEFORE this event — see `Note.tieLeading`. */
+  readonly tieLeading?: true
   readonly type: 'rest'
   readonly duration: Rational
   readonly notatedDuration: Rational
@@ -975,6 +991,8 @@ export interface Rest {
  * notes would lose the simultaneity that distinguishes a chord from a melody.
  */
 export interface Chord {
+  /** A `-` written BEFORE this event — see `Note.tieLeading`. */
+  readonly tieLeading?: true
   readonly type: 'chord'
   readonly pitches: readonly Pitch[]
   readonly duration: Rational

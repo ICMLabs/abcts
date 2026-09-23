@@ -1823,6 +1823,17 @@ class VoiceBuilder {
     return this.overlays[this.overlayIndex] as MusicEvent[]
   }
 
+  /**
+   * **abcjs's `inTie` HALF THAT REACHES FORWARD** — a standalone `-` sets
+   * `el.endTie = true` on the element being built, so the NEXT event closes a tie whether
+   * or not one was open. See `Note.tieLeading`, which is where it lands.
+   */
+  private leadingTie = false
+
+  markLeadingTie(): void {
+    this.leadingTie = true
+  }
+
   push(event: MusicEvent): void {
     /**
      * **THE LINE'S STYLE IS READ WHERE `startNewLine` FIRES**, which is at the first
@@ -1830,7 +1841,8 @@ class VoiceBuilder {
      * `styleForNextLine` is built on. See `Measure.lineStyle`.
      */
     if (!this.appendedSinceLineStart) this.captureLineStyle()
-    this.target.push(event)
+    this.target.push(this.leadingTie ? { ...event, tieLeading: true as const } : event)
+    this.leadingTie = false
     this.appendedSinceLineStart = true
     // Lyrics align to the primary melody only: overlay notes do not advance the counter,
     // since an overlay plus lyrics is otherwise ambiguous. Rests bear no lyric.
@@ -6010,6 +6022,17 @@ class Parser {
             return k === 'digit' || k === 'slash' ? t : null
           })()
           if (voided !== null) {
+            /**
+             * ⚠️ **AND A `-` INSIDE THE VOIDED RUN STILL OPENS A TIE FOR THE NEXT NOTE.**
+             * abcjs's retry re-reads the `-` as the head of a fresh attempt, so
+             * `getCoreNote` writes `el.endTie = true` on the element it is building — and
+             * `setIsInTie` is called from `el2.endTie` BEFORE the `core !== null` guard
+             * (`abc_parse_music.js:494-496`), so the FAILED attempt leaves the flag set
+             * behind it. `C2 -1 D2|` loses its C in both engines and still ties the D.
+             * See `Note.tieLeading`.
+             */
+            for (let t = built.next; t < voided; t += 1)
+              if ((tokens[t] as Token | undefined)?.kind === 'tie') voice().markLeadingTie()
             // Every character of the attempt, minus the spaces abcjs's own arm exempts.
             const stop = (tokens[voided] as Token).start
             for (let c = token.start; c < stop; c += 1) {
@@ -6389,6 +6412,14 @@ class Parser {
           const reachesBack = voice().last === null
           const from = token.start
           voice().tieLast(dottedCurve)
+          /**
+           * …**AND THE SAME ARM REACHES FORWARD.** `getCoreNote`'s `startSlur` branch runs
+           * `addTieToLastNote` AND writes `el.endTie = true`
+           * (`abc_parse_music.js:1221-1226`), so the note this `-` precedes closes a tie
+           * even where nothing opened one — `-CDEF|` gives its C an `endTie`. Ours had
+           * only the backward half. See `Note.tieLeading`.
+           */
+          voice().markLeadingTie()
           dottedCurve = false
           i++
           if (reachesBack) {

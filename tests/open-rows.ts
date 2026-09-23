@@ -53,6 +53,30 @@
  * disagree, because abcjs's engraver really does rename it. One override answered both.
  * `tests/clef-midmeasure.test.ts` is the control ladder, and every rung was checked against
  * its own deliberate break.
+ *
+ * ✅ **AND THE TIE FAMILIES ARE GONE TOO — CLOSED 2026-09-22, TWELVE TUNES AND A WHOLE
+ * `sequence` FIXTURE ON ONE DATA TYPE.** `abcts-void-notes-and-stray-ties` (11 tunes),
+ * `abcts-endings-tune5` and `abcts-rests-and-bars-tune1` were named separately and are one
+ * rule: **abcjs's `isInTie` IS A BOOLEAN** (`abc_parse_music.js:93-103`, `:529-538`). It
+ * lands on the very next element whatever that element holds — a different pitch, or a
+ * REST — and steps over exactly one thing, a SPACER. This engine matched on PITCH, which
+ * is the same answer for ordinary music and a different one for every rung of
+ * `tests/stray-tie.test.ts`.
+ *
+ * ⭐ **AND THE GRACE PATH HAD ALREADY PORTED IT**, under a note in `Note.startTie` saying
+ * in as many words that "the carry is positional and nothing compares them". A rule ported
+ * at the site that named it is not a rule ported.
+ *
+ * The second half is `Note.tieLeading`: a `-` written BEFORE a note sets `el.endTie` on the
+ * element being built (`:1221-1226`) and `setIsInTie` runs from it **above the
+ * `core !== null` guard** (`:494-496`), so even a FAILED attempt — `C2 -1 D2|`, whose C
+ * both engines discard — leaves the flag set for the next note.
+ *
+ * ⚠️ **AND TWO RUNGS ARE MEASURED AND DELIBERATELY NOT LANDED**, as `it.fails` so they
+ * cannot rot: a rest can OPEN a tie (`z-C|`), and abcjs's tie-back does not cross a line
+ * break where ours does. ⚠️ **A THIRD IS MEASURED AND UNEXPLAINED**: a leading `-` before
+ * a REST is swallowed whole (`-z C|` marks neither) though the source says it should not,
+ * and `markTieEnds` carries a guard saying exactly that.
  */
 
 const stafflines = (n: number[]) =>
@@ -61,8 +85,6 @@ const staffnonote = (n: number[]) =>
   n.map((i) => `repo/abcts-staffnonote-and-directives-tune${i}`);
 const emptyStaves = (n: number[]) =>
   n.map((i) => `repo/abcts-staffnonote-empty-staves-tune${i}`);
-const voidNotes = (n: number[]) =>
-  n.map((i) => `repo/abcts-void-notes-and-stray-ties-tune${i}`);
 const textUdef = (n: number[]) =>
   n.map((i) => `repo/abcts-text-udef-parts-overlays-tune${i}`);
 const withBreaks = (slugs: string[]) => slugs.flatMap((s) => [s, `${s}#breaks`]);
@@ -76,32 +98,23 @@ export const OPEN = {
   ]),
   parseOnly: [
     ...stafflines([4, 15, 41, 42]),
-    "repo/abcts-endings-tune5",
-    "repo/abcts-rests-and-bars-tune1",
     ...staffnonote([0, 5, 7]),
-    ...voidNotes([0, 1, 4, 7, 8, 9, 10, 11, 12, 13]),
   ],
   parseValues: [
-    "repo/abcts-endings-tune5",
-    "repo/abcts-rests-and-bars-tune1",
     ...stafflines([4, 15, 41, 42]),
     ...staffnonote([0, 5, 7]),
     ...emptyStaves([0, 1]),
     ...textUdef([2, 7, 30, 34, 37, 38, 39, 45, 47, 48, 49, 54]),
-    ...voidNotes([0, 1, 4, 7, 8, 9, 10, 11, 12, 13, 14]),
   ],
   renderValues: [
-    "repo/abcts-endings-tune5",
-    "repo/abcts-rests-and-bars-tune1",
     "repo/abcts-rests-and-bars-tune14",
     ...stafflines([4, 15, 41, 42]),
     ...staffnonote([0, 5, 7]),
     ...emptyStaves([0, 1]),
     ...textUdef([2, 7, 30, 34, 36, 37, 38, 39, 45, 47, 48, 49, 54]),
-    ...voidNotes([0, 1, 4, 7, 8, 9, 10, 11, 12, 13, 14]),
   ],
-  /** `sequence` is keyed by FIXTURE, not tune. */
-  sequence: ["abcts-void-notes-and-stray-ties"],
+  /** `sequence` is keyed by FIXTURE, not tune. Empty since the tie family closed. */
+  sequence: [] as readonly string[],
   /** `accessors`: `slug field`. */
   accessors: [
     "repo/abcts-tempo-rung-tune2 pickupLength",
