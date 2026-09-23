@@ -27,15 +27,16 @@ persist between tool calls and the workspace ROOT collects every sibling repo's 
     cp -R ../abcMusicKit/Docs/References/abcjs/abcjs-6.7.1/src /tmp/gp/abcjs
 …then `cd` back into the repo — that `cd` resets the shell's CWD for the next call.
 
-    suite       102 files, 2,817 tests + 3 expected-fail, no reds
+    suite       104 files, 2,838 tests, NO expected-fails — every recorded rung landed
     svg-bytes   0 of 697 in-repo, 0 of 359 sibling
     mode-bytes  11 — every one DECLARED
     midi-bytes  0 of 697 — 19 ruled divergent
     zzlive      0 of 691  WebKit AND Chrome        zzselect 0 of 691  WebKit AND Chrome
                 (re-run 2026-09-23 after the parser changes; Chrome is at zero too)
     zzclick     1 of 691 DECLARED ×3               zzledger 0 differ, 0 KNOWN, 41 agree
-    zzopts      26 rows, every one at its declared count. 5 differing of 17,966:
-                wrap+staffwidth 4 (THE FLOOR) · minPadding 1 · every other row 0
+    zzopts      26 rows, every one at its declared count. 4 differing of 17,966 —
+                `wrap+staffwidth` alone, and that is ITS floor: two debug markers the
+                owner declined and two tunes abcjs CRASHES on. Every other row is 0.
     open rows   ✅ **EMPTY as of 2026-09-23** — every list in `tests/open-rows.ts` is `[]`
                 but `renderValues`, whose ONE row is the §3 ruled divergence. `tune.lines`
                 1,204,999 of 1,204,999 characters over 814 tunes, `parse-only` 0 of 822,
@@ -48,8 +49,9 @@ persist between tool calls and the workspace ROOT collects every sibling repo's 
                 rule it turns off. ⚠️ THE FORMATTER IS OFF ON PURPOSE — 127 files disagree
                 with it and adopting a format is its own commit, never a side effect.
     package     2.0 MB packed / 6.9 MB unpacked, 25 files, version 6.7.1 — NOT PUBLISHED
-    debt        53 `ponytail:` markers, §A restated as decisions, §B swept — 5 of its 6
-                rows were ALREADY CLOSED
+    debt        84 `ponytail:` / 19 `abcjs-debt:` markers (re-counted 2026-09-23; the
+                instrument has moved three times, the code less). §A restated as
+                decisions, §B swept, and its `millisecondsPerMeasure` row is CLOSED.
 
 🏁 `zzopts` IS FINISHED. Seven rows closed on 2026-09-16 — timeBasedLayout, add_classes,
 scale 0.8, oneSvgPerLine+scale 0.8, scale 1.5, print, print+responsive — and the only thing
@@ -96,8 +98,12 @@ WHAT TO DO NEXT — ⚠️ **EVERY MEASURED SURFACE IN THIS REPO IS AT ITS FLOOR
 2026-09-23: suite, `svg-bytes` both corpora, `midi-bytes`, `mode-bytes` all-declared,
 `zzopts` all 26 rows at their declared counts, `zzlive`/`zzselect` in BOTH browsers,
 `zzclick`, `zzledger` 0 of 41, `zzscale` linear on all eight shapes, `warnings`,
-`test:dist`, `compat-surface` 0 absent, and the open-row lists now empty). **SO WHAT IS
-LEFT IS DECISIONS AND ONE ULP.** Do not invent work here; ask.
+`test:dist`, `compat-surface` 0 absent, and the open-row lists now empty). **AND THE ULP IS
+GONE TOO, SO WHAT IS LEFT IS DECISIONS.** Do not invent work here; ask.
+
+⚠️ **FOUR OF THE SIX ITEMS BELOW CLOSED ON 2026-09-22/23 AND ARE KEPT AS RECORDS**, because
+each one's recorded CAUSE or SIZE was wrong and that is the reusable part. Only 1 (publish)
+and 4 (the bundle) are open, and both are the owner's.
   1. **PUBLISH** — prepared and NOT run, because it is outward-facing and irreversible.
      `npm publish` from this directory claims the unregistered name `abcts` and goes live on
      unpkg/jsdelivr immediately. Version **6.7.1**, sourcemaps dropped, 2.0 MB packed.
@@ -108,9 +114,12 @@ LEFT IS DECISIONS AND ONE ULP.** Do not invent work here; ask.
      object and gated (`compat-surface` 0 of 64 absent, `accessors` 0 of 822 × 9). What is
      left of that row is the COMPOUND-METER MIDI branch (`flatten.ts:450`), which needs the
      same method and has no harvested case in 6/8 yet.
-  3. ⚖️ **`CLAUDE.md` — 2,354 lines, 170 KB, 1,549 of them blockquote** duplicating 60
-     handoffs and loaded in full every session. `Docs/CODEBASE-EVALUATION-2026-09-12.md`
-     argues it; nothing has been deleted.
+  3. ✅ **DONE 2026-09-23 — `CLAUDE.md` is 644 lines / 44 KB**, from 2,370 / 176 KB, and 187
+     blockquote lines from 1,557. The dated LOG and the session narratives are gone (they are
+     in `Docs/`); every owner ruling, the harness and the rules that bind stayed, and what the
+     narrative left behind is distilled into `### The rules that transfer`. ⚠️ Four numbers in
+     what remained were re-measured and WRONG — `ENGRAVE`'s count, the sibling corpus's
+     goldens, the vendored abcjs trees, and a debt bar that had been met on 2026-08-14.
   4. 📏 **The bundle is ~25% bigger than abcjs over the wire** — 626 KB raw / 201 KB gzipped
      against 499 / 145 — and NOBODY HAS INSTRUMENTED IT. Two plausible causes: two glyph
      tables embedded (abcjs's for strict, Bravura's for extended), and extended being a
@@ -133,11 +142,12 @@ LEFT IS DECISIONS AND ONE ULP.** Do not invent work here; ask.
      declared divergence and nobody asked whether it still sounded. A trailing `K:`, an
      empty `%%center` and `%%staffnonote` were all the same shape: the page agreed, so no
      byte gate could speak.
-  6. `minPadding`'s last ULP — ⚠️ **read the handoff first: it is a units DOMAIN, not a term
-     to regroup.** Both sides are instrumented and the grouping already agrees; abcjs's `er`
-     carries a tail its PIXEL chain put there where this engine walks the line in STAFF
-     SPACES. Two ULP in one root `width`, nothing visibly moved. Smallest thing on this
-     list and the most expensive.
+  6. ✅ **CLOSED 2026-09-23 — and the recorded cause was wrong.** `minPadding`'s ULP was
+     neither the solve nor a units domain: the `er` values are IDENTICAL on both sides and the
+     difference was `extraWidth`, because `graceLeft` RE-DERIVED a left reach the glyph beside
+     it already carried as a constructed `dx`. `zzopts` is now 0 on every row but
+     `wrap + staffwidth`'s declared floor of 4. ⚠️ The old note survived three sessions
+     because its probe stopped one term short — it compared the grouping, which agreed.
 
 ⚖️ AND ONE DECISION IS STILL THE OWNER'S, untouched: `CLAUDE.md` is 2,300+ lines with over
 half of it blockquote narrative duplicating 60 handoffs, loaded in full every session. See
