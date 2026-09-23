@@ -267,7 +267,20 @@ describe("tuplets", () => {
     const [a, b, c] = eventsOf("X:1\nL:1/8\nM:4/4\nK:C\n(3abc |\n");
     expect(a?.tuplet).toEqual({ group: 1, number: 3, opens: true });
     expect(b?.tuplet).toEqual({ group: 1, number: 3 });
-    expect(c?.tuplet).toEqual(b?.tuplet);
+    // …**AND THE LAST MEMBER CLOSES IT**, which is what makes the bracket drawable at all —
+    // see `TupletMark.closes`. A group with no closing member draws nothing.
+    expect(c?.tuplet).toEqual({ group: 1, number: 3, closes: true });
+  });
+
+  /**
+   * **AND A GROUP THAT NEVER REACHES ITS COUNT HAS NO CLOSING MEMBER**, so nothing is drawn:
+   * abcjs stamps `endTriplet` only when `tripletNotesLeft` hits zero, and a `TripletElem`
+   * with no end never reaches the page. `(3CD|` is two ordinary eighths there.
+   */
+  it("…and leaves an unfinished group unclosed", () => {
+    const [a, b] = eventsOf("X:1\nL:1/8\nM:4/4\nK:C\n(3ab |\n");
+    expect(a?.tuplet).toEqual({ group: 1, number: 3, opens: true });
+    expect(b?.tuplet).toEqual({ group: 1, number: 3 });
   });
 
   /**

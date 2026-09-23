@@ -602,6 +602,18 @@ export interface TupletMark {
    * no amount of widening could fix: only the parser knows where the `(p` stood.
    */
   readonly opens?: true
+  /**
+   * **DOES THIS EVENT CLOSE IT?** — abcjs's `endTriplet`, set on the member that brings
+   * `tripletNotesLeft` to zero (`abc_parse_music.js:540-545`), and **a group that never
+   * gets one DRAWS NOTHING AT ALL**: no bracket, no number, no reserved lane. `(3CD|` is
+   * two ordinary eighths in abcjs and `(9CDEF|` four, where this engine drew a bracket over
+   * each — 19.4px of page on a shape a user makes by typing `(3` and stopping.
+   *
+   * Measured on a ladder (`(3CDE|` closes, `(3CD|` and `(4CDE|` do not), and it is the same
+   * rule an ENDING has: "an ending with no `end` emits nothing", which this repo had already
+   * ported for the volta and not for the tuplet.
+   */
+  readonly closes?: true
 }
 
 /** A compound meter beats in threes — 6/8, 9/8, 12/8 — which changes the default tuplet q. */

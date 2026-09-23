@@ -9893,6 +9893,18 @@ function layoutTuplets(
     if (first === undefined || last === undefined) continue
     const number = first.event.tuplet?.number ?? 0
     if (number === 0) continue
+    /**
+     * ⚠️ **A GROUP THAT NEVER CLOSED DRAWS NOTHING.** abcjs stamps `endTriplet` on the
+     * member that spends the last of the count and a `TripletElem` with no end is never
+     * drawn, so `(3CD|` is two ordinary eighths and `(9CDEF|` four — where this engine drew
+     * a bracket and a number over each, 19.4px of page. See `TupletMark.closes`; it is the
+     * same rule as "an ending with no `end` emits nothing", which was ported for the volta
+     * and not for the tuplet.
+     *
+     * Found by fuzzing malformed input, but the shape is not exotic at all: a user types
+     * `(3` and two notes.
+     */
+    if (!members.some((m) => m.event.tuplet?.closes === true)) continue
 
     // The bracket goes on the stem side, where the beam is, so it never crosses the
     // noteheads. A majority vote: a group whose stems disagree is rare and the beam

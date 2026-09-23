@@ -444,9 +444,28 @@ the one a host feels:
 
    **What is LEFT of the class is `[K:C CDEF|`**, where abcjs raises seven warnings walking
    out of a failed inline field and we raise one. The ELEMENTS agree.
-2. **WARNINGS THIS PARSER DOES NOT RAISE** — `(99999CDEF|`, `^^^^^^C|`, `%%score (((`, `-|-`
-   and a `w:` before any music are silent here where abcjs warns, per extra character for the
-   first two.
+2. ✅ **WARNINGS THIS PARSER DID NOT RAISE — three of five CLOSED 2026-09-23, and every one
+   was a RETRY rather than a message.** abcjs fails the attempt and `parseMusic`'s
+   `if (i === startI)` warns for the character it walked past, so the question is never "what
+   does it warn" but "what did it fail to read".
+   * **a tuplet field is ONE DIGIT** — `(99999` is a tuplet of NINE and four warnings, not a
+     tuplet of 99999, and `p < 2` builds nothing and warns at its own digit;
+   * **an accidental run is the longest LEGAL SUFFIX** — `^^^^^^C` keeps `^^C` and warns four
+     times, `^_C` keeps `_C` and warns once. ⚠️ Ours ACCUMULATED and clamped to ±2, so
+     `^^^^^^C` was a silent double sharp and `^_C` a silent NATURAL — neither abcjs's glyph
+     nor its warning;
+   * **a `-` that nothing can continue is an unknown character**, and the boundary is one
+     character wide: a SPACE is enough to fail it, so `- C|` warns where `-C|` does not, while
+     a `-` that follows a note is eaten by THAT note's parse and fails nothing.
+
+   ⭐ **AND CLOSING THE TUPLET RULE EXPOSED A RENDERING DEFECT ON A SHAPE THAT IS NOT EXOTIC
+   AT ALL**: a tuplet that never reaches its count draws NOTHING in abcjs — `endTriplet` is
+   never stamped and a `TripletElem` with no end never reaches the page — where this engine
+   drew a bracket and a number, 19.4px of page. `(3CD|` is what a user types when they stop
+   halfway. It is the same rule as "an ending with no `end` emits nothing", ported for the
+   volta years ago and never for the tuplet. `TupletMark.closes`.
+
+   **What is LEFT: `%%score (((` and a `w:` before any music.**
 3. **AN EMPTY TUNE IS STILL A TUNE.** `''` gives abcjs ONE tune object and a 37.56px page;
    ours gives zero tunes and no SVG, so `renderAbc(div, '')[0]` is undefined where abcjs hands
    back an object.

@@ -43,9 +43,21 @@ const VERBOSE = process.argv.includes('-v')
  *    `!trill CDEF|` and six more rungs now match abcjs element for element and warning for
  *    warning. ⚠️ **What is LEFT of the class is `[K:C CDEF|`** — abcjs raises seven warnings
  *    walking out of a failed inline field where we raise one, and the ELEMENTS agree.
- * 2. **WARNINGS THIS PARSER DOES NOT RAISE.** `(99999CDEF|`, `^^^^^^C|`, `%%score (((`,
- *    `-|-` and a `w:` before any music are silent here where abcjs warns — per extra
- *    character for the first two, "Can't nest parenthesis in %%score" for the third.
+ * 2. ✅ **WARNINGS THIS PARSER DID NOT RAISE — three of five CLOSED 2026-09-23**, each a
+ *    RETRY rather than a message: abcjs fails the attempt and `parseMusic`'s
+ *    `if (i === startI)` warns per character it walks past.
+ *      • **a tuplet field is ONE DIGIT** — `(99999` is a tuplet of nine and four warnings,
+ *        and `p < 2` warns at its own digit and builds nothing;
+ *      • **an accidental run is the longest LEGAL SUFFIX** — `^^^^^^C` keeps `^^C` and warns
+ *        four times, `^_C` keeps `_C` and warns once, where ours accumulated and clamped
+ *        (a silent double sharp, and `^_` a silent NATURAL);
+ *      • **a `-` that nothing can continue is an unknown character** — and a SPACE is enough
+ *        to fail it, so `- C|` warns where `-C|` does not.
+ *    ⚠️ **AND CLOSING THE TUPLET ONE EXPOSED A RENDERING DEFECT**: a group that never reaches
+ *    its count draws NOTHING in abcjs (`endTriplet` is never stamped and a `TripletElem` with
+ *    no end is never drawn), where we drew a bracket and a number — 19.4px on a shape a user
+ *    makes by typing `(3` and stopping. `TupletMark.closes`.
+ *    **What is LEFT: `%%score (((` and a `w:` before any music.**
  * 3. **AN EMPTY TUNE IS STILL A TUNE.** `''` and `'\n\n\n'` give abcjs ONE tune object and a
  *    37.56px page; ours gives zero tunes and no SVG, so `renderAbc(div, '')[0]` is undefined
  *    where abcjs hands back an object.
@@ -60,13 +72,10 @@ const DECLARED = new Set([
   'unterminated slur',
   'unterminated bracket field',
   'huge duration',
-  'huge tuplet',
-  'many accidentals',
   'unicode',
   'directive garbage',
   'overlay only',
   'bare overlay after a note',
-  'tie into nothing',
 ])
 
 const cases = JSON.parse(readFileSync(`${REPO}/tests/corpus-fuzz/cases.json`, 'utf-8'))

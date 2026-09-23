@@ -5858,6 +5858,9 @@ class Parser {
           group: tupletGroup,
           number: tupletNumber,
           ...(opens ? { opens: true as const } : {}),
+          // …and the member that spends the last of the count CLOSES it — see
+          // `TupletMark.closes`. A group that never closes draws nothing.
+          ...(tupletRemaining === 0 ? { closes: true as const } : {}),
         },
       }
     }
@@ -6031,6 +6034,43 @@ class Parser {
       if (token.kind !== 'inlineField' && token.kind !== 'whitespace') takeLineStartFonts()
       switch (token.kind) {
         case 'accidental': {
+          /**
+           * **A RUN OF ACCIDENTALS LONGER THAN ONE ACCIDENTAL IS A RETRY, NOT A SUM.**
+           * abcjs's accidental set is bounded — `^`, `^^`, `_`, `__`, `=` — so `^^^^^^C`
+           * makes `getCoreNote` FAIL, and `parseMusic`'s `if (i === startI)` warns "Unknown
+           * character ignored" for the first character and retries one along. The net effect
+           * is that the accidental actually used is the longest LEGAL SUFFIX of the run, and
+           * every character before it warns:
+           *
+           *     ^^^^^^C   →  ^^C  and 4 warnings        ^_C  →  _C  and 1
+           *     ^^^C      →  ^^C  and 1 warning         ==C  →  =C  and 1
+           *     ____C     →  __C  and 2 warnings        ^^C  →  ^^C and none
+           *
+           * ⚠️ **OURS ACCUMULATED AND CLAMPED** — `combineAccidental` adds ±1 and clamps to
+           * ±2 — so `^^^^^^C` was a silent double sharp and `^_C` a silent NATURAL, which is
+           * neither abcjs's glyph nor its warning. Found by fuzzing malformed input.
+           */
+          if (pendingAccidental === null) {
+            let run = 0
+            while ((tokens[i + run] as Token | undefined)?.kind === 'accidental') run += 1
+            const aux = (n: number): string => (tokens[i + n] as Token).aux ?? ''
+            // The legal suffix is two IDENTICAL sharps or flats, else one character.
+            const keep = run >= 2 && aux(run - 2) === aux(run - 1) && aux(run - 1) !== '=' ? 2 : 1
+            for (let k = 0; k < run - keep; k += 1) {
+              const dropped = tokens[i + k] as Token
+              this.warn(
+                'unknown-character',
+                'unknown character ignored',
+                sourceRange(dropped.start, dropped.start + 1),
+              )
+              builder.unreadable.push(sourceRange(dropped.start, dropped.start + 1))
+            }
+            if (run - keep > 0) {
+              i += run - keep
+              accidentalStart = null
+              break
+            }
+          }
           if (accidentalStart === null) accidentalStart = token.start
           pendingAccidental = combineAccidental(pendingAccidental, token.aux)
           i++
@@ -6591,6 +6631,47 @@ class Parser {
         }
         case 'tie': {
           /**
+           * **A `-` THAT NOTHING CAN CONTINUE IS AN UNKNOWN CHARACTER.** `getCoreNote`
+           * starting on a `-` leaves the state at `startSlur` and reads ON, so the attempt
+           * only succeeds if what follows IMMEDIATELY is something that state accepts: an
+           * accidental, a note letter or a rest letter. A barline, a space, a `[`, a `"`, a
+           * `{` or the end of the line fails it, and `parseMusic`'s `if (i === startI)` then
+           * warns "Unknown character ignored" for the `-` and retries past it.
+           *
+           * MEASURED as a ladder, because the boundary is exactly one character wide:
+           * `-C|`, `-c|`, `-^C|`, `-_C|`, `-=C|`, `-C,|`, `-z|` and `-x|` warn NOTHING;
+           * `-`, `-|-`, `|-|`, `- |`, `- C|`, `- z|`, `-[CE]|`, `-"Am"C|` and `-{a}C|` each
+           * warn once. **A SPACE IS ENOUGH TO FAIL IT** — `- C|` warns where `-C|` does not.
+           *
+           * ⚠️ **AND THE FAILED ATTEMPT STILL DOES NOT OPEN THE CARRY HERE**, which is the
+           * opposite of the digit case (`C2 -1 D2|`, where the D closes a tie). Both are
+           * measured; `Note.tieLeading` carries the difference.
+           */
+          {
+            const next = this.src[token.start + 1] ?? ''
+            /**
+             * ⚠️ **AND ONLY WHERE THE `-` STARTS AN ATTEMPT AT ALL.** One that follows a note
+             * is eaten by THAT note's own `getCoreNote` — its duration arm's loop takes
+             * whitespace and ties alike (`abc_parse_music.js:1201-1206`) — so `C-|`, `C -|`
+             * and `C--D|` fail nothing and warn nothing. `voice().last === null` is the same
+             * test `tieLast` uses to decide it must reach back.
+             */
+            /**
+             * …**AND NOT WHERE A DIGIT FOLLOWS**, which is the OTHER failed attempt: the
+             * branch below already warns for every character of it, the `-` included, so
+             * testing here too warned twice at the same column. `abcts-endings-tune5`'s
+             * ratchet caught it in the run that added this check.
+             */
+            if (voice().last === null && !/[0-9A-Ga-gzxyZX^_=]/.test(next)) {
+              this.warn(
+                'unknown-character',
+                'unknown character ignored',
+                sourceRange(token.start, token.start + 1),
+              )
+              builder.unreadable.push(sourceRange(token.start, token.start + 1))
+            }
+          }
+          /**
            * ⚠️ **AND A `-` THAT REACHES BACK ACROSS THE BARLINE OWNS NO CHARACTERS.**
            * abcjs retakes `startI` at the top of every `parseMusic` iteration, so one that
            * has an EFFECT but appends no element leaves its characters to nobody — the
@@ -6744,8 +6825,19 @@ class Parser {
           // Read the spec straight from the source rather than from tokens: `::` lexes as
           // a double-repeat barline and a lone `:` is ambiguous, so a token walk misreads
           // exactly the forms that omit a field.
-          const spec = /^\((\d+)(?::(\d*))?(?::(\d*))?/.exec(
-            this.src.slice(token.start, token.start + 16),
+          /**
+           * ⚠️ **EACH FIELD IS ONE DIGIT, AND ANY FURTHER DIGIT IS AN UNKNOWN CHARACTER.**
+           * `(99999CDEF|` is a tuplet of NINE followed by four warnings in abcjs, not a
+           * tuplet of 99999; `(3:22:6` warns on the second `2`, then reads the `:` as a bar
+           * symbol (two more warnings) and warns on the `6`. Ours read `\d+` per field and
+           * was silent. Measured on a ladder of nine.
+           *
+           * ⚠️ **AND `p < 2` MAKES NO TUPLET AND WARNS AT THE DIGIT** — `(0` and `(1` each
+           * warn once and draw an ordinary run, which is what the `p >= 2` guard below
+           * already did silently.
+           */
+          const spec = /^\((\d)(?::(\d?))?(?::(\d?))?/.exec(
+            this.src.slice(token.start, token.start + 8),
           )
           if (!spec?.[1]) {
             pendingSlurStarts++
@@ -6774,6 +6866,33 @@ class Parser {
           }
 
           const p = Number.parseInt(spec[1], 10)
+          /**
+           * Every digit past the fields warns and is owned by nobody — abcjs reaches them
+           * through `parseMusic`'s retry, one character at a time. `p < 2` warns at its own
+           * digit for the same reason: the tuplet was never built, so the character is
+           * unread.
+           */
+          {
+            let at = specEnd
+            if (p < 2) {
+              this.warn(
+                'unknown-character',
+                'unknown character ignored',
+                sourceRange(token.start + 1, token.start + 2),
+              )
+              builder.unreadable.push(sourceRange(token.start + 1, token.start + 2))
+            }
+            while (/[0-9]/.test(this.src[at] ?? '')) {
+              this.warn(
+                'unknown-character',
+                'unknown character ignored',
+                sourceRange(at, at + 1),
+              )
+              builder.unreadable.push(sourceRange(at, at + 1))
+              at += 1
+            }
+            while (i < tokens.length && (tokens[i] as Token).start < at) i++
+          }
           const compound = builder.meter ? isCompoundMeter(builder.meter) : false
           const q = spec[2] ? Number.parseInt(spec[2], 10) : defaultTupletQ(p, compound)
           const r = spec[3] ? Number.parseInt(spec[3], 10) : p
