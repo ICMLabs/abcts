@@ -6345,6 +6345,22 @@ class Parser {
           break
         }
         case 'decoration': {
+          /**
+           * **AN UNTERMINATED `!` IS A DROPPED CHARACTER AND NO WARNING AT ALL.** Its arm
+           * ends `if (line[i] === '!' && (ret[0] === 1 || line[i+ret[0]-1] !== '!')) return
+           * [1, null]` under abcjs's own comment — *"it is possible that ! was used as a
+           * line break, so accept that"* (`abc_parse_music.js:824-826`) — so the character
+           * goes and the rest of the line is MUSIC. `!trill CDEF|` is `trillh` on a C and
+           * then D E F in abcjs, with four unknown-character warnings for `rill`; ours
+           * warned "Unknown decoration" once and lost the line. See `budgeted`.
+           *
+           * ⚠️ **A TERMINATED but unknown `!zzz!` IS THE OTHER ARM** and still warns
+           * "Unknown decoration", because `line[i+ret[0]-1]` IS the closing `!`.
+           */
+          if (token.length === 1) {
+            i++
+            break
+          }
           // `!name!` — the LONG form. Strict drops any name abcjs does not recognise; see
           // ABCJS_LEGAL_ACCENTS. The shorthand path below is deliberately not filtered,
           // because abcjs does not filter it either.
@@ -6662,6 +6678,34 @@ class Parser {
           break
         }
         case 'grace': {
+          /**
+           * **AN UNTERMINATED `{` IS ONE DROPPED CHARACTER AND TWO WARNINGS**, and the
+           * group is abandoned entirely: `letter_to_grace` warns "Missing the closing '}'"
+           * from `getBrackettedSubstring`'s failure (`abc_parse_music.js:674-676`), the
+           * character then reaches `parseMusic`'s retry and warns again as an unknown one,
+           * and everything after it is ORDINARY MUSIC. `{ab CDEF|` is `a b C D E F` and a
+           * barline in abcjs — six notes where we drew none at all. See `budgeted`.
+           *
+           * ⚠️ **AND THE CHARACTER BELONGS TO NOBODY** — the same rule the failed `-`
+           * attempt has: `parseMusic` retakes `startI` per iteration, so a character whose
+           * construct appended nothing leaves its span to no element. Ours opened the
+           * following note at the `{`.
+           */
+          if (token.length === 1) {
+            this.warn(
+              'grace-unterminated',
+              "missing the closing '}' while parsing grace note",
+              sourceRange(token.start, token.start + 1),
+            )
+            this.warn(
+              'unknown-character',
+              'unknown character ignored',
+              sourceRange(token.start, token.start + 1),
+            )
+            builder.unreadable.push(sourceRange(token.start, token.start + 1))
+            i++
+            break
+          }
           const inner = this.src.slice(token.start + 1, token.start + token.length - 1)
           /**
            * **A REST INSIDE A GRACE GROUP IS A WARNING, ONE PER REST** — `warn("Rests not

@@ -423,11 +423,27 @@ stream per voice and the page height. It found **six** defects on its first run;
 **FOUR CLASSES REMAIN, all DECLARED in the script with their measurements**, and the first is
 the one a host feels:
 
-1. **RECOVERY FROM AN UNTERMINATED CONSTRUCT.** abcjs keeps the rest of the line and warns;
-   this engine abandons the line. `{ab CDEF|` gives abcjs six notes and a barline with 2
-   warnings and gives us nothing at all; `"Am CDEF|` gives it two notes, `!trill CDEF|` four.
-   ⚠️ **This is what an EDITOR sees on every keystroke** — one stray `{` or `"` mid-typing
-   loses the line. It is the next thing worth fixing in this file.
+1. ✅ **RECOVERY FROM AN UNTERMINATED CONSTRUCT — CLOSED 2026-09-23, AND IT WAS ONE SHARED
+   PRIMITIVE.** `getBrackettedSubstring` clamps a missing close to a per-construct BUDGET
+   rather than eating the line — *"we'll just pick an arbitrary num of chars so the line
+   doesn't disappear"* (`abc_tokenizer.js:789-814`) — and ours ran to the NEWLINE, so one
+   stray `{` or `"` lost everything after it. **That is what an editor sees on every
+   keystroke, and `compat` is the editor's engine.**
+   * a `{` drops ONE character, abandons the group, and the rest of the line is ordinary
+     music: `{ab CDEF|` is `a b C D E F` and a barline, with two warnings — the missing brace
+     and then the character itself. ⚠️ And the character belongs to NOBODY, so the next
+     note's span opens past it.
+   * a `"` spends FIVE, so six characters go and the text is the four between: `"Am CDEF|` is
+     a chord `Am C` on an E, then F.
+   * a `!` is treated as a LINE BREAK — `[1, null]`, one character, **no warning at all** —
+     so `!trill CDEF|` reads `t` as `trillh` and warns four times on `rill`. A CLOSED but
+     unknown `!zzz!` is the other arm and still warns.
+   ⚠️ **AND THE BUDGETS ARE NOT ALL `budget + 1`**: measured, the brace and the bang consume
+   ONE character where the source's arithmetic says two. `tests/unterminated.test.ts` is the
+   ladder, nine rungs, every expectation abcjs's own.
+
+   **What is LEFT of the class is `[K:C CDEF|`**, where abcjs raises seven warnings walking
+   out of a failed inline field and we raise one. The ELEMENTS agree.
 2. **WARNINGS THIS PARSER DOES NOT RAISE** — `(99999CDEF|`, `^^^^^^C|`, `%%score (((`, `-|-`
    and a `w:` before any music are silent here where abcjs warns, per extra character for the
    first two.

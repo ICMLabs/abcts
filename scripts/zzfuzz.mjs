@@ -36,11 +36,13 @@ const VERBOSE = process.argv.includes('-v')
  * **THE ROWS THAT DIFFER, EACH MEASURED.** Four classes, and the first is the one worth
  * fixing next: it is what an EDITOR sees on every keystroke.
  *
- * 1. **RECOVERY FROM AN UNTERMINATED CONSTRUCT.** abcjs keeps the rest of the line and warns;
- *    this engine abandons the whole line. `{ab CDEF|` gives abcjs six notes and a barline
- *    (the graces become ordinary notes) with 2 warnings, and gives us NOTHING; `"Am CDEF|`
- *    gives abcjs two notes, `!trill CDEF|` four, `[K:C CDEF|` seven warnings against our one.
- *    ⚠️ **This is the class a host feels**: one stray `{` or `"` mid-typing loses the line.
+ * 1. ✅ **RECOVERY FROM AN UNTERMINATED CONSTRUCT — CLOSED 2026-09-23.** It was one shared
+ *    primitive: `getBrackettedSubstring` clamps a missing close to a per-construct BUDGET
+ *    rather than eating the line, and ours ran to the newline, so one stray `{` or `"` lost
+ *    everything after it — what an editor sees on every keystroke. `{ab CDEF|`, `"Am CDEF|`,
+ *    `!trill CDEF|` and six more rungs now match abcjs element for element and warning for
+ *    warning. ⚠️ **What is LEFT of the class is `[K:C CDEF|`** — abcjs raises seven warnings
+ *    walking out of a failed inline field where we raise one, and the ELEMENTS agree.
  * 2. **WARNINGS THIS PARSER DOES NOT RAISE.** `(99999CDEF|`, `^^^^^^C|`, `%%score (((`,
  *    `-|-` and a `w:` before any music are silent here where abcjs warns — per extra
  *    character for the first two, "Can't nest parenthesis in %%score" for the third.
@@ -55,10 +57,7 @@ const VERBOSE = process.argv.includes('-v')
 const DECLARED = new Set([
   'empty',
   'blank lines',
-  'unterminated grace',
   'unterminated slur',
-  'unterminated quote',
-  'unterminated bang',
   'unterminated bracket field',
   'huge duration',
   'huge tuplet',

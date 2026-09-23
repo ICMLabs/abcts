@@ -57,6 +57,33 @@ function delimited(src: string, from: number, close: string): number {
 }
 
 /**
+ * **AN UNTERMINATED CONSTRUCT DOES NOT EAT THE LINE — IT SPENDS A BUDGET.**
+ * `getBrackettedSubstring(line, i, maxErrorChars, matchChar)` searches for the close and,
+ * failing to find one, sets `pos = i + maxErrorChars` (clamped to the line's end) under its
+ * own comment: *"we hit the end of line, so we'll just pick an arbitrary num of chars so the
+ * line doesn't disappear"* (`abc_tokenizer.js:789-814`). The budget is the caller's — **5 for
+ * a chord symbol, 1 for a grace group, 5 for a decoration** (`abc_parse_music.js:602`,
+ * `:674`, `:793`) — and the consumed length is `budget + 1`.
+ *
+ * ⚠️ **OURS RAN TO THE NEWLINE, SO ONE STRAY `{` OR `"` LOST THE WHOLE LINE** — which is what
+ * an EDITOR sees on every keystroke, and `abcts/compat` is the editor's engine. Measured
+ * against abcjs in one page: `{ab CDEF|` gives it six notes and a barline where we drew
+ * nothing at all, `"Am CDEF|` two notes, `!trill CDEF|` four.
+ *
+ * ⚠️ **AND THE TWO SHORT BUDGETS ARE NOT `budget + 1`.** Measured, not read: an unterminated
+ * `{` consumes ONE character (`{CDEF|` puts abcjs's C at the very next index) and an
+ * unterminated `!` consumes one too, because its arm returns `[1, null]` — *"it is possible
+ * that ! was used as a line break, so accept that"* (`:825-826`) — with no warning at all.
+ * The chord symbol is the only one that spends its five.
+ */
+const budgeted = (src: string, from: number, close: string, unterminated: number): number => {
+  const end = delimited(src, from, close)
+  const closed = src[end - 1] === close && end > from + 1
+  if (closed) return end
+  return Math.min(from + unterminated, end)
+}
+
+/**
  * **THE EIGHT INLINE FIELDS abcjs HAS, AND IT HAS NO OTHERS.**
  * `letter_to_inline_header` is a switch on `line.substring(i, i+3)` with exactly these arms
  * (`abc_parse_header.js:347-410`) — anything else falls past it, so abcjs reads the `[` as a
@@ -211,9 +238,11 @@ export class Lexer {
     }
     if (c === ']') return token('closeBracket', 1)
 
-    if (c === '"') return token('chordSymbol', delimited(src, start, '"') - start)
-    if (c === '{') return token('grace', delimited(src, start, '}') - start)
-    if (c === '!') return token('decoration', delimited(src, start, '!') - start)
+    // The budgets are abcjs's own: 6 consumed for a chord symbol, 1 for a grace or a
+    // decoration — see `budgeted`.
+    if (c === '"') return token('chordSymbol', budgeted(src, start, '"', 6) - start)
+    if (c === '{') return token('grace', budgeted(src, start, '}', 1) - start)
+    if (c === '!') return token('decoration', budgeted(src, start, '!', 1) - start)
     if (c === '+') {
       // `+` is only a decoration when its closing `+` is on the same line.
       const end = delimited(src, start, '+')

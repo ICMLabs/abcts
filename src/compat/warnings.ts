@@ -365,6 +365,20 @@ const AS_ABCJS: Record<
     return { message: "Can't nest triplets", column: at - start };
   },
   /**
+   * `Missing the closing '}' while parsing grace note`, at the `{` itself
+   * (`abc_parse_music.js:674-676`) — raised from `getBrackettedSubstring`'s FAILURE, so it
+   * is the unterminated case only, and abcjs follows it with an `Unknown character ignored`
+   * for the same character. See `budgeted` in the lexer.
+   */
+  "grace-unterminated": (diagnostic, abc) => {
+    const at = diagnostic.range?.start ?? 0;
+    const start = lineStartAt(abc, at);
+    return {
+      message: "Missing the closing '}' while parsing grace note",
+      column: at - start,
+    };
+  },
+  /**
    * `Unknown character '<c>' while parsing grace note`, at the GROUP's own start — the same
    * column as the rests beside it (`abc_parse_music.js:719-725`).
    */
