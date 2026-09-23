@@ -18557,7 +18557,17 @@ function appendFreeText(
      * held it on the SYSTEM, so it was spent AFTER the block and the text sat 20px high on
      * a page whose TOTAL was right to the digit.
      */
-    if (block.vskip !== undefined) spend(block.vskip)
+    /**
+     * ⚠️ **EXCEPT BEFORE A SUBTITLE, WHICH CARRIES THE NUMBER AND NEVER SPENDS IT.** The
+     * controller builds `new Subtitle(spacing.subtitle, formatting, abcLine.subtitle,
+     * center, padding.left, getTextSize)` — no vskip argument at all
+     * (`engraver-controller.js:239`) — where the `FreeText` arm one line below takes one,
+     * and `draw()`'s `if (abcLine.vskip)` fires only for a line with a `staff`. MEASURED:
+     * abcjs's page for `%%vskip 20` before a `T:` is byte-identical to the same tune
+     * without it. The block keeps the number because `tune.lines` publishes it — see
+     * `ScoreMetadata.titleVskips`.
+     */
+    if (block.vskip !== undefined && block.role !== 'subtitle') spend(block.vskip)
     if (block.separator !== undefined) {
       // The RULE COSTS NO HEIGHT — `drawSeparator` paints at the cursor and moves nothing
       // — so the line is worth exactly its two spaces. Points to staff spaces on the way.

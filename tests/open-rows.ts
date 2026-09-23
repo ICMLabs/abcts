@@ -15,7 +15,8 @@
  * Each gate keeps its "the WHOLE corpus agrees" assertion over everything not named here,
  * and asserts that every row named here STILL differs — so a row cannot rot: fix it and
  * the gate tells you to delete the name. The plain-language table is
- * `Docs/PARITY-STATUS.md` §3b. The suffix `#breaks` (deline) is a case of the same tune.
+ * `Docs/PARITY-STATUS.md` §3b. The suffix `#breaks` (deline) was a case of the same tune —
+ * `withBreaks` is gone with the last deline row.
  *
  * ✅ **`unknown-clef` IS GONE FROM EVERY LIST — CLOSED 2026-09-22, and it was ONE FACT
  * SHOWING AS TWO DIVERGENCES ACROSS FOUR GATES.** `fixClef` rewrites `clef.type` from
@@ -94,6 +95,29 @@
  *     `zzz=up` and `xstem=up` do it too, with no warning. ⚠️ **MEASURED — the source
  *     predicts a warning and no stem.**
  *
+ * ✅ **AND THE `%%vskip` / `%%text` LINE-ROW FAMILY IS DOWN TO ONE ROW — 2026-09-23.**
+ * Twelve of its thirteen tunes on five rules, and with them `tune.lines`, `parseOnly`,
+ * `parseValues` and `deline` are EXACT over the whole corpus:
+ *
+ *   • **A PENDING `%%vskip` RIDES THE VERY NEXT LINE, WHATEVER KIND IT IS** — `pushLine`
+ *     stamps `hash.vskip` before it pushes (`tune-builder.js:904-908`), so a text row, a
+ *     `%%center`, a `%%begintext`, a `%%sep` and a mid-tune `T:` all take it and the STAFF
+ *     below gets none. ⚠️ **AND A SUBTITLE CARRIES IT WITHOUT SPENDING IT** — no vskip
+ *     argument reaches `Subtitle` (`engraver-controller.js:239`), so the page is
+ *     byte-identical while `tune.lines` publishes the number. The repo had recorded the
+ *     PAGE half of that and called it "thrown away".
+ *   • **A `%%text` SPAN IS ARITHMETIC, NOT THE LINE** — `iChar + restOfString.length + 7`
+ *     over the TRIMMED tail (`abc_parse_directive.js:983`), so a bare `%%text` spans SEVEN
+ *     characters where the line is six.
+ *   • **A BLOCK WRITTEN INSIDE A SYSTEM COMES OUT AFTER IT**, because the staff line was
+ *     pushed when the system opened.
+ *   • **AND THE `&` MARKER SORTS AHEAD OF THE LAYER'S FIRST ELEMENT, NOT ITS FIRST EVENT**
+ *     — a note's span opens at whatever was written FOR it, so `&"C"GABc|` builds its `G`
+ *     four characters early and `resolveOverlays` snipped one element late.
+ *
+ * ⚠️ **ONE RUNG MEASURED AND NOT LANDED**: `%%newpage` takes the pending vskip too; no
+ * fixture writes that pair, so it is an `it.fails` rather than two more model fields.
+ *
  * ⭐ **AND THE SESSION'S RULE IS THAT THREE OF THE FOUR FAMILIES WERE RULES THIS REPO HAD
  * ALREADY PORTED, AT THE SITE THAT NAMED THEM.** The renderer knew `%%staffnonote` and
  * `Measure.clefChangeSilent`; the grace path knew the tie carry was positional. Each was
@@ -103,21 +127,13 @@
 
 const textUdef = (n: number[]) =>
   n.map((i) => `repo/abcts-text-udef-parts-overlays-tune${i}`);
-const withBreaks = (slugs: string[]) => slugs.flatMap((s) => [s, `${s}#breaks`]);
 
 export const OPEN = {
   lines: [] as readonly string[],
-  deline: withBreaks([
-    ...textUdef([30, 34]),
-  ]),
+  deline: [] as readonly string[],
   parseOnly: [] as readonly string[],
-  parseValues: [
-    ...textUdef([2, 7, 30, 34, 37, 38, 39, 45, 47, 48, 49, 54]),
-  ],
-  renderValues: [
-    "repo/abcts-rests-and-bars-tune14",
-    ...textUdef([2, 7, 30, 34, 36, 37, 38, 39, 45, 47, 48, 49, 54]),
-  ],
+  parseValues: [] as readonly string[],
+  renderValues: ["repo/abcts-rests-and-bars-tune14", ...textUdef([36])],
   /** `sequence` is keyed by FIXTURE, not tune. Empty since the tie family closed. */
   sequence: [] as readonly string[],
   /** `accessors`: `slug field`. */

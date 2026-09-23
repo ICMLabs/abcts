@@ -3003,6 +3003,8 @@ class ScoreBuilder {
   /** `metaTextInfo` — see `ScoreMetadata.fieldRanges`. `title` lives in `titleRanges`. */
   fieldRanges: Record<string, SourceRange> = {}
   titleRanges: SourceRange[] = []
+  /** The `%%vskip` each `T:` line carries — see `ScoreMetadata.titleVskips`. */
+  titleVskips: (number | undefined)[] = []
   /**
    * `addMetaText`'s rule: the FIRST write sets both ends, a later one moves only the end
    * (`tune-builder.js:433-448`). `addMetaTextArray` does the same for `N:`/`H:`/`W:`.
@@ -3595,6 +3597,7 @@ class ScoreBuilder {
       runningHead: this.runningHead,
       fieldRanges: this.fieldRanges,
       titleRanges: this.titleRanges,
+      titleVskips: this.titleVskips,
     }
     return {
       metadata,
@@ -4242,10 +4245,20 @@ class Parser {
     if (freeText !== null) {
       const builder = this.ensureScore(start)
       const target = builder.voice.isEmpty ? builder.textAbove : builder.textBelow
+      const rest = (freeText[1] ?? '').trim()
       target.push({
-        lines: [decodeTextString((freeText[1] ?? '').trim())],
+        lines: [decodeTextString(rest)],
         align: 'left',
-        sourceRange: sourceRange(start, end),
+        /**
+         * ⚠️ **AND THE SPAN IS `restOfString.length + 7`, NOT THE LINE** — abcjs builds it
+         * arithmetically, `{startChar: iChar, endChar: iChar + restOfString.length + 7}`
+         * (`abc_parse_directive.js:983`), where `restOfString` is the TRIMMED tail. So a
+         * bare `%%text` spans SEVEN characters where the line is six, and `%%text  a `
+         * spans eight where the line is ten: the two disagree in both directions and only
+         * a directive with exactly one space and no trailing one reads the same either way
+         * — which is every `%%text` in the corpus until these controls were written.
+         */
+        sourceRange: sourceRange(start, start + rest.length + 7),
         ...this.takeBlockVskip(),
       })
       return
@@ -4332,6 +4345,11 @@ class Parser {
         lines: [],
         align: 'center',
         role: 'separator',
+        // …**AND A `%%sep` IS A LINE LIKE ANY OTHER, SO IT TAKES THE PENDING `%%vskip`** —
+        // `pushLine` stamps it onto whatever is pushed next (`tune-builder.js:904-908`).
+        // Left pending, it reached the STAFF below instead, which is 20px in the wrong place
+        // and a `tune.lines` row abcjs does not have.
+        ...this.takeBlockVskip(),
         sourceRange: sourceRange(start, start + (args === '' ? 5 : args.length)),
         separator: {
           above: Math.round(above ?? 14),
@@ -4907,9 +4925,16 @@ class Parser {
    *
    * **The consuming is the point**: leaving it pending would hand it to the STAFF instead.
    */
-  private dropVskipBeforeSubtitle(): void {
-    const pending = this.builder?.pendingVskip
-    if (pending !== undefined) pending.value = null
+  /**
+   * ⚠️ **AND "THROWN AWAY" WAS TRUE OF THE PAGE AND FALSE OF THE PARSE TREE.** `pushLine`
+   * stamps the pending vskip onto the `{subtitle}` line like any other, so abcjs's own
+   * `tune.lines` reads `{subtitle: {...}, vskip: 20}` — measured. What the controller does
+   * NOT do is hand it to `Subtitle`, so nothing SPENDS it and the page is byte-identical
+   * with and without the directive. Both halves are now modelled: the block carries the
+   * number for `tune.lines`, and the layout declines to spend it for a subtitle alone.
+   */
+  private dropVskipBeforeSubtitle(): { vskip?: number } {
+    return this.takeBlockVskip()
   }
 
   private takeBlockVskip(): { vskip?: number } {
@@ -5052,24 +5077,25 @@ class Parser {
           // …**AND IT GOES THROUGH `parseFontChangeLine` LIKE THE TITLE DOES** — see
           // `FreeTextBlock.rich`. `setTitle` splits the fonts BEFORE it branches.
           const rich = parseFontChangeLine(theReverser(decodeTextString(value)), builder.setfont)
-          this.dropVskipBeforeSubtitle()
           const block: FreeTextBlock = {
             lines: [theReverser(decodeTextString(value))],
             align: 'center',
             role: 'subtitle',
             rich,
             sourceRange: range,
+            ...this.dropVskipBeforeSubtitle(),
           }
           if (beforeMusicBlock) builder.textAbove.push(block)
           else builder.textBelow.push(block)
         } else {
-          this.dropVskipBeforeSubtitle()
+          const carried = this.dropVskipBeforeSubtitle()
           // `T: C: O: A: P:` all run through `parseFontChangeLine`
           // (`abc_parse_header.js:484-541`), so any of them may come back as phrases.
           builder.titles.push(
             parseFontChangeLine(theReverser(decodeTextString(value)), builder.setfont),
           )
           builder.titleRanges.push(range)
+          builder.titleVskips.push(carried.vskip)
         }
         }
         return

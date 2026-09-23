@@ -1917,6 +1917,15 @@ export interface ScoreMetadata {
   readonly fieldRanges: Readonly<Partial<Record<string, SourceRange>>>
   /** One per entry of `titles` — `[0]` is `metaTextInfo.title`, the rest are subtitles. */
   readonly titleRanges: readonly SourceRange[]
+  /**
+   * **THE `%%vskip` A SUBTITLE LINE CARRIES**, parallel to `titleRanges` — `pushLine`
+   * stamps a pending one onto the `{subtitle}` line like any other
+   * (`tune-builder.js:904-908`), so it is part of `tune.lines`. **Nothing SPENDS it**: the
+   * controller builds `Subtitle` without a vskip argument (`engraver-controller.js:239`),
+   * which is why abcjs's page is byte-identical with and without the directive. See
+   * `FreeTextBlock.vskip` for the same number on a block that does spend it.
+   */
+  readonly titleVskips: readonly (number | undefined)[]
 }
 
 /**

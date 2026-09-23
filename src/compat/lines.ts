@@ -1781,12 +1781,24 @@ function voiceElements(
       const written = layer.filter(
         (e) => e.sourceRange != null && !(e.type === "rest" && e.overlayPad === true),
       );
-      const first = written[0]?.sourceRange?.start;
-      if (first === undefined) return;
+      if (written[0]?.sourceRange?.start === undefined) return;
       const marker: AbcElement = { el_type: "overlay" };
-      sortAt.set(marker, first - 0.25);
       out.push(marker);
+      const layerFrom = out.length;
       for (const event of written) note(event);
+      /**
+       * ⚠️ **AND THE MARKER SORTS AHEAD OF THE LAYER'S FIRST ELEMENT, NOT AHEAD OF ITS
+       * FIRST EVENT.** A note's span opens at whatever was written FOR it — a chord
+       * symbol, a `!…!` decoration, a `.` or a grace group — so `&"C"GABc|` builds its `G`
+       * at the `"` four characters before the note's own range. Keyed on the EVENT, the
+       * marker sorted between them and `resolveOverlays` snipped one element late, leaving
+       * the layer's first note in the MAIN voice with the layer's second as its head.
+       * Same reading as the `%%MIDI` block below, and for the same reason.
+       */
+      const opensAt = out
+        .slice(layerFrom)
+        .flatMap((e) => (e == null ? [] : [e.startChar ?? Number.POSITIVE_INFINITY]));
+      sortAt.set(marker, Math.min(...opensAt, Number.POSITIVE_INFINITY) - 0.25);
     });
     out.push(
       bar(
@@ -2544,6 +2556,15 @@ export function projectionOf(
     return line;
   };
   const textLineOf = (b: FreeTextBlock): AbcLine => {
+    /**
+     * **A PENDING `%%vskip` GOES ON THE VERY NEXT LINE, WHATEVER KIND OF LINE THAT IS** —
+     * `pushLine` stamps `hash.vskip` and deletes the pending one before it pushes
+     * (`tune-builder.js:904-908`), so a `%%text`, a `%%center`, a `%%begintext` block, a
+     * `%%sep`, a `%%newpage` and a mid-tune `T:` all take it, and the STAFF below then
+     * gets none. Ours emitted it on music lines only, so six rows of the value gate read
+     * it in the wrong place or not at all.
+     */
+    const vskip = b.vskip === undefined ? {} : { vskip: b.vskip };
     const span =
       b.sourceRange === undefined
         ? {}
@@ -2558,13 +2579,14 @@ export function projectionOf(
           lineLength: b.separator?.length ?? 85,
           ...span,
         },
+        ...vskip,
       };
     // …and a subtitle publishes its PHRASES where it has them — see `FreeTextBlock.rich`.
     if (b.role === "subtitle")
-      return { subtitle: { text: richOf(b.rich ?? text), ...span } };
+      return { subtitle: { text: richOf(b.rich ?? text), ...span }, ...vskip };
     // **`%%center` IS THE ARRAY FORM AND HAS NO SPAN** — `addCentered` takes no `info`.
-    if (b.align === "center") return { text: [{ text, center: true }] };
-    return { text: { text, ...span } };
+    if (b.align === "center") return { text: [{ text, center: true }], ...vskip };
+    return { text: { text, ...span }, ...vskip };
   };
   /**
    * The blocks standing before any music, in SOURCE ORDER — the header's own `T:`
@@ -2575,6 +2597,7 @@ export function projectionOf(
     const before: { at: number; line: AbcLine }[] = [];
     score.metadata.titles.slice(1).forEach((title, i) => {
       const r = score.metadata.titleRanges[i + 1];
+      const carried = score.metadata.titleVskips[i + 1];
       before.push({
         at: r?.start ?? 0,
         line: {
@@ -2587,6 +2610,9 @@ export function projectionOf(
             text: richOf(title),
             ...(r === undefined ? {} : { startChar: r.start, endChar: r.end }),
           },
+          // …and a pending `%%vskip` rides this line too — see `textLineOf` and
+          // `ScoreMetadata.titleVskips`.
+          ...(carried === undefined ? {} : { vskip: carried }),
         },
       });
     });
@@ -3512,6 +3538,19 @@ const VOICE_FURNITURE = new Set(["style", "stem", "color", "scale"]);
           return staff;
         }),
     });
+    /**
+     * ⚠️ **AND A BLOCK WRITTEN INSIDE A SYSTEM COMES OUT AFTER IT** — `pushLine` appends
+     * where the directive stands, but the STAFF line was pushed when the system opened,
+     * so a `%%text` between `V:1`'s music and `V:2`'s lands at index 1 with the staff at
+     * 0. Every voice past the first is a line of the system already open, so its own
+     * `textBefore` is this case and not a block waiting for the next system.
+     *
+     * Measured on `abcts-text-udef-parts-overlays` tune 34, where abcjs answers
+     * `[staff, text]` and this projection — which read `textBefore` off VOICE 0 alone —
+     * answered `[staff]` and dropped the row outright.
+     */
+    for (const v of score.voices.slice(1))
+      for (const b of v.measures[from]?.textBefore ?? []) lines.push(textLine(b));
   });
   // …and the hoist runs over the finished lines, per voice, because it moves an element
   // from one line's array into another's.

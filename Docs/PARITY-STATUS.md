@@ -234,7 +234,7 @@ down, with evidence, in `Docs/ABCJS-DIFFERENCES.md`, and its slug is in the gate
 | writes **`NaN` into the tempo** — `Math.round(60000000 / undefined)` is `NaN`, and `toHex(NaN, 6)` pads the *string* `"NaN"` and slices it into `%00%0N%aN`. Its own decoder reads those as 0 and 10, giving a tempo of ~2.6 microseconds per quarter note. We write the 180bpm default. | 16 |
 | **throws outright**, so a host gets no file at all — a rich `T:` reaching `charCodeAt` as an object, and two `Cannot read properties of undefined` | 3 |
 
-### 3b. OPEN — measured 2026-09-22, named, not yet fixed
+### 3b. OPEN — measured 2026-09-23, named, not yet fixed
 
 Not divergences: **defects on the tune-object surfaces that the widened oracles named**, on
 hand-written `abcts-*` control tunes that no tune-object oracle had ever covered. Each is
@@ -244,7 +244,7 @@ the gate demand its name be deleted. The families, from the ranked tables:
 
 | family | fixtures | what differs |
 |---|---|---|
-| `%%vskip` / `%%text` line rows | `abcts-text-udef-parts-overlays` 2, 7, 30, 34, 36–39, 45, 47–49, 54 | `line.vskip`, `line.text`, a `nonMusic` line; a `stem` element (30) |
+| `%%text` before a system | `abcts-text-udef-parts-overlays` 36 | the `nonMusic` block a RENDERED line carries (`render-values` only) |
 | `clef=x` | `abcts-unknown-clef` 0–4 | the ruled divergence (§3) seen from the tune object: abcjs's `type: "x"` and debug marker |
 | one-offs | `abcts-rests-and-bars` 14, `abcts-tempo-rung` 2, `abcts-grace-order-and-lanes` 15, `abcts-inline-fields-and-blocks` 2 | `pickupLength`; `totalTime`/`totalBeats` |
 
@@ -258,6 +258,36 @@ measured"; it had measured the ink. (2) The clef is ONE tune-level variable ever
 shares (`abc_parse_music.js:961`), so `V:1 CD[K:C bass]EF|` then `V:2 GABc|` opens voice 2
 in bass; ours seeded each voice from the header's clef in two places, and fixing one left
 every note 12 pitch out with the staff already right. `tests/clef-midmeasure.test.ts`.
+
+✅ **AND THE `%%vskip` / `%%text` LINE-ROW FAMILY IS DOWN TO ONE ROW — twelve of its
+thirteen tunes closed on FOUR rules, and `tune.lines`, `parse-only`, `parse-values` and
+`deline` are now EXACT over the whole corpus.**
+
+* **A PENDING `%%vskip` RIDES THE VERY NEXT LINE, WHATEVER KIND OF LINE THAT IS** —
+  `pushLine` stamps `hash.vskip` before it pushes (`tune-builder.js:904-908`), so a text
+  row, a `%%center`, a `%%begintext`, a `%%sep` and a mid-tune `T:` all take it and the
+  STAFF below gets none. Ours emitted it on music lines only.
+* **AND A SUBTITLE CARRIES THE NUMBER WITHOUT SPENDING IT** — the controller builds
+  `Subtitle` with no vskip argument (`engraver-controller.js:239`), so abcjs's page is
+  byte-identical with and without the directive while `tune.lines` still publishes it.
+  Both halves are modelled now; the repo had recorded only the page half, as measured.
+* **A `%%text` SPAN IS ARITHMETIC, NOT THE LINE** — `iChar + restOfString.length + 7`
+  (`abc_parse_directive.js:983`) over the TRIMMED tail, so a bare `%%text` spans seven
+  characters where the line is six and `%%text  a ` spans eight where the line is ten.
+  Only the one-space no-trailing-space form reads the same either way, which is every
+  `%%text` in the corpus until these controls were written.
+* **A BLOCK WRITTEN INSIDE A SYSTEM COMES OUT AFTER IT** — the staff line was pushed when
+  the system opened, so a `%%text` between `V:1`'s music and `V:2`'s lands at index 1. The
+  projection read `textBefore` off VOICE 0 alone and dropped the row outright.
+* **AND THE `&` MARKER SORTS AHEAD OF THE LAYER'S FIRST ELEMENT, NOT ITS FIRST EVENT** — a
+  note's span opens at whatever was written FOR it, so `&"C"GABc|` builds its `G` four
+  characters early; keyed on the event, `resolveOverlays` snipped one element late and left
+  the layer's first note in the MAIN voice. Any attachment does it: a chord symbol, a
+  decoration, a `.` or a grace group.
+
+⚠️ **ONE RUNG IS MEASURED AND NOT LANDED**: `%%newpage` is a line too and abcjs stamps the
+pending vskip on it; no fixture writes that pair, so it is an `it.fails` in
+`tests/text-line-rows.test.ts` rather than two more model fields.
 
 ✅ **AND SO DID `%%staffnonote` AND THE VOICE MODIFIERS — the four families named in the
 morning's triage are all shut, and `tune.lines` and `parse-only` are now EXACT on every
@@ -305,9 +335,9 @@ user-supplied input is a denial of service, not a rendering difference.
 
 ## 4. Everything else that is measured
 
-Re-run 2026-09-22, after the abcjs 6.7.1 re-harvest and after the `unknown-clef`,
-`clef-midmeasure`, tie, `%%staffnonote` and voice-modifier families closed. These are the
-parse and API surfaces rather than the output.
+Re-run 2026-09-23, after the abcjs 6.7.1 re-harvest and after the `unknown-clef`,
+`clef-midmeasure`, tie, `%%staffnonote`, voice-modifier and `%%vskip`/`%%text` families
+closed. These are the parse and API surfaces rather than the output.
 
 ✅ **THE FIRST OPEN FAMILY IS CLOSED, AND IT WAS ONE LOOKUP.** `unknown-clef` was named in
 FOUR gates over five tunes — `parse-only`, `parse-values`, `render-values` and `deline` —
@@ -328,9 +358,9 @@ and new oracle is byte-identical, so none of it is a 6.7.1 change.
 | surface | result |
 |---|---|
 | `tune.lines` — every element's source span | **0 of 814 tunes; 1,204,999 of 1,204,999 characters** |
-| `parse-values` — every value of every element | **19 of 16,223 OPEN**, on 12 tunes (§3b) |
-| `render-values` — every value of every rendered element | **22 of 16,223 OPEN**, on 14 tunes (§3b) |
-| `parse-only`, `voices-array`, `deline`, `extract-measures`, `setupevents` | 0 / 0 / 4 / 0 / 0 OPEN on 822 / 237 / 1,628 / 284 / 186 cases |
+| `parse-values` — every value of every element | **0 of 16,223** |
+| `render-values` — every value of every rendered element | **3 of 16,223 OPEN**, on 2 tunes (§3b) |
+| `parse-only`, `voices-array`, `deline`, `extract-measures`, `setupevents` | 0 / 0 / 0 / 0 / 0 on 822 / 237 / 1,628 / 284 / 186 cases |
 | `sequence` | **0 of 237** |
 | `accessors` — the nine numeric tune accessors | **9 field-rows OPEN** of 822 tunes × 9 |
 | `tune.warnings` — the strings a host shows | **0 of 822 tunes**, 542 warnings across 93 |
