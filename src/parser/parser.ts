@@ -631,7 +631,27 @@ const BARLINES: Record<string, Barline> = {
   ':|]|:': 'repeatBoth',
   ':|]': 'repeatEnd',
   ':||': 'repeatEnd',
+  /**
+   * ⚠️ **AND THE SPELLINGS THE `|` TREE REACHES PAST TWO CHARACTERS**, which this table had
+   * no rows for — so the lexer handed it `||:` and it fell through to a plain `thin`.
+   * `getBarLine` answers `bar_left_repeat` for `||:` (len 3) and for `|` followed by ANY run
+   * of colons, `{len: 1 + colons}` (`abc_tokenizer.js:224-232`), and `bar_left_repeat` /
+   * `bar_invisible` for `[|:` / `[|]` (`:205-213`).
+   *
+   * `||||::|]` is the case that showed it: abcjs draws `thin_thin`, `left_repeat`,
+   * `right_repeat` and ours drew the middle one thin.
+   */
+  '||:': 'repeatStart',
+  '[|:': 'repeatStart',
 }
+
+/**
+ * `|` FOLLOWED BY A RUN OF COLONS IS A LEFT REPEAT, whatever the run's length —
+ * `{len: 1 + colons, token: "bar_left_repeat"}`. Spelled as a rule rather than as rows,
+ * because the run is unbounded.
+ */
+const barlineOf = (text: string): Barline =>
+  BARLINES[text] ?? (/^\|:+$/.test(text) ? 'repeatStart' : 'thin')
 
 /**
  * **EVERY DURATION A NOTEHEAD CAN SPELL, SHORTER THAN A WHOLE NOTE** — abcjs's `durations`
@@ -2630,7 +2650,13 @@ class VoiceBuilder {
       // `!coda!|:` leaves the coda on the `bar_left_repeat`. This branch used to keep
       // nothing: the caller cleared the decorations unconditionally and they were LOST,
       // while the chord leaked onto the next note ahead of that note's own.
-      this.pendingOpening ??= {
+      // …**AND A SECOND OPENER FLUSHES THE FIRST** — see `pushBareBarline`.
+      if (this.pendingOpening !== null) {
+        const held = this.pendingOpening
+        this.pendingOpening = null
+        this.pushBareBarline(held)
+      }
+      this.pendingOpening = {
         barline,
         range: barlineRange,
         decorations: [...decorations],
@@ -2689,6 +2715,61 @@ class VoiceBuilder {
    * Overlays must be checked too: `AB|&cd` with no closing barline used to discard the
    * whole overlay layer, so whether the notes existed depended on a trailing `|`.
    */
+  /**
+   * **A BARLINE WITH NOTHING BEFORE OR AFTER IT IS STILL ITS OWN ELEMENT**, and abcjs emits
+   * ONE PER TOKEN: `|||` is `bar_thin_thin` then `bar_thin`, `||||` is two `bar_thin_thin`,
+   * and `|]|[|` is three bars (`abstract-engraver.js:957` draws whatever the stream holds).
+   *
+   * ⚠️ **THIS SLOT USED TO HOLD ONE AND SAID SO**: *"Two openers in a row keep the first;
+   * `[|` then `|:` prints both, but nothing in the corpus does it and one slot is enough
+   * until something does."* A `ponytail:` in all but name, and fuzzing malformed input
+   * against abcjs is the something — every barline past the first was DROPPED.
+   */
+  private pushBareBarline(trailing: NonNullable<typeof this.pendingOpening>): void {
+    const bare: Measure = {
+      events: [],
+      overlays: [],
+      keyChange: null,
+      keyChangeSourceRange: null,
+      meterChange: null,
+      meterChangeSourceRange: null,
+      /**
+       * ⚠️ **AND IT TAKES A REPEAT ENDING THAT NOTHING ELSE WILL.** A volta rides on
+       * the measure the barline OPENS, and the projection matches it back to that
+       * barline by position — so `C2|1 D2|` works because the `D2` measure closes and
+       * consumes it. `C2|1|` has no such measure: the second `|` leaves a
+       * `pendingOpening` and the line ends, so the label was set and never taken, and
+       * abcjs writes `bar_thin startEnding "1"` spanning `|1`.
+       *
+       * The same one character costs the SPAN as well as the label, since the digit is
+       * inside the barline's element in abcjs and outside ours.
+       */
+      volta: this.pendingVolta?.label ?? null,
+      voltaSourceRange: this.pendingVolta?.range ?? null,
+      partLabel: null,
+      partLabelSourceRange: null,
+      /**
+       * ⚠️ **AND IT TAKES THE PENDING LINE START, BECAUSE IT IS THE LINE'S FIRST MEASURE.**
+       * Left unconsumed, the flag went to the measure AFTER it and `|:|:C:|:|` came out as
+       * TWO systems, 187px against abcjs's 94.789 — the bare barline on a line of its own.
+       * Caught by `scripts/zzfuzz.mjs` in the same run that the flush landed in, which is
+       * the gate doing its job on the change that needed it.
+       */
+      startsSystem: this.takeLineStart(),
+      openingBarline: null,
+      openingBarlineSourceRange: null,
+      closingBarline: trailing.barline,
+      closingBarlineSourceRange: trailing.range,
+      sourceRange: trailing.range,
+    }
+    this.pendingVolta = null
+    this.measures.push(
+      trailing.decorations.length === 0
+        ? bare
+        : { ...bare, closingBarlineDecorations: [...trailing.decorations] },
+    )
+  }
+
   private closeUnterminatedMeasure(): void {
     /**
      * **A BARLINE WITH NOTHING AFTER IT IS STILL A BARLINE.**
@@ -2732,41 +2813,7 @@ class VoiceBuilder {
       }
       if (trailing !== null) {
         this.pendingOpening = null
-        const bare: Measure = {
-          events: [],
-          overlays: [],
-          keyChange: null,
-          keyChangeSourceRange: null,
-          meterChange: null,
-          meterChangeSourceRange: null,
-          /**
-           * ⚠️ **AND IT TAKES A REPEAT ENDING THAT NOTHING ELSE WILL.** A volta rides on
-           * the measure the barline OPENS, and the projection matches it back to that
-           * barline by position — so `C2|1 D2|` works because the `D2` measure closes and
-           * consumes it. `C2|1|` has no such measure: the second `|` leaves a
-           * `pendingOpening` and the line ends, so the label was set and never taken, and
-           * abcjs writes `bar_thin startEnding "1"` spanning `|1`.
-           *
-           * The same one character costs the SPAN as well as the label, since the digit is
-           * inside the barline's element in abcjs and outside ours.
-           */
-          volta: this.pendingVolta?.label ?? null,
-          voltaSourceRange: this.pendingVolta?.range ?? null,
-          partLabel: null,
-          partLabelSourceRange: null,
-          startsSystem: false,
-          openingBarline: null,
-          openingBarlineSourceRange: null,
-          closingBarline: trailing.barline,
-          closingBarlineSourceRange: trailing.range,
-          sourceRange: trailing.range,
-        }
-        this.pendingVolta = null
-        this.measures.push(
-          trailing.decorations.length === 0
-            ? bare
-            : { ...bare, closingBarlineDecorations: [...trailing.decorations] },
-        )
+        this.pushBareBarline(trailing)
       }
       return
     }
@@ -2887,8 +2934,26 @@ class VoiceBuilder {
     }
   }
 
+  /**
+   * ⚠️ **AND A PENDING BARLINE IS CONTENT, BECAUSE THIS IS READ BEFORE `finish()`.**
+   * `closeUnterminatedMeasure` turns a trailing `pendingOpening` into a bare measure — "a
+   * barline with nothing after it is still a barline" — but the score build asks
+   * `explicit || !isEmpty` to decide whether the voice exists AT ALL, and it asks BEFORE
+   * that flush. So a line of nothing but barlines had no voice, no staff and no line:
+   * `X:1 / K:C / |` gives abcjs ONE bar element and a full staff (height 94.617) where this
+   * engine drew nothing at all (37.56, the header-only page). `|`, `||`, `|]`, `[|]`,
+   * `||||::|]` and `-|-` all reproduced it.
+   *
+   * Found by fuzzing malformed input against abcjs in one page — not by any corpus, because
+   * every fixture in both corpora has notes. A GATE'S REACH IS A PROPERTY OF ITS ENUMERATION.
+   */
   get isEmpty(): boolean {
-    return this.measures.length === 0 && this.events.length === 0 && this.overlays.length === 0
+    return (
+      this.measures.length === 0 &&
+      this.events.length === 0 &&
+      this.overlays.length === 0 &&
+      this.pendingOpening === null
+    )
   }
 }
 
@@ -6744,7 +6809,7 @@ class Parser {
           // A barline that OPENS a measure keeps nothing: `closeMeasure` returns false
           // there, and the chord stays pending for the next note rather than being lost.
           const closed = voice().closeMeasure(
-            BARLINES[text] ?? 'thin',
+            barlineOf(text),
             sourceRange(token.start, token.start + token.length),
             pending.decorations,
             pending.chordSymbol,

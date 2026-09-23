@@ -150,14 +150,40 @@ export class Lexer {
       const length = colonBarLength()
       if (length > 0) return token('barline', length)
     }
-    if (c === '|' || (c === '[' && src[start + 1] === '|')) {
-      let i = start + 1 // the opening char is part of the run by construction
-      while (i < src.length) {
-        const d = src[i]
-        if (d !== '|' && d !== ':' && d !== ']') break
-        i++
+    /**
+     * ⚠️ **AND NEITHER IS THE PIPE ARM A GREEDY RUN — THE SAME DEFECT ONE ARM OVER.**
+     * `getBarLine`'s `|` case is a bounded decision tree (`abc_tokenizer.js:219-235`): `|]`
+     * is 2, `||` is 2 (or 3 for `||:`), `|` followed by colons is `1 + colons`, and anything
+     * else is a LONE `bar_thin` of length 1. So **abcjs emits one element per barline
+     * token**: `|||` is `bar_thin_thin` then `bar_thin`, `||||` is two `bar_thin_thin`, and
+     * `|]|[|` is three bars.
+     *
+     * The greedy run swallowed all of them into ONE token, which `BARLINES` then failed to
+     * match and fell back to a plain `thin` — so `||||::|]` drew one thin barline where
+     * abcjs draws three, and `|||` drew one where abcjs draws two. The note on the colon arm
+     * above says a greedy run "looked right" because the three spellings of one barline
+     * agree everywhere except the shortest; this arm is the case where the LENGTH itself is
+     * the answer.
+     *
+     * Found by fuzzing malformed input against abcjs in one page. No fixture in either
+     * corpus writes three barlines in a row.
+     */
+    if (c === '|') {
+      const at = (n: number): string => src[start + n] ?? ''
+      if (at(1) === ']') return token('barline', 2)
+      if (at(1) === '|') return token('barline', at(2) === ':' ? 3 : 2)
+      if (at(1) === ':') {
+        let colons = 0
+        while (at(1 + colons) === ':') colons += 1
+        return token('barline', 1 + colons)
       }
-      return token('barline', i - start)
+      return token('barline', 1)
+    }
+    // …and the `[` arm, whose own tree is three deep: `[|:` is 3, `[|]` is 3, `[|` is 2.
+    if (c === '[' && src[start + 1] === '|') {
+      const third = src[start + 2] ?? ''
+      if (third === ':' || third === ']') return token('barline', 3)
+      return token('barline', 2)
     }
 
     // `[` BEFORE A DIGIT OR A QUOTE IS AN INVISIBLE BARLINE, one character long —

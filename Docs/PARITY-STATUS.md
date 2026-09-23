@@ -397,6 +397,48 @@ passing quietly when a run is silent on both sides.
 being byte-exact reads like proof that audio works, and it is proof about a different
 artefact. Ask what a host DOES, not what the nearest gate measures.
 
+## 3d. Malformed input — the corpus no fixture covers, and the two defects it found
+
+⚠️ **EVERY FIXTURE IN BOTH CORPORA IS VALID ABC** — 180 harvested from abcjs's own suite and
+57 controls written to pin a rule — so *"what does a drop-in do with input a user is halfway
+through typing?"* had no gate at all. `scripts/zzfuzz.mjs` runs 35 malformed shapes through
+BOTH engines in one WebKit page and compares the tune count, the warning strings, the element
+stream per voice and the page height. It found **six** defects on its first run; two are fixed:
+
+* ✅ **A LINE OF NOTHING BUT BARLINES WAS DELETED.** `|`, `||`, `|]`, `[|]`, `||||::|]` and
+  `-|-` each give abcjs a staff and gave this engine NO LINES AT ALL — the voice's emptiness
+  was tested before `closeUnterminatedMeasure` flushed the pending barline, so the voice never
+  existed. 37.56px against abcjs's 94.617.
+* ✅ **CONSECUTIVE BARLINES COLLAPSED INTO ONE.** The lexer's `|` arm was a GREEDY RUN where
+  `getBarLine` is a bounded decision tree (`abc_tokenizer.js:219-235`): `|||` is
+  `bar_thin_thin` then `bar_thin`, `||||` is two `bar_thin_thin`, `|]|[|` is three bars. The
+  run swallowed them into one token that `BARLINES` could not match and fell through to a
+  plain `thin`, and the table was missing `||:` and `[|:` besides. ⚠️ The code said so:
+  *"Two openers in a row keep the first … nothing in the corpus does it and one slot is enough
+  until something does."* A `ponytail:` in all but name, and this is the something.
+* ⚠️ **AND THE FIX'S OWN REGRESSION WAS CAUGHT IN THE SAME RUN**: the flushed bare measure did
+  not consume the pending line start, so `|:|:C:|:|` came out as TWO systems (187px against
+  94.789). Fixed by having it take the line start, as a real measure does.
+
+**FOUR CLASSES REMAIN, all DECLARED in the script with their measurements**, and the first is
+the one a host feels:
+
+1. **RECOVERY FROM AN UNTERMINATED CONSTRUCT.** abcjs keeps the rest of the line and warns;
+   this engine abandons the line. `{ab CDEF|` gives abcjs six notes and a barline with 2
+   warnings and gives us nothing at all; `"Am CDEF|` gives it two notes, `!trill CDEF|` four.
+   ⚠️ **This is what an EDITOR sees on every keystroke** — one stray `{` or `"` mid-typing
+   loses the line. It is the next thing worth fixing in this file.
+2. **WARNINGS THIS PARSER DOES NOT RAISE** — `(99999CDEF|`, `^^^^^^C|`, `%%score (((`, `-|-`
+   and a `w:` before any music are silent here where abcjs warns, per extra character for the
+   first two.
+3. **AN EMPTY TUNE IS STILL A TUNE.** `''` gives abcjs ONE tune object and a 37.56px page;
+   ours gives zero tunes and no SVG, so `renderAbc(div, '')[0]` is undefined where abcjs hands
+   back an object.
+4. **A BARE `&` LAYER** — `&|` gives abcjs no lines where ours draws a barline, and `C&|` gives
+   abcjs `stem note bar stem` where ours gives `note bar`. MEASURED, not built: `createVoice`'s
+   stem pair survives the empty layer's removal, and a half-understood fix there is worth less
+   than the note.
+
 ## 4. Everything else that is measured
 
 Re-run 2026-09-23, after the abcjs 6.7.1 re-harvest and after the `unknown-clef`,

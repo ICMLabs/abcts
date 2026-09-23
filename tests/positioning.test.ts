@@ -1515,3 +1515,50 @@ describe("timeBasedLayout spaces by time instead of by the spring solve", () => 
     );
   });
 });
+
+/**
+ * **A LINE OF NOTHING BUT BARLINES IS A LINE, AND EACH BARLINE IS ITS OWN ELEMENT.**
+ * Two defects found by fuzzing malformed input against abcjs (`scripts/zzfuzz.mjs`), neither
+ * reachable from any fixture, because every fixture in both corpora has notes:
+ *
+ *   1. the voice's emptiness was tested BEFORE `closeUnterminatedMeasure` flushed the pending
+ *      barline, so `|` gave no voice, no staff and no line at all — abcjs draws a full staff;
+ *   2. the lexer's `|` arm was a GREEDY RUN where `getBarLine` is a bounded decision tree
+ *      (`abc_tokenizer.js:219-235`), so `|||` collapsed to one token that `BARLINES` could
+ *      not match and fell through to a plain `thin`.
+ *
+ * Every expectation is abcjs 6.7.1's own answer, read out of a WebKit page.
+ */
+describe("a line of barlines", () => {
+  const barsOf = (music: string): string[] =>
+    (parseOnly(`X:1\nK:C\n${music}\n`)[0]?.lines ?? []).flatMap((l) =>
+      (l.staff ?? []).flatMap((s) =>
+        (s.voices ?? []).flatMap((v) =>
+          v.map((e) =>
+            e.el_type === "bar"
+              ? ((e as unknown as { type: string }).type ?? "").replace("bar_", "")
+              : e.el_type,
+          ),
+        ),
+      ),
+    );
+
+  it.each([
+    ["|", ["thin"]],
+    ["||", ["thin_thin"]],
+    ["|||", ["thin_thin", "thin"]],
+    ["||||", ["thin_thin", "thin_thin"]],
+    ["|]", ["thin_thick"]],
+    ["[|]", ["invisible"]],
+    ["|]|[|", ["thin_thick", "thin", "thick_thin"]],
+    ["||||::|]", ["thin_thin", "left_repeat", "right_repeat"]],
+    ["::", ["dbl_repeat"]],
+    ["|:", ["left_repeat"]],
+    [":|", ["right_repeat"]],
+    ["-|-", ["thin"]],
+    // …and a bare barline does not open a SYSTEM of its own: `|:|:C:|:|` is one line.
+    ["|:|:C:|:|", ["left_repeat", "left_repeat", "note", "right_repeat", "right_repeat"]],
+  ])("%s → %s", (music, expected) => {
+    expect(barsOf(music)).toEqual(expected);
+  });
+});
