@@ -750,6 +750,10 @@ export function parseClef(spec: string): Clef | null {
      */
     return named ?? {
       shape: 'unknown',
+      // …**AND THE WRITTEN TOKEN TRAVELS WITH IT** — see `Clef.name`. abcjs appends the
+      // number and the `±8` to `clef.token` AFTER warning about the name
+      // (`abc_parse_key_voice.js:504-512`), so `clef=q2` is the single token `q2`.
+      name: `${explicit[1] ?? ''}${explicit[2] ?? ''}${explicit[3] ?? ''}`,
       line: 2,
       octaveShift: 0,
       middleOverride,

@@ -270,8 +270,20 @@ user-supplied input is a denial of service, not a rendering difference.
 
 ## 4. Everything else that is measured
 
-Re-run 2026-09-22, after the abcjs 6.7.1 re-harvest. These are the parse and API surfaces
-rather than the output. ⚠️ **The oracles WIDENED that day**: every tune-object harvester
+Re-run 2026-09-22, after the abcjs 6.7.1 re-harvest and after the `unknown-clef` family
+closed. These are the parse and API surfaces rather than the output.
+
+✅ **THE FIRST OPEN FAMILY IS CLOSED, AND IT WAS ONE LOOKUP.** `unknown-clef` was named in
+FOUR gates over five tunes — `parse-only`, `parse-values`, `render-values` and `deline` —
+and every row came from `fixClef` doing two things inside one `if (value)`: rewriting
+`clef.type` from `clefLines` and assigning `clefPos = value.pitch`
+(`abc_parse_key_voice.js:75-81`). A name it does not know gets NEITHER, so abcjs reports
+`clef=q2` as `type: "q2"` with no `clefPos`, where this engine fell back to `treble` and
+assigned 4. The written token travels on `Clef.name` now;
+`tests/unknown-clef.test.ts` holds it, with a known clef as its break.
+⭐ **That is what the family grouping was worth** — five tunes × four gates were one
+lookup, and the shared fixture prefix predicted it. ⚠️ It does NOT follow that the other
+families are one cause each; that is the same untested assumption. ⚠️ **The oracles WIDENED that day**: every tune-object harvester
 enumerates the whole fixture directory, and most had last been run at 507 tunes while the
 directory had grown to 822 with the `abcts-*` control ladders — so 315 tunes were being asked
 these questions for the first time. What they answered is §3b; every row common to the old
@@ -280,9 +292,9 @@ and new oracle is byte-identical, so none of it is a 6.7.1 change.
 | surface | result |
 |---|---|
 | `tune.lines` — every element's source span | **12 of 814 tunes OPEN (§3b); 1,204,877 of 1,204,999 characters** |
-| `parse-values` — every value of every element | **88 of 16,223 OPEN**, on 46 tunes (§3b) |
-| `render-values` — every value of every rendered element | **71 of 16,223 OPEN**, on 48 tunes (§3b) |
-| `parse-only`, `voices-array`, `deline`, `extract-measures`, `setupevents` | 28 / 0 / 24 / 0 / 0 OPEN on 822 / 237 / 1,644 / 284 / 186 cases |
+| `parse-values` — every value of every element | **82 of 16,223 OPEN**, on 41 tunes (§3b) |
+| `render-values` — every value of every rendered element | **65 of 16,223 OPEN**, on 43 tunes (§3b) |
+| `parse-only`, `voices-array`, `deline`, `extract-measures`, `setupevents` | 23 / 0 / 22 / 0 / 0 OPEN on 822 / 237 / 1,644 / 284 / 186 cases |
 | `sequence` | **1 of 237 OPEN** |
 | `accessors` — the nine numeric tune accessors | **9 field-rows OPEN** of 822 tunes × 9 |
 | `tune.warnings` — the strings a host shows | **0 of 822 tunes**, 542 warnings across 93 |

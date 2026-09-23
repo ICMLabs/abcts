@@ -249,6 +249,15 @@ export type ClefShape = 'G' | 'F' | 'C' | 'percussion' | 'none' | 'unknown'
  */
 export interface Clef {
   readonly shape: ClefShape
+  /**
+   * **THE TOKEN AS WRITTEN, KEPT ONLY WHEN abcjs DID NOT RECOGNISE IT** — `shape` is
+   * `unknown` exactly then. `fixClef` rewrites `clef.type` from its own table and leaves it
+   * ALONE on a miss (`abc_parse_key_voice.js:75-81`), so abcjs's parsed clef for `clef=q2`
+   * reports `type: "q2"` — the letters, the digit and any `±8`, assembled by the arm that
+   * warned about it (`:490-513`). Projecting a `treble` there was one fact showing as two
+   * divergences: the wrong `type` AND a `clefPos` abcjs never assigns.
+   */
+  readonly name?: string
   /** Staff line the clef's reference pitch sits on, 1 = bottom line, 3 = middle. */
   readonly line: number
   /**

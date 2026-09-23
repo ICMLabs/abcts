@@ -433,13 +433,20 @@ export const clefElement = (
   staffLineOverride?: number | null,
 ): AbcElement => ({
   el_type: "clef",
+  /**
+   * ⚠️ **A NAME abcjs DOES NOT KNOW KEEPS ITS OWN SPELLING.** `fixClef` rewrites `type`
+   * from `clefLines` and leaves it alone on a miss, so `clef=x`, `clef=zzz` and `clef=q2`
+   * report `x`, `zzz` and `q2` — not the `treble` this fell back to. See `Clef.name`.
+   */
   type:
-    (CLEF_TYPE[clef.shape] ?? "treble") +
-    (clef.octaveShift === 0 || clef.octaveShift === undefined
-      ? ""
-      : clef.octaveShift > 0
-        ? "+8"
-        : "-8"),
+    clef.shape === "unknown" && clef.name !== undefined
+      ? clef.name
+      : (CLEF_TYPE[clef.shape] ?? "treble") +
+        (clef.octaveShift === 0 || clef.octaveShift === undefined
+          ? ""
+          : clef.octaveShift > 0
+            ? "+8"
+            : "-8"),
   verticalPos: clefVerticalPos(clef),
   /**
    * **`stafflines=` RIDES THE CLEF, AND ONLY WHEN IT WAS WRITTEN.** `V:` and `K:` both
@@ -460,12 +467,21 @@ export const clefElement = (
     ? {}
     : { stafflines: staffLineOverride ?? clef.staffLines }),
   /**
-   * **AND A `clef=none` HAS NO `clefPos` AT ALL.** `fixClef` assigns one only when the
-   * type is in `clefLines`, and `none` is not a row in that table
-   * (`abc_parse_key_voice.js:75-81`) — where `perc` is, at pitch 6. So the field is absent
-   * rather than 0, which is what `visual-misc-09`'s `%%stafflines 0` staff shows.
+   * **`clefPos` IS ASSIGNED ONLY WHERE `fixClef`'S LOOKUP HITS** — `if (value)
+   * clef.clefPos = value.pitch` (`abc_parse_key_voice.js:75-81`). Two shapes miss it, for
+   * two different reasons:
+   *
+   * - **`clef=none` hits the row and the row has no `pitch`**: `'none': {clef:'none',
+   *   mid:0}` is in `clefLines` and carries no pitch at all, so the assignment stores
+   *   `undefined` and the field never serialises. ⚠️ This comment used to say `none` was
+   *   not a row in the table; it is one, and the OUTPUT is the same either way, which is
+   *   how the wrong reason survived. `visual-misc-09`'s `%%stafflines 0` staff is the case.
+   * - **A NAME abcjs DOES NOT KNOW MISSES THE TABLE ENTIRELY** — `x`, `zzz`, `q2` — so the
+   *   `if` never runs. Ours assigned 4, which is the treble it had fallen back to.
    */
-  ...(clef.shape === "none" ? {} : { clefPos: clef.line * 2 }),
+  ...(clef.shape === "none" || clef.shape === "unknown"
+    ? {}
+    : { clefPos: clef.line * 2 }),
   /**
    * **`V:… transpose=` RIDES THE CLEF**, because abcjs's `V:` handler writes it onto the
    * clef object it just built (`abc_parse_key_voice.js`), and `synth.sequence` reads it

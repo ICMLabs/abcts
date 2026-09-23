@@ -16,6 +16,17 @@
  * and asserts that every row named here STILL differs — so a row cannot rot: fix it and
  * the gate tells you to delete the name. The plain-language table is
  * `Docs/PARITY-STATUS.md` §3b. The suffix `#breaks` (deline) is a case of the same tune.
+ *
+ * ✅ **`unknown-clef` IS GONE FROM EVERY LIST — CLOSED 2026-09-22, and it was ONE FACT
+ * SHOWING AS TWO DIVERGENCES ACROSS FOUR GATES.** `fixClef` rewrites `clef.type` from
+ * `clefLines` and assigns `clefPos` INSIDE THE SAME `if (value)`
+ * (`abc_parse_key_voice.js:75-81`), so a name it does not know keeps the token the parser
+ * assembled — letters, digit and any `±8` — and gets no `clefPos` at all. This engine fell
+ * back to `treble` and assigned 4. The written token travels on `Clef.name` now.
+ *
+ * ⭐ That is what the family grouping was worth: five tunes × four gates were one lookup,
+ * and the shared prefix predicted it. ⚠️ It does NOT follow that the other families are one
+ * cause each — that is the same untested assumption, and it is only cheap to check.
  */
 
 const clefMidmeasure = (n: number[]) => n.map((i) => `repo/abcts-clef-midmeasure-tune${i}`);
@@ -25,7 +36,6 @@ const staffnonote = (n: number[]) =>
   n.map((i) => `repo/abcts-staffnonote-and-directives-tune${i}`);
 const emptyStaves = (n: number[]) =>
   n.map((i) => `repo/abcts-staffnonote-empty-staves-tune${i}`);
-const unknownClef = (n: number[]) => n.map((i) => `repo/abcts-unknown-clef-tune${i}`);
 const voidNotes = (n: number[]) =>
   n.map((i) => `repo/abcts-void-notes-and-stray-ties-tune${i}`);
 const textUdef = (n: number[]) =>
@@ -39,7 +49,6 @@ export const OPEN = {
     ...stafflines([4, 15, 41, 42]),
     ...staffnonote([5]),
     ...textUdef([30, 34]),
-    ...unknownClef([4]),
   ]),
   parseOnly: [
     ...clefMidmeasure([15, 16, 17, 21]),
@@ -47,7 +56,6 @@ export const OPEN = {
     "repo/abcts-endings-tune5",
     "repo/abcts-rests-and-bars-tune1",
     ...staffnonote([0, 5, 7]),
-    ...unknownClef([0, 1, 2, 3, 4]),
     ...voidNotes([0, 1, 4, 7, 8, 9, 10, 11, 12, 13]),
   ],
   parseValues: [
@@ -58,7 +66,6 @@ export const OPEN = {
     ...staffnonote([0, 5, 7]),
     ...emptyStaves([0, 1]),
     ...textUdef([2, 7, 30, 34, 37, 38, 39, 45, 47, 48, 49, 54]),
-    ...unknownClef([0, 1, 2, 3, 4]),
     ...voidNotes([0, 1, 4, 7, 8, 9, 10, 11, 12, 13, 14]),
   ],
   renderValues: [
@@ -70,7 +77,6 @@ export const OPEN = {
     ...staffnonote([0, 5, 7]),
     ...emptyStaves([0, 1]),
     ...textUdef([2, 7, 30, 34, 36, 37, 38, 39, 45, 47, 48, 49, 54]),
-    ...unknownClef([0, 1, 2, 3, 4]),
     ...voidNotes([0, 1, 4, 7, 8, 9, 10, 11, 12, 13, 14]),
   ],
   /** `sequence` is keyed by FIXTURE, not tune. */
