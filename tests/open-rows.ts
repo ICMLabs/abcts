@@ -27,9 +27,34 @@
  * ⭐ That is what the family grouping was worth: five tunes × four gates were one lookup,
  * and the shared prefix predicted it. ⚠️ It does NOT follow that the other families are one
  * cause each — that is the same untested assumption, and it is only cheap to check.
+ *
+ * ✅ **`clef-midmeasure` IS GONE FROM EVERY LIST — CLOSED 2026-09-22, AND IT WAS THE FIRST
+ * FAMILY TO HOLD TWO CAUSES.** The warning above earned itself immediately.
+ *
+ *   1. **A `K:` WRITTEN AFTER THE LAST MUSIC STILL PUBLISHES ITS ELEMENTS.** A change with
+ *      no following measure had nothing to ride, so the projection published NEITHER the
+ *      `clef` nor the `key` abcjs appends. `Measure.trailingKey` joins `trailingClef`, and
+ *      the merge has to re-assert `drawnName`'s answer or `keyElement`'s own `el_type`
+ *      takes it back. ⚠️ **AND THE DRAWING WAS ALREADY RIGHT** — abcjs draws the cautionary
+ *      clef and no trailing key at all — which is why `svg-bytes` agreed throughout and the
+ *      parser's own comment said this shape "needs nothing, measured". It had measured the
+ *      INK. The parse tree is a second surface.
+ *   2. **THE CLEF IS ONE TUNE-LEVEL VARIABLE AND EVERY VOICE SHARES IT.** `startNewLine`
+ *      reads `multilineVars.staves[staffNum].clef` only for a staff that DECLARED one and
+ *      otherwise falls through to `multilineVars.clef` (`abc_parse_music.js:961`), which
+ *      every `K:`/`[K: clef=]` overwrites in READING ORDER whatever voice it stands in. So
+ *      `V:1 CD[K:C bass]EF|` then `V:2 GABc|` opens voice 2 in BASS and its notes read
+ *      `verticalPos` 16-19. Ours seeded each voice from the HEADER's clef, in two places —
+ *      the staff furniture and `workingClef` — and fixing one left every note 12 pitch out
+ *      with the staff already right, which is how the second half was found.
+ *
+ * ⚠️ **AND THE FIRST CAUSE CLOSED THREE GATES AND TOOK A FOURTH THE OTHER WAY.** Hard-coding
+ * the trailing key's name to `key` made `parseOnly` agree and `deline` — which RENDERS —
+ * disagree, because abcjs's engraver really does rename it. One override answered both.
+ * `tests/clef-midmeasure.test.ts` is the control ladder, and every rung was checked against
+ * its own deliberate break.
  */
 
-const clefMidmeasure = (n: number[]) => n.map((i) => `repo/abcts-clef-midmeasure-tune${i}`);
 const stafflines = (n: number[]) =>
   n.map((i) => `repo/abcts-stafflines-and-modifiers-tune${i}`);
 const staffnonote = (n: number[]) =>
@@ -43,15 +68,13 @@ const textUdef = (n: number[]) =>
 const withBreaks = (slugs: string[]) => slugs.flatMap((s) => [s, `${s}#breaks`]);
 
 export const OPEN = {
-  lines: [...emptyStaves([0, 1]), ...staffnonote([0, 5, 7]), ...clefMidmeasure([15, 16, 17, 21]), ...stafflines([4, 41, 42])],
+  lines: [...emptyStaves([0, 1]), ...staffnonote([0, 5, 7]), ...stafflines([4, 41, 42])],
   deline: withBreaks([
-    ...clefMidmeasure([15, 16, 17, 21]),
     ...stafflines([4, 15, 41, 42]),
     ...staffnonote([5]),
     ...textUdef([30, 34]),
   ]),
   parseOnly: [
-    ...clefMidmeasure([15, 16, 17, 21]),
     ...stafflines([4, 15, 41, 42]),
     "repo/abcts-endings-tune5",
     "repo/abcts-rests-and-bars-tune1",
@@ -59,7 +82,6 @@ export const OPEN = {
     ...voidNotes([0, 1, 4, 7, 8, 9, 10, 11, 12, 13]),
   ],
   parseValues: [
-    ...clefMidmeasure([10, 15, 16, 17, 18, 20, 21]),
     "repo/abcts-endings-tune5",
     "repo/abcts-rests-and-bars-tune1",
     ...stafflines([4, 15, 41, 42]),
@@ -69,7 +91,6 @@ export const OPEN = {
     ...voidNotes([0, 1, 4, 7, 8, 9, 10, 11, 12, 13, 14]),
   ],
   renderValues: [
-    ...clefMidmeasure([10, 15, 16, 17, 18, 20, 21]),
     "repo/abcts-endings-tune5",
     "repo/abcts-rests-and-bars-tune1",
     "repo/abcts-rests-and-bars-tune14",

@@ -1260,6 +1260,21 @@ export interface Measure {
   readonly clefChangeSilent?: boolean
   readonly trailingClef?: Clef | null
   readonly trailingClefSourceRange?: SourceRange | null
+  /**
+   * **AND THE KEY THAT CAME WITH IT — THE SAME SHAPE, AND THE REASON IT WAS MISSED IS
+   * WORTH MORE THAN THE FIELD.** `trailingClef`'s own note ended "a trailing KEY change is
+   * not this shape and needs nothing — measured, `CDEF|` then `K:Am` is byte-exact both
+   * ways." That measurement was of the DRAWING and it is still true: abcjs draws no
+   * trailing key signature either. It says nothing about the PARSE TREE, where abcjs
+   * appends a `key` element for the field whatever it drew — and for `K:C clef=bass` it
+   * appends BOTH, clef first, each spanning the whole `K:` line
+   * (`abc_parse_header.js:508-509`).
+   *
+   * A claim scoped to one surface, read as general: four tunes in five gates
+   * (`tests/open-rows.ts`'s `clef-midmeasure` family).
+   */
+  readonly trailingKey?: KeySignature | null
+  readonly trailingKeySourceRange?: SourceRange | null
   /** A mid-tune `M:` taking effect at this measure. */
   readonly meterChange: Meter | null
   readonly meterChangeSourceRange: SourceRange | null

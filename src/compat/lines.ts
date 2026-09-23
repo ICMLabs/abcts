@@ -1794,6 +1794,56 @@ function voiceElements(
       ),
     );
     /**
+     * **AND A `K:` WITH NOTHING AFTER IT STILL PUBLISHES ITS ELEMENTS** — see
+     * `Measure.trailingClef` and `Measure.trailingKey`. `CDEF|` then `K:C clef=bass` gives
+     * abcjs `clef@24..37 key@24..37` appended to the voice, and `CDEF|` then `K:Am` gives
+     * it `key@…` alone; this projection published NEITHER, because a change with no
+     * following measure has nothing to ride.
+     *
+     * ⚠️ **THE DRAWING WAS ALREADY RIGHT, WHICH IS WHY IT LASTED** — the renderer takes the
+     * trailing clef through `layoutMeasure`'s own parameter and abcjs draws no trailing key
+     * signature at all, so `svg-bytes` agreed throughout. Four tunes in five tune-object
+     * gates (`tests/open-rows.ts`'s `clef-midmeasure`).
+     *
+     * They sort by their own span like everything else, which puts them after the closing
+     * barline without being told to.
+     */
+    if (measure.trailingClef != null)
+      out.push(
+        (() => {
+          const e = el("clef", measure.trailingClefSourceRange ?? null);
+          if (e !== null)
+            Object.assign(e, clefElement(measure.trailingClef), {
+              startChar: e.startChar,
+              endChar: e.endChar,
+            });
+          return e;
+        })(),
+      );
+    if (measure.trailingKey != null)
+      out.push(
+        (() => {
+          /**
+           * ⚠️ **AND THE NAME HAS TO SURVIVE THE MERGE** — `keyElement` builds the element
+           * the ENGRAVER would have, `el_type` included, so the `Object.assign` below has
+           * to re-assert `drawnName`'s answer or every trailing key reads `keySignature`,
+           * including on a `parseOnly` tune where abcjs says `key`. Same override the
+           * mid-tune site carries, and **it is what made this row look like a naming rule
+           * of its own**: hard-coding `"key"` here closed `parseOnly` and took `deline`
+           * — which renders — the other way, because abcjs's engraver really does rename
+           * this element. One override answers both.
+           */
+          const e = el(drawnName("keySignature"), measure.trailingKeySourceRange ?? null);
+          if (e !== null)
+            Object.assign(
+              e,
+              keyElement(measure.trailingKey, measure.trailingClef ?? clefNow ?? defaultClef),
+              { startChar: e.startChar, endChar: e.endChar, el_type: e.el_type },
+            );
+          return e;
+        })(),
+      );
+    /**
      * …**AND THE POSITION IT SORTS AT IS THIS MEASURE'S OWN FIRST CHARACTER**, taken off
      * the elements actually built rather than off `sourceRange`: a note's span opens at
      * its CHORD SYMBOL or decoration, so `"D"z4` begins five characters before the note
@@ -2334,8 +2384,61 @@ export function projectionOf(
    * else. Same shape as `meterAt` beside it, and for the same reason: `voiceElements` is
    * handed one LINE's measures and cannot see the change that happened before them.
    */
+  /** The first character of a measure's own music — `musicStartsAt`'s twin, hoisted. */
+  const measureStartsAt = (m: Measure): number =>
+    Math.min(
+      m.openingBarlineSourceRange?.start ?? Number.POSITIVE_INFINITY,
+      ...m.events.map((e) => e.sourceRange?.start ?? Number.POSITIVE_INFINITY),
+    );
+  /**
+   * ⚠️ **AND THE CLEF A VOICE WITHOUT ITS OWN OPENS A LINE IN IS THE TUNE'S SHARED ONE,
+   * WHICH EVERY OTHER VOICE'S CLEF CHANGE HAS ALREADY MOVED.** `startNewLine` reads
+   * `multilineVars.staves[staffNum].clef` only when that STAFF declared one and otherwise
+   * falls through to `multilineVars.clef` (`abc_parse_music.js:961`) — one tune-level
+   * variable that every `K:`/`[K: clef=]` overwrites IN READING ORDER, whatever voice it
+   * was written in. So `V:1 CD[K:C bass]EF|` then `V:2 GABc|` opens voice 2's staff in
+   * BASS, and its four notes read `verticalPos` 16-19 against the treble 4-7.
+   *
+   * Ours seeded each voice from `score.clef` — the header's — so a change in the voice
+   * above was invisible. Measured on four tunes of `abcts-clef-midmeasure` (parse- and
+   * render-values); the source read named the mechanism and the probe named the numbers.
+   */
+  const clefTimeline: { at: number; clef: Clef }[] = score.voices
+    .flatMap((v) =>
+      (v.measures ?? []).flatMap((m) => [
+        ...(m.clefChange != null && m.clefChangeSourceRange != null
+          ? [{ at: m.clefChangeSourceRange.start, clef: m.clefChange }]
+          : []),
+        ...(m.trailingClef != null && m.trailingClefSourceRange != null
+          ? [{ at: m.trailingClefSourceRange.start, clef: m.trailingClef }]
+          : []),
+      ]),
+    )
+    .sort((a, b) => a.at - b.at);
+  /** The tune-level clef as the scan had it just before `at`. */
+  const sharedClefAt = (at: number): Clef | null => {
+    let found: Clef | null = null;
+    for (const row of clefTimeline) {
+      if (row.at >= at) break;
+      found = row.clef;
+    }
+    return found;
+  };
+
   const clefAt = (voice: (typeof score.voices)[number], upTo: number): Clef | null => {
     let clef = voice.clef ?? score.clef;
+    /**
+     * …**AND `workingClef` IS THAT SAME SHARED VARIABLE**, so a clef written in ANOTHER
+     * voice earlier in the source is in force here too — see `sharedClefAt`. Only a voice
+     * that declared its own `clef=` is insulated from it.
+     */
+    if (voice.clef == null) {
+      const at = voice.measures[upTo];
+      const shared = sharedClefAt(
+        at === undefined ? Number.POSITIVE_INFINITY : measureStartsAt(at),
+      );
+      if (shared !== null) clef = shared;
+    }
     for (let i = 0; i < upTo; i += 1) {
       const change = voice.measures[i]?.clefChange;
       if (change != null) clef = change;
@@ -2721,6 +2824,10 @@ const VOICE_FURNITURE = new Set(["style", "stem", "color", "scale"]);
        * LINE**, in which case `startNewLine` has already copied the old one onto the staff
        * and only the NEXT line sees the change. See the renderer's `clefLeadsHere`.
        */
+      if (voice?.clef == null && (i === 0 || m.startsSystem === true)) {
+        const shared = sharedClefAt(musicStartsAt(m));
+        if (shared !== null) clefInForce = shared;
+      }
       const clefDeferred =
         m.clefChange != null &&
         (i === 0 || m.startsSystem === true) &&

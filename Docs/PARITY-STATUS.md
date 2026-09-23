@@ -244,13 +244,23 @@ the gate demand its name be deleted. The families, from the ranked tables:
 
 | family | fixtures | what differs |
 |---|---|---|
-| mid-measure `[K: clef=]` | `abcts-clef-midmeasure` tunes 10, 15–18, 20, 21 | `tune.lines`: the clef element / `verticalPos` of the notes after it (`lines`, `deline`, `parse-only`, `parse-values`, `render-values`) |
 | `%%stafflines` / voice modifiers | `abcts-stafflines-and-modifiers` 4, 15, 41, 42 (34: `totalTime`) | key-signature element shape carrying `stafflines`; a `stem` element; span of a graced note |
 | `%%staffnonote` | `abcts-staffnonote-and-directives` 0, 5, 7; `-empty-staves` 0, 1 | notes on the silent staff appear in our stream and not abcjs's |
 | tie into a rest / void note | `abcts-void-notes-and-stray-ties` 0, 1, 4, 7–14 | `pitches.endTie` on the note after; one `sequence` row |
 | `%%vskip` / `%%text` line rows | `abcts-text-udef-parts-overlays` 2, 7, 30, 34, 36–39, 45, 47–49, 54 | `line.vskip`, `line.text`, a `nonMusic` line; a `stem` element (30) |
 | `clef=x` | `abcts-unknown-clef` 0–4 | the ruled divergence (§3) seen from the tune object: abcjs's `type: "x"` and debug marker |
 | one-offs | `abcts-endings` 5, `abcts-rests-and-bars` 1 / 14, `abcts-tempo-rung` 2, `abcts-grace-order-and-lanes` 15, `abcts-inline-fields-and-blocks` 2 | a `rest` value; `pickupLength`; `totalTime`/`totalBeats` |
+
+✅ **`mid-measure [K: clef=]` (`abcts-clef-midmeasure`, 7 tunes × 5 gates) CLOSED
+2026-09-22 — and it was TWO causes, not one.** (1) A `K:` written after the last music still
+publishes its elements: abcjs appends `clef` and `key` for `K:C clef=bass` and `key` alone
+for `K:Am`, where a change with no following measure had nothing to ride here. ⚠️ The
+DRAWING was already right — abcjs draws the cautionary clef and no trailing key — so
+`svg-bytes` agreed throughout and the parser's own note said this shape "needs nothing,
+measured"; it had measured the ink. (2) The clef is ONE tune-level variable every voice
+shares (`abc_parse_music.js:961`), so `V:1 CD[K:C bass]EF|` then `V:2 GABc|` opens voice 2
+in bass; ours seeded each voice from the header's clef in two places, and fixing one left
+every note 12 pitch out with the staff already right. `tests/clef-midmeasure.test.ts`.
 
 Two of the widened oracle's findings WERE fixed the same day, both on a new upstream
 fixture: a `%%text` between two UNBARRED music lines was claimed by the line above
@@ -270,8 +280,9 @@ user-supplied input is a denial of service, not a rendering difference.
 
 ## 4. Everything else that is measured
 
-Re-run 2026-09-22, after the abcjs 6.7.1 re-harvest and after the `unknown-clef` family
-closed. These are the parse and API surfaces rather than the output.
+Re-run 2026-09-22, after the abcjs 6.7.1 re-harvest and after the `unknown-clef` and
+`clef-midmeasure` families closed. These are the parse and API surfaces rather than the
+output.
 
 ✅ **THE FIRST OPEN FAMILY IS CLOSED, AND IT WAS ONE LOOKUP.** `unknown-clef` was named in
 FOUR gates over five tunes — `parse-only`, `parse-values`, `render-values` and `deline` —
@@ -291,10 +302,10 @@ and new oracle is byte-identical, so none of it is a 6.7.1 change.
 
 | surface | result |
 |---|---|
-| `tune.lines` — every element's source span | **12 of 814 tunes OPEN (§3b); 1,204,877 of 1,204,999 characters** |
-| `parse-values` — every value of every element | **82 of 16,223 OPEN**, on 41 tunes (§3b) |
-| `render-values` — every value of every rendered element | **65 of 16,223 OPEN**, on 43 tunes (§3b) |
-| `parse-only`, `voices-array`, `deline`, `extract-measures`, `setupevents` | 23 / 0 / 22 / 0 / 0 OPEN on 822 / 237 / 1,644 / 284 / 186 cases |
+| `tune.lines` — every element's source span | **8 of 814 tunes OPEN (§3b); 1,204,917 of 1,204,999 characters** |
+| `parse-values` — every value of every element | **50 of 16,223 OPEN**, on 34 tunes (§3b) |
+| `render-values` — every value of every rendered element | **53 of 16,223 OPEN**, on 36 tunes (§3b) |
+| `parse-only`, `voices-array`, `deline`, `extract-measures`, `setupevents` | 19 / 0 / 14 / 0 / 0 OPEN on 822 / 237 / 1,628 / 284 / 186 cases |
 | `sequence` | **1 of 237 OPEN** |
 | `accessors` — the nine numeric tune accessors | **9 field-rows OPEN** of 822 tunes × 9 |
 | `tune.warnings` — the strings a host shows | **0 of 822 tunes**, 542 warnings across 93 |

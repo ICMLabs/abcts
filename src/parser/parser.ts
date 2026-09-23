@@ -2742,21 +2742,36 @@ class VoiceBuilder {
      * and the cautionary at the end of line 1 went with it. A byte-exact rung of the same
      * ladder is what said so.
      *
-     * A trailing KEY change is not this shape and needs nothing — measured, `CDEF|` then
-     * `K:Am` is byte-exact both ways.
+     * ⚠️ **AND THE KEY RIDES IT TOO, WHICH THIS NOTE USED TO DENY.** It read "a trailing
+     * KEY change is not this shape and needs nothing — measured, `CDEF|` then `K:Am` is
+     * byte-exact both ways", and that measurement was of the DRAWING, which is still true.
+     * The PARSE TREE is a second surface: abcjs appends a `key` element for the field
+     * whatever it drew, and for `K:C clef=bass` it appends BOTH. See `Measure.trailingKey`.
      */
-    if (this.pendingClefChange !== null) {
+    if (this.pendingClefChange !== null || this.pendingKeyChange !== null) {
       const lastMeasure = this.measures[this.measures.length - 1]
       if (lastMeasure !== undefined) {
         this.measures[this.measures.length - 1] = {
           ...lastMeasure,
-          trailingClef: this.pendingClefChange,
-          trailingClefSourceRange: this.pendingClefChangeRange,
+          ...(this.pendingClefChange === null
+            ? {}
+            : {
+                trailingClef: this.pendingClefChange,
+                trailingClefSourceRange: this.pendingClefChangeRange,
+              }),
+          ...(this.pendingKeyChange === null
+            ? {}
+            : {
+                trailingKey: this.pendingKeyChange,
+                trailingKeySourceRange: this.pendingKeyChangeRange,
+              }),
         }
       }
       this.pendingClefChange = null
       this.pendingClefChangeRange = null
       this.pendingClefChangeInline = false
+      this.pendingKeyChange = null
+      this.pendingKeyChangeRange = null
     }
     this.applyLyrics()
     this.applySymbols()
