@@ -853,14 +853,43 @@ const voiceOptions = (spec: string): string =>
  * form is the token itself. ABC 2.1 §4.19 documents only the first spelling; abcjs accepts
  * both, and its own test fixtures use the bare one (`V:1 up`, `V:2 merge down`).
  */
+/**
+ * **THE V: SWITCH HAS NO `default:` ARM — IT IS COMMENTED OUT** (`:828-830`), so an
+ * attribute abcjs does not know is DROPPED WITHOUT A WARNING and, crucially, **without its
+ * value**: every recognised key eats its own token (`addNextTokenToStaffInfo` and friends)
+ * and an unrecognised one eats nothing, leaving `up` or `down` standing alone for the
+ * `case 'up'` arm to read.
+ *
+ * ⭐ **WHICH IS WHY `V:1 gstem=up` SETS THE STEM** — measured on `zzz=up`, `xstem=up` and
+ * `GSTEM=up`, all three of which abcjs answers with `{el_type: 'stem', direction: 'up'}`
+ * and no warning, so the mechanism is not the NAME at all. A source read predicts a warning
+ * and no stem; the probe denies both. `abcts-stafflines-and-modifiers` tune 15.
+ */
+const VOICE_KEYS_THAT_EAT_THEIR_VALUE = new Set([
+  'name', 'nm', 'subname', 'sname', 'snm', 'stem', 'stems', 'middle', 'm', 'gchords',
+  'gch', 'space', 'spc', 'scale', 'score', 'sound', 'transpose', 'stafflines',
+  'staffscale', 'octave', 'volume', 'cue', 'style', 'staves', 'stave', 'stv', 'brace',
+  'brc', 'bracket', 'brk', 'clef',
+])
+
 function stemModifier(spec: string): 'up' | 'down' | null {
   // `stem=` AND `stems=`. abcjs's switch takes both spellings
   // (`abc_parse_key_voice.js:717-718`) and `synth-flattener-28` writes the singular —
   // which left its percussion voice stemming by pitch, 11.63px of staff.
   const explicit = /\bstems?=(up|down)\b/i.exec(spec)
   if (explicit?.[1] !== undefined) return explicit[1].toLowerCase() as 'up' | 'down'
-  const bare = /\s(up|down)\s/i.exec(voiceOptions(spec))
-  return bare?.[1] === undefined ? null : (bare[1].toLowerCase() as 'up' | 'down')
+  for (const word of voiceOptions(spec).trim().split(/\s+/)) {
+    const [key, value] = word.split('=')
+    const bare =
+      value === undefined
+        ? key
+        : VOICE_KEYS_THAT_EAT_THEIR_VALUE.has((key ?? '').toLowerCase())
+          ? undefined
+          : value
+    const low = bare?.toLowerCase()
+    if (low === 'up' || low === 'down') return low
+  }
+  return null
 }
 
 /**

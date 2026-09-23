@@ -244,8 +244,6 @@ the gate demand its name be deleted. The families, from the ranked tables:
 
 | family | fixtures | what differs |
 |---|---|---|
-| `%%stafflines` / voice modifiers | `abcts-stafflines-and-modifiers` 4, 15, 41, 42 (34: `totalTime`) | key-signature element shape carrying `stafflines`; a `stem` element; span of a graced note |
-| `%%staffnonote` | `abcts-staffnonote-and-directives` 0, 5, 7; `-empty-staves` 0, 1 | notes on the silent staff appear in our stream and not abcjs's |
 | `%%vskip` / `%%text` line rows | `abcts-text-udef-parts-overlays` 2, 7, 30, 34, 36–39, 45, 47–49, 54 | `line.vskip`, `line.text`, a `nonMusic` line; a `stem` element (30) |
 | `clef=x` | `abcts-unknown-clef` 0–4 | the ruled divergence (§3) seen from the tune object: abcjs's `type: "x"` and debug marker |
 | one-offs | `abcts-rests-and-bars` 14, `abcts-tempo-rung` 2, `abcts-grace-order-and-lanes` 15, `abcts-inline-fields-and-blocks` 2 | `pickupLength`; `totalTime`/`totalBeats` |
@@ -260,6 +258,24 @@ measured"; it had measured the ink. (2) The clef is ONE tune-level variable ever
 shares (`abc_parse_music.js:961`), so `V:1 CD[K:C bass]EF|` then `V:2 GABc|` opens voice 2
 in bass; ours seeded each voice from the header's clef in two places, and fixing one left
 every note 12 pitch out with the staff already right. `tests/clef-midmeasure.test.ts`.
+
+✅ **AND SO DID `%%staffnonote` AND THE VOICE MODIFIERS — the four families named in the
+morning's triage are all shut, and `tune.lines` and `parse-only` are now EXACT on every
+tune in the corpus.** `%%staffnonote 0` deletes a staff from `tune.lines` and not only from
+the page (`tune-builder.js:70-93`) — one per-line filter, and a rest carrying a CHORD SYMBOL
+keeps its staff. A `K:` that names no clef appends no `clef` element, because `foundClef` is
+set in the clef-NAME arm alone (`abc_parse_key_voice.js:513-516`) and
+`Measure.clefChangeSilent` already said so. And `V:1 gstem=up` sets the stem because abcjs's
+voice switch has **no `default:` arm — it is commented out**: an attribute it does not know
+is dropped WITHOUT ITS VALUE, so the `up` left standing reaches `case 'up'`. That last one is
+measured and the source predicts the opposite; `zzz=up` sets the stem too, which is what says
+the name is not the mechanism. `tests/staffnonote-lines.test.ts` and
+`tests/voice-modifiers.test.ts`.
+
+⭐ **THREE OF THE FOUR FAMILIES WERE RULES THIS REPO HAD ALREADY PORTED — AT THE SITE THAT
+NAMED THEM.** The renderer knew `%%staffnonote` and `clefChangeSilent`; the grace path knew
+the tie carry was positional. Each was written once, where one surface needed it, and the
+projection had no share of it.
 
 ✅ **AND THE TIE FAMILIES CLOSED THE SAME DAY — `abcts-void-notes-and-stray-ties` (11
 tunes), `abcts-endings-tune5` and `abcts-rests-and-bars-tune1`, three names for one rule.**
@@ -290,8 +306,8 @@ user-supplied input is a denial of service, not a rendering difference.
 ## 4. Everything else that is measured
 
 Re-run 2026-09-22, after the abcjs 6.7.1 re-harvest and after the `unknown-clef`,
-`clef-midmeasure` and tie families closed. These are the parse and API surfaces rather than
-the output.
+`clef-midmeasure`, tie, `%%staffnonote` and voice-modifier families closed. These are the
+parse and API surfaces rather than the output.
 
 ✅ **THE FIRST OPEN FAMILY IS CLOSED, AND IT WAS ONE LOOKUP.** `unknown-clef` was named in
 FOUR gates over five tunes — `parse-only`, `parse-values`, `render-values` and `deline` —
@@ -311,10 +327,10 @@ and new oracle is byte-identical, so none of it is a 6.7.1 change.
 
 | surface | result |
 |---|---|
-| `tune.lines` — every element's source span | **8 of 814 tunes OPEN (§3b); 1,204,917 of 1,204,999 characters** |
-| `parse-values` — every value of every element | **36 of 16,223 OPEN**, on 21 tunes (§3b) |
-| `render-values` — every value of every rendered element | **39 of 16,223 OPEN**, on 23 tunes (§3b) |
-| `parse-only`, `voices-array`, `deline`, `extract-measures`, `setupevents` | 7 / 0 / 14 / 0 / 0 OPEN on 822 / 237 / 1,628 / 284 / 186 cases |
+| `tune.lines` — every element's source span | **0 of 814 tunes; 1,204,999 of 1,204,999 characters** |
+| `parse-values` — every value of every element | **19 of 16,223 OPEN**, on 12 tunes (§3b) |
+| `render-values` — every value of every rendered element | **22 of 16,223 OPEN**, on 14 tunes (§3b) |
+| `parse-only`, `voices-array`, `deline`, `extract-measures`, `setupevents` | 0 / 0 / 4 / 0 / 0 OPEN on 822 / 237 / 1,628 / 284 / 186 cases |
 | `sequence` | **0 of 237** |
 | `accessors` — the nine numeric tune accessors | **9 field-rows OPEN** of 822 tunes × 9 |
 | `tune.warnings` — the strings a host shows | **0 of 822 tunes**, 542 warnings across 93 |

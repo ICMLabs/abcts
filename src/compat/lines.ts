@@ -1504,8 +1504,19 @@ function voiceElements(
     // `if (result.foundClef) appendStartingElement('clef', …)` is unconditional on the key
     // (`abc_parse_header.js:508-509`), so `[K: treble+8]` puts a CLEF in the stream and no
     // key, and `getElementFromChar` answers `clef` for its characters.
+    /**
+     * ⚠️ **AND `foundClef` IS A NAME, NOT A CHANGE** — `ret.foundClef = true` is written in
+     * the clef-NAME arm alone (`abc_parse_key_voice.js:513-516`), so `[K:C stafflines=1]`
+     * changes the staff and appends NO clef element at all, where `[K:C bass]` appends one.
+     * The model has said so since the renderer needed it (`Measure.clefChangeSilent`) and
+     * the projection emitted a clef for every modifier — four tunes of
+     * `abcts-stafflines-and-modifiers` across four gates. The same split as the trailing
+     * key, the tie carry and `%%staffnonote`: a rule ported at the site that named it is
+     * not a rule ported.
+     */
     if (
       measure.clefChange !== null &&
+      measure.clefChangeSilent !== true &&
       inStream(
         measure.clefChangeSourceRange,
         measure.clefChangeInline,
@@ -3355,6 +3366,31 @@ const VOICE_FURNITURE = new Set(["style", "stem", "color", "scale"]);
       staff: voicesOfStaff
         .map((members, s) => ({ members, s }))
         .filter(({ members }) => members.some((k) => (lineVoices[k] ?? []).length > 0))
+        /**
+         * **`%%staffnonote 0` DROPS EVERY STAFF THAT HOLDS NOTHING BUT RESTS**, and it is
+         * a per-LINE pass over the built elements: `cleanUp` nulls any STAFF — not voice —
+         * none of whose voices satisfies `containsNotesStrict`, then filters the nulls out
+         * (`tune-builder.js:70-93`). See `Score.staffNoNote` for the inverted boolean.
+         *
+         * ⚠️ **AND A REST CARRYING A CHORD SYMBOL KEEPS ITS STAFF** — the test is
+         * `el_type === 'note' && (rest === undefined || chord !== undefined)`
+         * (`:896-902`), which is the whole difference between `zzzz|` and `"C"zzzz|`.
+         *
+         * ⭐ **THE RENDERER HAS HAD THIS RULE SINCE IT NEEDED IT** (`layout.ts`'s
+         * `voicesOfStaff`) and the projection never did, so abcjs's `tune.lines` held one
+         * staff where ours held two. The same split as the trailing key and the tie carry:
+         * a rule ported at the site that named it is not a rule ported.
+         */
+        .filter(
+          ({ members }) =>
+            score.staffNoNote !== true ||
+            members.some((k) =>
+              (lineVoices[k] ?? []).some(
+                (e) =>
+                  e.el_type === "note" && (e.rest === undefined || e.chord !== undefined),
+              ),
+            ),
+        )
         .map(({ members, s }) => {
           const staff: AbcStaff = {
             voices: members.map((k) => lineVoices[k] ?? []),

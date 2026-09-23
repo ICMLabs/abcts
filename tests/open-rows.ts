@@ -77,40 +77,45 @@
  * break where ours does. ⚠️ **A THIRD IS MEASURED AND UNEXPLAINED**: a leading `-` before
  * a REST is swallowed whole (`-z C|` marks neither) though the source says it should not,
  * and `markTieEnds` carries a guard saying exactly that.
+ *
+ * ✅ **AND `%%staffnonote` AND `%%stafflines`/VOICE-MODIFIERS WENT WITH THEM — ALL FOUR
+ * TRIAGED FAMILIES SHUT ON 2026-09-22, AND `lines` AND `parseOnly` ARE EMPTY LISTS.**
+ *
+ *   • **`%%staffnonote 0` DELETES A STAFF FROM `tune.lines`, not only from the page**
+ *     (`tune-builder.js:70-93`) — one per-line filter closed five tunes across four gates
+ *     and TWO fixture families, `-and-directives` and `-empty-staves`. A rest carrying a
+ *     CHORD SYMBOL keeps its staff (`:896-902`), which is why it cannot be "has a note".
+ *   • **A `K:` THAT NAMES NO CLEF APPENDS NO CLEF ELEMENT** — `foundClef` is set in the
+ *     clef-NAME arm alone (`abc_parse_key_voice.js:513-516`), so `[K:C stafflines=1]`
+ *     changes the staff and says nothing in the stream.
+ *   • **abcjs's V: SWITCH HAS NO `default:` ARM — IT IS COMMENTED OUT** (`:828-830`), so an
+ *     attribute it does not know is dropped WITHOUT ITS VALUE and the value is read as a
+ *     token of its own. That, and not the spelling, is why `V:1 gstem=up` sets the stem:
+ *     `zzz=up` and `xstem=up` do it too, with no warning. ⚠️ **MEASURED — the source
+ *     predicts a warning and no stem.**
+ *
+ * ⭐ **AND THE SESSION'S RULE IS THAT THREE OF THE FOUR FAMILIES WERE RULES THIS REPO HAD
+ * ALREADY PORTED, AT THE SITE THAT NAMED THEM.** The renderer knew `%%staffnonote` and
+ * `Measure.clefChangeSilent`; the grace path knew the tie carry was positional. Each was
+ * written once, where one surface needed it, and the projection had no share of it. When a
+ * tune-object row looks like a missing feature, grep this repo for the rule first.
  */
 
-const stafflines = (n: number[]) =>
-  n.map((i) => `repo/abcts-stafflines-and-modifiers-tune${i}`);
-const staffnonote = (n: number[]) =>
-  n.map((i) => `repo/abcts-staffnonote-and-directives-tune${i}`);
-const emptyStaves = (n: number[]) =>
-  n.map((i) => `repo/abcts-staffnonote-empty-staves-tune${i}`);
 const textUdef = (n: number[]) =>
   n.map((i) => `repo/abcts-text-udef-parts-overlays-tune${i}`);
 const withBreaks = (slugs: string[]) => slugs.flatMap((s) => [s, `${s}#breaks`]);
 
 export const OPEN = {
-  lines: [...emptyStaves([0, 1]), ...staffnonote([0, 5, 7]), ...stafflines([4, 41, 42])],
+  lines: [] as readonly string[],
   deline: withBreaks([
-    ...stafflines([4, 15, 41, 42]),
-    ...staffnonote([5]),
     ...textUdef([30, 34]),
   ]),
-  parseOnly: [
-    ...stafflines([4, 15, 41, 42]),
-    ...staffnonote([0, 5, 7]),
-  ],
+  parseOnly: [] as readonly string[],
   parseValues: [
-    ...stafflines([4, 15, 41, 42]),
-    ...staffnonote([0, 5, 7]),
-    ...emptyStaves([0, 1]),
     ...textUdef([2, 7, 30, 34, 37, 38, 39, 45, 47, 48, 49, 54]),
   ],
   renderValues: [
     "repo/abcts-rests-and-bars-tune14",
-    ...stafflines([4, 15, 41, 42]),
-    ...staffnonote([0, 5, 7]),
-    ...emptyStaves([0, 1]),
     ...textUdef([2, 7, 30, 34, 36, 37, 38, 39, 45, 47, 48, 49, 54]),
   ],
   /** `sequence` is keyed by FIXTURE, not tune. Empty since the tie family closed. */
