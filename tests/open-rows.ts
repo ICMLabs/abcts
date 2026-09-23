@@ -132,6 +132,18 @@
  * `^\n` → `\xA0\n` rule actually fires), and the emitter drops both the text and the
  * `<g>` when nothing is drawn.
  *
+ * ✅ **AND THE NINE `accessors` FIELD-ROWS WENT TOO — 2026-09-23, THREE RULES AND NO TWO
+ * THE SAME.** `computePickupLength` is LINE-major (`abc_tune.js:108-134`), reaching every
+ * voice of the first SYSTEM before the second system of the first voice and shedding a bar
+ * length as it passes one; the clock starts at `metaText.tempo`, which an inline `[Q:]` is
+ * NOT, and the head-of-voice tempo ELEMENT is the header's alone — ours filed an inline one
+ * under measure 0, so it governed the bars before it; and **a note longer than a breve has
+ * no head and still takes its time**, where ours returned a layout element with no
+ * `sourceEvent` and the timing's `%%maxStaves` rule read it as truncated, giving the whole
+ * tune zero seconds. ⚠️ **THE INK THERE IS §3's RULED DIVERGENCE AND THE CLOCK NEVER WAS**
+ * — the two had been conflated, which is why the row sat under a declared divergence.
+ * `tests/accessor-walks.test.ts`.
+ *
  * ⭐ **AND THE SESSION'S RULE IS THAT THREE OF THE FOUR FAMILIES WERE RULES THIS REPO HAD
  * ALREADY PORTED, AT THE SITE THAT NAMED THEM.** The renderer knew `%%staffnonote` and
  * `Measure.clefChangeSilent`; the grace path knew the tie carry was positional. Each was
@@ -156,17 +168,7 @@ export const OPEN = {
   /** `sequence` is keyed by FIXTURE, not tune. Empty since the tie family closed. */
   sequence: [] as readonly string[],
   /** `accessors`: `slug field`. */
-  accessors: [
-    "repo/abcts-tempo-rung-tune2 pickupLength",
-    "repo/abcts-grace-order-and-lanes-tune15 totalTime",
-    "repo/abcts-grace-order-and-lanes-tune15 totalBeats",
-    "repo/abcts-inline-fields-and-blocks-tune2 totalTime",
-    "repo/abcts-inline-fields-and-blocks-tune2 totalBeats",
-    "repo/abcts-rests-and-bars-tune14 totalTime",
-    "repo/abcts-rests-and-bars-tune14 totalBeats",
-    "repo/abcts-stafflines-and-modifiers-tune34 totalTime",
-    "repo/abcts-stafflines-and-modifiers-tune34 totalBeats",
-  ],
+  accessors: [] as readonly string[],
 } satisfies Record<string, readonly string[]>;
 
 /** The rows named OPEN that AGREE — each one is a fix that needs its name deleted. */

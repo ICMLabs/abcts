@@ -3425,6 +3425,16 @@ function layoutNoteheads(
     const bare = steps.length === 0 ? [] : ledgerLines(lowest, x, 0, highest)
     return {
       type: 'note',
+      /**
+       * ⚠️ **AND IT IS STILL THE EVENT'S OWN ELEMENT, WHICH IS WHAT MAKES IT SOUND.**
+       * abcjs builds the AbsoluteElement and only its GLYPH is missing, so the note keeps
+       * its place in `makeVoicesArray` and takes its time: `C32|` is 5.333s there. Ours
+       * returned an element with no `sourceEvent`, so the timing's `%%maxStaves` rule —
+       * "an element with an event and NO geometry is one abcjs never saw" — read it as
+       * truncated and gave the whole tune **0 seconds**. The ink is the declared
+       * divergence (`Docs/ABCJS-DIFFERENCES.md`); the CLOCK never was.
+       */
+      ...(event === null ? {} : { sourceEvent: event }),
       x,
       width: advance,
       spring: advance,

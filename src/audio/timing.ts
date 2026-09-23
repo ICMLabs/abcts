@@ -239,21 +239,58 @@ function bpmOf(tempo: Tempo | null, meter: Meter): number {
  * for the pickup gets abcjs's number, and this is one of the places its own comment does
  * not claim the result is sensible.
  */
+/**
+ * ⚠️ **AND THE WALK IS LINE-MAJOR, NOT VOICE-MAJOR — which is a different sum whenever a
+ * voice's first line is not the tune's.** `computePickupLength` is three nested loops over
+ * `lines[i].staff[j].voices[v]` (`abc_tune.js:108-134`), so it reaches EVERY voice of the
+ * FIRST system before it reaches the second system of the first voice. Walking voice by
+ * voice reads the same for an ordinary tune and differently for one whose opening line
+ * holds only some of its voices: `[V:1]P:A` on a line of its own gives abcjs
+ * `L0 = [note 0.125] [note 0.5, note 0.5, bar]` — one system holding the P: line's
+ * element AND the second voice's measure — which sums to 1.125, sheds a bar length and
+ * returns 0.125, where the voice-major walk returned voice 1's own 0.5.
+ *
+ * The systems are the model's `startsSystem` flags, and the voice order within one is
+ * `%%score`'s where there is one — the same expression the projection's `voicesOfStaff`
+ * is, for the same reason.
+ */
 function pickupOf(score: Score, meter: Meter): number {
   const barLength = barLengthOf(meter)
-  let pickup = 0
-  for (const voice of score.voices) {
+  const order: number[] =
+    score.staves.length > 0
+      ? score.staves.flatMap((group) =>
+          group.voiceIds
+            .map((id) => score.voices.findIndex((v) => v.id === id))
+            .filter((k) => k >= 0),
+        )
+      : score.voices.map((_, k) => k)
+  /** Each voice's measures grouped into the systems they open, in order. */
+  const systemsOf = (voice: (typeof score.voices)[number]): Measure[][] => {
+    const out: Measure[][] = []
     for (const measure of voice.measures) {
-      if (measure.openingBarline !== null) return settle(pickup, barLength)
-      for (const event of measure.events) {
-        if (!(event.type === 'rest' && event.kind === 'spacer')) {
-          pickup += ratToNumber(event.duration)
-        }
-        if (pickup >= barLength) pickup -= barLength
-      }
-      if (measure.closingBarline !== null) return settle(pickup, barLength)
+      if (out.length === 0 || measure.startsSystem === true) out.push([])
+      out[out.length - 1]?.push(measure)
     }
+    return out
   }
+  const bySystem = order.map((k) => {
+    const voice = score.voices[k]
+    return voice === undefined ? [] : systemsOf(voice)
+  })
+  const lineCount = Math.max(0, ...bySystem.map((v) => v.length))
+  let pickup = 0
+  for (let line = 0; line < lineCount; line += 1)
+    for (const voice of bySystem)
+      for (const measure of voice[line] ?? []) {
+        if (measure.openingBarline !== null) return settle(pickup, barLength)
+        for (const event of measure.events) {
+          if (!(event.type === 'rest' && event.kind === 'spacer')) {
+            pickup += ratToNumber(event.duration)
+          }
+          if (pickup >= barLength) pickup -= barLength
+        }
+        if (measure.closingBarline !== null) return settle(pickup, barLength)
+      }
   return settle(pickup, barLength)
 }
 
@@ -344,7 +381,7 @@ function voiceElements(voice: Voice, score: Score, tempos: Map<number, Tempo>): 
   // The tune's own `Q:` is a tempo ELEMENT at the head of the first voice, so it files
   // under measure 0 — which is why a header tempo and a `[Q:]` in bar 1 are the same thing
   // to this walk.
-  if (score.tempo !== null) {
+  if (score.tempo !== null && score.tempoInline !== true) {
     tempos.set(0, score.tempo)
     out.push({ kind: 'tempo', measureNumber: 0, duration: 0, tempo: score.tempo })
   }
@@ -765,7 +802,16 @@ export function timingsOf(score: Score, options: TimingOptions = {}): TimingTota
 export function setTiming(score: Score, options: TimingOptions = {}): NoteTiming[] {
   const meter = meterOf(score)
   const measuresOfDelay = options.measuresOfDelay ?? 0
-  const naturalBpm = bpmOf(score.tempo, meter)
+  /**
+   * ⚠️ **AND `naturalBpm` IS `metaText.tempo`'s, WHICH AN INLINE `[Q:]` IS NOT.**
+   * `var tempo = this.metaText ? this.metaText.tempo : null; var naturalBpm =
+   * this.getBpm(tempo)` (`abc_tune.js:592-593`) — the same distinction the warp guard
+   * below makes and the same one `getBpm` makes, and this line was the one place that
+   * read `score.tempo` bare. So `CDEF|[Q:1/4=90]GABc|` with no header `Q:` starts at the
+   * DEFAULT 180 and slows at its own bar — abcjs's 4.0s against the 5.333 we played, the
+   * whole tune at 90.
+   */
+  const naturalBpm = bpmOf(score.tempoInline === true ? null : score.tempo, meter)
   let warp = 1
   let bpm = options.bpm ?? 0
   if (bpm) {

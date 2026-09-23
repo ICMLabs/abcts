@@ -245,7 +245,7 @@ the gate demand its name be deleted. The families, from the ranked tables:
 | family | fixtures | what differs |
 |---|---|---|
 | `clef=x` | `abcts-unknown-clef` 0–4 | the ruled divergence (§3) seen from the tune object: abcjs's `type: "x"` and debug marker |
-| one-offs | `abcts-rests-and-bars` 14, `abcts-tempo-rung` 2, `abcts-grace-order-and-lanes` 15, `abcts-inline-fields-and-blocks` 2 | the §3 debug-string divergence seen as element values; `pickupLength`; `totalTime`/`totalBeats` |
+| one-off | `abcts-rests-and-bars` 14 | the §3 debug-string divergence seen as element values — the ONLY open row left in the repo |
 
 ✅ **`mid-measure [K: clef=]` (`abcts-clef-midmeasure`, 7 tunes × 5 gates) CLOSED
 2026-09-22 — and it was TWO causes, not one.** (1) A `K:` written after the last music still
@@ -257,6 +257,29 @@ measured"; it had measured the ink. (2) The clef is ONE tune-level variable ever
 shares (`abc_parse_music.js:961`), so `V:1 CD[K:C bass]EF|` then `V:2 GABc|` opens voice 2
 in bass; ours seeded each voice from the header's clef in two places, and fixing one left
 every note 12 pitch out with the staff already right. `tests/clef-midmeasure.test.ts`.
+
+✅ **AND THE NINE `accessors` FIELD-ROWS ARE GONE — THREE RULES, NO TWO THE SAME.**
+
+* **`computePickupLength` IS LINE-MAJOR, NOT VOICE-MAJOR** — three nested loops over
+  `lines[i].staff[j].voices[v]` (`abc_tune.js:108-134`), so it reaches every voice of the
+  first SYSTEM before the second system of the first voice, accumulating across staves and
+  shedding a bar length whenever it passes one. `[V:1]P:A` on a line of its own makes line
+  0 hold that element AND the second voice's measure: 1.125, less a bar, is abcjs's 0.125
+  where the voice-major walk returned 0.5.
+* **THE CLOCK STARTS AT `metaText.tempo`, WHICH AN INLINE `[Q:]` IS NOT** — and the
+  head-of-voice tempo ELEMENT is the header's too. Ours pushed it for any `score.tempo`,
+  so an inline `[Q:]` was filed under measure 0 and governed the bars BEFORE it: the whole
+  tune played at 90 where abcjs plays the first bar at the default and slows at the `[Q:]`.
+  Both halves are load-bearing; reverting either takes the row back.
+* **A NOTE LONGER THAN A BREVE HAS NO HEAD AND STILL TAKES ITS TIME.** abcjs builds the
+  AbsoluteElement and only the GLYPH is missing, so the note keeps its place in
+  `makeVoicesArray`. Ours returned a layout element with no `sourceEvent`, so the timing's
+  `%%maxStaves` rule — "an element with an event and NO geometry is one abcjs never saw" —
+  read it as truncated and gave the WHOLE TUNE **zero seconds**. ⚠️ The INK there is the
+  ruled divergence of §3; the clock never was, and the two had been conflated.
+
+`tests/accessor-walks.test.ts` is the ladder, and each rule was checked against its own
+break.
 
 ✅ **AND WITH THE EMPTY `%%center`, EVERY TUNE-OBJECT GATE IS AT ZERO BUT THE RULED
 DIVERGENCE.** An empty `%%center` publishes a ROW and draws NOTHING: its text reaches
@@ -370,7 +393,7 @@ and new oracle is byte-identical, so none of it is a 6.7.1 change.
 | `render-values` — every value of every rendered element | **2 of 16,223 OPEN**, on 1 tune — the §3 divergence |
 | `parse-only`, `voices-array`, `deline`, `extract-measures`, `setupevents` | 0 / 0 / 0 / 0 / 0 on 822 / 237 / 1,628 / 284 / 186 cases |
 | `sequence` | **0 of 237** |
-| `accessors` — the nine numeric tune accessors | **9 field-rows OPEN** of 822 tunes × 9 |
+| `accessors` — the nine numeric tune accessors | **0 of 822 tunes × 9** |
 | `tune.warnings` — the strings a host shows | **0 of 822 tunes**, 542 warnings across 93 |
 | `metaText` / `metaTextInfo` / `formatting` / `tuneMetrics` / `toptext` / `timing-callbacks` / `tunebook` | **0** on 822 / 822 / 822 / 284 / 822 / 140 / 259 |
 | `compat-surface` — abcjs's 64 public symbols | **0 absent** |
