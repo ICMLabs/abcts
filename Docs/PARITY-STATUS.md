@@ -364,6 +364,39 @@ user-supplied input is a denial of service, not a rendering difference.
 
 ---
 
+## 3c. WebAudio — the surface that had no gate at all, and was BROKEN
+
+⚠️ **FOUND 2026-09-23, and it is the sharpest example in this file of a green board over a
+dead feature.** Every audio comparison here stops short of WebAudio on purpose — the event
+list (0 of 72), the sequencer rows (0 of 237), the note timings (0 of 38) and the **byte-exact
+MIDI file** (0 of 697) all describe what SHOULD sound and none of them touches an
+`AudioContext`, a soundfont fetch or a rendered buffer. So `compat/create-synth.ts` and
+`compat/synth-controller.ts` — the API a host calls to HEAR the tune — sat behind every green
+gate in the repo while playback did not work at all:
+
+* **`registerAudioContext()` never created a context.** abcjs's own comment is explicit —
+  *"If you call it with no parameters, then an AudioContext is created and stored"* — and ours
+  only stored what a host handed in, under a comment asserting the opposite. With no context
+  `supportsAudio()` returns `undefined`, `_deviceCapable()` coerces that to false, and
+  `CreateSynth.init` rejects with **"MIDI is not supported in this browser"** — in WebKit,
+  where abcjs loads its soundfonts and primes.
+* **`SynthController.play()` threw** "CreateSynth is not built yet — pass a midi buffer
+  factory". A default written before `CreateSynth` existed, which outlived it: abcjs's
+  controller does `self.midiBuffer = new CreateSynth()` itself, so every host following its
+  documented three lines hit the throw.
+
+Both are fixed and gated. `scripts/zzaudio.mjs` drives abcjs's own documented path —
+`new SynthController()`, `load`, `setTune`, `play`, then `CreateSynth().init().prime()` — in
+ONE WebKit page against BOTH engines over five shapes, and compares the RENDERED SAMPLES as
+well as the API: buffer count, duration, peak amplitude and audible-sample count. **0 of 5
+differ, peak and sample counts identical**, and each fix was checked against its own break (5
+of 5 with either reverted). ⚠️ It needs the network for the soundfonts and says so rather than
+passing quietly when a run is silent on both sides.
+
+⭐ **THE LESSON: A SURFACE WITH NO GATE IS NOT A SURFACE WITH A SMALL GATE.** The MIDI file
+being byte-exact reads like proof that audio works, and it is proof about a different
+artefact. Ask what a host DOES, not what the nearest gate measures.
+
 ## 4. Everything else that is measured
 
 Re-run 2026-09-23, after the abcjs 6.7.1 re-harvest and after the `unknown-clef`,

@@ -1,3 +1,4 @@
+import { CreateSynth } from "./create-synth.js";
 import { CreateSynthControl, type ControlElement } from "./synth-control.js";
 import { activeAudioContext } from "./synth.js";
 import { TimingCallbacks } from "./timing-callbacks.js";
@@ -83,12 +84,17 @@ const sleep = (ms: number): Promise<void> =>
     else g.setTimeout(() => resolve(), ms);
   });
 
-/** Until `CreateSynth` is built, a host must hand one in. */
-const noBuffer = (): MidiBuffer => {
-  throw new Error(
-    "abcts: CreateSynth is not built yet — pass a midi buffer factory to SynthController.",
-  );
-};
+/**
+ * **THE CONTROLLER MAKES ITS OWN** — `self.midiBuffer = new CreateSynth()`
+ * (`synth/synth-controller.js:76`), so a host that follows abcjs's documented three lines
+ * (`new SynthController()`, `load`, `setTune`, `play`) gets sound with nothing else passed.
+ *
+ * ⚠️ **THIS USED TO THROW "CreateSynth is not built yet — pass a midi buffer factory".** It
+ * was written before `CreateSynth` existed and outlived it: `play()` threw for every host
+ * that did not inject a factory, which is every host porting from abcjs. The parameter stays
+ * so a host CAN substitute one — abcjs cannot, so that is an addition rather than a gap.
+ */
+const defaultBuffer = (): MidiBuffer => new CreateSynth() as unknown as MidiBuffer;
 
 export class SynthController {
   warp = 100;
@@ -108,7 +114,7 @@ export class SynthController {
 
   private readonly makeBuffer: () => MidiBuffer;
 
-  constructor(midiBufferFactory: () => MidiBuffer = noBuffer) {
+  constructor(midiBufferFactory: () => MidiBuffer = defaultBuffer) {
     this.makeBuffer = midiBufferFactory;
   }
 

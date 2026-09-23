@@ -267,17 +267,44 @@ export function supportsAudio(): boolean | undefined {
   return undefined;
 }
 
-let audioContext: unknown = null;
-
-/** `registerAudioContext(ac)` — the host hands in its own, since only it can create one. */
+/**
+ * `registerAudioContext(ac)` — **AND WITH NO ARGUMENT IT CREATES ONE.** abcjs's own comment
+ * is explicit: *"If you call it with no parameters, then an AudioContext is created and
+ * stored"* (`synth/register-audio-context.js`), the context lives on the GLOBAL as
+ * `abcjsAudioContext` so a host sharing the page sees the same one, and the return is
+ * `state !== "suspended"` rather than a capability test.
+ *
+ * ⚠️ **OURS ONLY STORED WHAT A HOST HANDED IN, UNDER A COMMENT SAYING "only it can create
+ * one" — WHICH IS NOT WHAT ABCJS DOES, AND IT KILLED AUDIO OUTRIGHT.** With no context,
+ * `activeAudioContext()` is null, `supportsAudio()` returns `undefined`, `_deviceCapable()`
+ * coerces that to false, and `CreateSynth.init` rejects with "MIDI is not supported in this
+ * browser" **in WebKit, where abcjs loads its soundfonts and primes**. Measured side by side
+ * in one page. No gate here could see it: the audio gates compare EVENT LISTS and MIDI
+ * BYTES, which never touch WebAudio, and the browser gates render SVG.
+ */
 export function registerAudioContext(ac?: unknown): boolean | undefined {
-  if (ac) audioContext = ac;
-  return supportsAudio();
+  const w = globalThis as unknown as Record<string, unknown>;
+  // If one is passed in, that is the one to use even if there was already one created.
+  if (ac) w["abcjsAudioContext"] = ac;
+  else if (!w["abcjsAudioContext"]) {
+    const Ctor = (w["AudioContext"] ?? w["webkitAudioContext"]) as
+      | (new () => unknown)
+      | undefined;
+    if (Ctor === undefined) return false;
+    w["abcjsAudioContext"] = new Ctor();
+  }
+  return (w["abcjsAudioContext"] as { state?: string }).state !== "suspended";
 }
 
-/** `activeAudioContext()` — whatever was registered, or null. */
+/**
+ * `activeAudioContext()` — and it CREATES one if there is none, which is the other half of
+ * the same file (`synth/active-audio-context.js`): `if (!window.abcjsAudioContext)
+ * registerAudioContext()`.
+ */
 export function activeAudioContext(): unknown {
-  return audioContext;
+  const w = globalThis as unknown as Record<string, unknown>;
+  if (!w["abcjsAudioContext"]) registerAudioContext();
+  return w["abcjsAudioContext"] ?? null;
 }
 
 export interface MidiFileParams extends MidiFileOptions {
