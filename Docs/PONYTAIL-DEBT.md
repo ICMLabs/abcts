@@ -197,11 +197,12 @@ where the cost of believing is a session.
   (`visual-selection-01`) is byte-identical at six staff widths, fractional ones included.
   A latent difference. Bring a width that shows it before paying for a px conversion in
   space-domain geometry.
-- ⚖️ `compat/index.ts` — `millisecondsPerMeasure` / `getTotalTime` absent from the tune
-  object. **The marker says "flag it before doing it" and it is right**: hanging them on
-  `TuneObject` makes them part of the drop-in contract, which is an API decision and the
-  owner's. `setUpAudio`'s answer already exists (`src/audio/flatten.ts`); only the wiring is
-  missing.
+- ✅ **CLOSED 2026-09-23** — `compat/index.ts`'s `millisecondsPerMeasure` / `getTotalTime`
+  are ON the tune object, named by `tests/compat-surface.test.ts` (0 of 64 symbols absent)
+  and compared against abcjs by `tests/accessors.test.ts` over 822 tunes at 0 differing.
+  The row read "absent, and an API decision"; the decision had already been taken and the
+  wiring done, so what was left was the note. ⚠️ **A DEBT ROW IS A CLAIM WITH A DATE** —
+  this one described the repo of a fortnight earlier.
 - `layout.ts` quarter-tone accidentals in the NON-STRICT modes. Signal: the drawn glyph.
   ⚠️ Strict draws nothing either way, so abcjs cannot be the oracle and the control must set
   the mode — this one is about our own extended mode, not parity.

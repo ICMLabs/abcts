@@ -829,8 +829,12 @@ const abcjsMeter = (score: Score): AbcjsMeter => {
  * them here and they become part of the drop-in contract, which is what `compat` is for —
  * flag it before doing it.
  *
- * `millisecondsPerMeasure` and `getTotalTime` are still genuinely absent, and both belong
- * with `setTiming`, the audio↔geometry JOIN nothing measures yet.
+ * ✅ **BOTH ARE HERE NOW AND GATED** — `millisecondsPerMeasure` and `getTotalTime` are on
+ * the interface below, `tests/compat-surface.test.ts` names them, and
+ * `tests/accessors.test.ts` compares all nine numeric accessors against abcjs over 822
+ * tunes at 0 differing. The paragraph above is kept because its REASONING still holds for
+ * anything else a host might want hung here; the two it names are no longer absent, and
+ * the debt row that said so is closed.
  */
 export interface TuneObject {
   /** The rendered markup, also injected into the target when there is a DOM. */
