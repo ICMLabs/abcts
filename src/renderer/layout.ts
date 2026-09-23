@@ -14903,6 +14903,11 @@ function layoutScoped(input: Score, options: LayoutOptions = {}): Layout {
              * with the section total exact.
              */
             const placed = x + (wants - room)
+            if (ENV.ABCTS_XX)
+              console.log(
+                'ZZSHIFT x', x, 'wants', wants, 'room', room, 'left', item.left, 'pad', pad,
+                'w-r', wants - room, 'placed', placed,
+              )
             const dx = placed - x
             x = placed
             for (const w of done) {
@@ -22263,10 +22268,32 @@ function layoutGraces(
           // constructor over, and worth 0.07px of ragtime's dy on its own.
           reserve: [stepToY(graceStep) - accDeclaredHalf, stepToY(graceStep) + accDeclaredHalf],
         })
-        // FROM THE NOTE, NOT THE CURSOR. `extraw` is relative to `abselem.x`, which is
-        // where the notehead sits — the graces hang at negative `dx` from it — and the
-        // caller compares this against `headX - x`, which is measured the same way.
-        graceLeft = Math.max(graceLeft, graceNoteX - accX)
+        /**
+         * FROM THE NOTE, NOT THE CURSOR. `extraw` is relative to `abselem.x`, which is
+         * where the notehead sits — the graces hang at negative `dx` from it — and the
+         * caller compares this against `headX - x`, which is measured the same way.
+         *
+         * ⚠️ **AND IT IS THE GLYPH'S CONSTRUCTED `dx`, NOT `graceNoteX - accX`.**
+         * `extraw` is a MIN over each child's OWN `dx` — `if (extra.dx < this.extraw)
+         * this.extraw = extra.dx` (`absolute-element.js:99`) — so abcjs never subtracts
+         * two absolute x's to find the left reach, and the two disagree in the last bit:
+         * the derived form gives 16.94999999999999 where the constructed one gives the
+         * 16.95 abcjs holds. **The comment three lines above already said so about the
+         * glyph's own `dx` and this line re-derived it anyway** — the same number, twice,
+         * one of them a recovery.
+         *
+         * It was the last row of `zzopts`: two ULP in `minPadding`'s root `width` on
+         * `synth-flattener-23`, which the board had recorded as a units DOMAIN question
+         * about the solve. It was neither the solve nor a domain.
+         *
+         * ⚠️ **AND ITS GATE IS THE BROWSER ROW, BECAUSE A NODE CONTROL IS MUTE HERE.** The
+         * grace offsets are built from MEASURED widths, and under node's calibrated tables
+         * both forms land on exactly 16.95 — a control asserting the number passes with the
+         * subtraction restored, which is a green test that cannot see its own rule. The
+         * live comparison is `scripts/zzopts.mjs`'s `minPadding` row, declared 0 and failing
+         * loudly if it moves.
+         */
+        graceLeft = Math.max(graceLeft, (graceOffsets[i] ?? 0) + accRoom)
       }
       const headGlyph = {
         name: 'noteheadBlack' as const,

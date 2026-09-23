@@ -467,18 +467,31 @@ const OPTIONS = [
    * ⚠️ **AND IT IS NOT A SUM ORDER — 2026-09-14.** Both sides were instrumented at that
    * element and the GROUPING already agrees: abcjs spends `x += extraWidth - er` as one term
    * (`layout/voice-elements.js`) and so does this engine (`placed = x + (wants - room)`);
-   * `minx` is two adds on both sides. What differs is the DOMAIN the chain accumulates in.
-   * abcjs's own terms there, logged:
+   * `minx` is two adds on both sides. abcjs's own terms there, logged:
    *
    *     x(trial) 526.703   minx 507.51300000000003   er 19.18999999999994
    *     extraWidth 56.95 (pad 40, extraw -16.95)  ->  X 564.4630000000001
    *
-   * — its `er` carries a tail its PIXEL chain put there, where ours walks the same line in
-   * STAFF SPACES and multiplies once at the end. So closing this is a units decision about
-   * the solve, not a term to regroup, and it is worth less than it costs: two ULP in one
-   * root `width` on one fixture, with no element visibly moved.
+   * ✅ **CLOSED 2026-09-23 — AND IT WAS NEITHER THE SOLVE NOR A DOMAIN.** This note used to
+   * end "its `er` carries a tail its PIXEL chain put there, where ours walks the same line in
+   * STAFF SPACES", and concluded the row was a units decision worth less than it costs. Both
+   * halves were wrong. Logging the SAME element on both sides one step further in shows the
+   * `er` values are IDENTICAL (19.18999999999994 on each) and the difference is the other
+   * term: abcjs's `extraWidth` is **56.95** where ours was **56.94999999999999**.
+   *
+   * `extraw` is a MIN over each child's OWN `dx` — `if (extra.dx < this.extraw) this.extraw =
+   * extra.dx` (`absolute-element.js:99`) — so abcjs never subtracts two absolute x's to find
+   * an element's left reach. Ours did: `graceLeft = max(graceLeft, graceNoteX - accX)`, one
+   * line below a comment on the glyph's own `dx` that **already said the derived form gives
+   * 16.94999999999999 and the constructed one 16.95**. The same number, twice, one of them a
+   * recovery. `layout.ts` carries the constructed term now.
+   *
+   * ⭐ **A RECOVERY IS NOT A PRIMITIVE — for the sixth time on this branch, and this one had
+   * been written down AT THE SITE and re-derived three lines later.** And the board's recorded
+   * cause survived three sessions because it was measured one step too early: the grouping it
+   * compared really does agree, and the term it never printed is where the tail was.
    */
-  ['minPadding', { minPadding: 40 }, 1],
+  ['minPadding', { minPadding: 40 }, 0],
   /**
    * ✅ **CLOSED TO 1 FROM 669 — A SECOND LAYOUT ALGORITHM, AND IT IS 83 LINES.**
    * `layout()` calls `layoutInGrid` INSTEAD OF `setXSpacing` for every line
