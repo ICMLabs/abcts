@@ -610,6 +610,21 @@ export const isCompoundMeter = (m: Meter): boolean =>
 
 export interface Note {
   /**
+   * **A TIE THE `-` REACHED BACK FOR, WHICH DRAWS AND DOES NOT CARRY.**
+   * `addTieToLastNote` writes `el.pitches[0].startTie = {}` and **nothing else**
+   * (`tune-builder.js:162-172`) — where a `-` read inside the note's own token goes through
+   * `core.startTie`, which the caller turns into `setIsInTie(true)`
+   * (`abc_parse_music.js:537`). So the voice-level carry is opened by a tie written AFTER
+   * the note and NOT by one written after the BARLINE, and the difference shows the moment
+   * a REST follows: `C -z D|` closes on the rest and `C|-z C|` closes on nothing at all.
+   *
+   * Two more properties of that function, both here: it ties `pitches[0]` ALONE (its own
+   * TODO asks "if this is a chord, which note?"), so `[CE]|-D|` ties the C and not the E;
+   * and it searches `tune.lines[tune.lineNum]` — THIS LINE's voice — so it cannot reach
+   * across a line break, and a rest it meets on the way stops it rather than being skipped.
+   */
+  readonly tieReachedBack?: true
+  /**
    * **A `-` WRITTEN BEFORE THIS EVENT RATHER THAN AFTER THE ONE BEFORE IT.** `getCoreNote`
    * starting on a `-` is in state `startSlur`, and its arm does TWO things
    * (`abc_parse_music.js:1221-1226`): `addTieToLastNote` — which is `tieLast` here — and
@@ -846,6 +861,17 @@ export interface GracePitch extends Pitch {
 export type RestKind = 'normal' | 'invisible' | 'multiMeasure' | 'invisibleMultiMeasure' | 'spacer'
 
 export interface Rest {
+  /**
+   * **A `-` AFTER A REST OPENS A TIE, AND THE REST CARRIES THE FLAG.** `el.rest.startTie =
+   * core.startTie` and the caller then runs `setIsInTie(true)` for `core.startTie` like any
+   * note's (`abc_parse_music.js:519, 537`), so `z-C|` gives the REST a `startTie` and the C
+   * an `endTie` — and abcjs DRAWS nothing for it, there being no head to hang a curve on.
+   *
+   * ⚠️ **THE REACH-BACK IS THE OTHER DIRECTION AND A REST REFUSES IT**: `getLastNote`
+   * returns the last `el_type === 'note'` and `addTieToLastNote` fails its `el.pitches`
+   * guard, so `C z|-D|` ties nothing at all. See `Note.tieReachedBack`.
+   */
+  readonly tiedToNext?: true
   /** A `-` written BEFORE this event — see `Note.tieLeading`. */
   readonly tieLeading?: true
   readonly type: 'rest'
@@ -991,6 +1017,8 @@ export interface Rest {
  * notes would lose the simultaneity that distinguishes a chord from a melody.
  */
 export interface Chord {
+  /** A tie the `-` reached back for — see `Note.tieReachedBack`. */
+  readonly tieReachedBack?: true
   /** A `-` written BEFORE this event — see `Note.tieLeading`. */
   readonly tieLeading?: true
   readonly type: 'chord'
@@ -1631,6 +1659,8 @@ export interface Measure {
    * `lines[0]` and does spend the separation.
    */
   readonly newPageBefore?: number
+  /** A `%%vskip` pending when that `%%newpage` was read — see `ScoreMetadata.newPageVskip`. */
+  readonly newPageVskip?: number
   /**
    * A barline that OPENS this measure — a leading `|:` or `[|`, which belongs to the
    * measure after it rather than the one before. Distinct from `closingBarline` because
@@ -2102,6 +2132,14 @@ export interface Score {
   readonly newPage: number | null
   /** Where `%%newpage` was written, so the projection can slot its LINE in source order. */
   readonly newPageAt: number | null
+  /**
+   * **AND IT TAKES A PENDING `%%vskip` LIKE ANY OTHER LINE** — `pushLine` stamps
+   * `hash.vskip` before it pushes, whatever kind of line it is pushing
+   * (`tune-builder.js:904-908`), so `%%vskip 20` then `%%newpage` puts the 20 on the
+   * NEWPAGE line and leaves the staff below with none. See `FreeTextBlock.vskip` for the
+   * same number on a text block and `Measure.newPageVskip` for a mid-tune one.
+   */
+  readonly newPageVskip?: number
   /**
    * `%%partsbox` — draw a box round every `P:` label.
    *

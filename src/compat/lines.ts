@@ -146,7 +146,13 @@ export interface AbcElement {
    * (`abc_parse_music.js:533`), the one field a rest shares with a pitch. See
    * `markTieEnds`.
    */
-  rest?: { type: string; text?: string | number; endTie?: boolean };
+  rest?: {
+    type: string;
+    text?: string | number;
+    endTie?: boolean;
+    /** `z-` — see `Rest.tiedToNext`. */
+    startTie?: Record<string, never>;
+  };
   duration?: number | readonly number[];
   decoration?: readonly string[];
   chord?: readonly {
@@ -969,7 +975,12 @@ function noteFields(
   const drumKey = (name: string): string => name.replace(/[,']/g, "");
   e.duration = ratToNumber(event.notatedDuration);
   if (event.type === "rest") {
-    e.rest = { type: restType(event.kind) };
+    e.rest = {
+      type: restType(event.kind),
+      // …**AND A REST CARRIES ITS OWN `startTie`** — `el.rest.startTie = core.startTie`
+      // (`abc_parse_music.js:519`). See `Rest.tiedToNext`.
+      ...(event.tiedToNext === true ? { startTie: {} } : {}),
+    };
     /**
      * **A MULTI-MEASURE REST IS AS LONG AS IT SAYS, AND IT SAYS SO TWICE.**
      * `el.duration = num * tune.getBarLength()` and `el.rest.text = num`
@@ -1943,9 +1954,13 @@ function voiceElements(
  * with the element-level boolean never opening at all; the element-level one, opened by a
  * `-` AFTER the bracket (`:427-428`), closes EVERY head of the next chord.
  */
-/** `core.startTie || el.startTie` — a rest never carries one here. See `Rest`. */
+/**
+ * `core.startTie || el.startTie` — a rest never carries one here (see `Rest`), and **neither
+ * does a tie the `-` REACHED BACK for**: `addTieToLastNote` writes the flag on the note and
+ * never touches the voice's carry (`tune-builder.js:162-172`). See `Note.tieReachedBack`.
+ */
 const tiesOut = (event: MusicEvent): boolean =>
-  event.type !== "rest" && event.tiedToNext === true;
+  event.tiedToNext === true && (event.type === "rest" || event.tieReachedBack !== true);
 
 function markTieEnds(
   notes: readonly { event: MusicEvent; e: AbcElement }[],
@@ -2630,7 +2645,11 @@ export function projectionOf(
     if (score.newPage !== null)
       before.push({
         at: score.newPageAt ?? 0,
-        line: { newpage: score.newPage } as unknown as AbcLine,
+        // …and it takes a pending `%%vskip` like any other line — see `textLineOf`.
+        line: {
+          newpage: score.newPage,
+          ...(score.newPageVskip === undefined ? {} : { vskip: score.newPageVskip }),
+        } as unknown as AbcLine,
       });
     before
       .sort((a, b) => a.at - b.at)
@@ -3380,8 +3399,15 @@ const VOICE_FURNITURE = new Set(["style", "stem", "color", "scale"]);
     const newPageHere = score.voices
       .map((v) => v.measures[from]?.newPageBefore)
       .find((n) => n !== undefined);
-    if (newPageHere !== undefined)
-      lines.push({ newpage: newPageHere } as unknown as AbcLine);
+    if (newPageHere !== undefined) {
+      const carried = score.voices
+        .map((v) => v.measures[from]?.newPageVskip)
+        .find((n) => n !== undefined);
+      lines.push({
+        newpage: newPageHere,
+        ...(carried === undefined ? {} : { vskip: carried }),
+      } as unknown as AbcLine);
+    }
     // `%%vskip` — the same first-measure read the renderer's `vskipBeforeSystem` makes.
     const vskip = score.voices
       .map((v) => v.measures[from]?.vskip ?? 0)

@@ -1644,6 +1644,8 @@ class VoiceBuilder {
      * so one written between two music lines belongs to the SECOND of them.
      */
     readonly pendingNewPage: { value: number | null } = { value: null },
+    /** The `%%vskip` that `%%newpage`'s own line took — see `ScoreMetadata.newPageVskip`. */
+    readonly pendingNewPageVskip: { value: number | null } = { value: null },
   ) {}
 
   /** `%%vskip n` — see `Measure.vskip`. */
@@ -2378,6 +2380,17 @@ class VoiceBuilder {
       return
     }
     /**
+     * …**AND A REST TAKES ITS OWN `-`.** `el.rest.startTie = core.startTie` and the caller
+     * opens the carry for it like any note's (`abc_parse_music.js:519, 537`), so `z-C|`
+     * gives the rest a `startTie` and the C an `endTie`. Nothing is DRAWN — there is no
+     * head to hang a curve on — which is why only the parse tree could say so. See
+     * `Rest.tiedToNext`; the REACH-BACK below refuses a rest, which is the other direction.
+     */
+    if (last?.type === 'rest') {
+      this.replaceLast({ ...last, tiedToNext: true })
+      return
+    }
+    /**
      * ⚠️ **AND A `-` WRITTEN AFTER THE BARLINE STILL TIES THE NOTE BEFORE IT.** abcjs's
      * tie is a voice-level flag rather than a property of the measure being built, so
      * `C2|[-1 D2|]` — where the `[-1` reverts to a bare barline and the chord abandons at
@@ -2388,14 +2401,34 @@ class VoiceBuilder {
      * its `-` BEFORE the barline and never comes here.
      */
     if (last !== null) return
+    /**
+     * ⚠️ **AND IT CANNOT REACH ACROSS A LINE BREAK.** `getLastNote` reads
+     * `tune.lines[tune.lineNum].staff[staffNum].voices[voiceNum]` — THIS LINE's voice and
+     * no other (`tune-builder.js:859-872`) — so `C` then `-D|` on the next line ties
+     * NOTHING, where the same pair on one line ties across the barline. `appendedSinceLineStart`
+     * is the same lazy line start every other rule here reads.
+     */
+    if (!this.appendedSinceLineStart) return
     const previous = this.measures[this.measures.length - 1]
     const events = previous?.events
     const at = events === undefined ? -1 : events.length - 1
     const target = at < 0 ? undefined : events?.[at]
     if (previous === undefined || events === undefined || target === undefined) return
+    // …**AND A REST STOPS THE SEARCH** rather than being skipped: `getLastNote` returns the
+    // last `el_type === 'note'` and `addTieToLastNote` then fails its `el.pitches` guard.
     if (target.type === 'rest') return
     const replaced = [...events]
-    replaced[at] = { ...target, tiedToNext: true, ...(dotted ? { tieDotted: true } : {}) }
+    replaced[at] = {
+      ...target,
+      tiedToNext: true,
+      /** It draws and it does not carry — see `Note.tieReachedBack`. */
+      tieReachedBack: true as const,
+      // …**AND IT TIES `pitches[0]` ALONE**, whatever the chord holds.
+      ...(target.type === 'chord'
+        ? { tiedPitches: target.pitches.map((_, k) => k === 0) }
+        : {}),
+      ...(dotted ? { tieDotted: true } : {}),
+    }
     this.measures[this.measures.length - 1] = { ...previous, events: replaced }
   }
 
@@ -2530,11 +2563,16 @@ class VoiceBuilder {
    * `%%text` line is one. So this reads whatever is LEFT, which is the staff case.
    */
   /** `%%newpage` written between two systems — see `Measure.newPageBefore`. */
-  private takeNewPage(startsSystem: boolean): { newPageBefore?: number } {
+  private takeNewPage(startsSystem: boolean): {
+    newPageBefore?: number
+    newPageVskip?: number
+  } {
     if (!startsSystem || this.pendingNewPage.value === null) return {}
     const n = this.pendingNewPage.value
+    const carried = this.pendingNewPageVskip.value
     this.pendingNewPage.value = null
-    return { newPageBefore: n }
+    this.pendingNewPageVskip.value = null
+    return { newPageBefore: n, ...(carried === null ? {} : { newPageVskip: carried }) }
   }
 
   private takeVskip(startsSystem: boolean): { vskip?: number } {
@@ -2939,6 +2977,8 @@ interface Formatting {
   graceSlurs: boolean
   newPage: number | null
   newPageAt: number | null
+  /** See `ScoreMetadata.newPageVskip`. */
+  newPageVskip?: number | null
   barsPerStaff: number | null
   partsBox: boolean
   /** `%%printtempo` — see `ScoreBuilder.printTempo`. */
@@ -3201,6 +3241,8 @@ class ScoreBuilder {
   /** `%%barsperstaff` — see the wrap pass in the score build. */
   barsPerStaff: number | null = null
   newPageAt: number | null = null
+  /** See `ScoreMetadata.newPageVskip`. */
+  newPageVskip: number | null = null
   partsBox = false
   /**
    * `%%printtempo` — `multilineVars.printTempo`. UNDEFINED until a directive says
@@ -3238,6 +3280,7 @@ class ScoreBuilder {
       graceSlurs: this.graceSlurs,
       newPage: this.newPage,
       newPageAt: this.newPageAt,
+      ...(this.newPageVskip === null ? {} : { newPageVskip: this.newPageVskip }),
       partsBox: this.partsBox,
       printTempo: this.printTempo,
       jazzChords: this.jazzChords,
@@ -3272,6 +3315,7 @@ class ScoreBuilder {
     this.graceSlurs = f.graceSlurs
     this.newPage = f.newPage
     this.newPageAt = f.newPageAt
+    this.newPageVskip = f.newPageVskip ?? null
     this.barsPerStaff = f.barsPerStaff
     this.partsBox = f.partsBox
     this.printTempo = f.printTempo
@@ -3337,6 +3381,8 @@ class ScoreBuilder {
   readonly pendingVskip: { value: number | null } = { value: null }
   /** `%%newpage` written mid-tune — see `Measure.newPageBefore`. */
   readonly pendingNewPage: { value: number | null } = { value: null }
+  /** The `%%vskip` that `%%newpage`'s own line took — see `ScoreMetadata.newPageVskip`. */
+  readonly pendingNewPageVskip: { value: number | null } = { value: null }
   /**
    * The tune-level `K: octave=` — abcjs's `multilineVars.octave`, which is GLOBAL and can
    * change mid-tune. A voice that set its own `octave=` ignores it.
@@ -3397,6 +3443,7 @@ class ScoreBuilder {
         this.barNumbering,
         this.pendingVskip,
         this.pendingNewPage,
+        this.pendingNewPageVskip,
       )
       // …**AND A VOICE CONJURED AFTER THE `K:` STILL SEES THE GLOBAL STYLE** — abcjs reads
       // `multilineVars.style` at the line's open, so it does not matter when the voice was
@@ -3666,6 +3713,7 @@ class ScoreBuilder {
       graceSlurs: this.graceSlurs,
       newPage: this.newPage,
       newPageAt: this.newPageAt,
+      ...(this.newPageVskip === null ? {} : { newPageVskip: this.newPageVskip }),
       partsBox: this.partsBox,
       jazzChords: this.jazzChords,
       keywarn: this.keywarn,
@@ -4574,10 +4622,19 @@ class Parser {
        * The marker here predicted this shape and said a mid-tune one "would be a line
        * where it stands"; it is, and `Measure.newPageBefore` is where it stands.
        */
-      if (b.beganMusic) b.pendingNewPage.value = page
-      else {
+      /**
+       * …**AND THE LINE IT PUSHES TAKES A PENDING `%%vskip`**, like every other line
+       * `pushLine` pushes (`tune-builder.js:904-908`) — so the staff below gets none. See
+       * `ScoreMetadata.newPageVskip`.
+       */
+      const carried = this.takeBlockVskip()
+      if (b.beganMusic) {
+        b.pendingNewPage.value = page
+        if (carried.vskip !== undefined) b.pendingNewPageVskip.value = carried.vskip
+      } else {
         b.newPage = page
         b.newPageAt = start
+        b.newPageVskip = carried.vskip ?? null
       }
       return
     }

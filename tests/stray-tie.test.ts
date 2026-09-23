@@ -22,7 +22,9 @@ describe("a tie's carry", () => {
           : ((e.pitches ?? [])
               .map((p) => `${p.name}${p.startTie ? "(" : ""}${p.endTie ? ")" : ""}`)
               .join("") ||
-            `z${e.rest?.endTie === true ? ")" : ""}${e.rest?.type === "spacer" ? "~" : ""}`),
+            `z${e.rest?.startTie === undefined ? "" : "("}${
+              e.rest?.endTie === true ? ")" : ""
+            }${e.rest?.type === "spacer" ? "~" : ""}`),
       )
       .join(" ");
 
@@ -86,15 +88,16 @@ describe("a tie's carry", () => {
    * because each is a model change for one shape and neither is named by any open row.
    * `it.fails` so they go RED when the gap closes rather than rotting into a claim.
    */
-  it.fails("a rest can OPEN a tie — `z-C|` is `z( C)` in abcjs, `z C)` here", () => {
-    // `Rest` has no `tiedToNext`: `tieLast` refuses a rest, where abcjs writes
-    // `el.rest.startTie` (`abc_parse_music.js:519-520`). The endTie half already agrees.
+  /**
+   * ✅ **BOTH OF THESE WERE `it.fails` AND ARE LANDED (2026-09-23)** — see
+   * `tests/reach-back-tie.test.ts` for the whole of `addTieToLastNote`'s behaviour, of which
+   * these two are the rungs this file had already measured.
+   */
+  it("a rest can OPEN a tie", () => {
     expect(shapeOf("z-C|")).toBe("z( C) bar");
   });
 
-  it.fails("a voided `-` does not tie back across a LINE break in abcjs", () => {
-    // `C2` then `-1 D2|` on the next line: abcjs gives the C no `startTie` at all — its
-    // `addTieToLastNote` cannot see the line above — while ours reaches back.
+  it("…and a voided `-` does not tie back across a LINE break", () => {
     expect(shapeOf("C2\n-1 D2|")).toBe("C D) bar");
   });
 });

@@ -56,9 +56,18 @@ describe("a %%vskip rides the next line, whatever it is", () => {
     expect(linesOf("%%vskip 20\nCDEF|")).toEqual(['staff{"vskip":20}']);
   });
 
-  /** MEASURED, NOT LANDED: `%%newpage` is a line too and abcjs stamps it there. */
-  it.fails("a %%newpage row takes it", () => {
+  /** ✅ LANDED 2026-09-23 — `%%newpage` is a line too and takes the pending vskip. */
+  it("a %%newpage row takes it", () => {
     expect(linesOf("%%vskip 20\n%%newpage\nCDEF|")).toEqual([
+      '{"newpage":-1,"vskip":20}',
+      "staff{}",
+    ]);
+  });
+
+  /** …and a MID-TUNE `%%newpage` takes it too, where its line stands. */
+  it("…including a mid-tune one", () => {
+    expect(linesOf("CDEF|\n%%vskip 20\n%%newpage\nGABc|")).toEqual([
+      "staff{}",
       '{"newpage":-1,"vskip":20}',
       "staff{}",
     ]);
