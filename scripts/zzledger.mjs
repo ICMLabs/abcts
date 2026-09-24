@@ -190,6 +190,10 @@ const CASES = [
     "X:1\nM:4/4\nL:1/4\nK:C\nCDEF|GABc|\n%%sep\nK:D\ndefg|abc'd'|defg|abc'd'|defg|abc'd'|\n", { wrap: { minSpacing: 1.8, maxSpacing: 2.7, preferredMeasuresPerLine: 2 }, staffwidth: 400 }],
   ["wrap.ts:675d", "…and after a subtitle, which keeps the carried key",
     "X:1\nM:4/4\nL:1/4\nK:C\nCDEF|GABc|\nT:Sub\nK:D\ndefg|abc'd'|defg|abc'd'|defg|abc'd'|\n", { wrap: { minSpacing: 1.8, maxSpacing: 2.7, preferredMeasuresPerLine: 2 }, staffwidth: 400 }],
+  ["meter:after-continuation", "an inline [M:] straight after a continuation",
+    "X:1\nM:4/4\nL:1/4\nV:1\nK:C\nCDEF|\\\n[M:3/4]GAB|\n"],
+  ["meter:parked-discarded", "a line-start [M:] after a V: field is taken and discarded",
+    "X:1\nM:4/4\nL:1/4\nV:1\nV:2\nK:C\nV:1\nCDEF|\nV:2\nC,D,E,F,|\nV:1\n[M:3/4]GAB|\nV:2\nG,A,B,|\nV:1\nCDE|\nV:2\nC,D,E,|\n"],
   ["model.ts:2178", "a FILE-header %%landscape over two tunes",
     "%%landscape 1\n\nX:1\nK:C\nC|\n\nX:2\nK:C\nD|\n"],
 ]
@@ -246,7 +250,7 @@ const KNOWN = new Map([
   // ⏳ OPEN, 2026-09-24 — the third sweep's six SVG-visible divergences, each still carrying
   // its `ponytail:` with the measurement written at the marker.
   ['parser.ts:1340', 'OPEN: an & overlay on a shared staff draws its notes elsewhere'],
-  ['flatten.ts:1892', 'OPEN: inline [M:] on one voice’s later line — drawing, lines and MIDI all differ'],
+  ['meter:after-continuation', 'OPEN: an inline [M:] straight after a \\ continuation — abcjs swallows the field'],
 ])
 
 const rows = []

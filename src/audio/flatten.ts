@@ -1894,9 +1894,11 @@ export function flattenAudio(
    * ponytail: read voice-major where abcjs reads line-major, so a tune whose LAST line
    * changes meter on voice 0 and not on voice 1 differs. Nothing states one anywhere.
    *
-   * ⏳ **STILL REQUIRED — MEASURED 2026-09-24, AND WIDER THAN THIS.** `[M:3/4]` on V:1's second
-   * line alone differs in the DRAWING and `tune.lines` as well as here (`zzledger` row
-   * `flatten.ts:1892`), so the fix starts in the parser, not in this reader.
+   * ✅ **THE CONTROL IT WAS MEASURED ON IS FIXED — 2026-09-24, IN THE PARSER.** `[M:3/4]` on
+   * V:1's second line was never a meter change in abcjs at all: a `V:` field had already
+   * opened that line, so the parked staff meter was taken and discarded. See
+   * `ScoreBuilder.setStaffMeterForNextLine` and `tests/inline-meter-line-start.test.ts`.
+   * The voice-major reading itself is still unmeasured by a live shape.
    *
    * ⚠️ **A CONTROL WAS WRITTEN FOR THIS AND IS MUTE — 2026-09-12.** The shape the marker
    * names was built (`V1` changing meter on the last line, `V2` changed earlier and not

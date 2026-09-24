@@ -2321,6 +2321,10 @@ class VoiceBuilder {
 
   beginMusicLine(): void {
     const alreadyOpen = this.lineStartedEmpty
+    // A standalone `V:` FIELD ran `startNewLine` itself, even for the voice already current;
+    // an inline `[V:]` only sets `delayStartNewLine` and leaves the line lazy.
+    const openedByField = this.openedByVoiceField
+    this.openedByVoiceField = false
     this.lineNoteStart = this.noteCounter
     /**
      * **A BLOCK WRITTEN BETWEEN TWO LINES BELONGS TO THE LINE BELOW, NOT THE UNBARRED ONE
@@ -2360,9 +2364,41 @@ class VoiceBuilder {
     // line; ours reaches here again when the music under that `V:` begins.
     // It still TAKES it, copying it to every other staff: `startNewLine` runs for that
     // music line too, and a staff already made ignores the `params.meter` it hands over.
+    this.freshLine = !alreadyOpen && !openedByField
+    this.takeLineMeter(alreadyOpen)
+  }
+
+  /**
+   * The line this scan opened itself and has put nothing on — the one abcjs has NOT opened
+   * yet, because its `startNewLine` waits for the first music token after the inline
+   * fields (`abc_parse_music.js:151-159`). Ours opens eagerly; see `retakeLineMeter`.
+   */
+  private freshLine = false
+  /** See `beginMusicLine`'s `openedByField`. */
+  openedByVoiceField = false
+
+  /**
+   * **AN INLINE `[M:]` AT THE LINE'S START REACHES THE LINE IT STARTS** — abcjs has not run
+   * `startNewLine` yet, so the meter it parks on the staff is taken by this very line. Ours
+   * opened the line before reading the field; re-running the take is the same answer. A line
+   * a `V:` FIELD opened is not fresh, and there the meter waits, as it does in abcjs.
+   */
+  retakeLineMeter(): void {
+    // …and a line a `V:` field opened is REUSED by that `startNewLine`, which still takes
+    // the parked meter and discards it — `V:1` / `[M:3/4]GAB|` / … `CDE|` draws no 3/4 on
+    // the line after either.
+    if (this.lineStartedEmpty) this.takeLineMeter(!this.freshLine)
+  }
+
+  private takeLineMeter(alreadyOpen: boolean): void {
     const taken = takeMeter(this.meterSlot, this.id)
     const meterForNextLine = alreadyOpen ? null : taken
     if (meterForNextLine !== null) {
+      // A SECOND take at the same spot OVERWRITES the first — `[M:3/4][M:2/4]` at a line's
+      // start writes one staff slot twice, and the line takes what is left.
+      const last = this.pendingMeterChanges[this.pendingMeterChanges.length - 1]
+      if (this.pendingMeterChangeStandalone && last?.at === this.events.length)
+        this.pendingMeterChanges.pop()
       this.pendingMeterChange = meterForNextLine.meter
       this.pendingMeterChangeRange = meterForNextLine.range
       this.pendingMeterChanges.push({
@@ -3696,6 +3732,24 @@ class ScoreBuilder {
    * change mid-tune. A voice that set its own `octave=` ignores it.
    */
   readonly keyOctave = { value: 0 }
+
+  /**
+   * **AN INLINE `[M:]` BEFORE A LINE'S MUSIC, ONCE A `V:` EXISTS, IS THE STAFF'S NEXT
+   * METER** — `if (startLine && multilineVars.currentVoice && meter)
+   * multilineVars.staves[currentVoice.staffNum].meter = meter` (`abc_parse_header.js:359-360`),
+   * the declared voice's staff alone, taken by its next `startNewLine` like an `M:` field's
+   * copy. A line a `V:` FIELD already opened takes and discards it, so after `V:1` / `[M:3/4]`
+   * abcjs draws no meter anywhere, where ours pushed a cautionary onto the line above.
+   */
+  setStaffMeterForNextLine(meter: Meter | null, range: SourceRange): void {
+    // ON THE TUNE'S FIRST MUSIC LINE the header `M:` is still `multilineVars.meter`, and
+    // that line's `startNewLine` copies it over EVERY staff's slot before taking its own —
+    // so the header meter wins and this one is gone (`abc_parse_music.js:985-998`).
+    if (this.meter !== null && [...this.voices.values()].every((v) => v.isEmpty)) return
+    const staff = this.declaredVoiceId === null ? -1 : this.meterSlot.staffOf(this.declaredVoiceId)
+    if (staff < 0) this.meterSlot.value = { meter, range }
+    else this.meterSlot.byStaff.set(staff, { meter, range })
+  }
 
   constructor(readonly sourceStartOffset: number) {}
 
@@ -5729,7 +5783,10 @@ class Parser {
           //
           // `this.lineContinued` still holds the PREVIOUS line's flag here: a field line
           // returns from `parseLine` before the music path reassigns it.
-          if (inline || this.lineContinued || this.continueAll) {
+          if (inline && this.inlineFieldAtLineStart && builder.declaredVoiceId !== null) {
+            builder.setStaffMeterForNextLine(meterOf(), range)
+            builder.voice.retakeLineMeter()
+          } else if (inline || this.lineContinued || this.continueAll) {
             builder.voice.setMeterChange(meterOf(), range, inline)
           } else builder.voice.setMeterForNextLine(meterOf(), range)
           return
@@ -5943,6 +6000,7 @@ class Parser {
          * `V:1 scale=1.5`'s line as unscaled.
          */
         if (builder.bodyStarted) builder.openVoiceLine(id)
+        if (builder.bodyStarted && !inline) builder.voiceFor(id).openedByVoiceField = true
         return
       }
       case 's': {
@@ -6210,6 +6268,12 @@ class Parser {
   private lineIsContinuation = false
   /** `%%continueall` — every music line continues (`abc_parse_directive.js:966`). */
   private continueAll = false
+  /**
+   * abcjs's `startLine` for the inline field being applied — `delayStartNewLine`, true
+   * before the line's first music on a line that does not continue the one above
+   * (`abc_parse_music.js:119-159`). See `setStaffMeterForNextLine`.
+   */
+  private inlineFieldAtLineStart = false
 
   private scanMusic(start: number, end: number, continued = false): void {
     // ⚠️ **AN INLINE `[V:` OPENS A LINE ON A NON-CONTINUED LINE, WHATEVER THE VOICE.** See
@@ -7426,6 +7490,10 @@ class Parser {
            */
           if (colon === 1 && 'VKMQP'.includes(text[0] as string)) closeBeamRun()
           if (colon === 1) {
+            this.inlineFieldAtLineStart =
+              !continued &&
+              !this.continueAll &&
+              tokens.slice(0, i).every((t) => t.kind === 'inlineField' || t.kind === 'whitespace')
             this.applyField(
               text[0] as string,
               text.slice(2),
@@ -7433,6 +7501,7 @@ class Parser {
               token.start + token.length,
               true,
             )
+            this.inlineFieldAtLineStart = false
           }
           i++
           break
