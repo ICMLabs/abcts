@@ -14225,6 +14225,11 @@ function layoutScoped(input: Score, options: LayoutOptions = {}): Layout {
             next.clefChangeAtLineHead === true
           )
             return null
+          // …**NOR WHEN THE LINE'S OWN MUSIC CAME FIRST** — `|[K:clef=bass]` appends the bar,
+          // which fires `startNewLine`, so the clef lands on the NEW line. The key's rule,
+          // `keyChangeLeadsLine`; measured 2026-09-24.
+          const clefAt = next.clefChangeSourceRange?.start
+          if (clefAt != null && clefAt > musicStartsAt(next)) return null
           /**
            * ⚠️ **AND A WRAP HAS ALREADY PUT IT IN THE STREAM.** The cautionary is
            * `appendStartingElement('clef', …)` pushing onto the voice that is still open

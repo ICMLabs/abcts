@@ -1,0 +1,159 @@
+[
+ {
+  "abc": "X:1\nM:4/4\nL:1/4\nK:C\nCDEF|\n|[K:clef=bass]CDEF|GABc|\n",
+  "order": [
+   "staff-extra clef",
+   "clefs.G",
+   "staff-extra time-signature",
+   "bar",
+   "bar",
+   "staff-extra clef",
+   "clefs.G",
+   "bar",
+   "bar",
+   "staff-extra clef",
+   "clefs.F",
+   "bar",
+   "bar",
+   "bar",
+   "bar"
+  ]
+ },
+ {
+  "abc": "X:1\nM:4/4\nL:1/4\nK:C\nCDEF|\n|:[K:clef=bass]CDEF|GABc:|\n",
+  "order": [
+   "staff-extra clef",
+   "clefs.G",
+   "staff-extra time-signature",
+   "bar",
+   "bar",
+   "staff-extra clef",
+   "clefs.G",
+   "bar",
+   "bar",
+   "bar",
+   "staff-extra clef",
+   "clefs.F",
+   "bar",
+   "bar",
+   "bar",
+   "bar",
+   "bar"
+  ]
+ },
+ {
+  "abc": "X:1\nM:4/4\nL:1/4\nK:C\nCDEF|\n[K:clef=bass]CDEF|GABc|\n",
+  "order": [
+   "staff-extra clef",
+   "clefs.G",
+   "staff-extra time-signature",
+   "bar",
+   "bar",
+   "staff-extra clef",
+   "clefs.F",
+   "staff-extra clef",
+   "clefs.F",
+   "bar",
+   "bar",
+   "bar",
+   "bar"
+  ]
+ },
+ {
+  "abc": "X:1\nM:4/4\nL:1/4\nK:C\nCDEF|\n[K:clef=bass]|CDEF|GABc|\n",
+  "order": [
+   "staff-extra clef",
+   "clefs.G",
+   "staff-extra time-signature",
+   "bar",
+   "bar",
+   "staff-extra clef",
+   "clefs.F",
+   "staff-extra clef",
+   "clefs.F",
+   "bar",
+   "bar",
+   "bar",
+   "bar",
+   "bar",
+   "bar"
+  ]
+ },
+ {
+  "abc": "X:1\nM:4/4\nL:1/4\nK:C\nCDEF|\nK:clef=bass\nCDEF|GABc|\n",
+  "order": [
+   "staff-extra clef",
+   "clefs.G",
+   "staff-extra time-signature",
+   "bar",
+   "bar",
+   "staff-extra clef",
+   "clefs.F",
+   "staff-extra clef",
+   "clefs.F",
+   "bar",
+   "bar",
+   "bar",
+   "bar"
+  ]
+ },
+ {
+  "abc": "X:1\nM:4/4\nL:1/4\nV:1\nK:C\nV:1\nCDEF|\n|[V:1 clef=bass]CDEF|\n",
+  "order": [
+   "staff-extra clef",
+   "clefs.G",
+   "staff-extra time-signature",
+   "bar",
+   "bar",
+   "staff-extra clef",
+   "clefs.G",
+   "bar",
+   "bar",
+   "staff-extra clef",
+   "clefs.F",
+   "bar",
+   "bar"
+  ]
+ },
+ {
+  "abc": "X:1\nM:4/4\nL:1/4\nK:C\nCDEF|\n|:[P:A][K:clef=bass]CDEF|GABc:|\n",
+  "order": [
+   "staff-extra clef",
+   "clefs.G",
+   "staff-extra time-signature",
+   "bar",
+   "bar",
+   "staff-extra clef",
+   "clefs.G",
+   "bar",
+   "bar",
+   "bar",
+   "part",
+   "staff-extra clef",
+   "clefs.F",
+   "bar",
+   "bar",
+   "bar",
+   "bar",
+   "bar"
+  ]
+ },
+ {
+  "abc": "X:1\nM:4/4\nL:1/4\nK:C\nCDEF|\nC[K:clef=bass]DEF|GABc|\n",
+  "order": [
+   "staff-extra clef",
+   "clefs.G",
+   "staff-extra time-signature",
+   "bar",
+   "bar",
+   "staff-extra clef",
+   "clefs.G",
+   "staff-extra clef",
+   "clefs.F",
+   "bar",
+   "bar",
+   "bar",
+   "bar"
+  ]
+ }
+]
