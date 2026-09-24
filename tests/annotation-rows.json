@@ -1,0 +1,88 @@
+[
+ {
+  "abc": "X:1\nM:4/4\nL:1/4\nK:C\n\"<top\"\"<bot\"CDEF|\n",
+  "marks": [
+   "bot",
+   "top"
+  ]
+ },
+ {
+  "abc": "X:1\nM:4/4\nL:1/4\nK:C\n\"<top\\nbot\"CDEF|\n",
+  "marks": [
+   "bot",
+   "top"
+  ]
+ },
+ {
+  "abc": "X:1\nM:4/4\nL:1/4\nK:C\n\">top\\nbot\"CDEF|\n",
+  "marks": [
+   "bot",
+   "top"
+  ]
+ },
+ {
+  "abc": "X:1\nM:4/4\nL:1/4\nK:C\n\">top\"\">bot\"CDEF|\n",
+  "marks": [
+   "bot",
+   "top"
+  ]
+ },
+ {
+  "abc": "X:1\nM:4/4\nL:1/4\nK:C\n\"@5,5top\\nbot\"CDEF|\n",
+  "marks": [
+   "bot",
+   "top"
+  ]
+ },
+ {
+  "abc": "X:1\nM:4/4\nL:1/4\nK:C\n\"@5,5top\"\"@9,9bot\"CDEF|\n",
+  "marks": [
+   "top",
+   "bot"
+  ]
+ },
+ {
+  "abc": "X:1\nM:4/4\nL:1/4\nK:C\n\"^a\"\"<l\"\"_c\"\"^b\"\">r\"\"<m\"CDEF|\n",
+  "marks": [
+   "b",
+   "a",
+   "m",
+   "l",
+   "c",
+   "r"
+  ]
+ },
+ {
+  "abc": "X:1\nM:4/4\nL:1/4\nK:C\n\"^a;b\"CDEF|\n",
+  "marks": [
+   "b",
+   "a"
+  ]
+ },
+ {
+  "abc": "X:1\nM:4/4\nL:1/4\nK:C\n\"C;G7\"CDEF|\n",
+  "marks": []
+ },
+ {
+  "abc": "X:1\nM:4/4\nL:1/4\nK:C\n\"^top\\nbottom\"CDEF|\n",
+  "marks": [
+   "bottom",
+   "top"
+  ]
+ },
+ {
+  "abc": "X:1\nM:4/4\nL:1/4\nK:C\n\"^a\\nb\\nc\"CDEF|\n",
+  "marks": [
+   "c",
+   "b",
+   "a"
+  ]
+ },
+ {
+  "abc": "X:1\nM:4/4\nL:1/4\nK:C\n\"_p\"\"_dolce\"D|\n",
+  "marks": [
+   "dolce",
+   "p"
+  ]
+ }
+]

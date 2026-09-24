@@ -6416,8 +6416,8 @@ const fontHeightOf = (type: AbcFontType, text?: string): number => {
  * ponytail: one line, where abcjs splits on `\n` first. Our chord symbols carry no
  * newline; a multi-line one would need the loop.
  * ✅ MEASURED 2026-09-24: a two-row chord symbol agrees, plain and under `jazzchords`
- * (`zzledger` rows `layout.ts:6411`/`6411j`). A two-row ANNOTATION (`"^top\nbottom"`)
- * is 1.19px too tall — a separate defect, not this marker's.
+ * (`zzledger` rows `layout.ts:6411`/`6411j`). A two-row ANNOTATION was 1.19px too tall —
+ * fixed 2026-09-24, see where `annotations` is built.
  */
 /**
  * A `"…"` annotation's PLACEMENT, and the coordinates of an absolute one.
@@ -6805,7 +6805,20 @@ function noteText(
   // gives `chordHeightAbove` only when the pitch is UNDEFINED
   // (`relative-element.js:68-75`). `above` and `below` pass no pitch and take the lane;
   // `left`, `right` and `@` are pitched on the note and take none.
-  const annotations = event.annotations.map(annotationOf)
+  //
+  // **ONE ENTRY PER POSITION, ITS ROWS WALKED BACKWARD.** The parser JOINS every mark with
+  // the same position into one entry with `\n` (`abc_parse_music.js:197-204`; an `@` has
+  // none and never joins), and `chordString` splits that entry and places its rows last
+  // first, "because we place them from bottom to top" (`add-chord.js:39-42`). Measuring
+  // `"^top\nbottom"` whole made it 1.19px too tall, and `"<a""<b"` came out in source order.
+  const groups: ReturnType<typeof annotationOf>[][] = []
+  for (const a of event.annotations.map(annotationOf)) {
+    const rows = a.text.split('\n').map((text) => ({ ...a, text }))
+    const joined = a.where === 'relative' ? undefined : groups.find((g) => g[0]?.where === a.where)
+    if (joined === undefined) groups.push(rows)
+    else joined.push(...rows)
+  }
+  const annotations = groups.flatMap((g) => g.reverse())
   const above = annotations.filter((a) => a.where === 'above')
   const below = annotations.filter((a) => a.where === 'below')
 
@@ -6820,15 +6833,17 @@ function noteText(
    * Our chord-symbol branch already stored them that way; this one did not, and the
    * difference only showed once the private within-element stack came out.
    *
-   * **AND THE LOOP IS OVER `chords`, SO THE BELOW MARKS TURN ROUND TOO.** It is ONE
-   * backwards walk over every annotation on the note, not an above-side rule — this
-   * reversed only the above list, so `"_p""_dolce"D` came out `p, dolce` where abcjs
-   * writes `dolce, p`. Both lanes were already exact; it is the DOCUMENT ORDER that was
-   * wrong, which no positional gate can express.
+   * **AND THE BELOW MARKS TURN ROUND TOO**, and so do the left, right and `@` ones — the
+   * backward walk is over each POSITION's joined entry, which is why it now happens where
+   * `annotations` is built rather than here.
    */
-  above.reverse()
-  below.reverse()
+  // Each mark's GROUP, in push order — one push per mark below — so the groups can be put
+  // back in the order they were written. See the sort after the `@` loop.
+  const annotationsFrom = texts.length
+  const groupOfPush: number[] = []
+  const groupOf = (a: (typeof annotations)[number]): number => groups.findIndex((g) => g.includes(a))
   above.forEach((a) => {
+    groupOfPush.push(groupOf(a))
     // `annotationfont`, not the chord font — abcjs picks `font = isAnnotation ?
     // 'annotationfont' : 'gchordfont'` (`add-chord.js:11-17`). They share a 12pt default,
     // so a tune that sets neither is unmoved; `%%annotationfont Times-Roman 15 box` is
@@ -6888,6 +6903,7 @@ function noteText(
   })
 
   below.forEach((a) => {
+    groupOfPush.push(groupOf(a))
     const size = fontSizeOf('annotationfont')
     // A BELOW ANNOTATION TAKES A LANE ON THE STAFF'S BOTTOM INK, exactly as an above one
     // takes one on its top: `RelativeElement`'s `case "text"` with no pitch sets
@@ -6955,6 +6971,7 @@ function noteText(
       ('dots' in event && typeof event.dots === 'number' ? event.dots : 0)
   for (const a of annotations) {
     if (a.where !== 'left' && a.where !== 'right') continue
+    groupOfPush.push(groupOf(a))
     const size = fontSizeOf('annotationfont')
     // The annotation's own family — `%%annotationfont Times-Roman` is a SERIF, and this
     // feeds `roomTaken`, so it PLACES the note. Same defect the above/below boxes had.
@@ -7033,6 +7050,7 @@ function noteText(
   // `"@1,1E"e` alone reserved 22.38px abcjs does not.
   for (const a of annotations) {
     if (a.where !== 'relative') continue
+    groupOfPush.push(groupOf(a))
     const y = stepToY(minStep + 3 + a.dy / STEP_PX)
     texts.push({
       text: a.text,
@@ -7046,6 +7064,16 @@ function noteText(
       reserve: pointReserve(y),
     })
   }
+  // **THE GROUPS ARE DRAWN IN THE ORDER THEY WERE WRITTEN** — `addChord` walks `elem.chord`
+  // forward (`add-chord.js:6`), so `"^a""<l""_c"` is above, left, below. Ours pushed by
+  // placement. A stable sort on the group keeps each group's own row order.
+  const pushed = texts.splice(annotationsFrom)
+  texts.push(
+    ...pushed
+      .map((t, i) => ({ t, g: groupOfPush[i] ?? 0 }))
+      .sort((x, y) => x.g - y.g)
+      .map(({ t }) => t),
+  )
 
   // A REST STOPS HERE. It carries a chord symbol and annotations, which abcjs engraves
   // over it like any other element, but no lyric — nothing sings a rest.

@@ -6835,7 +6835,8 @@ class Parser {
           // 16.92 of dx, 29.60 of ox and 18.52 of oy, all four axes exact once it is split.
           const text = substInChord(this.src.slice(token.start + 1, token.start + token.length - 1))
           if (isAnnotation(text)) {
-            pending.annotations.push(decodeTextString(text))
+            // …and a `;` is a row break in an annotation exactly as in a chord (`:198`).
+            pending.annotations.push(decodeTextString(text).replace(/;/g, '\n'))
             pending.annotationSourceRanges.push(range)
           } else {
             // TWO CHORD SYMBOLS ON ONE NOTE STACK, they do not replace each other:
