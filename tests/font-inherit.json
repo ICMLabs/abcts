@@ -1,0 +1,52 @@
+[
+ {
+  "abc": "X:1\nM:4/4\nL:1/4\n%%gchordfont box\nK:C\n\"Cmaj7\"CDEF|\n",
+  "sel": "[data-name=\"chord\"]",
+  "font": "16|normal|Helvetica|normal"
+ },
+ {
+  "abc": "X:1\nM:4/4\nL:1/4\n%%gchordfont Arial 14\n%%gchordfont box\nK:C\n\"Cmaj7\"CDEF|\n",
+  "sel": "[data-name=\"chord\"]",
+  "font": "19|normal|Arial|normal"
+ },
+ {
+  "abc": "X:1\nM:4/4\nL:1/4\n%%gchordfont Arial 14\n%%gchordfont 16\nK:C\n\"Cmaj7\"CDEF|\n",
+  "sel": "[data-name=\"chord\"]",
+  "font": "21|normal|Arial|normal"
+ },
+ {
+  "abc": "X:1\nM:4/4\nL:1/4\n%%gchordfont Arial 14\n%%gchordfont bold\nK:C\n\"Cmaj7\"CDEF|\n",
+  "sel": "[data-name=\"chord\"]",
+  "font": "19|normal|Arial|bold"
+ },
+ {
+  "abc": "X:1\nM:4/4\nL:1/4\n%%gchordfont Arial 14 bold\nK:C\n\"Cmaj7\"CDEF|\n",
+  "sel": "[data-name=\"chord\"]",
+  "font": "19|normal|Arial|bold"
+ },
+ {
+  "abc": "X:1\nM:4/4\nL:1/4\n%%gchordfont Arial 14 italic\nK:C\n\"Cmaj7\"CDEF|\n",
+  "sel": "[data-name=\"chord\"]",
+  "font": "19|italic|Arial|normal"
+ },
+ {
+  "abc": "X:1\nM:4/4\nL:1/4\n%%gchordfont Times-Bold 14\nK:C\n\"Cmaj7\"CDEF|\n",
+  "sel": "[data-name=\"chord\"]",
+  "font": "19|normal|Times New Roman|bold"
+ },
+ {
+  "abc": "X:1\nM:4/4\nL:1/4\n%%gchordfont Arial 14 bold\n%%gchordfont 16\nK:C\n\"Cmaj7\"CDEF|\n",
+  "sel": "[data-name=\"chord\"]",
+  "font": "21|normal|Arial|bold"
+ },
+ {
+  "abc": "X:1\nM:4/4\nL:1/4\n%%vocalfont Arial 11\n%%vocalfont 16\nK:C\nCDEF|\nw:a b c d\n",
+  "sel": "[data-name=\"lyric\"]",
+  "font": "21|normal|Arial|normal"
+ },
+ {
+  "abc": "X:1\nM:4/4\nL:1/4\n%%annotationfont Courier 10\n%%annotationfont box\nK:C\n\"^x\"CDEF|\n",
+  "sel": "[data-name=\"annotation\"]",
+  "font": "13|normal|Courier New|normal"
+ }
+]

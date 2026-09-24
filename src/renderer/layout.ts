@@ -6346,7 +6346,7 @@ const measuredText = (t: PlacedText): string =>
   t.jazz === undefined || getTextMeasurer() === null ? t.text : t.jazz.join('\x03')
 
 /** The font a chord symbol or annotation is DRAWN in — see `chordHeightOf`'s ladder. */
-const markFontOf = (t: PlacedText): TextFont => ({
+const markFontOf = (t: Pick<PlacedText, 'size' | 'face' | 'bold' | 'italic'>): TextFont => ({
   size: t.size * UNIT_PX,
   family: t.face === undefined || t.face === '' ? 'Helvetica' : t.face,
   ...(t.bold === true ? { weight: 'bold' } : {}),
@@ -6707,7 +6707,17 @@ function noteText(
        */
       const measured = JAZZ_CHORDS && getTextMeasurer() !== null ? parts.join('\x03') : line
       const boxed = event.chordFont?.box === true
-      const lineWidth = markWidth(measured, size, boxed)
+      // Measured in the face it is DRAWN in — `markFontOf`'s answer, built before the mark.
+      const chordFace: Face | TextFont =
+        event.chordFont === null
+          ? 'sans'
+          : markFontOf({
+              size,
+              face: event.chordFont.face,
+              bold: event.chordFont.bold,
+              italic: event.chordFont.italic,
+            })
+      const lineWidth = markWidth(measured, size, boxed, chordFace)
       if (spans !== null) {
         spans.left = Math.max(spans.left, lineWidth / 2)
         spans.right = Math.max(spans.right, headWidth / 2 + lineWidth / 2)
@@ -6744,8 +6754,8 @@ function noteText(
         // can spend that lane exactly once — the shape the below ANNOTATION already uses.
         y: chordAt === 'below' ? stepToY(-4) : stepToY(ENGRAVE.chordSymbolStep),
         size,
-        bold: false,
-        italic: false,
+        bold: event.chordFont?.bold ?? false,
+        italic: event.chordFont?.italic ?? false,
         ...(JAZZ_CHORDS ? { jazz: parts } : {}),
         // A `%%gchordfont Arial 10` NAMES ITS FACE, and the emitter's table only has the
         // DEFAULT one per type. abcjs writes whatever the directive said.

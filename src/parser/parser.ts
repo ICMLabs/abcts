@@ -4625,9 +4625,12 @@ class Parser {
         // `%%vocalfont sans-serif 11 box` is a font with NO box, and honouring the word
         // gave `visual-options-01-fonts` a lyric lane four paddings too tall the moment
         // strict started realizing the directive at all.
+        // What a directive leaves out comes from the font IN FORCE, not the default —
+        // `getFontParameter`'s `currentSetting` (`abc_parse_directive.js:159-172, 282-296`).
+        const current = builder.fonts[type] ?? DEFAULT_CHANGING_FONTS[type]
         const font = boxable(type)
-          ? parseFontSpec(fontDirective[2], ABC_FONT_DEFAULT_PT[type])
-          : { ...parseFontSpec(fontDirective[2], ABC_FONT_DEFAULT_PT[type]), box: false }
+          ? parseFontSpec(fontDirective[2], ABC_FONT_DEFAULT_PT[type], current)
+          : { ...parseFontSpec(fontDirective[2], ABC_FONT_DEFAULT_PT[type], current), box: false }
         /**
          * …**AND abcjs SAYS SO OUT LOUD**: `warn("This font style doesn't support \"box\"",
          * str, position)` where `str` is the directive's BODY and `position` is 0
@@ -8654,7 +8657,11 @@ const POSTSCRIPT_FONTS: Readonly<
   'ZapfChancery-MediumItalic': { face: '"Zapf Chancery",cursive,serif', bold: false, italic: false },
 }
 
-function parseFontSpec(spec: string, defaultPt: number = DEFAULT_VOCALFONT_PT): LyricFont {
+function parseFontSpec(
+  spec: string,
+  defaultPt: number = DEFAULT_VOCALFONT_PT,
+  current?: LyricFont,
+): LyricFont {
   // `box` may follow the size — `%%gchordfont Arial 10 box`. abcjs accepts it on eleven of
   // the font types (`fontTypeCanHaveBox`, `abc_parse_directive.js:60`) and it draws a frame
   // rather than changing the face.
@@ -8674,15 +8681,26 @@ function parseFontSpec(spec: string, defaultPt: number = DEFAULT_VOCALFONT_PT): 
   const sizeMatch = /(^|\s)(\d+(?:\.\d+)?)(?=(?:\s+(?:bold|italic|oblique|underline))*\s*$)/i.exec(
     trimmed,
   )
-  const face = (sizeMatch ? trimmed.slice(0, sizeMatch.index) : trimmed).trim()
-  const modifiers = sizeMatch ? trimmed.slice(sizeMatch.index + sizeMatch[0].length) : ''
+  // `bold` / `italic` / `underline` BEFORE the size are modifiers too, never part of the
+  // face — `getFontParameter`'s `face` state excludes all three.
+  const faceWords = (sizeMatch ? trimmed.slice(0, sizeMatch.index) : trimmed).trim().split(/\s+/)
+  const isModifier = (w: string) => /^(?:bold|italic|underline)$/i.test(w)
+  const face = faceWords.filter((w) => !isModifier(w)).join(' ')
+  const modifiers =
+    faceWords.filter(isModifier).join(' ') + ' ' +
+    (sizeMatch ? trimmed.slice(sizeMatch.index + sizeMatch[0].length) : '')
   // …AND THE FACE ITSELF IS TRANSLATED, when it is a PostScript name — see
   // `POSTSCRIPT_FONTS`. Anything not in abcjs's table passes through unchanged, which is
   // abcjs's own `default: return { face: fontFace, … }`.
-  const translated = POSTSCRIPT_FONTS[face]
+  const size = sizeMatch?.[2] ? Number.parseFloat(sizeMatch[2]) : (current?.size ?? defaultPt)
+  // A SIZE ALONE (`%%gchordfont 16`, or `* 16`) keeps the face AND its weight and style —
+  // `processNumberOnly`. A definition with no face keeps only the face and the size.
+  if (current !== undefined && face.replace(/^\*\s*/, '') === '' && modifiers.trim() === '' && sizeMatch !== null)
+    return { ...current, size, box: boxed }
+  const translated = POSTSCRIPT_FONTS[face === '' ? (current?.face ?? '') : face]
   return {
-    face: translated?.face ?? face,
-    size: sizeMatch?.[2] ? Number.parseFloat(sizeMatch[2]) : defaultPt,
+    face: translated?.face ?? (face === '' ? (current?.face ?? '') : face),
+    size,
     // A face may still SAY bold — `%%vocalfont Times-Bold 16` names one face — so both
     // roads are read. abcjs only honours the word, but the face spelling is what the
     // corpus's existing fixtures are gated on, and this widens rather than replaces it.
