@@ -443,8 +443,25 @@ its measurements:
    ONE character where the source's arithmetic says two. `tests/unterminated.test.ts` is the
    ladder, nine rungs, every expectation abcjs's own.
 
-   **What is LEFT of the class is `[K:C CDEF|`**, where abcjs raises seven warnings walking
-   out of a failed inline field and we raise one. The ELEMENTS agree.
+   ✅ **`[K:C CDEF|` CLOSED 2026-09-24 — AND IT WAS NOT WARNINGS-ONLY, IT WAS THE WORST OF
+   THE CLASS.** An `[X:` with no `]` ran to the end of the line here, so `[K:C CDEF|` drew an
+   EMPTY PAGE — what an editor showed for every keystroke of typing `[K:G]` mid-line. abcjs
+   finds `e = -1`, and `line.substring(i+3, e)` SWAPS into `line.substring(0, i+3)`: it parses
+   the line UP TO THE COLON as the field, returns a length `<= 0`, and `parseMusic` reads the
+   `[` again as a failed chord (`abc_parse_header.js:342-414`). So `CD [P:A CDEF|` really does
+   print a part label reading `CD [P:`. A zero-length `brokenField` token carries it; the
+   garbage replay is strict-only, the line surviving is every mode's. Three neighbours closed
+   with it: a bare barline takes the `[K:]`/`[M:]` written BEFORE it (a held barline now
+   snapshots its changes — `[K:G]|` drew no signature at all); an unknown directive's name is
+   LOWERCASED (`abc_parse_directive.js:757`); and an inline `[I:…]`'s caret is at the `[`.
+   `tests/unterminated-field.test.ts` holds abcjs's own answers, each rule broken in turn.
+
+   ⚠️ **WHAT THE PROBE FOUND NEXT, MEASURED NOT BUILT — THE METER GRAMMAR.** Our `parseMeter`
+   is a lenient `split('/')`; abcjs's `setMeter` is a grammar that THROWS, and a throw is a
+   warning and NO METER AT ALL. `M:3/4 x` draws no meter in abcjs and 3/4 here; `M:3`,
+   `M:o` (tempus), `M:2/4 3/8`, `M:3.2/8` and `M:(2+3)/8` all draw differently, because our
+   `Meter` cannot hold abcjs's `value: [{num, den?}]`. And `M:3/` makes abcjs warn its own
+   TypeError text — a crash string, declined like the red debug string.
 2. ✅ **WARNINGS THIS PARSER DID NOT RAISE — three of five CLOSED 2026-09-23, and every one
    was a RETRY rather than a message.** abcjs fails the attempt and `parseMusic`'s
    `if (i === startI)` warns for the character it walked past, so the question is never "what

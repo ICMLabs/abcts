@@ -1863,7 +1863,23 @@ class VoiceBuilder {
 
   private meterForNextLine: { meter: Meter | null; range: SourceRange } | null = null
 
-  private takeChanges() {
+  /**
+   * `takeChanges`, with the changes a HELD opening barline carried merged UNDER them. A
+   * change written before the `|:` and one written after both precede this measure's
+   * notes, so both are this measure's — and where both set the same field, the later wins.
+   */
+  private changesWith(held: ReturnType<VoiceBuilder['takeChanges']> | undefined) {
+    const now = this.takeChanges()
+    if (held === undefined) return now
+    const merged: Record<string, unknown> = { ...held }
+    for (const [key, value] of Object.entries(now)) {
+      if (key === 'midiCommands') merged[key] = [...(held.midiCommands ?? []), ...(value as [])]
+      else if (value !== null && value !== undefined) merged[key] = value
+    }
+    return merged as typeof now
+  }
+
+  takeChanges() {
     const changes = {
       keyChange: this.pendingKeyChange,
       ...(this.pendingKeyChangeClef === undefined
@@ -2539,6 +2555,8 @@ class VoiceBuilder {
     decorations: readonly string[]
     chordSymbol: string | null
     annotations: readonly string[]
+    /** The changes written BEFORE this barline — see `changesWith`. */
+    changes: ReturnType<VoiceBuilder['takeChanges']>
   } | null = null
   /** A `P:` label awaiting the measure it marks. */
   private pendingPart: { label: string; range: SourceRange } | null = null
@@ -2712,13 +2730,14 @@ class VoiceBuilder {
         decorations: [...decorations],
         chordSymbol,
         annotations: [...annotations],
+        changes: this.takeChanges(),
       }
       return false
     }
     this.measures.push({
       events: this.events,
       overlays: this.overlays,
-      ...this.takeChanges(),
+      ...this.changesWith(this.pendingOpening?.changes),
       ...this.takeOpening(this.events[this.events.length - 1]?.sourceRange?.start ?? null),
       ...(() => {
         const startsSystem = this.takeLineStart()
@@ -2779,10 +2798,16 @@ class VoiceBuilder {
     const bare: Measure = {
       events: [],
       overlays: [],
-      keyChange: null,
-      keyChangeSourceRange: null,
-      meterChange: null,
-      meterChangeSourceRange: null,
+      /**
+       * ⚠️ **AND THE CHANGES WAITING FOR IT.** `[K:G]|` and `[M:3/4]|` open the line in G
+       * and in 3/4 for abcjs — the field set `multilineVars` before any music, so the staff
+       * starts with them — and this measure is the line's only one. It hard-coded `null`,
+       * so the signature was never drawn: 55.05px of staff against abcjs's 73.3.
+       *
+       * EXACTLY the ones written before it: `[K:G]|[M:3/4]|` puts the meter after the first
+       * bar, and a change written after this barline belongs to the measure after it.
+       */
+      ...trailing.changes,
       /**
        * ⚠️ **AND IT TAKES A REPEAT ENDING THAT NOTHING ELSE WILL.** A volta rides on
        * the measure the barline OPENS, and the projection matches it back to that
@@ -2871,7 +2896,7 @@ class VoiceBuilder {
     this.measures.push({
       events: this.events,
       overlays: this.overlays,
-      ...this.takeChanges(),
+      ...this.changesWith(this.pendingOpening?.changes),
       ...this.takeOpening(last?.sourceRange?.start ?? null),
       ...(() => {
         const startsSystem = this.takeLineStart()
@@ -5183,6 +5208,8 @@ class Parser {
     end: number,
     /** `[M:3/4]` written INSIDE a music line, which prints where it stands. */
     inline = false,
+    /** Where `content` begins in the source, when it is not just past the `K:` — see `brokenField`. */
+    contentAt?: number,
   ): void {
     const value = content.trim()
     const range = sourceRange(start, end)
@@ -5631,7 +5658,7 @@ class Parser {
         // …**AND AN INLINE FIELD'S VALUE BEGINS ONE CHARACTER LATER** — `[K:` against `K:`.
         // The mid-tune `[K:C clef=x]` reported its context as `:C clef=` for abcjs's
         // `C clef=x`, which is the whole span shifted by one.
-        const valueAt = start + (inline ? 3 : 2)
+        const valueAt = contentAt ?? start + (inline ? 3 : 2)
         for (const bad of unknownKeyParameters(content))
           this.warn(
             bad.expectedClef === true ? 'expected-clef-name' : 'unknown-parameter',
@@ -7005,6 +7032,30 @@ class Parser {
           closeBeamRun() // a beam cannot cross a layer boundary
           voice().startOverlay()
           tupletRemaining = 0 // a tuplet group cannot span an `&` layer boundary
+          i++
+          break
+        }
+        /**
+         * **THE FIELD abcjs RUNS ON A MISSING `]`** — see the lexer's `brokenField`. Only
+         * the five arms with no `e > 0` guard do anything: `I`, `M`, `K`, `P` and `L`, each
+         * on the line UP TO ITS COLON (`abc_parse_header.js:353-381`), with an `endChar` of
+         * `iChar + e + 1` — the LINE's start. `Q` and `V` test `e > 0` first and break.
+         *
+         * Strict only: it reproduces a `substring` argument swap, and the half that matters
+         * to anyone — the line surviving — is the lexer's, in every mode.
+         */
+        case 'brokenField': {
+          if (isStrict(this.mode) && 'IMKPL'.includes(token.aux)) {
+            if ('KMP'.includes(token.aux)) closeBeamRun()
+            this.applyField(
+              token.aux,
+              this.src.slice(start, token.start + 3),
+              token.start,
+              start,
+              true,
+              start,
+            )
+          }
           i++
           break
         }

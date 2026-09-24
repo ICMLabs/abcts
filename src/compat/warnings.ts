@@ -487,11 +487,22 @@ const AS_ABCJS: Record<
       ? null
       : { message: `Unknown macro: ${name}`, column: at - start };
   },
-  "unknown-directive": (diagnostic) => {
+  /**
+   * `Unknown directive: <name>` — ⚠️ **the name LOWERCASED**, because `addDirective` takes
+   * `tokens.shift().token.toLowerCase()` before it looks anything up
+   * (`abc_parse_directive.js:757`), so `%%BOGUS` says `bogus`. Two characters in on a `%%`
+   * line; AT THE `[` for an inline `[I:…]`, which warns with the field's own index
+   * (`abc_parse_header.js:354-355`).
+   */
+  "unknown-directive": (diagnostic, abc) => {
     const name = /%%\s*(\S+)/.exec(diagnostic.message)?.[1];
+    const at = diagnostic.range?.start ?? 0;
     return name === undefined
       ? null
-      : { message: `Unknown directive: ${name}`, column: 2 };
+      : {
+          message: `Unknown directive: ${name.toLowerCase()}`,
+          column: abc[at] === "[" ? at - lineStartAt(abc, at) : 2,
+        };
   },
 };
 

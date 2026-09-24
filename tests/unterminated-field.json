@@ -1,0 +1,120 @@
+[
+ {
+  "abc": "X:1\nK:C\n[K:C CDEF|",
+  "warnings": [
+   "Music Line:3:1: Unknown parameter: [:  <span style=\"text-decoration:underline;font-size:1.3em;font-weight:bold;\">[</span>K:",
+   "Music Line:3:2: Unknown parameter: K:  [<span style=\"text-decoration:underline;font-size:1.3em;font-weight:bold;\">K</span>:",
+   "Music Line:3:3: Unknown parameter: ::  [K<span style=\"text-decoration:underline;font-size:1.3em;font-weight:bold;\">:</span>",
+   "Music Line:3:2: Expected ']' to end the chords:  [<span style=\"text-decoration:underline;font-size:1.3em;font-weight:bold;\">K</span>:C CDEF|",
+   "Music Line:3:2: Unknown character ignored:  [<span style=\"text-decoration:underline;font-size:1.3em;font-weight:bold;\">K</span>:C CDEF|",
+   "Music Line:3:3: Unknown bar symbol:  [K<span style=\"text-decoration:underline;font-size:1.3em;font-weight:bold;\">:</span>C CDEF|",
+   "Music Line:3:3: Unknown bar type:  [K<span style=\"text-decoration:underline;font-size:1.3em;font-weight:bold;\">:</span>C CDEF|"
+  ],
+  "stream": [
+   "note",
+   "note",
+   "note",
+   "note",
+   "note",
+   "bar"
+  ],
+  "key": ""
+ },
+ {
+  "abc": "X:1\nK:C\nCD [P:A CDEF|",
+  "warnings": [
+   "Music Line:3:6: Expected ']' to end the chords:  CD [P<span style=\"text-decoration:underline;font-size:1.3em;font-weight:bold;\">:</span>A CDEF|",
+   "Music Line:3:6: Unknown bar symbol:  CD [P<span style=\"text-decoration:underline;font-size:1.3em;font-weight:bold;\">:</span>A CDEF|",
+   "Music Line:3:6: Unknown bar type:  CD [P<span style=\"text-decoration:underline;font-size:1.3em;font-weight:bold;\">:</span>A CDEF|"
+  ],
+  "stream": [
+   "note",
+   "note",
+   "part:CD [P:",
+   "note",
+   "note",
+   "note",
+   "note",
+   "note",
+   "bar"
+  ],
+  "key": ""
+ },
+ {
+  "abc": "X:1\nK:C\nCD [K:G CDEF|",
+  "warnings": [
+   "Music Line:3:1: Unknown parameter: D:  <span style=\"text-decoration:underline;font-size:1.3em;font-weight:bold;\">C</span>D [K:",
+   "Music Line:3:4: Unknown parameter: [:  CD <span style=\"text-decoration:underline;font-size:1.3em;font-weight:bold;\">[</span>K:",
+   "Music Line:3:5: Unknown parameter: K:  CD [<span style=\"text-decoration:underline;font-size:1.3em;font-weight:bold;\">K</span>:",
+   "Music Line:3:6: Unknown parameter: ::  CD [K<span style=\"text-decoration:underline;font-size:1.3em;font-weight:bold;\">:</span>",
+   "Music Line:3:5: Expected ']' to end the chords:  CD [<span style=\"text-decoration:underline;font-size:1.3em;font-weight:bold;\">K</span>:G CDEF|",
+   "Music Line:3:5: Unknown character ignored:  CD [<span style=\"text-decoration:underline;font-size:1.3em;font-weight:bold;\">K</span>:G CDEF|",
+   "Music Line:3:6: Unknown bar symbol:  CD [K<span style=\"text-decoration:underline;font-size:1.3em;font-weight:bold;\">:</span>G CDEF|",
+   "Music Line:3:6: Unknown bar type:  CD [K<span style=\"text-decoration:underline;font-size:1.3em;font-weight:bold;\">:</span>G CDEF|"
+  ],
+  "stream": [
+   "note",
+   "note",
+   "key",
+   "note",
+   "note",
+   "note",
+   "note",
+   "note",
+   "bar"
+  ],
+  "key": ""
+ },
+ {
+  "abc": "X:1\nK:C\n[K:G]|",
+  "stream": [
+   "bar"
+  ],
+  "key": "sharpf"
+ },
+ {
+  "abc": "X:1\nK:C\n[M:3/4]|",
+  "stream": [
+   "bar"
+  ],
+  "key": "",
+  "meter": "3/4"
+ },
+ {
+  "abc": "X:1\nK:C\n[K:G]|[M:3/4]|",
+  "stream": [
+   "bar",
+   "meter",
+   "bar"
+  ],
+  "key": "sharpf"
+ },
+ {
+  "abc": "X:1\nK:C\n%%BOGUS\nCD EF|",
+  "warnings": [
+   "Music Line:3:3: Unknown directive: bogus:  %%<span style=\"text-decoration:underline;font-size:1.3em;font-weight:bold;\">B</span>OGUS"
+  ],
+  "stream": [
+   "note",
+   "note",
+   "note",
+   "note",
+   "bar"
+  ],
+  "key": ""
+ },
+ {
+  "abc": "X:1\nK:C\nCD [I:FOO] EF|",
+  "warnings": [
+   "Music Line:3:4: Unknown directive: foo:  CD <span style=\"text-decoration:underline;font-size:1.3em;font-weight:bold;\">[</span>I:FOO] EF|"
+  ],
+  "stream": [
+   "note",
+   "note",
+   "note",
+   "note",
+   "bar"
+  ],
+  "key": ""
+ }
+]

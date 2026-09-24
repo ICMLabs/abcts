@@ -41,8 +41,10 @@ const VERBOSE = process.argv.includes('-v')
  *    rather than eating the line, and ours ran to the newline, so one stray `{` or `"` lost
  *    everything after it — what an editor sees on every keystroke. `{ab CDEF|`, `"Am CDEF|`,
  *    `!trill CDEF|` and six more rungs now match abcjs element for element and warning for
- *    warning. ⚠️ **What is LEFT of the class is `[K:C CDEF|`** — abcjs raises seven warnings
- *    walking out of a failed inline field where we raise one, and the ELEMENTS agree.
+ *    warning. ✅ **AND `[K:C CDEF|` CLOSED 2026-09-24 — it was NOT warnings-only.** An `[X:`
+ *    with no `]` ran to the end of the line here and drew an EMPTY PAGE; abcjs runs the field
+ *    on `line.substring(0, i+3)` (the swapped `substring(i+3, -1)`), consumes nothing, and
+ *    reads the `[` again as a failed chord. `tests/unterminated-field.test.ts`.
  * 2. ✅ **WARNINGS THIS PARSER DID NOT RAISE — three of five CLOSED 2026-09-23**, each a
  *    RETRY rather than a message: abcjs fails the attempt and `parseMusic`'s
  *    `if (i === startI)` warns per character it walks past.
@@ -112,7 +114,12 @@ const VERBOSE = process.argv.includes('-v')
 const DECLARED = new Set([
   'cr two tunes',
   'unterminated slur',
-  'unterminated bracket field',
+  /**
+   * ⚖️ **RULED, NOT OPEN.** `C99999999|` is a note past every glyph abcjs has, and abcjs
+   * draws its own red DEBUG TEXT for it — `pitch is undefined`, an `abcjs-debug-msg` — which
+   * is its whole 113.992px against our 94.617. The same ruling as `abcts-rests-and-bars-tune14`
+   * in `tests/open-rows.ts`: we decline to draw an internal error message as music.
+   */
   'huge duration',
 ])
 

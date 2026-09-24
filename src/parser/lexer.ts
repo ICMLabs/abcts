@@ -18,6 +18,8 @@ export type TokenKind =
   | 'openBracket'
   | 'closeBracket'
   | 'inlineField'
+  /** An `[X:` with no `]` on its line — zero length; see the `[` arm. */
+  | 'brokenField'
   | 'chordSymbol'
   | 'decoration'
   | 'grace'
@@ -96,6 +98,8 @@ const ABCJS_INLINE_FIELDS = new Set(['I', 'M', 'K', 'P', 'L', 'Q', 'V', 'r'])
 
 export class Lexer {
   private pos: number
+  /** Where a `brokenField` was just emitted, so the `[` there lexes as itself next. */
+  private brokenAt = -1
 
   constructor(
     private readonly src: string,
@@ -226,13 +230,34 @@ export class Lexer {
 
     // `[K:C]` is an inline field; a bare `[` opens a chord.
     if (c === '[') {
+      /**
+       * ⚠️ **AND abcjs WANTS FIVE CHARACTERS OF LINE FROM THE `[`** — `line.length >= i+5`
+       * (`abc_parse_header.js:347`) — so `[K:]` at a line's end is not a field at all.
+       */
+      const lineEnd = src.indexOf('\n', start)
       if (
-        start + 2 < src.length &&
+        (lineEnd < 0 ? src.length : lineEnd) - start >= 5 &&
         src[start + 2] === ':' &&
         // …and in STRICT only the eight abcjs knows — see `ABCJS_INLINE_FIELDS`.
         (!this.strictFields || ABCJS_INLINE_FIELDS.has(src[start + 1] as string))
       ) {
-        return token('inlineField', delimited(src, start, ']') - start)
+        const end = delimited(src, start, ']')
+        if (src[end - 1] === ']') return token('inlineField', end - start)
+        /**
+         * **AN `[X:` WITH NO `]` DOES NOT EAT THE LINE — IT CONSUMES NOTHING.**
+         * `letter_to_inline_header` finds `e = -1`, runs the field on
+         * `line.substring(i+3, -1)` — which `substring` SWAPS into `line.substring(0, i+3)`,
+         * the line up to the colon — and returns `e-i+1 <= 0`, so `parseMusic` reads the
+         * `[` again as music (`abc_parse_header.js:342-414`, `abc_parse_music.js:144-146`).
+         * Ours ran the field to the end of the line: `[K:C CDEF|` drew an empty page, which
+         * is what an editor showed for every keystroke of typing `[K:G]` mid-line.
+         *
+         * A zero-length `brokenField` carries the field; the `[` is lexed again next call.
+         */
+        if (this.brokenAt !== start) {
+          this.brokenAt = start
+          return { kind: 'brokenField', start, length: 0, aux: src[start + 1] as string }
+        }
       }
       return token('openBracket', 1)
     }
