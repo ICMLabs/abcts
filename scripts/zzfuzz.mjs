@@ -81,13 +81,30 @@ const VERBOSE = process.argv.includes('-v')
  *    or `%%begintext` up there is lost. MEASURED, not built: abcjs prepends the lines to the
  *    tune STRING (`abc_parse_book.js:36`), which also shifts every `startChar` in the tune by
  *    the block's length, and that shift has to be reproduced with it or not at all.
- * 5. **A BARE `&` LAYER.** `&|` and `&&&|` give abcjs NO lines where ours draws a barline, and
+ * 5. ✅ **THE THREE REWRITES BEFORE THE FIRST LINE IS READ — CLOSED 2026-09-23.** abcjs
+ *    normalizes line endings, blanks latex lines and swaps escaped percents before it reads
+ *    anything (`abc_parse.js:497-512`), and the book is STRIPPED and its leading chunk's
+ *    non-`%%` lines are never parsed (`abc_parse_book.js:9-31`). A classic-Mac file whose only
+ *    separator is `\r` was ONE line here — a whole book as a 37.56px empty page — and a CRLF
+ *    file's offsets were the host's rather than the normalized ones abcjs reports. ⚠️ **AND
+ *    THE PROJECTION WAS READING A DIFFERENT STRING FROM THE PARSE**: `tune.lines` tiles spans
+ *    per source line and tiled from character 0 with no `\n` to find, so the parser had it
+ *    right and the tune object did not. `normalizeSource` is now the one door both use.
+ *    ⚠️ **WHAT IS LEFT IS THE CHUNKING, WHICH abcjs DOES ON THE RAW STRING**: it cuts the book
+ *    on `"\nX:"` BEFORE normalizing, so `X:1\rC|\rX:2\rD|` is ONE tune of two lines to abcjs
+ *    (its split finds no `\n`) where ours is two tunes, and in a CRLF book a later tune's
+ *    offsets are its RAW start plus its NORMALIZED interior — tune 2 of
+ *    `X:1⏎C|⏎⏎X:2⏎D|` is `note15,16` to abcjs and `note12,13` here, the three `\r`s before it.
+ *    MEASURED, not built: reproducing it means chunking the raw source and giving each chunk
+ *    its own offset base, which is a different parser entry, not a rewrite.
+ * 6. **A BARE `&` LAYER.** `&|` and `&&&|` give abcjs NO lines where ours draws a barline, and
  *    `C&|` gives abcjs `stem note bar stem` — `createVoice`'s stem pair survives the empty
  *    layer's removal — where ours gives `note bar`. MEASURED, not built: `resolveOverlays`
  *    and `createVoice` interact here and a half-understood fix is worth less than this note.
  */
 const DECLARED = new Set([
   'leading text directive',
+  'cr two tunes',
   'unterminated slur',
   'unterminated bracket field',
   'huge duration',

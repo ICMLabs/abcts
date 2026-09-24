@@ -85,3 +85,63 @@ describe("a chunk of the book is exactly one tune", () => {
     expect(shape("W:x\n\nCDEF|")).toEqual({ tunes: 1, counted: 1, lines: [[]] });
   });
 });
+
+/**
+ * **THE THREE REWRITES abcjs MAKES BEFORE IT READS A LINE** — line endings, latex commands,
+ * escaped percent (`abc_parse.js:497-512`) — and the rule that the book is STRIPPED and its
+ * leading chunk is not parsed (`abc_parse_book.js:9-31`).
+ *
+ * Every offset here is abcjs 6.7.1's own answer, read out of a WebKit page.
+ */
+describe("the source is normalized before it is read", () => {
+  /** The spans a host clicks against: `el_type` then `startChar,endChar`. */
+  const spans = (abc: string): string =>
+    (parseOnly(abc)[0]?.lines ?? [])
+      .flatMap((l) => (("staff" in l ? l.staff : []) ?? []) as { voices?: unknown[] }[])
+      .flatMap((st) => (st.voices ?? []) as { el_type: string; startChar: number; endChar: number }[][])
+      .flatMap((v) => v.map((e) => `${e.el_type}${e.startChar},${e.endChar}`))
+      .join(" ");
+
+  const LF = "note8,9 note9,10 note10,11 note11,12 bar12,13";
+
+  it("a lone \\r is a line separator, and it costs no characters", () => {
+    expect(spans("X:1\rK:C\rCDEF|")).toBe(LF);
+  });
+
+  it("a \\r\\n is a line separator, and the offsets are the SHORTER ones", () => {
+    // `/\r\n?/g → '\n'` loses a character per line, and abcjs reports the offsets of the
+    // string it made — not of the string the host handed in.
+    expect(spans("X:1\r\nK:C\r\nCDEF|")).toBe(LF);
+  });
+
+  it("a line starting with a backslash is a latex command and becomes spaces", () => {
+    expect(spans("X:1\nK:C\n\\latex\nCDEF|")).toBe(
+      "note15,16 note16,17 note17,18 note18,19 bar19,20",
+    );
+  });
+
+  it("…but not on the first line, where there is no newline before it to eat", () => {
+    // It is the book's leading chunk instead, and a leading chunk is not parsed: abcjs
+    // raises NO warning here, where reading `\first` as music raises three.
+    expect(parseOnly("\\first\nX:1\nK:C\nCDEF|")[0]?.warnings ?? []).toEqual([]);
+    expect(spans("\\first\nX:1\nK:C\nCDEF|")).toBe(
+      "note15,16 note16,17 note17,18 note18,19 bar19,20",
+    );
+  });
+
+  it("the book is stripped, so leading blank lines end nothing", () => {
+    expect(spans("\n\n X:1\nK:C\nCDEF|")).toBe(
+      "note11,12 note12,13 note13,14 note14,15 bar15,16",
+    );
+    expect(spans("  \n\nCDEF|")).toBe("note4,5 note5,6 note6,7 note7,8 bar8,9");
+  });
+
+  it("a T: above the first X: is dropped with the rest of the leading chunk", () => {
+    expect(parseOnly("T:lost\nX:1\nK:C\nCDEF|")[0]?.metaText?.title).toBeUndefined();
+  });
+
+  it("…while a %% line up there is kept and applies to every tune", () => {
+    const tunes = parseOnly("%%bogus x\nX:1\nCDEF|\n\nX:2\nGABc|");
+    expect(tunes.map((t) => (t.warnings ?? []).length)).toEqual([1, 1]);
+  });
+});

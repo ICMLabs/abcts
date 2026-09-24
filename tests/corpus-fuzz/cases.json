@@ -162,5 +162,33 @@
  {
   "label": "leading text directive",
   "abc": "%%text hi\n\nX:1\nCDEF|"
+ },
+ {
+  "label": "cr line endings",
+  "abc": "X:1\rK:C\rCDEF|"
+ },
+ {
+  "label": "crlf line endings",
+  "abc": "X:1\r\nK:C\r\nCDEF|"
+ },
+ {
+  "label": "cr two tunes",
+  "abc": "X:1\rC|\rX:2\rD|"
+ },
+ {
+  "label": "latex line",
+  "abc": "X:1\nK:C\n\\latex\nCDEF|"
+ },
+ {
+  "label": "latex first line",
+  "abc": "\\first\nX:1\nK:C\nCDEF|"
+ },
+ {
+  "label": "leading blank lines",
+  "abc": "  \n\nCDEF|"
+ },
+ {
+  "label": "indented X",
+  "abc": "\n\n X:1\nK:C\nCDEF|"
  }
 ]

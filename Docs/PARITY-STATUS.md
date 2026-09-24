@@ -403,8 +403,8 @@ artefact. Ask what a host DOES, not what the nearest gate measures.
 57 controls written to pin a rule — so *"what does a drop-in do with input a user is halfway
 through typing?"* had no gate at all. `scripts/zzfuzz.mjs` runs 35 malformed shapes through
 BOTH engines in one WebKit page and compares the tune count, the warning strings, the element
-stream per voice and the page height. It is **41 shapes** now — the six added with the chunk
-rule are its own regression net — and it found **six** defects on its first run; two are fixed:
+stream per voice and the page height. It is **48 shapes** now — the thirteen added with the chunk
+rule and the normalizations are its own regression net — and it found **six** defects on its first run; two are fixed:
 
 * ✅ **A LINE OF NOTHING BUT BARLINES WAS DELETED.** `|`, `||`, `|]`, `[|]`, `||||::|]` and
   `-|-` each give abcjs a staff and gave this engine NO LINES AT ALL — the voice's emptiness
@@ -421,8 +421,8 @@ rule are its own regression net — and it found **six** defects on its first ru
   not consume the pending line start, so `|:|:C:|:|` came out as TWO systems (187px against
   94.789). Fixed by having it take the line start, as a real measure does.
 
-**FIVE CLASSES WERE NAMED, THREE ARE CLOSED**, and the two that are left are DECLARED in the
-script with their measurements:
+**SIX CLASSES WERE NAMED, FOUR ARE CLOSED**, and what is left is DECLARED in the script with
+its measurements:
 
 1. ✅ **RECOVERY FROM AN UNTERMINATED CONSTRUCT — CLOSED 2026-09-23, AND IT WAS ONE SHARED
    PRIMITIVE.** `getBrackettedSubstring` clamps a missing close to a per-construct BUDGET
@@ -498,7 +498,33 @@ script with their measurements:
    else, so a `%%text`, `%%center` or `%%begintext` up there is lost. MEASURED, not built: the
    prepend also shifts every `startChar` in the tune by the block's length, and that shift has
    to be reproduced with it or not at all.
-5. **A BARE `&` LAYER** — `&|` gives abcjs no lines where ours draws a barline, and `C&|` gives
+5. ✅ **THE THREE REWRITES BEFORE THE FIRST LINE IS READ — CLOSED 2026-09-23, AND ONE OF THEM
+   WAS TWO STRINGS.** abcjs normalizes line endings, blanks latex lines and swaps escaped
+   percents before it reads anything (`abc_parse.js:497-512`), and the book is `strip`ped with
+   its leading chunk's non-`%%` lines never parsed at all (`abc_parse_book.js:9-31`).
+   * **A lone `\r` is a line separator** — one character for one, so nothing moves. A
+     classic-Mac file was ONE line to this engine: a whole book as a 37.56px empty page.
+   * **A `\r\n` is one too, and abcjs reports the SHORTER offsets** — it normalizes and then
+     reports positions in the string it made, so on a CRLF file every span was off by one per
+     preceding line. That is an editor's click-to-select on every Windows-authored file.
+   * ⭐ **AND THE PROJECTION WAS READING A DIFFERENT STRING FROM THE PARSE.** `tune.lines` tiles
+     each element's span per SOURCE LINE by walking the host's string for its line starts —
+     with no `\n` in it there are no lines, so every element on the page opened at character 0.
+     The parser had the right answer and the tune object did not. `normalizeSource` is the one
+     door both go through now. Same class as a knob reaching the layout and not the audio.
+   * **A line starting with `\` is a latex command and becomes spaces**, the preceding newline
+     included, so `\score{…}` between two music lines costs nothing. Ours read it as music:
+     198.86px and a warning where abcjs draws 94.789 and says nothing.
+   * **A `T:` or a stray line above the first `X:` is never parsed** — only the `%%` lines up
+     there survive, prepended to every tune. Ours read them and kept their warnings.
+   ⚠️ **WHAT IS LEFT IS THE CHUNKING, WHICH abcjs DOES ON THE RAW STRING.** It cuts the book on
+   `"\nX:"` BEFORE any normalizing, so `X:1\rC|\rX:2\rD|` is ONE tune of two lines to abcjs
+   where ours is two tunes, and in a CRLF book a later tune's offsets are its RAW start plus its
+   NORMALIZED interior: tune 2 of `X:1⏎C|⏎⏎X:2⏎D|` is `note15,16` to abcjs and `note12,13`
+   here, exactly the three `\r`s before it. MEASURED, not built — reproducing that hybrid means
+   chunking the raw source and giving each chunk its own offset base, which is a different
+   parser entry rather than a rewrite. The first tune of a CRLF book is exact either way.
+6. **A BARE `&` LAYER** — `&|` gives abcjs no lines where ours draws a barline, and `C&|` gives
    abcjs `stem note bar stem` where ours gives `note bar`. MEASURED, not built: `createVoice`'s
    stem pair survives the empty layer's removal, and a half-understood fix there is worth less
    than the note.

@@ -99,7 +99,7 @@ import {
   SynthSequence,
 } from "./synth.js";
 import { numberOfTunes } from "./tunebook.js";
-import { parse } from "../parser/parser.js";
+import { normalizeSource, parse } from "../parser/parser.js";
 import { EngraverController, Parse } from "./engraver.js";
 import { strTranspose as transposeString } from "../str/transpose.js";
 import { STAFF_SPACE_PX, UNIT_PX } from "../renderer/abcjs-constants.js";
@@ -1048,10 +1048,18 @@ const engraverSvgs = new WeakMap<object, readonly unknown[]>();
 
 function renderInto(
   target: Target | readonly Target[],
-  abc: string,
+  source: string,
   params: AbcjsParams,
   engraved: boolean,
 ): TuneObject[] {
+  /**
+   * **THE PARSE AND EVERYTHING DERIVED FROM THE SOURCE READ THE SAME STRING.** abcjs
+   * rewrites line endings, latex lines and escaped percents before it reads a line
+   * (`abc_parse.js:497-512`) and every offset it reports is in THAT string. Ours normalized
+   * inside `parse` only, so `tune.lines`'s span tiling — which walks the host's string for
+   * its line starts — tiled a classic-Mac file with no `\n` in it from character 0.
+   */
+  const abc = normalizeSource(source);
   // `AbcjsParams.mode`, which is `abcjs-strict` unless a host asks otherwise — and the
   // ONE place it is resolved, so the parse, the layout and the emitter cannot disagree.
   const mode: CompatibilityMode = params.mode ?? "abcjs-strict";

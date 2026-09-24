@@ -3879,7 +3879,28 @@ class Parser {
   ) {}
 
   parse(): ParseResult {
-    let lineStart = 0
+    /**
+     * **THE BOOK IS STRIPPED BEFORE IT IS CUT INTO TUNES** — `book = strip(book)`, and the
+     * leading whitespace is COUNTED rather than lost, so every offset still indexes the
+     * source the host handed in (`abc_parse_book.js:9-16`). That is why a book opening with
+     * blank lines is not a book whose first chunk ends immediately: there is no chunk
+     * before the strip. Ours read those newlines as a chunk terminator and skipped the
+     * whole file, and an INDENTED `X:1` was never a tune start at all.
+     */
+    let lineStart = /^\s*/.exec(this.src)?.[0].length ?? 0
+    /**
+     * **AND WHAT IS ABOVE THE FIRST `X:` IS NOT PARSED AT ALL — ONLY ITS `%%` LINES ARE.**
+     * abcjs shifts that chunk off the book and keeps the directive lines alone, prepending
+     * them to every tune (`abc_parse_book.js:22-31`); everything else up there is gone
+     * before a parser ever sees it. Ours READ those lines and kept their warnings, so
+     * `\first` above an `X:1` — a latex line abcjs does not even blank, because the blanking
+     * needs a preceding newline — warned three times on a tune abcjs renders silently.
+     *
+     * One chunk means no leading chunk: an `X:`-less book is the tune, whatever it holds.
+     */
+    this.leadingEnd = this.src.startsWith('X:', lineStart)
+      ? 0
+      : this.src.indexOf('\nX:', lineStart) + 1
     while (lineStart <= this.src.length) {
       let lineEnd = this.src.indexOf('\n', lineStart)
       if (lineEnd === -1) lineEnd = this.src.length
@@ -3992,6 +4013,8 @@ class Parser {
 
   /** Set by an empty line: everything up to the next `X:` is not this book's. See below. */
   private skippingChunk = false
+  /** End of the book's leading chunk, whose non-`%%` lines are not parsed. See `parse`. */
+  private leadingEnd = 0
 
   private processLine(start: number, endIn: number): void {
     let end = endIn
@@ -4001,6 +4024,7 @@ class Parser {
       if (!/^X:/.test(line)) return
       this.skippingChunk = false
     }
+    if (start < this.leadingEnd && !line.startsWith('%%')) return
 
     // A `%%begintext` block runs to `%%endtext`. Its content lines carry no `%%` prefix,
     // so they must be claimed here — otherwise ordinary English prose parses as music and
@@ -8615,6 +8639,55 @@ export interface ParseOptions {
  */
 const escapePercent = (source: string): string => source.replace(/\\%/g, '\u200B\uFF05')
 
+/**
+ * **WHATEVER LINE ENDINGS COME OUR WAY** — `strTune.replace(/\r\n?/g, '\n')`
+ * (`abc_parse.js:497-498`), which is the FIRST thing abcjs does to a tune.
+ *
+ * A lone `\r` is one character replaced by one, so every offset downstream is unmoved and
+ * the only thing that changes is where the lines are — and a classic-Mac file whose only
+ * separator is `\r` was ONE line to this engine, which is a whole book rendering as an
+ * empty 37.56px page.
+ *
+ * ⚠️ **A `\r\n` LOSES A CHARACTER, AND abcjs REPORTS THE SHORTER OFFSETS.** It normalizes
+ * per TUNE, after the book was cut on the raw string, so a later tune's offsets are its RAW
+ * start plus its NORMALIZED interior — a hybrid this does not reproduce. See
+ * `ABCJS-DIFFERENCES.md`; the first tune of a CRLF book is exact either way.
+ */
+const normalizeLineEndings = (source: string): string => source.replace(/\r\n?/g, '\n')
+
+/**
+ * **A LINE THAT STARTS WITH A BACKSLASH IS A LATEX COMMAND, AND IT BECOMES SPACES.**
+ *
+ *     var arr = strTune.split("\n\\");
+ *     … while (arr[i2][0] !== "\n") { arr[i2] = arr[i2].substr(1); arr[i2-1] += ' ' }
+ *     strTune = arr.join("  ");
+ *
+ * (`abc_parse.js:500-510`.) Character for character, including the `\n` that preceded it —
+ * the spaces are appended to the PREVIOUS line — so `\score{…}` between two music lines
+ * costs nothing and moves nothing. Ours read it as music: `\latex` is an `l` decoration
+ * short of a note, an `a`, a `t`, an `e`… 198.86px of page where abcjs draws 94.789 and a
+ * warning where abcjs raises none.
+ *
+ * A backslash on the FIRST line is not one of these: `split` leaves it in the head piece,
+ * and this regex needs the newline for the same reason.
+ */
+const blankLatexLines = (source: string): string =>
+  source.replace(/\n\\[^\n]*/g, (m) => ' '.repeat(m.length))
+
+/**
+ * The three rewrites abcjs makes before it reads a single line, in its own order
+ * (`abc_parse.js:497-512`) — line endings, latex commands, escaped percent. Idempotent, so
+ * a caller that normalizes and then hands the result to `parse` costs nothing.
+ *
+ * ⚠️ **AND A HOST-FACING SURFACE THAT DERIVES ANYTHING FROM THE SOURCE MUST NORMALIZE IT
+ * FIRST.** `tune.lines`'s spans are tiled per source line (`lines.ts`), and on a file whose
+ * only separator is `\r` there are no lines to tile against: every element on the page
+ * opened at character 0. The parser had it right and the projection was reading a different
+ * string — the same class as `%%visualTranspose` reaching the layout and not the audio.
+ */
+export const normalizeSource = (source: string): string =>
+  escapePercent(blankLatexLines(normalizeLineEndings(source)))
+
 export function parse(source: string, options: ParseOptions = {}): ParseResult {
   HOST_TRANSPOSE = options.visualTranspose ?? 0
   const mode = options.mode ?? defaultMode
@@ -8623,7 +8696,7 @@ export function parse(source: string, options: ParseOptions = {}): ParseResult {
   // fourteen `decodeTextString` call sites, which is the shape `JAZZ_CHORDS` and
   // `PERC_MAP` already take in the renderer. See `setAbcjsEscapes`.
   setAbcjsEscapes(isStrict(mode))
-  return deepFreeze(new Parser(escapePercent(source), mode).parse())
+  return deepFreeze(new Parser(normalizeSource(source), mode).parse())
 }
 
 /**
