@@ -1341,8 +1341,10 @@ function shiftMeasure(measure: Measure, octaves: number): Measure {
  * a two-voice staff gains two voices per pass where this gains one each. Nothing in either
  * corpus writes an `&` on a shared staff; the ranked tables will say so if anything does.
  *
- * ⏳ **STILL REQUIRED — MEASURED 2026-09-24.** `%%score (1 2)` with `G4&EFGA` on V:1 draws the
- * overlay's notes in different places (`zzledger` row `parser.ts:1340`).
+ * ✅ **THE SHARED-STAFF CONTROL IS FIXED — 2026-09-24, AND IT WAS NOT THIS.** Its only
+ * divergences were ORDER and STEMS: a staff's layers draw after all its voices, and a layer
+ * takes its parent's head stem (`expandOverlays`, `stemForVoiceOn`). The back-fill rule
+ * this marker names is still unmeasured by a live shape.
  */
 const overlayElementFor = (event: MusicEvent): OverlayElement => {
   const range = event.sourceRange

@@ -249,7 +249,6 @@ const KNOWN = new Map([
   // not its verse's.
   // ⏳ OPEN, 2026-09-24 — the third sweep's six SVG-visible divergences, each still carrying
   // its `ponytail:` with the measurement written at the marker.
-  ['parser.ts:1340', 'OPEN: an & overlay on a shared staff draws its notes elsewhere'],
   ['meter:after-continuation', 'OPEN: an inline [M:] straight after a \\ continuation — abcjs swallows the field'],
 ])
 

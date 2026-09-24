@@ -13130,8 +13130,13 @@ export function expandOverlays(input: Score): Score {
     if (ids.length > 0) layerIds.set(voice.id, ids)
   }
 
-  const withLayers = (ids: readonly string[]): string[] =>
-    ids.flatMap((id) => [id, ...(layerIds.get(id) ?? [])])
+  // **A STAFF'S LAYERS COME AFTER ALL ITS VOICES** — `staff.voices.push(ov.voice)` appends
+  // to the staff, so `%%score (1 2)` with an `&` on V:1 draws 1, 2, then 1's layer. The
+  // MIDI file's track order is the same rule (`trackOrder`). Measured 2026-09-24.
+  const withLayers = (ids: readonly string[]): string[] => [
+    ...ids,
+    ...ids.flatMap((id) => layerIds.get(id) ?? []),
+  ]
   const staves =
     score.staves.length > 0
       ? score.staves.map((g) => ({ ...g, voiceIds: withLayers(g.voiceIds) }))
@@ -13623,6 +13628,19 @@ function layoutScoped(input: Score, options: LayoutOptions = {}): Layout {
      * below for the same reason a declared direction does.
      */
     if (score.bagpipes) return false
+    /**
+     * **A LAYER STARTS `down` AND THEN COPIES ITS PARENT'S STEM ELEMENTS** —
+     * `ov.voice.splice(0, 0, {el_type: "stem", direction: "down"})` ahead of every `stem` the
+     * parent's stream held (`tune-builder.js:585-598`). So it takes the parent's HEAD stem —
+     * `up` as a shared staff's first voice, `down` as its second, a declared `stems=` — and
+     * `down` when the parent has none. Measured 2026-09-24.
+     */
+    const ownId = voices[index]?.id ?? ''
+    const cut = ownId.indexOf('$')
+    if (cut >= 0) {
+      const parent = voices.findIndex((v) => v?.id === ownId.slice(0, cut))
+      return (parent < 0 ? null : stemForVoiceOn(parent, line)) ?? false
+    }
     // `V:… stems=` WINS over the shared-staff convention — abcjs takes
     // `if (params.stem) … else if (voiceNum > 0)` (`parse/tune-builder.js:971-986`), so a
     // declared direction also suppresses the `up` back-filled onto the staff's first voice.
@@ -13633,7 +13651,10 @@ function layoutScoped(input: Score, options: LayoutOptions = {}): Layout {
     // the second is byte-identical in both engines (`scripts/zzledger.mjs`).
     const declared = voices[index]?.stemDirection
     if (declared != null) return declared === 'up'
-    const staff = voicesOfStaff.find((members) => members.includes(index))
+    // A LAYER is added after `createVoice` has run, so it never counts as a voice here.
+    const staff = voicesOfStaff
+      .find((members) => members.includes(index))
+      ?.filter((member) => voices[member]?.id.includes('$') !== true)
     if (staff === undefined || staff.length < 2) return null
     // `else if (tune.voiceNum > 0)` — the STAFF-RELATIVE index from the declaration, so a
     // second voice appearing alone on a line is still forced down.
