@@ -2872,6 +2872,11 @@ const VOICE_FURNITURE = new Set(["style", "stem", "color", "scale"]);
     Math.min(
       m.openingBarlineSourceRange?.start ?? Number.POSITIVE_INFINITY,
       ...m.events.map((e) => e.sourceRange?.start ?? Number.POSITIVE_INFINITY),
+      // …and a BARE measure's music is its barline (`VoiceBuilder.pushBareBarline`): without
+      // it `[K:G]|:[K:C bass]…` opened the line at +∞ and published the later clef.
+      m.events.length === 0
+        ? (m.closingBarlineSourceRange?.start ?? Number.POSITIVE_INFINITY)
+        : Number.POSITIVE_INFINITY,
     );
   const leadsLine = (m: Measure, at: number | null | undefined): boolean =>
     at != null && at < musicStartsAt(m);

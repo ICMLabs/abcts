@@ -13950,10 +13950,21 @@ function layoutScoped(input: Score, options: LayoutOptions = {}): Layout {
        * in bass; ours drew all four in bass, 46.5px — six staff steps — high. The PARSE was
        * already exact (`verticalPos` 0, 1, 14, 15 both ways), so this was the layout alone.
        */
+      /**
+       * …**AND THE NOTES ARE WHAT IT LEADS, NOT THE OPENING BARLINE.** An inline
+       * `[K: clef=]` written after a `|:` that opens the line is a stream element between
+       * the bar and the first note, so every note of the measure is in the new clef — but
+       * `musicStartsAt` counts the barline, the measure "opened" before the change, and the
+       * in-measure switch fires only at an event index above 0. `|:[K:C clef=bass]C,D,E,F,|`
+       * drew all four notes in treble, 46.5px low.
+       */
       const clefLeadsMeasure =
         measure.clefChange == null ||
         (measure.clefChangeSourceRange?.start ?? Number.NEGATIVE_INFINITY) <
-          musicStartsAt(measure)
+          Math.min(
+            ...measure.events.map((e) => e.sourceRange?.start ?? Number.POSITIVE_INFINITY),
+            Number.POSITIVE_INFINITY,
+          )
       const clefEnteringMeasure = clefInForce
       if (measure.clefChange != null && clefLeadsHere) clefInForce = measure.clefChange
       clefAtMeasure.push(clefInForce)

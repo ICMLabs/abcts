@@ -645,6 +645,16 @@ its measurements:
    time signature there, so the row now writes its `M:` first. `tests/line-head-changes.test.ts`,
    eleven rungs with abcjs's MIDI, each rule broken in turn.
 
+12. ✅ **A CHANGE ON BOTH SIDES OF A HELD BARLINE — CLOSED 2026-09-24, with two it surfaced.**
+   `[K:G]|:[K:D]CDEF|` is, in abcjs's flat stream, the line opening in G, the `|:`, and a
+   `key` D after it; ours merged the held barline's changes into the measure after it, so the
+   later change won and a different field after the barline was drawn before it
+   (`VoiceBuilder.flushClashingOpening` sends the held barline out bare). The probe then found:
+   an inline `[K: clef=]` right after a line's opening `|:` leads the MEASURE's notes though
+   not the prefix — ours drew all four notes in the old clef, **46.5px low** — and an inline
+   `[K:G]` before any music is the first staff's key, so the MIDI file's (ours wrote the
+   header's C). `tests/held-barline-changes.test.ts`, ten rungs with abcjs's MIDI.
+
 ## 4. Everything else that is measured
 
 Re-run 2026-09-23, after the abcjs 6.7.1 re-harvest and after the `unknown-clef`,

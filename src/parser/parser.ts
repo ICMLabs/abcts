@@ -2020,6 +2020,28 @@ class VoiceBuilder {
    * change written before the `|:` and one written after both precede this measure's
    * notes, so both are this measure's — and where both set the same field, the later wins.
    */
+  /**
+   * **A HELD BARLINE WITH A KEY, CLEF OR METER ON BOTH SIDES IS ITS OWN MEASURE.** abcjs's
+   * stream is flat: `[K:G]|:[K:D]CDEF|` is the line opening in G, the `|:`, and a `key` D
+   * after it. Merged into one measure the later change won and the G was never drawn —
+   * and a DIFFERENT field after it (`[K:G]|:[M:3/4]`) was drawn before the barline. So when
+   * BOTH sides carry a change, the held barline goes out bare with what was written before
+   * it, exactly as `[K:G]|[M:3/4]|` already does.
+   */
+  private flushClashingOpening(): void {
+    const held = this.pendingOpening
+    if (held === null) return
+    const c = held.changes
+    const before = c.keyChange !== null || c.clefChange !== null || c.meterChange !== null
+    const after =
+      this.pendingKeyChange !== null ||
+      this.pendingClefChange !== null ||
+      this.pendingMeterChange !== null
+    if (!before || !after) return
+    this.pendingOpening = null
+    this.pushBareBarline(held)
+  }
+
   private changesWith(held: ReturnType<VoiceBuilder['takeChanges']> | undefined) {
     const now = this.takeChanges()
     if (held === undefined) return now
@@ -2927,6 +2949,7 @@ class VoiceBuilder {
       }
       return false
     }
+    this.flushClashingOpening()
     this.measures.push({
       events: this.events,
       overlays: this.overlays,
@@ -3086,6 +3109,7 @@ class VoiceBuilder {
       return
     }
     const last = this.events[this.events.length - 1]
+    this.flushClashingOpening()
     this.measures.push({
       events: this.events,
       overlays: this.overlays,

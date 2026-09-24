@@ -519,7 +519,28 @@ export function midiFile(score: Score, options: MidiFileOptions = {}): string {
    * so the walk finds a key in every row it has. **A GUARD IS INVISIBLE TO A CORPUS THAT
    * NEVER MAKES IT FALSE.**
    */
-  const keyForFile = score.voices.length === 0 ? undefined : score.key
+  //
+  // ⚠️ **AND THE FIRST STAFF'S KEY IS NOT ALWAYS THE HEADER'S.** An inline `[K:G]` written
+  // before the first note or barline restamps the staff (`appendStartingElement` on an
+  // empty voice, `tune-builder.js:272-277`), so `K:C` then `[K:G]CDEF|` is a G tune to
+  // `getKeySignature` — ours wrote C's `%00`.
+  const first = score.voices[0]?.measures[0]
+  const firstMusic =
+    first === undefined
+      ? Number.POSITIVE_INFINITY
+      : Math.min(
+          first.openingBarlineSourceRange?.start ?? Number.POSITIVE_INFINITY,
+          ...first.events.map((e) => e.sourceRange?.start ?? Number.POSITIVE_INFINITY),
+          first.events.length === 0
+            ? (first.closingBarlineSourceRange?.start ?? Number.POSITIVE_INFINITY)
+            : Number.POSITIVE_INFINITY,
+        )
+  const leadingKey =
+    first?.keyChange != null &&
+    (first.keyChangeSourceRange?.start ?? Number.POSITIVE_INFINITY) < firstMusic
+      ? first.keyChange
+      : null
+  const keyForFile = score.voices.length === 0 ? undefined : (leadingKey ?? score.key)
   midi.setGlobalInfo(tempo, title, keyForFile, time)
 
   commands.tracks.forEach((track, i) => {
