@@ -13,12 +13,10 @@
  * Also read: `U:` user-defined symbols, `P:` part labels, `w:`/`W:` lyrics, and the
  * `clef=` / `octave=` / `middle=` / `stafflines=` / `style=` modifiers on both `K:` and
  * `V:`.
- * ponytail: DEFERRED — symbol lines (`s:`) and most `%%` directives.
+ * Symbol lines (`s:`) and abcjs's `%%` directive switch are implemented.
  * ⚖️ The header part ORDER (`P:ABAB`) was on this list and is NOT a parity item: measured
  * 2026-09-16, abcjs carries it at `metaText.partOrder` and expands nothing, which is
  * exactly what happens here. See `tests/part-order-header.test.ts`.
- * Each is a separate step driven by the corpus fixture that needs it; the lexer
- * already tokenizes all of them, so the work is parser-side only.
  */
 
 import {
@@ -374,6 +372,9 @@ function parseKeyAccidentals(content: string): KeyAccidental[] {
  * engine and both take the bass clef — the early return is unreachable for every one of
  * the 189 key spellings probed, because `standardKey` returns a truthy object rather than
  * `undefined`. What the control actually caught is the SIGNATURE: see `keyFifths`.
+ *
+ * ⏳ **STILL REQUIRED — MEASURED 2026-09-24.** The drawing agrees, but `tune.lines` does not:
+ * for `K:Cbmin` abcjs publishes `acc: ""` and we publish `acc: "b"`.
  */
 interface KeyToken {
   type: 'quote' | 'alpha' | 'number' | 'punct'
@@ -1339,6 +1340,9 @@ function shiftMeasure(measure: Measure, octaves: number): Measure {
  * ponytail: ONE STAFF PER VOICE. abcjs back-fills a staff by copying EVERY voice on it, so
  * a two-voice staff gains two voices per pass where this gains one each. Nothing in either
  * corpus writes an `&` on a shared staff; the ranked tables will say so if anything does.
+ *
+ * ⏳ **STILL REQUIRED — MEASURED 2026-09-24.** `%%score (1 2)` with `G4&EFGA` on V:1 draws the
+ * overlay's notes in different places (`zzledger` row `parser.ts:1340`).
  */
 const overlayElementFor = (event: MusicEvent): OverlayElement => {
   const range = event.sourceRange
@@ -3241,6 +3245,7 @@ class VoiceBuilder {
     //
     // ponytail: the voice's FINAL shift applies to all of its measures. A mid-body `V:`
     // that changes `octave=` partway would need this per-measure; none does.
+    // ✅ MEASURED 2026-09-24: a mid-body `V:1 octave=1` agrees (`zzledger` row `parser.ts:2615`).
     // PER MEASURE, because the tune-level `K: octave=` can change mid-tune and a voice
     // with no `octave=` of its own follows it from that point.
     const measures = this.measureShifts.some((n) => n !== 0)
@@ -3799,6 +3804,8 @@ class ScoreBuilder {
    * whole voice at a time, where abcjs engraves line 1 of every voice before line 2 of the
    * first. Upgrade path is a post-parse pass over `score.staves` and the `startsSystem`
    * boundaries, which is where the true (line, staff, voice) order lives.
+   * ✅ MEASURED 2026-09-24: a whole-voice-at-a-time tune with a mid-voice `[K: style=]`
+   * agrees (`zzledger` row `parser.ts:3798`).
    */
   private runningStyle: NoteStyle | null = null
 

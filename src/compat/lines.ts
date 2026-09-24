@@ -1492,6 +1492,8 @@ function voiceElements(
     // `[Q:]`, `%%MIDI`, `!style=!`, `%%voicecolor` and `P:` do not yet — so those six
     // element types are absent from the projection. `tests/lines.test.ts` measures which
     // characters that costs, rather than the gap being a claim.
+    // ⏳ STILL REQUIRED — MEASURED 2026-09-24: a mid-voice `%%voicecolor red` publishes abcjs's
+    // `{el_type: 'color'}` element and we publish none.
     // **A STANDALONE `K:` OR `M:` LINE IS NOT IN THE STREAM — IT RESTAMPS THE STAFF.**
     // Only the INLINE form is an element (`[K:…]`, `[M:…]`); a field on a line of its own
     // goes to `staff.key` / `staff.meter`, which is the same rule that lets `%%keywarn`

@@ -8,6 +8,22 @@
 > assume if one of them matters again.
 
 Harvested by `/ponytail-debt`. One row per deliberate shortcut.
+
+> ✅ **THIRD SWEEP, 2026-09-24 — all 56 comment-prefixed markers re-evaluated against abcjs
+> 6.7.1 live**, on the svg, `tune.lines`, warnings and MIDI. 23 new controls are in
+> `scripts/zzledger.mjs` (64 rows, 6 declared).
+> - **Closed (29)**: the prediction was measured and holds. Each marker now carries a dated
+>   `✅ MEASURED` line naming its ledger row.
+> - **Stale, rewritten (4)**: `layout.ts` cross-system curves (abcjs's own behaviour),
+>   `model.ts` text between lines (placed correctly), the `parser.ts` header's `s:`
+>   deferral (implemented), and `compat/index.ts`'s tune methods (present and gated).
+> - **Still required, measured failing (8 sites, 7 defects)**: a hairpin crossing a break and
+>   closing on a barline; an inline `[P:]` after `|:`; `K:` beside `%%text` under wrap (both
+>   orders); `K:Cbmin`'s `acc` in `tune.lines`; `&` on a shared staff; an inline `[M:]` on
+>   one voice's later line; the `%%voicecolor` element. Each marker says what differs.
+> - **Still required by design, or extended-only ceilings (14)**: unchanged.
+>
+> The rows below are the 2026-09-16 harvest and their line numbers have moved.
 **Re-harvested 2026-09-16: 53 markers**, 21 naming no trigger, 16 carrying a resolution.
 
 Two whole sections closed that day: **§A's ten were RESTATED AS DECISIONS in the code**, and

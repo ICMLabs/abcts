@@ -678,6 +678,10 @@ export function applyLineBreaks(
          * hangs `textBefore` on the measure and keeps no relative position, so the second
          * reading is assumed. Give `Measure` a source offset for the block if a fixture
          * ever writes the first.
+         *
+         * ⏳ **STILL REQUIRED — MEASURED 2026-09-24, AND BOTH ORDERS DIFFER** under
+         * `preferredMeasuresPerLine: 4` at width 400: the new key's `D` sits 3.56px right
+         * of abcjs's. `zzledger` rows `wrap.ts:675` and `wrap.ts:675b`.
          */
         if (m.keyChange !== null && (m.textBefore?.length ?? 0) === 0) runKey = m.keyChange;
       });
@@ -747,6 +751,8 @@ export function applyLineBreaks(
        * ponytail: the DECISION is still voice 0's, where abcjs asks it per staff against
        * `currentKey[s]`. Right whenever the staves share a key, which is every fixture in
        * both corpora; give `injects` a staff dimension if one ever differs.
+       * ✅ MEASURED 2026-09-24: two staves in different keys under wrap agree (`zzledger` row
+       * `wrap.ts:747`).
        */
       const owedHere = injects.get(i);
       const injected = {
@@ -879,6 +885,7 @@ export function applyLineBreaks(
      * `closingBarNumber` and no opening twin. It still COUNTS, so every drawn number is
      * right; only a number ON a `|:` is missing. Give `Measure` an `openingBarNumber` if a
      * fixture ever shows one.
+     * ✅ MEASURED 2026-09-24: a numbered `|:` under wrap agrees (`zzledger` row `wrap.ts:878`).
      */
     if (score.barNumbersDirective !== true) return { ...voice, measures };
     /**

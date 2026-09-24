@@ -124,6 +124,58 @@ const CASES = [
     `${H}K:C\n[CE]-[GE]|\n`],
   ['tie:dangling-end', 'a tie on the last note of the tune runs to the end of the line',
     `${H}K:C\nGGGG|GGGG-|\n`],
+
+  /**
+   * **THE THIRD SWEEP, 2026-09-24** — every marker re-evaluated after the line-head,
+   * meter-grammar and held-barline fixes. SVG only: `/tmp/gp/pt.mjs` compared tune.lines,
+   * warnings and MIDI too, and the markers record what those found.
+   */
+  ["layout-model.ts:737b", "a BOXED part label over two parts",
+    "X:1\n%%partsfont box\nM:4/4\nL:1/4\nK:C\nP:A\nCDEF|\nP:B\nGABc|\n"],
+  ["layout.ts:915", "the quarter-tone prefixes ^/ and _/",
+    "X:1\nM:4/4\nL:1/4\nK:C\n^/C _/D E F|\n"],
+  ["layout.ts:2316", "a tempo mark under a non-default %%scale",
+    "X:1\n%%scale 0.7\nM:4/4\nL:1/4\nQ:1/4=100\nK:C\n\"C\"CDEF|\n"],
+  ["layout.ts:6411", "a two-row chord symbol",
+    "X:1\nM:4/4\nL:1/4\nK:C\n\"C\\nG7\"CDEF|\n"],
+  ["layout.ts:6411j", "a two-row chord symbol under jazzchords",
+    "X:1\nM:4/4\nL:1/4\nK:C\n\"C7\\nGm7/Bb\"CDEF|\n", { jazzchords: true }],
+  ["layout.ts:7329", "a hairpin crossing a break and closing on a BARLINE",
+    "X:1\nM:4/4\nL:1/4\nK:C\n!crescendo(!CDEF|\ndefg!crescendo)!|\n"],
+  ["layout.ts:7329b", "\u2026and closing on a NOTE, which agrees",
+    "X:1\nM:4/4\nL:1/4\nK:C\n!crescendo(!CDEF|\nGAB!crescendo)!c|\n"],
+  ["layout.ts:9381", "a slur over up-stems on a shared staff",
+    "X:1\nM:4/4\nL:1/4\n%%score (1 2)\nV:1\nV:2\nK:C\nV:1\n(CDEF)|\nV:2\nC,D,E,F,|\n"],
+  ["layout.ts:9381b", "a slur over MIXED stems",
+    "X:1\nM:4/4\nL:1/4\nK:C\n(CcC)D|\n"],
+  ["layout.ts:10442", "beamed tuplets high above the staff",
+    "X:1\nM:4/4\nL:1/8\nK:C\n(3c'd'e' (3f'g'a' b'4|\n"],
+  ["layout.ts:10442b", "\u2026and low below it",
+    "X:1\nM:4/4\nL:1/8\nK:C\n(3C,D,E, (3F,G,A, B,4|\n"],
+  ["layout.ts:15472", "unequal-length voices ending ||",
+    "X:1\nM:4/4\nL:1/4\n%%score (1 2)\nV:1\nV:2\nK:C\nV:1\nCDEF|GABc||\nV:2\nC,4||\n"],
+  ["layout.ts:16686", "a %%voicecolor mid-voice",
+    "X:1\nM:4/4\nL:1/4\nV:1\nK:C\nV:1\nCDEF|\n%%voicecolor red\nGABc|\n"],
+  ["layout.ts:21052", "an inline [P:] straight after |:",
+    "X:1\nM:4/4\nL:1/4\nK:C\n|:[P:A]CDEF|1 GABc:|2 cdef|]\n"],
+  ["layout.ts:21052b", "an ending with an inline [Q:]",
+    "X:1\nM:4/4\nL:1/4\nK:C\n|:CDEF|1 [Q:1/4=90]GABc:|2 cdef|]\n"],
+  ["wrap.ts:675", "a K: change then %%text, under wrap",
+    "X:1\nM:4/4\nL:1/4\nK:C\nCDEF|GABc|\nK:D\n%%text hello\ndefg|abc'd'|\n", { wrap: { minSpacing: 1.8, maxSpacing: 2.7, preferredMeasuresPerLine: 4 }, staffwidth: 400 }],
+  ["wrap.ts:675b", "%%text then a K: change, under wrap",
+    "X:1\nM:4/4\nL:1/4\nK:C\nCDEF|GABc|\n%%text hello\nK:D\ndefg|abc'd'|\n", { wrap: { minSpacing: 1.8, maxSpacing: 2.7, preferredMeasuresPerLine: 4 }, staffwidth: 400 }],
+  ["wrap.ts:747", "staves in different keys, under wrap",
+    "X:1\nM:4/4\nL:1/4\n%%score 1 2\nV:1\nV:2\nK:C\nV:1\nCDEF|GABc|cdef|gabc'|\nV:2\n[K:D]C,D,E,F,|G,A,B,C|CDEF|GABc|\n", { wrap: { minSpacing: 1.8, maxSpacing: 2.7, preferredMeasuresPerLine: 2 }, staffwidth: 400 }],
+  ["wrap.ts:878", "a bar number on a |:, under wrap",
+    "X:1\n%%barnumbers 1\nM:4/4\nL:1/4\nK:C\nCDEF|GABc|:cdef|gabc':|CDEF|GABc|\n", { wrap: { minSpacing: 1.8, maxSpacing: 2.7, preferredMeasuresPerLine: 2 }, staffwidth: 400 }],
+  ["parser.ts:3798", "[K: style=] reaching a whole voice",
+    "X:1\nM:4/4\nL:1/4\nV:1\nV:2\nK:C\nV:1\nCDEF|\n[K:C style=x]GABc|\nV:2\nC,D,E,F,|\nG,A,B,C|\n"],
+  ["flatten.ts:1892", "an inline [M:] on voice 0\u2019s later line only",
+    "X:1\nM:4/4\nL:1/4\nV:1\nV:2\nK:C\nV:1\nCDEF|\nV:2\nC,D,E,F,|\nV:1\n[M:3/4]GAB|\nV:2\nG,A,B,|\n"],
+  ["parser.ts:1340", "an & overlay on the FIRST voice of a shared staff",
+    "X:1\nM:4/4\nL:1/4\n%%score (1 2)\nV:1\nV:2\nK:C\nV:1\nCDEF|G4&EFGA|\nV:2\nC,4|C,4|\n"],
+  ["model.ts:2178", "a FILE-header %%landscape over two tunes",
+    "%%landscape 1\n\nX:1\nK:C\nC|\n\nX:2\nK:C\nD|\n"],
 ]
 
 const engine = process.env.ENGINE === 'chrome'
@@ -175,14 +227,22 @@ const KNOWN = new Map([
   // `Note.extraVerseMelismaStarts`, set in `applyLyrics`, read by the drawing and by the
   // compat emitter — whose zip happens BEFORE the dense filter, since an entry's index is
   // not its verse's.
+  // ⏳ OPEN, 2026-09-24 — the third sweep's six SVG-visible divergences, each still carrying
+  // its `ponytail:` with the measurement written at the marker.
+  ['layout.ts:7329', 'OPEN: a hairpin crossing a break and closing on a barline — abcjs is 27px taller'],
+  ['layout.ts:21052', 'OPEN: an inline [P:] straight after |: — our svg width reads 700.96'],
+  ['wrap.ts:675', 'OPEN: K: change beside %%text under wrap — the new key sits 3.56px right'],
+  ['wrap.ts:675b', 'OPEN: the same, text first'],
+  ['parser.ts:1340', 'OPEN: an & overlay on a shared staff draws its notes elsewhere'],
+  ['flatten.ts:1892', 'OPEN: inline [M:] on one voice’s later line — drawing, lines and MIDI all differ'],
 ])
 
 const rows = []
 let differ = 0
 let unexpected = 0
 let stale = 0
-for (const [marker, claim, abc] of CASES) {
-  const r = await page.evaluate((abc) => {
+for (const [marker, claim, abc, opts] of CASES) {
+  const r = await page.evaluate(([abc, opts]) => {
     const render = (API) => {
       try {
         const d = document.createElement('div')
@@ -190,7 +250,7 @@ for (const [marker, claim, abc] of CASES) {
         // visibility, NOT display — see zzlive: getBBox() answers 0 in a display:none tree.
         d.style.visibility = 'hidden'
         document.body.appendChild(d)
-        API.renderAbc([d], abc, { staffwidth: 670 })
+        API.renderAbc([d], abc, { staffwidth: 670, ...opts })
         const svg = d.querySelector('svg')
         const s = svg ? svg.outerHTML : 'NO SVG'
         d.remove()
@@ -198,7 +258,7 @@ for (const [marker, claim, abc] of CASES) {
       } catch (e) { return 'THREW: ' + e.message }
     }
     return { js: render(window.ABCJS), ts: render(window.ABCTS) }
-  }, abc)
+  }, [abc, opts])
   if (r.js === r.ts) {
     if (KNOWN.has(marker)) { stale += 1; rows.push(`  STALE    ${marker.padEnd(20)} agrees now — drop it from KNOWN`) }
     else rows.push(`  agrees   ${marker.padEnd(20)} ${claim}`)

@@ -802,9 +802,9 @@ const abcjsMeter = (score: Score): AbcjsMeter =>
 /**
  * What `renderAbc` hands back, per tune.
  *
- * ponytail: abcjs's tune object also carries audio and timing methods (`setUpAudio`,
+ * abcjs's tune object also carries audio and timing methods (`setUpAudio`,
  * `millisecondsPerMeasure`, `getTotalTime`) and an `engraver` for its drag interaction.
- * None of them is faked — a stub returning plausible numbers would be worse than an absent
+ * Nothing is faked — a stub returning plausible numbers would be worse than an absent
  * method, which at least fails loudly.
  *
  * **THE AUDIO HALF OF THAT IS NO LONGER A CAPABILITY GAP.** `setUpAudio`'s answer exists —

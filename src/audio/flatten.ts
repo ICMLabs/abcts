@@ -1596,6 +1596,8 @@ function spliceDrumIntro(
  * STAFF — `staff.voices.push(ov.voice)` — so a two-staff tune where only the second staff
  * has an overlay numbers its tracks differently from this. Nothing in the corpus does it,
  * and the ranked table will say so if anything ever does.
+ * ✅ MEASURED 2026-09-24: an overlay on the SECOND staff only agrees on the svg,
+ * `tune.lines`, warnings and MIDI.
  */
 function overlayVoices(voices: readonly Voice[]): Voice[] {
   const out: Voice[] = []
@@ -1891,6 +1893,10 @@ export function flattenAudio(
    *
    * ponytail: read voice-major where abcjs reads line-major, so a tune whose LAST line
    * changes meter on voice 0 and not on voice 1 differs. Nothing states one anywhere.
+   *
+   * ⏳ **STILL REQUIRED — MEASURED 2026-09-24, AND WIDER THAN THIS.** `[M:3/4]` on V:1's second
+   * line alone differs in the DRAWING and `tune.lines` as well as here (`zzledger` row
+   * `flatten.ts:1892`), so the fix starts in the parser, not in this reader.
    *
    * ⚠️ **A CONTROL WAS WRITTEN FOR THIS AND IS MUTE — 2026-09-12.** The shape the marker
    * names was built (`V1` changing meter on the last line, `V2` changed earlier and not

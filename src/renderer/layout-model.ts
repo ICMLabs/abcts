@@ -738,6 +738,8 @@ export interface PlacedText {
    * pad`. They are the same double for every row in either corpus — `index` is 0 and there
    * is no box — and differ in the last bits for a boxed multi-row block. Split it if one
    * turns up.
+   * ✅ MEASURED 2026-09-24: a boxed `%%partsfont` over two parts and a boxed two-row chord
+   * symbol both agree byte for byte (`zzledger` row `layout-model.ts:737b`).
    */
   readonly advanceAt?: number
   readonly rowExtra?: number

@@ -2176,6 +2176,8 @@ export interface Score {
    * (`abc_parse.js:579-594`): letter 612×792, legal 612×1008, A4 597.6×842.4, swapped by
    * `landscape`. Nothing in the drawing reads them.
    * ponytail: not carried from a FILE header to each tune the way `measurements` is.
+   * ✅ MEASURED 2026-09-24: a file-header `%%papersize A4` and `%%landscape 1` reach every
+   * tune's page size in both engines (`zzledger` row `model.ts:2178`).
    */
   readonly papersize?: string
   readonly landscape?: boolean
@@ -2410,9 +2412,8 @@ export interface Score {
    * The same standing AFTER the music. As well as being drawn, these make the last music
    * line no longer the LAST line, so abcjs justifies it like any other.
    *
-   * ponytail: free text BETWEEN two music lines lands here too. No fixture does it, and
-   * placing it properly needs free text to be a line in its own right rather than a
-   * property of the tune.
+   * Free text BETWEEN two music lines does not land here — it is placed where it is
+   * written, byte-identical to abcjs (`scripts/zzledger.mjs`, `model.ts:2003`).
    */
   readonly textBelow: readonly FreeTextBlock[]
   /**

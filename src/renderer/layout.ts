@@ -915,6 +915,7 @@ export const ENGRAVE = {
  * ponytail: the quarter-tone prefixes `_/` and `^/` are in abcjs's `accMap` and not here,
  * because `Accidental` is a whole-semitone enum. Strict draws nothing for a three-quarter
  * tone anyway — see `Docs/ABCJS-DIFFERENCES.md`.
+ * ✅ MEASURED 2026-09-24: `^/C _/D` agrees byte for byte (`zzledger` row `layout.ts:915`).
  */
 const ABCJS_ACCIDENTAL_PREFIX: Readonly<Record<number, string>> = {
   [-2]: '__',
@@ -2316,6 +2317,8 @@ function layoutTempo(
      * ponytail: the x is in LAYOUT units and the emitter scales by `OUT` — 1 for every
      * default host, and the whole effect is one sub-pixel, so a non-default `%%scale`
      * measures at an x off by that factor. Thread `OUT` in if one ever matters.
+     * ✅ MEASURED 2026-09-24: `%%scale 0.7` with a tempo mark agrees byte for byte
+     * (`zzledger` row `layout.ts:2316`).
      */
     const preWidth = textWidth(tempo.text, tempoSize, tempoTextFont, drawAt(cursor), provisional)
     cursor += preWidth + preWidth / Math.max(1, tempo.text.length)
@@ -2432,6 +2435,8 @@ function layoutTempo(
        * `ABCJS-DIFFERENCES.md` and gated by the ledger sweep; reproducing it means the
        * error colour as well as the missing flag, which is a bigger port than "drop a
        * flag" and is why it is written down rather than guessed at.
+       * ✅ PORTED 2026-09-09 as `tempoNoteGlyph`, error colour and all; `Q:3/32=60`
+       * agrees byte for byte (2026-09-24).
        */
       let right = headAdvance
       /**
@@ -6410,6 +6415,9 @@ const fontHeightOf = (type: AbcFontType, text?: string): number => {
  *
  * ponytail: one line, where abcjs splits on `\n` first. Our chord symbols carry no
  * newline; a multi-line one would need the loop.
+ * ✅ MEASURED 2026-09-24: a two-row chord symbol agrees, plain and under `jazzchords`
+ * (`zzledger` rows `layout.ts:6411`/`6411j`). A two-row ANNOTATION (`"^top\nbottom"`)
+ * is 1.19px too tall — a separate defect, not this marker's.
  */
 /**
  * A `"…"` annotation's PLACEMENT, and the coordinates of an absolute one.
@@ -7329,6 +7337,10 @@ function noteText(
  * ponytail: a run that crosses a system break is truncated at the edge, because anchors
  * arrive already filtered to one system. v1 draws a stub and resumes on the next; worth
  * doing when a fixture needs it.
+ *
+ * ⏳ **STILL REQUIRED — MEASURED 2026-09-24.** A crescendo that crosses a break and closes on a
+ * note agrees; one that closes on a BARLINE (`!crescendo(!CDEF|\ndefg!crescendo)!|`)
+ * leaves abcjs's svg 27px taller (214.07 against 186.95). `zzledger` row `layout.ts:7329`.
  */
 /**
  * Spanning decorations: hairpins and glissandi.
@@ -7348,6 +7360,7 @@ function noteText(
  * resolving after the whole tune is packed; hairpins can move to that machinery when a
  * fixture needs it. **MEASURED: `abcts-ledger-gaps-4` tune 1 spans one and is byte-exact,
  * because abcjs drops it too** — its `crescendo` element is per LINE like the tie's.
+ * ⏳ Except when the close sits on a barline — see the marker above (2026-09-24).
  */
 const SPANNER_OPEN: Readonly<Record<string, 'crescendo' | 'diminuendo' | 'glissando'>> = {
   '<(': 'crescendo',
@@ -8468,17 +8481,9 @@ function curveIsAbove(
  * nest, so `slurStarts` and `slurEnds` are COUNTS and matching them needs a stack —
  * `((AB)C)` has two slurs opening on the same note and they close in reverse.
  *
- * ponytail: a curve whose ends fall in different SYSTEMS is dropped rather than drawn
- * wrong. Engraving splits it in two, one piece running to the end of the first system
- * and another from the start of the next; that needs the halves laid out separately and
- * is a slice of its own. `vree-ties-across-bars` ties across a BARLINE, which is fine —
- * only a system break drops one.
- *
- * ✅ **MEASURED 2026-09-08 AND IT COSTS NOTHING: abcjs DROPS IT TOO.** A slur opening on
- * system 1 and closing on system 4 is byte-identical in both engines
- * (`scripts/zzledger.mjs`). Same answer the hairpin got from the other side — abcjs's
- * `crescendo` and its curve are both per LINE. The prediction stands; the shortcut is
- * abcjs's behaviour rather than ours.
+ * A curve whose ends fall in different SYSTEMS is abcjs's own per-LINE behaviour, not a
+ * shortcut: a slur over two systems, and one from system 1 to system 4, are both
+ * byte-identical in both engines (`scripts/zzledger.mjs`, 2026-09-08 and 2026-09-24).
  */
 function layoutCurves(
   strict: boolean,
@@ -9381,6 +9386,8 @@ function layoutCurves(
  * ponytail: `startY`/`endY` are the anchor pitches, which is `calcSlurY`'s `else` branch.
  * An ABOVE slur between two up-stem notes reads the middle of the stem instead; that
  * side is inside the notes' own ink in every corpus fixture, so it never binds.
+ * ✅ MEASURED 2026-09-24: a slur over up-stems on a shared staff, and one over mixed
+ * stems, agree (`zzledger` rows `layout.ts:9381`/`9381b`).
  */
 
 function curveReserves(
@@ -9548,6 +9555,7 @@ function curveReserves(
    * ponytail: `(highestVert + pitch) / 2`, the half-way-up-the-stem case for an above end
    * on an up-stem note, is not reproduced. Probed, `highestVert` IS the anchor pitch on
    * every binding curve here, so the average is the pitch and the branch is a no-op.
+   * ✅ MEASURED 2026-09-24 by the same two controls as the marker above.
    */
   // RESOLVED ONCE, onto the anchor, so the DRAWING can read the same answer — see
   // `NoteAnchor.slurFixed` and `slurEndY`. This is the only place with the final elements.
@@ -10443,6 +10451,8 @@ function layoutTuplets(
      * beam's own two pitches where ours samples the drawn line and undoes half its
      * thickness — a length with no pitch of its own — so that arm keeps the division. No
      * fixture in either corpus reaches the extent through a beamed tuplet.
+     * ✅ MEASURED 2026-09-24: beamed tuplets high above and low below the staff agree
+     * (`zzledger` rows `layout.ts:10442`/`10442b`).
      */
     reserves.push({
       top: y - ENGRAVE.spacePerStep,
@@ -15237,6 +15247,7 @@ function layoutScoped(input: Score, options: LayoutOptions = {}): Layout {
      * so no voice's `getNextX` is greater than the cursor and `spacingunit` stays 0.
      * Measured on `voice-middle-after-clef`: `minSpace=0`. `spacing * 0 > 50` is never true,
      * so the guard is inert in abcjs itself and implementing it would be a divergence.
+     * ✅ DECIDED — re-checked 2026-09-24; the reasoning above is a measurement, not a deferral.
      */
     const target = pageWidth + PAGE_PADDING.left
     // Trailing `%%center` text means the music is no longer the LAST LINE of the tune, so
@@ -15474,6 +15485,8 @@ function layoutScoped(input: Score, options: LayoutOptions = {}): Layout {
      * that one rule. They part on a `|]` (two rules, one of which would stay behind) and
      * on a bar carrying a number — abcjs would deform it and we translate it. No fixture
      * writes an unequal-length voice ending in either; widen this when one does.
+     * ✅ MEASURED 2026-09-24: unequal-length voices ending `|]` and `||` both agree
+     * (`zzledger` rows `layout.ts:13829` and `layout.ts:15472`).
      */
     const lastBarNudge: ({ block: number; index: number; dx: number } | undefined)[] = []
     ;(() => {
@@ -16686,6 +16699,8 @@ function layoutScoped(input: Score, options: LayoutOptions = {}): Layout {
        * ponytail: "the line that carries it" is read as SYSTEM 0, which is where a
        * `%%voicecolor` at the head of a voice lands. A directive written mid-tune belongs
        * to whichever output line holds its offset; no fixture in either corpus writes one.
+       * ✅ MEASURED 2026-09-24: a mid-voice `%%voicecolor` draws byte for byte (`zzledger` row
+       * `layout.ts:16686`). Its `tune.lines` element is still absent — see `lines.ts`.
        */
       const wrapLostColor =
         systemIndex > 0 &&
@@ -18914,6 +18929,8 @@ function appendFreeText(
       // ponytail: one spend for the block, where abcjs builds one `Subtitle` per line. A
       // mid-tune `T:` block is one line — the header's subtitles take `advanceText` — so
       // the two agree; spend per line if a block ever carries two.
+      // ✅ MEASURED 2026-09-24: a two-line mid-tune `T:` block agrees (`zzledger` row
+      // `layout.ts:16725`).
       spend(
         textHeight(size, block.lines[0], fontOfType(fonts, 'subtitlefont', size)) +
           boxOf('subtitlefont'),
@@ -21056,6 +21073,10 @@ function anchorBelowStaff<
  * moving the ending into `anchorAboveStaff`'s stack and un-spending it here, which is a
  * genuine refactor of the most regression-prone code in the file; this gets the common case
  * exact without touching it.
+ *
+ * ⏳ **STILL REQUIRED — MEASURED 2026-09-24.** The P:-field and inline-[Q:] shapes agree; an
+ * inline `[P:A]` straight after `|:` does not — our svg width reads 700.96 where abcjs's
+ * is 700. `zzledger` row `layout.ts:21052`.
  */
 /**
  * A REST GETS OUT OF THE OTHER VOICE'S WAY — abcjs's `fixVoiceCollisions`.
