@@ -657,7 +657,16 @@ export function applyLineBreaks(
          */
         const opensNow =
           i === 0 ? m.startsSystem === true : opensHere.has(i) || sectionStarts.includes(i);
-        if (opensNow && i > 0) headKeys.set(i, runKey);
+        // …**BUT A SECTION THE WRAP NEVER MERGED OPENS AS IF THERE WERE NO WRAP** — its line
+        // was not `deline`d into the one above, so its head is `params.key` with the `K:`
+        // included, and the line above still ends in the cautionary. No carried head key at
+        // all, then. MEASURED 2026-09-24 over `%%text`, `%%sep` and `%%center`, in both
+        // orders. Only a SUBTITLE keeps the carried key — `x11`, below.
+        const ownKey =
+          sectionStarts.includes(i) &&
+          m.keyChange !== null &&
+          !(m.textBefore ?? []).some((b) => b.role === "subtitle");
+        if (opensNow && i > 0 && !ownKey) headKeys.set(i, runKey);
         /**
          * ⭐ **AND THE CARRIED KEY IS THE LAST ONE ALLOWED INTO THE STREAM, NOT THE ONE IN
          * FORCE.** `lastKeySig` is taken from the last key ELEMENT of the line just
@@ -667,23 +676,15 @@ export function applyLineBreaks(
          * because the current row is the SUBTITLE and has no staff (`tune-builder.js:255`),
          * so `x11`'s `K:D` reaches `multilineVars.key` and nothing else.
          *
-         * ⚠️ **ANY non-music row does it, not only a subtitle** — a `%%text`, a `%%sep` and
-         * a `%%newpage` all leave `tune.lines[lineNum]` without a staff — which is why the
-         * test is the same `textBefore` one `sectionStarts` uses rather than
-         * `subtitleLeads`.
-         *
-         * ponytail: this cannot see the ORDER of the block and the `K:`. Written
-         * `K:D` / `%%text` / music the field lands on the previous music line's voice and
-         * DOES publish an element; written `%%text` / `K:D` / music it does not. The model
-         * hangs `textBefore` on the measure and keeps no relative position, so the second
-         * reading is assumed. Give `Measure` a source offset for the block if a fixture
-         * ever writes the first.
-         *
-         * ⏳ **STILL REQUIRED — MEASURED 2026-09-24, AND BOTH ORDERS DIFFER** under
-         * `preferredMeasuresPerLine: 4` at width 400: the new key's `D` sits 3.56px right
-         * of abcjs's. `zzledger` rows `wrap.ts:675` and `wrap.ts:675b`.
+         * ⚠️ **ONLY A SUBTITLE DOES IT — CORRECTED 2026-09-24.** This said "any non-music row",
+         * `%%text`, `%%sep` and `%%newpage` included, and the ponytail below it said the order
+         * of the block and the `K:` could not be seen. Both were inferences. Measured under
+         * wrap over `%%text`, `%%sep` and `%%center`, the `K:` written before the row AND
+         * after it: abcjs draws the cautionary and opens the next line in the new key every
+         * time, exactly as with no wrap. `T:` is the one row that keeps the carried key.
          */
-        if (m.keyChange !== null && (m.textBefore?.length ?? 0) === 0) runKey = m.keyChange;
+        if (m.keyChange !== null && !(m.textBefore ?? []).some((b) => b.role === "subtitle"))
+          runKey = m.keyChange;
       });
     }
     const measures = voice.measures.map((m, i) => {

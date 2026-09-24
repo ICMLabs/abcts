@@ -186,6 +186,10 @@ const CASES = [
     "X:1\nM:4/4\nL:1/4\nK:C\nCDEF|\n|:[P:A][K:D]CDEF|GABc:|\n"],
   ["hairpin:open-on-last-bar", "a hairpin opened on a line's last bar is a zero-length pair",
     "X:1\nM:4/4\nL:1/4\nK:C\nCDEF!crescendo(!|\ndefg|\n"],
+  ["wrap.ts:675c", "a K: after %%sep in a section that wraps onto a second line",
+    "X:1\nM:4/4\nL:1/4\nK:C\nCDEF|GABc|\n%%sep\nK:D\ndefg|abc'd'|defg|abc'd'|defg|abc'd'|\n", { wrap: { minSpacing: 1.8, maxSpacing: 2.7, preferredMeasuresPerLine: 2 }, staffwidth: 400 }],
+  ["wrap.ts:675d", "…and after a subtitle, which keeps the carried key",
+    "X:1\nM:4/4\nL:1/4\nK:C\nCDEF|GABc|\nT:Sub\nK:D\ndefg|abc'd'|defg|abc'd'|defg|abc'd'|\n", { wrap: { minSpacing: 1.8, maxSpacing: 2.7, preferredMeasuresPerLine: 2 }, staffwidth: 400 }],
   ["model.ts:2178", "a FILE-header %%landscape over two tunes",
     "%%landscape 1\n\nX:1\nK:C\nC|\n\nX:2\nK:C\nD|\n"],
 ]
@@ -241,8 +245,6 @@ const KNOWN = new Map([
   // not its verse's.
   // ⏳ OPEN, 2026-09-24 — the third sweep's six SVG-visible divergences, each still carrying
   // its `ponytail:` with the measurement written at the marker.
-  ['wrap.ts:675', 'OPEN: K: change beside %%text under wrap — the new key sits 3.56px right'],
-  ['wrap.ts:675b', 'OPEN: the same, text first'],
   ['parser.ts:1340', 'OPEN: an & overlay on a shared staff draws its notes elsewhere'],
   ['flatten.ts:1892', 'OPEN: inline [M:] on one voice’s later line — drawing, lines and MIDI all differ'],
 ])
