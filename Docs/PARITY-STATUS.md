@@ -655,6 +655,13 @@ its measurements:
    `[K:G]` before any music is the first staff's key, so the MIDI file's (ours wrote the
    header's C). `tests/held-barline-changes.test.ts`, ten rungs with abcjs's MIDI.
 
+13. ⚖️ **THE LAST TWO `wrap + staffwidth` ROWS ARE abcjs's DEBUG TEXT — RULED 2026-09-24.**
+   Both fixtures put a font directive at the head of a source line; wrapped, abcjs merges the
+   lines, the directive becomes a mid-line `font` element its engraver has no case for, and
+   the `default` arm draws an `unsupported` group reading `element type font`
+   (`abstract-engraver.js:380-383`) — the only element that differs. With the two abcjs
+   crashes, all four declared rows of that gate are now abcjs's own failures.
+
 ## 4. Everything else that is measured
 
 Re-run 2026-09-23, after the abcjs 6.7.1 re-harvest and after the `unknown-clef`,

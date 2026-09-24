@@ -1207,6 +1207,15 @@ const OPTIONS = [
    *    3  GEOMETRY ONLY, same element kinds throughout:
    *       `text-udef-parts-overlays-tune8` and `-tune46`, `vskip-tune1`.
    *
+   * ⚖️ **AND THE OTHER TWO ARE abcjs's DEBUG TEXT, NOT US — ruled 2026-09-24.**
+   * `abcjs-visual-tablature-17-stretchlast` and `abcts-model-gaps-tune7` both put a font
+   * directive at the head of a SOURCE line. Wrapped, abcjs merges the lines and re-parses,
+   * so the directive lands mid-line as a `font` ELEMENT — and its engraver has no case for
+   * that type, so the `default` arm draws an `unsupported` group carrying the debug text
+   * `element type font` (`abstract-engraver.js:380-383`), one per change: four on
+   * tablature-17, one on model-gaps tune 7 (whose third tune-in-the-book index is `X:8`).
+   * Measured: that group is the only element that differs. The same ruling as the red
+   * debug string on an over-breve note — we do not draw an internal error as music.
    * ⚠️ **AND TWO OF THE 4 ARE abcjs CRASHING, NOT US.** `abcts-vskip` tunes 0 and 2 throw
    * inside abcjs's own `wrapLines` — `undefined is not an object (evaluating 'l[p]')` —
    * because `addLineBreaks` reads `lines[action.ogLine].staff[action.staff]` on a row a
