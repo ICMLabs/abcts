@@ -1688,7 +1688,8 @@ class VoiceBuilder {
   private readonly symbolLines: { start: number; syllables: Syllable[] }[] = []
 
   constructor(
-    readonly id: string,
+    /** Renamed once, by `ScoreBuilder.declareVoice` — see `adoptImplicitVoice`. */
+    public id: string,
     /** The score's shared box of blocks waiting for the next system — see `ScoreBuilder`. */
     private readonly pendingTextBefore: { blocks: FreeTextBlock[] } = { blocks: [] },
     /** The tune-level `K: octave=`, shared and mutable — see `octaveShift`. */
@@ -1787,19 +1788,26 @@ class VoiceBuilder {
   }
 
   /** A mid-tune `K:… clef=` or `[K: bass]`. Delta, like the key change. */
+  /** The clef the last `V:` gave this voice — see the `V:` arm. */
+  lastVoiceClef: Clef | null = null
+
   setClefChange(
     clef: Clef,
     range: SourceRange | null = null,
     inline = false,
     /** No clef NAME was written, so nothing is drawn — see `Measure.clefChangeSilent`. */
     silent = false,
+    /** A `V:` wrote it — see `Measure.clefChangeFromVoice`. */
+    fromVoice = false,
   ): void {
+    this.pendingClefChangeFromVoice = fromVoice
     this.pendingClefChange = clef
     this.pendingClefChangeRange = range
     this.pendingClefChangeInline = inline
     this.pendingClefChangeSilent = silent
   }
   private pendingClefChangeSilent = false
+  private pendingClefChangeFromVoice = false
 
   /**
    * A `%%MIDI` written INSIDE the music — an element in the stream, not a tune setting.
@@ -1889,6 +1897,7 @@ class VoiceBuilder {
       clefChangeSourceRange: this.pendingClefChangeRange,
       ...(this.pendingClefChangeInline ? { clefChangeInline: true } : {}),
       ...(this.pendingClefChangeSilent ? { clefChangeSilent: true } : {}),
+      ...(this.pendingClefChangeFromVoice ? { clefChangeFromVoice: true as const } : {}),
       tempoChange: this.pendingTempoChange,
       tempoChangeSourceRange: this.pendingTempoChangeRange,
       ...(this.pendingMidi.length > 0 ? { midiCommands: this.pendingMidi } : {}),
@@ -1913,6 +1922,7 @@ class VoiceBuilder {
     this.pendingClefChangeRange = null
     this.pendingClefChangeInline = false
     this.pendingClefChangeSilent = false
+    this.pendingClefChangeFromVoice = false
     this.pendingTempoChange = null
     this.pendingTempoChangeRange = null
     this.pendingMidi = []
@@ -2150,8 +2160,23 @@ class VoiceBuilder {
    * `[V:T]c|[V:B]A|[V:T]d|` is one source line and TWO printed systems because of it —
    * T's `d` cannot share a line with its own `c`.
    */
+  /**
+   * Whether this voice holds anything on the current line — `setCurrentVoice`'s "line full"
+   * test is an ELEMENT, not a finished measure. ⚠️ `wroteSinceLineStart` alone turns true
+   * only when a measure CLOSES, so `AB[V:1]cd` switched inside the line's first measure and
+   * opened nothing, where abcjs puts `A B` and `c d` on two lines.
+   */
+  private get hasLineContent(): boolean {
+    return (
+      this.wroteSinceLineStart ||
+      this.events.length > 0 ||
+      this.overlays.length > 0 ||
+      this.pendingOpening !== null
+    )
+  }
+
   switchedTo(): void {
-    if (this.wroteSinceLineStart) this.beginMusicLine()
+    if (this.hasLineContent) this.beginMusicLine()
   }
 
   /**
@@ -2177,7 +2202,7 @@ class VoiceBuilder {
    * the other.
    */
   inlineVoiceField(continued: boolean): void {
-    if (continued || !this.wroteSinceLineStart) return
+    if (continued || !this.hasLineContent) return
     this.beginMusicLine()
   }
 
@@ -3550,7 +3575,32 @@ class ScoreBuilder {
     this.captureVoiceLine(this.voiceFor(id), true)
   }
 
+  /**
+   * **MUSIC WRITTEN BEFORE THE FIRST `V:` IS THAT VOICE.** abcjs gives the implicit voice no
+   * entry in `multilineVars.voices`, so the first body `V:` naming a NEW id is handed staff
+   * 0 and voice 0 — the very slot the implicit music is in — and `setCurrentVoice` then
+   * finds that line full and opens the next (`abc_parse_key_voice.js:526-560`). So
+   * `CDEF| / V:2 / GABc|` is ONE voice of two systems, and ours made a second voice of the
+   * `V:2` and drew the two as simultaneous staves: different music, sounding different.
+   *
+   * A header `V:` has already named a voice, and a `V:` that names the default id is the
+   * same voice anyway — neither reaches here.
+   */
+  private adoptImplicitVoice(id: string): void {
+    if (!this.bodyStarted || this.voiceSelected || this.voices.has(id) || this.voices.size !== 1)
+      return
+    const implicit = this.voices.get(DEFAULT_VOICE_ID)
+    if (implicit === undefined || implicit.explicit || implicit.isEmpty) return
+    this.voices.delete(DEFAULT_VOICE_ID)
+    implicit.id = id
+    this.voices.set(id, implicit)
+    if (this.barNumbering.firstVoiceId === DEFAULT_VOICE_ID) this.barNumbering.firstVoiceId = id
+    if (this.currentVoiceId === DEFAULT_VOICE_ID) this.currentVoiceId = id
+    if (this.lastVoiceId === DEFAULT_VOICE_ID) this.lastVoiceId = id
+  }
+
   declareVoice(id: string, merge = false): void {
+    this.adoptImplicitVoice(id)
     const isFirst = this.voices.size === 0
     this.declaredVoiceId = id
     this.voiceFor(id).explicit = true
@@ -5544,10 +5594,24 @@ class Parser {
          * of the `K:` path, and an inference on the `V:` one.
          */
         const zeroDropped = /\bstafflines=0\b/i.test(value)
-        if (voiceClef !== null)
-          builder.voiceFor(id).clef = zeroDropped
-            ? { ...voiceClef, staffLines: DEFAULT_STAFF_LINES }
-            : voiceClef
+        if (voiceClef !== null) {
+          const clef = zeroDropped ? { ...voiceClef, staffLines: DEFAULT_STAFF_LINES } : voiceClef
+          const target = builder.voiceFor(id)
+          /**
+           * ⚠️ **A LATER `V:` CHANGES THE CLEF FROM HERE, NOT FROM THE BEGINNING.** It writes
+           * the STAFF's clef, which the next line opens in (`abc_parse_key_voice.js`'s
+           * `staves[staffNum].clef`, read by `startNewLine`). Ours set the VOICE's clef, so
+           * `V:1 / CDEF| / V:1 clef=bass / C,D,E,F,|` redrew the first line in bass as well —
+           * a part that moves to tenor clef rewrote everything before the move. A voice that
+           * already holds music takes a pending CHANGE; the same clef again is no change.
+           */
+          if (builder.bodyStarted && !target.isEmpty) {
+            const was = target.lastVoiceClef ?? target.clef ?? builder.clef
+            if (JSON.stringify(was) !== JSON.stringify(clef))
+              target.setClefChange(clef, range, inline, false, true)
+          } else target.clef = clef
+          target.lastVoiceClef = clef
+        }
         const bare = zeroDropped ? null : bareStaffLines(value)
         if (bare !== null) builder.voiceFor(id).staffLineOverride = bare
         const stems = stemModifier(value)

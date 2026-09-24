@@ -596,10 +596,23 @@ its measurements:
    `\`, ours publishes line 2's staff as `[["note44 bar45", ""]]` where abcjs has one voice.
    `corpus-lines` compares element SPANS and cannot see an empty voice; the `\r\n` sweep kept
    the structure, and found it in LF as well.
-10. **MUSIC BEFORE THE FIRST `V:` IS THAT VOICE — MEASURED, NOT BUILT.** `CDEF| / V:2 / GABc|`
-   is ONE voice of two systems to abcjs — the implicit voice has no entry in
-   `multilineVars.voices`, so the first `V:` takes staff 0 — and two simultaneous staves
-   here: different music, and it sounds different.
+10. ✅ **MUSIC BEFORE THE FIRST `V:` IS THAT VOICE — CLOSED 2026-09-24, WITH TWO DEFECTS
+   BEHIND IT.** abcjs gives the implicit voice no entry in `multilineVars.voices`, so the first
+   body `V:` naming a NEW id takes staff 0 / voice 0 — the implicit music's own slot — and its
+   line scan opens the next line (`abc_parse_key_voice.js:526-560`). `CDEF| / V:2 / GABc|` is
+   ONE voice of two systems; ours drew two simultaneous staves — different music, sounding
+   different. `ScoreBuilder.adoptImplicitVoice`. And the scan's "line full" is an ELEMENT, not
+   a closed measure, so `AB[V:1]cd` and a `\`-continued `AB\` + `[V:1]cd|` are two lines —
+   ours needed a measure to have closed first.
+   ⭐ **AND A LATER `V:… clef=` REWROTE THE PAST.** `parseVoice` writes `staves[staffNum].clef`
+   and nothing else (`abc_parse_key_voice.js:855-858`): the staff opens its NEXT line in it,
+   no cautionary clef is appended to the line before, and no other staff shares it. Ours set
+   the VOICE's clef, so `V:1 / CDEF| / V:1 clef=bass / C,D,E,F,|` redrew the first line in
+   bass as well — a part moving to tenor clef rewrote everything before the move. A voice
+   with music now takes a pending change (`Measure.clefChangeFromVoice`), kept out of the
+   renderer's and the projection's SHARED running clef, which only a `K:` writes.
+   `tests/implicit-voice.test.ts`, eleven rungs from abcjs's own answers, each rule broken in
+   turn — two rungs were mute until they counted paths and continued a line.
 
 ## 4. Everything else that is measured
 

@@ -13763,7 +13763,9 @@ function layoutScoped(input: Score, options: LayoutOptions = {}): Layout {
   const runningClefs: { readonly at: number; readonly clef: Clef }[] = voices
     .flatMap((v) => v?.measures ?? [])
     .flatMap((m) => [
-      ...(m.clefChange == null
+      // …**BUT NOT ONE A `V:` MADE**, which writes only `staves[staffNum].clef`
+      // (`abc_parse_key_voice.js:855-858`). See `Measure.clefChangeFromVoice`.
+      ...(m.clefChange == null || m.clefChangeFromVoice === true
         ? []
         : [{ at: m.clefChangeSourceRange?.start ?? musicStartsAt(m), clef: m.clefChange }]),
       // …and a trailing one, which draws nothing in some shapes and is a running value in
@@ -14074,7 +14076,7 @@ function layoutScoped(input: Score, options: LayoutOptions = {}): Layout {
           const next = (voice?.measures ?? [])[measureIndex + 1]
           // …and with NO next measure, a trailing `K: clef=` draws the same cautionary.
           if (next === undefined) return measure.trailingClef ?? null
-          if (next.clefChangeSilent === true) return null
+          if (next.clefChangeSilent === true || next.clefChangeFromVoice === true) return null
           /**
            * ⚠️ **AND A WRAP HAS ALREADY PUT IT IN THE STREAM.** The cautionary is
            * `appendStartingElement('clef', …)` pushing onto the voice that is still open

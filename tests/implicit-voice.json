@@ -1,0 +1,100 @@
+[
+ {
+  "abc": "X:1\nL:1/4\nK:C\nCDEF|\nV:2\nGABc|",
+  "height": "190.822",
+  "paths": 31,
+  "lines": [
+   "treble[C D E F]",
+   "treble[G A B c]"
+  ]
+ },
+ {
+  "abc": "X:1\nL:1/4\nK:C\nCDEF|\nV:2\nGABc|\nV:3\ncdef|",
+  "height": "269.822",
+  "paths": 47,
+  "lines": [
+   "treble[C D E F] treble[c d e f]",
+   "treble[G A B c]"
+  ]
+ },
+ {
+  "abc": "X:1\nL:1/4\nK:C\nAB[V:2]cd|",
+  "height": "186.947",
+  "paths": 21,
+  "lines": [
+   "treble[A B]",
+   "treble[c d]"
+  ]
+ },
+ {
+  "abc": "X:1\nL:1/4\nK:C\nAB[V:1]cd|",
+  "height": "186.947",
+  "paths": 21,
+  "lines": [
+   "treble[A B]",
+   "treble[c d]"
+  ]
+ },
+ {
+  "abc": "X:1\nL:1/4\nV:1\nK:C\nCDEF|\nV:2\nGABc|",
+  "height": "177.49200000000002",
+  "paths": 32,
+  "lines": [
+   "treble[C D E F] treble[G A B c]"
+  ]
+ },
+ {
+  "abc": "X:1\nL:1/4\nK:C\nV:1\nCDEF|\nV:1 clef=bass\nC,D,E,F,|",
+  "height": "190.822",
+  "paths": 31,
+  "lines": [
+   "treble[C D E F]",
+   "bass[C, D, E, F,]"
+  ]
+ },
+ {
+  "abc": "X:1\nL:1/4\nV:1\nV:2\nK:C\nV:1\nCDEF|\nV:2\nGABc|\nV:1 clef=bass\nC,D,E,F,|\nV:2\nGABc|",
+  "height": "348.822",
+  "paths": 63,
+  "lines": [
+   "treble[C D E F] treble[G A B c]",
+   "bass[C, D, E, F,] treble[G A B c]"
+  ]
+ },
+ {
+  "abc": "X:1\nL:1/4\nK:C\nCDEF|\nV:2 clef=bass\nC,D,E,F,|",
+  "height": "190.822",
+  "paths": 31,
+  "lines": [
+   "treble[C D E F]",
+   "bass[C, D, E, F,]"
+  ]
+ },
+ {
+  "abc": "X:1\nL:1/4\nV:1 clef=bass\nK:C\nV:1 clef=bass\nC,D,E,F,|\nV:1 clef=bass\nC,D,E,F,|",
+  "height": "184.14",
+  "paths": 30,
+  "lines": [
+   "bass[C, D, E, F,]",
+   "bass[C, D, E, F,]"
+  ]
+ },
+ {
+  "abc": "X:1\nL:1/4\nK:C\nAB\\\n[V:1]cd|",
+  "height": "186.947",
+  "paths": 21,
+  "lines": [
+   "treble[A B]",
+   "treble[c d]"
+  ]
+ },
+ {
+  "abc": "X:1\nL:1/4\nV:1\nV:2\nK:C\n[V:1]AB\\\n[V:2]cd\\\n[V:1]ef|",
+  "height": "265.947",
+  "paths": 32,
+  "lines": [
+   "treble[A B] treble[c d]",
+   "treble[e f]"
+  ]
+ }
+]

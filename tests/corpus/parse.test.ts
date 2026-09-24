@@ -739,7 +739,11 @@ describe("audit regressions", () => {
   it("closes a beam run at a mid-line voice switch", () => {
     // Beam indices were resolved against whichever voice was current at close time, so
     // voice 1 went unbeamed and its indices were applied to voice 2.
-    const voices = shape("X:1\nK:C\nAB[V:2]cd\n").scores[0]?.voices;
+    //
+    // ⚠️ Both voices are DECLARED: `AB[V:2]cd` with no header `V:` is ONE voice to abcjs —
+    // music before the first `V:` is that voice, and the switch opens its next line (see
+    // `ScoreBuilder.adoptImplicitVoice`). This input used to make two.
+    const voices = shape("X:1\nV:1\nV:2\nK:C\n[V:1]AB[V:2]cd\n").scores[0]?.voices;
     const groups = (i: number) =>
       voices?.[i]?.measures
         .flatMap((m) => m.events)

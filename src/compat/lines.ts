@@ -1530,6 +1530,9 @@ function voiceElements(
     if (
       measure.clefChange !== null &&
       measure.clefChangeSilent !== true &&
+      // …and a `V:… clef=` appends no element at all — it writes the staff's clef and the
+      // next line opens in it. See `Measure.clefChangeFromVoice`.
+      measure.clefChangeFromVoice !== true &&
       inStream(
         measure.clefChangeSourceRange,
         measure.clefChangeInline,
@@ -2522,7 +2525,10 @@ export function projectionOf(
   const clefTimeline: { at: number; clef: Clef }[] = score.voices
     .flatMap((v) =>
       (v.measures ?? []).flatMap((m) => [
-        ...(m.clefChange != null && m.clefChangeSourceRange != null
+        // …**AND A `V:` DOES NOT WRITE IT.** `parseVoice` sets `staves[staffNum].clef` and
+        // nothing else (`abc_parse_key_voice.js:855-858`), so its change is its staff's
+        // alone. See `Measure.clefChangeFromVoice`.
+        ...(m.clefChange != null && m.clefChangeSourceRange != null && m.clefChangeFromVoice !== true
           ? [{ at: m.clefChangeSourceRange.start, clef: m.clefChange }]
           : []),
         ...(m.trailingClef != null && m.trailingClefSourceRange != null

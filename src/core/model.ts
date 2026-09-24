@@ -1316,6 +1316,13 @@ export interface Measure {
    * where ours drew five lines at 36.64 and the `staff-extra clef` it always had.
    */
   readonly clefChangeSilent?: boolean
+  /**
+   * **A `V:` CHANGED IT, SO THE LINE BEFORE ENDS WITH NO CAUTIONARY CLEF.** A body `K:`
+   * appends its clef to the line still open (`appendStartingElement`,
+   * `abc_parse_header.js:508-513`), which is the cautionary at that line's end; a `V:…
+   * clef=` only writes the STAFF's clef, which the next line OPENS in, and appends nothing.
+   */
+  readonly clefChangeFromVoice?: true
   readonly trailingClef?: Clef | null
   readonly trailingClefSourceRange?: SourceRange | null
   /**
