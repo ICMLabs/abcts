@@ -75,12 +75,13 @@ const VERBOSE = process.argv.includes('-v')
  *        line between two music lines joins them into ONE tune of two staves.
  *    ⚠️ **And a chunk holding only a `W:` or a `%%text` is not empty**: `flush` dropped it,
  *    losing 96.5px of words and a whole text line.
- * 4. **THE LEADING CHUNK'S `%%` LINES ARE PREPENDED TO EVERY TUNE.** `%%text hi` above the
- *    first `X:` draws a text row in the tune below it (189.88px vs our 94.79px); we keep the
- *    leading chunk's FORMATTING (`fileDefaults`) and nothing else, so a `%%text`, `%%center`
- *    or `%%begintext` up there is lost. MEASURED, not built: abcjs prepends the lines to the
- *    tune STRING (`abc_parse_book.js:36`), which also shifts every `startChar` in the tune by
- *    the block's length, and that shift has to be reproduced with it or not at all.
+ * 4. ✅ **THE LEADING CHUNK'S `%%` LINES ARE PREPENDED TO EVERY TUNE — CLOSED 2026-09-24.**
+ *    abcjs keeps them as TEXT and each tune parses them again (`abc_parse_book.js:22-37`), so
+ *    `%%text hi` above the first `X:` is a row in every tune. Ours kept a FORMATTING SNAPSHOT
+ *    of that chunk and lost every directive that makes content. They REPLAY now, into each
+ *    tune, at the offsets abcjs's string gives them — the `header.length` characters before
+ *    the tune, packed end to end (`abc_tunebook.js:84`) — and their warnings are not raised
+ *    twice. The snapshot and its 70 lines are gone.
  * 5. ✅ **THE THREE REWRITES BEFORE THE FIRST LINE IS READ — CLOSED 2026-09-23.** abcjs
  *    normalizes line endings, blanks latex lines and swaps escaped percents before it reads
  *    anything (`abc_parse.js:497-512`), and the book is STRIPPED and its leading chunk's
@@ -103,7 +104,6 @@ const VERBOSE = process.argv.includes('-v')
  *    and `createVoice` interact here and a half-understood fix is worth less than this note.
  */
 const DECLARED = new Set([
-  'leading text directive',
   'cr two tunes',
   'unterminated slur',
   'unterminated bracket field',

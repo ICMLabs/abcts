@@ -3054,45 +3054,6 @@ function carryDanglingBarNumbers(voices: readonly Voice[]): void {
   }
 }
 
-/** The `%%` formatting a file header passes to every tune under it. */
-interface Formatting {
-  staffSep: number | null
-  musicSpace: number | null
-  measurements: Record<string, number>
-  titleLeft: boolean
-  bagpipes: boolean
-  flatBeams: boolean
-  graceSlurs: boolean
-  newPage: number | null
-  newPageAt: number | null
-  /** See `ScoreMetadata.newPageVskip`. */
-  newPageVskip?: number | null
-  barsPerStaff: number | null
-  partsBox: boolean
-  /** `%%printtempo` — see `ScoreBuilder.printTempo`. */
-  printTempo: boolean | undefined
-  jazzChords: boolean
-  keywarn: boolean
-  /** See `Score.barNumbersDirective`. */
-  barNumbersDirective?: true
-  percMap: Record<string, PercMapEntry>
-  drumMap?: Record<string, number>
-  midi?: Record<string, readonly (string | number)[]>
-  stretchLast: number | null
-  /** `%%staffnonote 0` — INVERTED sense; see `Score.staffNoNote`. */
-  staffNoNote: boolean
-  staffWidth: number | null
-  scale: number | null
-  maxStaves: number | null
-  sysStaffSep: number | null
-  vocalFont: LyricFont | null
-  fonts: Partial<Record<AbcFontType, LyricFont>>
-  /** The five `positionChoices` directives — see `ScoreBuilder.positions`. */
-  positions: Partial<Record<PositionKind, ElementPosition>>
-  /** The `tune.formatting` keys the file header set, in its order — see `noteFormatting`. */
-  formattingOrder: readonly string[]
-}
-
 class ScoreBuilder {
   tuneNumber: number | null = null
   titles: RichText[] = []
@@ -3355,77 +3316,6 @@ class ScoreBuilder {
   maxStaves: number | null = null
   sysStaffSep: number | null = null
 
-  /** The file-header formatting this tune would pass on — see `Parser.fileDefaults`. */
-  formatting(): Formatting {
-    return {
-      staffSep: this.staffSep,
-      musicSpace: this.musicSpace,
-      measurements: this.measurements,
-      barsPerStaff: this.barsPerStaff,
-      titleLeft: this.titleLeft,
-      bagpipes: this.bagpipes,
-      flatBeams: this.flatBeams,
-      graceSlurs: this.graceSlurs,
-      newPage: this.newPage,
-      newPageAt: this.newPageAt,
-      ...(this.newPageVskip === null ? {} : { newPageVskip: this.newPageVskip }),
-      partsBox: this.partsBox,
-      printTempo: this.printTempo,
-      jazzChords: this.jazzChords,
-      keywarn: this.keywarn,
-      ...(this.barNumbersDirective === true ? { barNumbersDirective: true as const } : {}),
-      percMap: this.percMap,
-      drumMap: this.drumMap,
-      midi: this.midi,
-      stretchLast: this.stretchLast,
-      staffNoNote: this.staffNoNote,
-      staffWidth: this.staffWidth,
-      scale: this.scale,
-      maxStaves: this.maxStaves,
-      sysStaffSep: this.sysStaffSep,
-      vocalFont: this.vocalFont,
-      fonts: this.fonts,
-      // …and the five POSITION directives, which a FILE HEADER can set for every tune
-      // (ABC 2.1 §4.1) exactly as it can a font. `multilineVars` survives the header in
-      // abcjs; ours is per builder, so it has to travel here.
-      positions: this.positions,
-      formattingOrder: this.formattingOrder,
-    }
-  }
-
-  applyFormatting(f: Formatting): void {
-    this.staffSep = f.staffSep
-    this.musicSpace = f.musicSpace
-    this.measurements = f.measurements
-    this.titleLeft = f.titleLeft
-    this.bagpipes = f.bagpipes
-    this.flatBeams = f.flatBeams
-    this.graceSlurs = f.graceSlurs
-    this.newPage = f.newPage
-    this.newPageAt = f.newPageAt
-    this.newPageVskip = f.newPageVskip ?? null
-    this.barsPerStaff = f.barsPerStaff
-    this.partsBox = f.partsBox
-    this.printTempo = f.printTempo
-    this.jazzChords = f.jazzChords
-    this.percMap = f.percMap
-    if (f.drumMap !== undefined) this.drumMap = f.drumMap
-    if (f.midi !== undefined) this.midi = f.midi
-    this.stretchLast = f.stretchLast
-    this.staffNoNote = f.staffNoNote
-    // …**AND THE ORDER WITH THEM.** A `%%` directive above the first `X:` is the FILE
-    // HEADER and applies to every tune (ABC 2.1 §4.1), so its `formatting` key must arrive
-    // in the tune too — `%%stretchlast 1` written there was reaching `stretchLast` and not
-    // `formattingOrder`, so the value was right and the key absent.
-    this.formattingOrder = [...f.formattingOrder]
-    this.staffWidth = f.staffWidth
-    this.scale = f.scale
-    this.maxStaves = f.maxStaves
-    this.sysStaffSep = f.sysStaffSep
-    this.vocalFont = f.vocalFont
-    this.fonts = { ...f.fonts }
-    this.positions = { ...f.positions }
-  }
   /** `%%center` text, split by whether any music had been parsed when it was read. */
   textAbove: FreeTextBlock[] = []
   /**
@@ -3940,6 +3830,7 @@ class Parser {
     /** Where inside `range` the caret goes, when the text cannot say — see `Diagnostic`. */
     column?: number,
   ): void {
+    if (this.replaying) return
     this.diagnostics.push({
       code,
       severity: 'warning',
@@ -3950,6 +3841,7 @@ class Parser {
   }
 
   private info(code: string, message: string, range: SourceRange | null): void {
+    if (this.replaying) return
     this.diagnostics.push({ code, severity: 'info', message, range })
   }
 
@@ -4000,15 +3892,61 @@ class Parser {
     this.textBlock = []
   }
 
-  /** Formatting from `%%` directives standing before the first `X:` — see `applyField`. */
-  private fileDefaults: Formatting | null = null
+  /**
+   * **THE LEADING CHUNK'S `%%` LINES, REPLAYED AT THE HEAD OF EVERY TUNE.** abcjs keeps
+   * them as TEXT and prepends them to each tune's string (`abc_parse_book.js:22-37`), so
+   * they are parsed again, in full, by every tune — a `%%text` or `%%center` up there is a
+   * line in each tune, not a setting. This used to be a FORMATTING SNAPSHOT of the leading
+   * chunk, which carried `%%stretchlast` and lost every directive that makes content:
+   * `%%text hi` above `X:1` drew nothing, 95px and a whole row short.
+   *
+   * `[start, end]` in the source, each a whole line.
+   */
+  private readonly headerLines: (readonly [number, number])[] = []
+  /** Set while `headerLines` replays: its warnings were raised once, on the first read. */
+  private replaying = false
 
   private ensureScore(at: number): ScoreBuilder {
     if (!this.builder) {
       this.builder = new ScoreBuilder(at)
-      if (this.fileDefaults) this.builder.applyFormatting(this.fileDefaults)
+      if (this.leadingEnd > 0 && at >= this.leadingEnd) this.replayHeader(at)
     }
     return this.builder
+  }
+
+  /**
+   * Replays `headerLines` into the tune opening at `at`.
+   *
+   * ⚠️ **AND THEY ARE REPORTED WHERE abcjs'S STRING PUTS THEM, NOT WHERE THEY WERE WRITTEN.**
+   * The tune is parsed from `startPos - header.length` (`abc_tunebook.js:84`), so its own
+   * lines keep their offsets and the prepended ones take the `header.length` characters
+   * BEFORE the tune — packed end to end, whatever stood between them in the source.
+   */
+  private replayHeader(at: number): void {
+    if (this.replaying) return
+    const builder = this.builder as ScoreBuilder
+    this.replaying = true
+    let written = at - this.headerLines.reduce((n, [s, e]) => n + (e - s) + 1, 0)
+    for (const [start, end] of this.headerLines) {
+      const above = builder.textAbove.length
+      const below = builder.textBelow.length
+      this.processLine(start, end)
+      const shift = written - start
+      const move = (blocks: FreeTextBlock[], from: number): void => {
+        for (let i = from; i < blocks.length; i += 1) {
+          const b = blocks[i] as FreeTextBlock
+          if (b.sourceRange)
+            blocks[i] = {
+              ...b,
+              sourceRange: sourceRange(b.sourceRange.start + shift, b.sourceRange.end + shift),
+            }
+        }
+      }
+      move(builder.textAbove, above)
+      move(builder.textBelow, below)
+      written += end - start + 1
+    }
+    this.replaying = false
   }
 
   /** Set by an empty line: everything up to the next `X:` is not this book's. See below. */
@@ -4024,7 +3962,10 @@ class Parser {
       if (!/^X:/.test(line)) return
       this.skippingChunk = false
     }
-    if (start < this.leadingEnd && !line.startsWith('%%')) return
+    if (start < this.leadingEnd) {
+      if (!line.startsWith('%%')) return
+      if (!this.replaying) this.headerLines.push([start, end])
+    }
 
     // A `%%begintext` block runs to `%%endtext`. Its content lines carry no `%%` prefix,
     // so they must be claimed here — otherwise ordinary English prose parses as music and
@@ -5233,10 +5174,7 @@ class Parser {
       // `%% example / T: wed / %%example / X:1` kept its leading block as a TUNE and we
       // rendered two where abcjs renders one. A builder still holding no `X:` when an
       // `X:` arrives IS the leading chunk, whatever else it has collected.
-      if (this.builder !== null && this.builder.tuneNumber === null) {
-        this.fileDefaults = this.builder.formatting()
-        this.builder = null
-      }
+      if (this.builder !== null && this.builder.tuneNumber === null) this.builder = null
       this.flush()
       const builder = this.ensureScore(start)
       builder.tuneNumber = Number.parseInt(value, 10) || null

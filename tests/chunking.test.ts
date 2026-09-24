@@ -145,3 +145,41 @@ describe("the source is normalized before it is read", () => {
     expect(tunes.map((t) => (t.warnings ?? []).length)).toEqual([1, 1]);
   });
 });
+
+/**
+ * **THE LEADING CHUNK'S `%%` LINES ARE PREPENDED TO EVERY TUNE** — as text, parsed again
+ * by each one (`abc_parse_book.js:22-37`) — and reported at the `header.length` characters
+ * before the tune, because the tune is parsed from `startPos - header.length`
+ * (`abc_tunebook.js:84`). abcjs 6.7.1's own offsets, read out of a WebKit page.
+ */
+describe("the header's %% lines replay into every tune", () => {
+  const texts = (abc: string): string[][] =>
+    parseOnly(abc).map((t) =>
+      (t.lines ?? []).flatMap((l) => {
+        const text = (l as { text?: { text: string; startChar: number; endChar: number } }).text;
+        return text && "startChar" in text ? [`${text.text}@${text.startChar},${text.endChar}`] : [];
+      }),
+    );
+
+  it("a %%text above X:1 is a row in the tune", () => {
+    expect(texts("%%text hi\n\nX:1\nCDEF|")).toEqual([["hi@1,10"]]);
+  });
+
+  it("…in EVERY tune, each at the characters before its own X:", () => {
+    expect(texts("%%text hi\nX:1\nCDEF|\n\nX:2\nGABc|")).toEqual([["hi@0,9"], ["hi@11,20"]]);
+  });
+
+  it("packed end to end, whatever stood between them in the source", () => {
+    expect(texts("%%text a\n\n%%text b\nX:1\nC|")).toEqual([["a@1,9", "b@10,18"]]);
+  });
+
+  it("and its warnings are raised once, then repeated per tune", () => {
+    expect(
+      parseOnly("%%bogus\n%%text hi\nX:1\nCDEF|\n\nX:2\nD|").map((t) => (t.warnings ?? []).length),
+    ).toEqual([1, 1]);
+    // …a WARNING-severity one too: the replay must not raise it a second time.
+    expect(
+      parseOnly("%%score 1)\nX:1\nCDEF|\n\nX:2\nD|").map((t) => (t.warnings ?? []).length),
+    ).toEqual([1, 1]);
+  });
+});

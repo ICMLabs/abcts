@@ -421,7 +421,7 @@ rule and the normalizations are its own regression net — and it found **six** 
   not consume the pending line start, so `|:|:C:|:|` came out as TWO systems (187px against
   94.789). Fixed by having it take the line start, as a real measure does.
 
-**SIX CLASSES WERE NAMED, FOUR ARE CLOSED**, and what is left is DECLARED in the script with
+**SIX CLASSES WERE NAMED, FIVE ARE CLOSED**, and what is left is DECLARED in the script with
 its measurements:
 
 1. ✅ **RECOVERY FROM AN UNTERMINATED CONSTRUCT — CLOSED 2026-09-23, AND IT WAS ONE SHARED
@@ -491,13 +491,16 @@ its measurements:
    134.09 and `%%text hi` lost its line outright. `tests/chunking.test.ts` is the ladder, eight
    rungs, every number abcjs's own — and it counts `parse().scores`, because `parseOnly` opens
    one slot per `numberOfTunes` and CANNOT SEE the extra tune.
-4. **THE LEADING CHUNK'S `%%` LINES ARE PREPENDED TO EVERY TUNE.** `%%text hi` above the first
-   `X:` draws a text row in the tune below it — 189.88px against our 94.79 — because abcjs
-   prepends the leading chunk's `%%` lines to each tune STRING
-   (`abc_parse_book.js:22-37`). Ours keeps that chunk's FORMATTING (`fileDefaults`) and nothing
-   else, so a `%%text`, `%%center` or `%%begintext` up there is lost. MEASURED, not built: the
-   prepend also shifts every `startChar` in the tune by the block's length, and that shift has
-   to be reproduced with it or not at all.
+4. ✅ **THE LEADING CHUNK'S `%%` LINES ARE PREPENDED TO EVERY TUNE — CLOSED 2026-09-24.**
+   abcjs keeps them as TEXT and every tune parses them again (`abc_parse_book.js:22-37`), so
+   `%%text hi` above the first `X:` is a row in each tune — 189.88px against the 94.79 we drew.
+   Ours kept a FORMATTING SNAPSHOT of that chunk (`fileDefaults`), which carried
+   `%%stretchlast` and lost every directive that makes content. They REPLAY now, and at the
+   offsets abcjs reports: the tune is parsed from `startPos - header.length`
+   (`abc_tunebook.js:84`), so the replayed lines take the characters just BEFORE the tune,
+   packed end to end whatever stood between them in the source — `hi@11,20` for tune 2 of
+   `%%text hi / X:1 / … / X:2`. Their warnings are raised once, as before, and repeated per
+   tune by `warningsOf`. The snapshot and its 70 lines are deleted.
 5. ✅ **THE THREE REWRITES BEFORE THE FIRST LINE IS READ — CLOSED 2026-09-23, AND ONE OF THEM
    WAS TWO STRINGS.** abcjs normalizes line endings, blanks latex lines and swaps escaped
    percents before it reads anything (`abc_parse.js:497-512`), and the book is `strip`ped with
