@@ -14076,7 +14076,12 @@ function layoutScoped(input: Score, options: LayoutOptions = {}): Layout {
           const next = (voice?.measures ?? [])[measureIndex + 1]
           // …and with NO next measure, a trailing `K: clef=` draws the same cautionary.
           if (next === undefined) return measure.trailingClef ?? null
-          if (next.clefChangeSilent === true || next.clefChangeFromVoice === true) return null
+          if (
+            next.clefChangeSilent === true ||
+            next.clefChangeFromVoice === true ||
+            next.clefChangeAtLineHead === true
+          )
+            return null
           /**
            * ⚠️ **AND A WRAP HAS ALREADY PUT IT IN THE STREAM.** The cautionary is
            * `appendStartingElement('clef', …)` pushing onto the voice that is still open
@@ -14114,6 +14119,9 @@ function layoutScoped(input: Score, options: LayoutOptions = {}): Layout {
            * notes 18.25px left of abcjs's.
            */
           if (!keyChangeLeadsLine(next) || next?.keyChange == null) return null
+          // …nor when a switch already opened the voice's next line — see
+          // `Measure.keyChangeAtLineHead`.
+          if (next.keyChangeAtLineHead === true) return null
           // …**AND THIS ONE READS THE DIRECTIVE AT THE `K:` IT WARNS ABOUT** — the NEXT
           // line's change, not the tune's last setting. See `Measure.keyChangeKeywarn`.
           //

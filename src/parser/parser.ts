@@ -764,7 +764,37 @@ const REPRESENTABLE: readonly Rational[] = [2, 4, 8, 16, 32, 64].flatMap((base) 
   ),
 )
 
-const DEFAULT_VOICE_ID = '1' 
+const DEFAULT_VOICE_ID = '1'
+
+/**
+ * **A STANDALONE `M:` IS abcjs's `multilineVars.meter`, AND IT REACHES EVERY STAFF.** The
+ * next `startNewLine` copies it onto EVERY staff's own slot, takes its own, and clears the
+ * shared one; each other staff takes its copy at ITS next line (`abc_parse_music.js:985-998`).
+ * A voice no `V:` has named has no staff there and takes the shared value directly.
+ * Ours kept it on the voice that was current when the `M:` was read, so after `V:1` had
+ * already opened its next line the 3/4 was drawn on voice 1 — abcjs draws it on voice 2's,
+ * and on voice 1's line after that.
+ */
+interface MeterSlot {
+  value: { meter: Meter | null; range: SourceRange } | null
+  readonly byStaff: Map<number, { meter: Meter | null; range: SourceRange }>
+  readonly staffOf: (voiceId: string) => number
+  readonly staves: () => readonly number[]
+}
+
+const takeMeter = (slot: MeterSlot, voiceId: string): MeterSlot['value'] => {
+  const staff = slot.staffOf(voiceId)
+  if (slot.value !== null) {
+    const shared = slot.value
+    slot.value = null
+    if (staff < 0) return shared
+    for (const s of slot.staves()) slot.byStaff.set(s, shared)
+  }
+  const own = staff < 0 ? undefined : slot.byStaff.get(staff)
+  if (own === undefined) return null
+  slot.byStaff.delete(staff)
+  return own
+}
 
 /**
  * Named ABC clefs → shape and default staff line.
@@ -1815,6 +1845,18 @@ class VoiceBuilder {
     readonly pendingNewPage: { value: number | null } = { value: null },
     /** The `%%vskip` that `%%newpage`'s own line took — see `ScoreMetadata.newPageVskip`. */
     readonly pendingNewPageVskip: { value: number | null } = { value: null },
+    /**
+     * **THE STANDALONE `M:`, SHARED BY EVERY VOICE** — abcjs's `multilineVars.meter`, which
+     * the NEXT `startNewLine` consumes whichever voice it opens. After `V:1` has already
+     * opened its next line, `M:3/4` goes to V:2's, and abcjs draws it there. See
+     * `setMeterForNextLine`.
+     */
+    private readonly meterSlot: MeterSlot = {
+      value: null,
+      byStaff: new Map(),
+      staffOf: () => -1,
+      staves: () => [],
+    },
   ) {}
 
   /** `%%vskip n` — see `Measure.vskip`. */
@@ -1879,6 +1921,7 @@ class VoiceBuilder {
     keywarn?: boolean,
   ): void {
     this.pendingKeyChange = key
+    this.pendingKeyChangeAtLineHead = !inline && this.lineStartedEmpty
     this.pendingKeyChangeRange = range
     this.pendingKeyChangeClef = clef
     this.pendingKeyChangeInline = inline
@@ -1899,6 +1942,8 @@ class VoiceBuilder {
     fromVoice = false,
   ): void {
     this.pendingClefChangeFromVoice = fromVoice
+    // A line a switch already opened, with nothing on it yet — `Measure.clefChangeAtLineHead`.
+    this.pendingClefChangeAtLineHead = !inline && this.lineStartedEmpty
     this.pendingClefChange = clef
     this.pendingClefChangeRange = range
     this.pendingClefChangeInline = inline
@@ -1906,6 +1951,9 @@ class VoiceBuilder {
   }
   private pendingClefChangeSilent = false
   private pendingClefChangeFromVoice = false
+  private pendingClefChangeAtLineHead = false
+  /** See `Measure.keyChangeAtLineHead`. */
+  private pendingKeyChangeAtLineHead = false
 
   /**
    * A `%%MIDI` written INSIDE the music — an element in the stream, not a tune setting.
@@ -1964,10 +2012,8 @@ class VoiceBuilder {
    * which merges with the `P:A` music, so its meter prints at the head of THAT system.
    */
   setMeterForNextLine(meter: Meter | null, range: SourceRange): void {
-    this.meterForNextLine = { meter, range }
+    this.meterSlot.value = { meter, range }
   }
-
-  private meterForNextLine: { meter: Meter | null; range: SourceRange } | null = null
 
   /**
    * `takeChanges`, with the changes a HELD opening barline carried merged UNDER them. A
@@ -1996,6 +2042,10 @@ class VoiceBuilder {
       ...(this.pendingClefChangeInline ? { clefChangeInline: true } : {}),
       ...(this.pendingClefChangeSilent ? { clefChangeSilent: true } : {}),
       ...(this.pendingClefChangeFromVoice ? { clefChangeFromVoice: true as const } : {}),
+      ...(this.pendingClefChangeAtLineHead ? { clefChangeAtLineHead: true as const } : {}),
+      ...(this.pendingKeyChange !== null && this.pendingKeyChangeAtLineHead
+        ? { keyChangeAtLineHead: true as const }
+        : {}),
       tempoChange: this.pendingTempoChange,
       tempoChangeSourceRange: this.pendingTempoChangeRange,
       ...(this.pendingMidi.length > 0 ? { midiCommands: this.pendingMidi } : {}),
@@ -2021,6 +2071,8 @@ class VoiceBuilder {
     this.pendingClefChangeInline = false
     this.pendingClefChangeSilent = false
     this.pendingClefChangeFromVoice = false
+    this.pendingClefChangeAtLineHead = false
+    this.pendingKeyChangeAtLineHead = false
     this.pendingTempoChange = null
     this.pendingTempoChangeRange = null
     this.pendingMidi = []
@@ -2196,6 +2248,7 @@ class VoiceBuilder {
   }
 
   beginMusicLine(): void {
+    const alreadyOpen = this.lineStartedEmpty
     this.lineNoteStart = this.noteCounter
     /**
      * **A BLOCK WRITTEN BETWEEN TWO LINES BELONGS TO THE LINE BELOW, NOT THE UNBARRED ONE
@@ -2230,19 +2283,25 @@ class VoiceBuilder {
     // `multilineVars.meter`. See `setMeterForNextLine`. It is promoted AFTER
     // `closeUnterminatedMeasure`, so the measure this line opens gets it and the one it
     // closes does not.
-    if (this.meterForNextLine !== null) {
-      this.pendingMeterChange = this.meterForNextLine.meter
-      this.pendingMeterChangeRange = this.meterForNextLine.range
+    // …**BUT NOT ON A LINE A `V:` ALREADY OPENED.** abcjs's `V:` field runs `startNewLine`
+    // itself (`abc_parse_header.js:550-551`), so a `M:` read after it is for the NEXT
+    // line; ours reaches here again when the music under that `V:` begins.
+    // It still TAKES it, copying it to every other staff: `startNewLine` runs for that
+    // music line too, and a staff already made ignores the `params.meter` it hands over.
+    const taken = takeMeter(this.meterSlot, this.id)
+    const meterForNextLine = alreadyOpen ? null : taken
+    if (meterForNextLine !== null) {
+      this.pendingMeterChange = meterForNextLine.meter
+      this.pendingMeterChangeRange = meterForNextLine.range
       this.pendingMeterChanges.push({
-        meter: this.meterForNextLine.meter,
+        meter: meterForNextLine.meter,
         at: this.events.length,
-        ...(this.meterForNextLine.range == null ? {} : { range: this.meterForNextLine.range }),
+        ...(meterForNextLine.range == null ? {} : { range: meterForNextLine.range }),
       })
       // The standalone form, by construction — this is abcjs's `startNewLine` consuming
       // `multilineVars.meter`, which the inline arm never fills.
       this.pendingMeterChangeInline = false
       this.pendingMeterChangeStandalone = true
-      this.meterForNextLine = null
     }
   }
 
@@ -2275,6 +2334,17 @@ class VoiceBuilder {
 
   switchedTo(): void {
     if (this.hasLineContent) this.beginMusicLine()
+  }
+
+  /**
+   * **A LINE `startNewLine` HAS ALREADY OPENED, WITH NOTHING ON IT YET** — by a `V:` switch
+   * (the field runs it, `abc_parse_header.js:550-551`) or by a music line that produced no
+   * element at all (`@@@`, or `+:two` lexed as junk). A standalone `K:` or `M:` read now is
+   * at that line's HEAD, not the end of the one before: no courtesy clef or key, and a
+   * `M:` the line takes and discards. Measured each way against abcjs.
+   */
+  private get lineStartedEmpty(): boolean {
+    return this.pendingLineStart && !this.hasLineContent
   }
 
   /**
@@ -3538,6 +3608,13 @@ class ScoreBuilder {
   readonly pendingNewPage: { value: number | null } = { value: null }
   /** The `%%vskip` that `%%newpage`'s own line took — see `ScoreMetadata.newPageVskip`. */
   readonly pendingNewPageVskip: { value: number | null } = { value: null }
+  /** Every voice's `VoiceBuilder.meterSlot`, one object — see `MeterSlot`. */
+  private readonly meterSlot: MeterSlot = {
+    value: null,
+    byStaff: new Map(),
+    staffOf: (id) => this.staffOfVoice.get(id) ?? -1,
+    staves: () => [...new Set(this.staffOfVoice.values())],
+  }
   /**
    * The tune-level `K: octave=` — abcjs's `multilineVars.octave`, which is GLOBAL and can
    * change mid-tune. A voice that set its own `octave=` ignores it.
@@ -3599,6 +3676,7 @@ class ScoreBuilder {
         this.pendingVskip,
         this.pendingNewPage,
         this.pendingNewPageVskip,
+        this.meterSlot,
       )
       // …**AND A VOICE CONJURED AFTER THE `K:` STILL SEES THE GLOBAL STYLE** — abcjs reads
       // `multilineVars.style` at the line's open, so it does not matter when the voice was

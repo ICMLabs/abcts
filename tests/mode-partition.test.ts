@@ -128,11 +128,17 @@ const ROWS: { name: string; sees: 'strict' | 'nonStrict'; base: string; feat: st
   { name: '!turnx!', sees: 'nonStrict', base: `${H}C D E F|\n`, feat: `${H}!turnx!C D E F|\n` },
   // ABC 2.1 §3.2 — abcjs has no `+:` handling, so the continuation falls through to the
   // music parser and the words are lexed as notes.
+  //
+  // ⚠️ **THE `M:` COMES FIRST, AND THAT IS NOT COSMETIC.** Lexed as junk music, `+:two`
+  // OPENS line one before anything after it is read — so an `M:4/4` written after it is a
+  // standalone body meter that line takes and discards, and abcjs draws NO time signature
+  // (measured). This row used to put the `M:` there and call strict blind; it was blind
+  // only because ours drew the meter anyway.
   {
     name: '+: field continuation',
     sees: 'nonStrict',
-    base: 'X:1\nT:one\nM:4/4\nL:1/4\nK:C\nC D E F|\n',
-    feat: 'X:1\nT:one\n+:two\nM:4/4\nL:1/4\nK:C\nC D E F|\n',
+    base: 'X:1\nM:4/4\nL:1/4\nT:one\nK:C\nC D E F|\n',
+    feat: 'X:1\nM:4/4\nL:1/4\nT:one\n+:two\nK:C\nC D E F|\n',
   },
   {
     name: 'I: information field',

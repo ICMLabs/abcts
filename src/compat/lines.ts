@@ -1533,6 +1533,7 @@ function voiceElements(
       // …and a `V:… clef=` appends no element at all — it writes the staff's clef and the
       // next line opens in it. See `Measure.clefChangeFromVoice`.
       measure.clefChangeFromVoice !== true &&
+      measure.clefChangeAtLineHead !== true &&
       inStream(
         measure.clefChangeSourceRange,
         measure.clefChangeInline,
@@ -1595,6 +1596,7 @@ function voiceElements(
     // `multilineVars.keywarn !== false` inside `parseKey` itself. See
     // `Measure.keyChangeKeywarn`.
     if (
+      measure.keyChangeAtLineHead !== true &&
       inStream(
         measure.keyChangeSourceRange,
         measure.keyChangeInline,

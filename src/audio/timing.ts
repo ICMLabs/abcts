@@ -130,7 +130,7 @@ function meterOf(score: Score): Meter {
   let inForce = score.meter
   for (const measure of voice?.measures ?? []) {
     // A barline is an element too — `containsNotes` tests `el_type === 'note' || 'bar'`.
-    if (measure.openingBarline !== null) return inForce ?? DEFAULT_METER
+    if (measure.openingBarline !== null) return inForce ?? laterLineMeter(score) ?? DEFAULT_METER
     /**
      * …**AND AN INLINE `[M:]` ONLY STAMPS THE STAFF WHEN NOTHING HAS STAMPED IT YET.**
      * `appendStartingElement` replaces `staff[staffNum][type]` while the voice holds no
@@ -180,11 +180,33 @@ function meterOf(score: Score): Meter {
         next += 1
       }
       // A SPACER counts: abcjs gives it `el_type: 'note'` like any other rest.
-      if (i < measure.events.length) return inForce ?? DEFAULT_METER
+      if (i < measure.events.length) return inForce ?? laterLineMeter(score) ?? DEFAULT_METER
     }
-    if (measure.closingBarline !== null) return inForce ?? DEFAULT_METER
+    if (measure.closingBarline !== null) return inForce ?? laterLineMeter(score) ?? DEFAULT_METER
   }
-  return DEFAULT_METER
+  return laterLineMeter(score) ?? DEFAULT_METER
+}
+
+/**
+ * **AND WHEN THE FIRST LINE HAS NO METER, `getMeter` KEEPS LOOKING.** It walks every
+ * line's staves for the first that HAS one (`abc_tune.js:181-193`), and a standalone body
+ * `M:` puts one on the next line's staff (`startNewLine`, `abc_parse_music.js:985-998`).
+ * So `CDEF| / M:3/4 / DEF|` with no header `M:` is a 3/4 tune to abcjs — its MIDI time
+ * signature and its beat accents — where ours stopped at line one and answered 4/4.
+ *
+ * A line's staff meter is a line-opening, standalone change; the earliest line wins, and
+ * within a line the first staff.
+ */
+function laterLineMeter(score: Score): Meter | null {
+  let best: { at: number; voice: number; meter: Meter } | null = null
+  score.voices.forEach((voice, v) =>
+    voice.measures.forEach((m, at) => {
+      if (m.startsSystem !== true || m.meterChange == null || m.meterChangeInline === true) return
+      if (best === null || at < best.at || (at === best.at && v < best.voice))
+        best = { at, voice: v, meter: m.meterChange }
+    }),
+  )
+  return (best as { meter: Meter } | null)?.meter ?? null
 }
 
 /**

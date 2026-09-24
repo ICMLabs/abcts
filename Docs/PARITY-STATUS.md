@@ -629,6 +629,22 @@ its measurements:
    `tests/implicit-voice.test.ts`, eleven rungs from abcjs's own answers, each rule broken in
    turn — two rungs were mute until they counted paths and continued a line.
 
+11. ✅ **A `K:` OR `M:` AT THE HEAD OF A LINE ALREADY OPENED — CLOSED 2026-09-24.** abcjs's
+   `startNewLine` runs when a `V:` field switches voice (`abc_parse_header.js:550-551`) and
+   when a music line begins — even one that produces no element (`@@@`, or `+:two` lexed as
+   junk). A standalone `K:` read after that is at the HEAD of the new, empty line: no
+   courtesy clef or key ends the line before (ours drew both), though a clef is still the
+   running clef undeclared staves follow. A standalone `M:` is `multilineVars.meter`, which
+   the next `startNewLine` copies onto EVERY staff's slot and takes its own; each other
+   staff takes its copy at its own next line, and a line already open takes and DISCARDS it
+   (`abc_parse_music.js:985-998`) — so after `V:1` opened its next line a `M:3/4` is drawn on
+   voice 2's, not voice 1's. And with no header `M:` the tune's meter is the FIRST staff
+   meter anywhere in `lines` (`abc_tune.js:181-218`): the MIDI time signature and the
+   flattener's pickup both read the header's, the pickup through its own copy of the rule.
+   `mode-partition`'s `+:` row had assumed strict was blind to the junk line; abcjs draws no
+   time signature there, so the row now writes its `M:` first. `tests/line-head-changes.test.ts`,
+   eleven rungs with abcjs's MIDI, each rule broken in turn.
+
 ## 4. Everything else that is measured
 
 Re-run 2026-09-23, after the abcjs 6.7.1 re-harvest and after the `unknown-clef`,

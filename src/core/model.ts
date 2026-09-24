@@ -1323,6 +1323,17 @@ export interface Measure {
    * clef=` only writes the STAFF's clef, which the next line OPENS in, and appends nothing.
    */
   readonly clefChangeFromVoice?: true
+  /**
+   * **A `K:` WHOSE VOICE HAS ALREADY MOVED ONTO ITS NEXT LINE — NO CAUTIONARY EITHER.**
+   * `appendStartingElement('clef', …)` lands on the voice's CURRENT line, and a `V:` switch
+   * to a voice with music on this line has already opened its next one
+   * (`setCurrentVoice`'s scan) — so the clef is at the HEAD of an empty line, the staff
+   * opens in it, and nothing ends the line before. Unlike `clefChangeFromVoice` it IS the
+   * tune's running clef, which every staff without its own clef follows.
+   */
+  readonly clefChangeAtLineHead?: true
+  /** The same for a `K:` KEY — no courtesy key ends the line before. */
+  readonly keyChangeAtLineHead?: true
   readonly trailingClef?: Clef | null
   readonly trailingClefSourceRange?: SourceRange | null
   /**

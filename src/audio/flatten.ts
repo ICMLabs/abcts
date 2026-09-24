@@ -43,6 +43,7 @@ import {
 } from '../core/model.js'
 import { ABCJS_PERC_NOTE_NAMES } from '../renderer/abcjs-constants.js'
 import { type ChordOptions, ChordTrack } from './chord-track.js'
+import { getBarLength } from './timing.js'
 
 /** One `{cmd: 'note'}` row, exactly as abcjs's flattener emits it. */
 export interface MidiNote {
@@ -1651,7 +1652,10 @@ function qpmOf(score: Score, options: AudioOptions): number {
 function pickupLengthOf(score: Score): number {
   const voice = score.voices[0]
   if (voice === undefined) return 0
-  const barLength = score.meter === null ? 1 : score.meter.numerator / score.meter.denominator
+  // `tune.getBarLength()` — `getMeterFraction`'s walk over `lines`, not the header's `M:`
+  // (`abc_tune.js:145-148`, `:181-218`). With no header meter a body `M:3/4` on line two is
+  // the tune's meter, and a four-beat first bar is then a quarter of pickup.
+  const barLength = getBarLength(score)
   let pickup = 0
   for (const measure of voice.measures) {
     // …AND AN OPENING BARLINE IS A BAR ELEMENT TOO. abcjs's voice is a flat stream, so a
