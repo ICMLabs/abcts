@@ -494,6 +494,15 @@ const AS_ABCJS: Record<
    * line; AT THE `[` for an inline `[I:…]`, which warns with the field's own index
    * (`abc_parse_header.js:354-355`).
    */
+  /**
+   * `setMeter`'s throw, warned at column 0 of the field's VALUE — the text is that value
+   * alone, comment stripped and trimmed (`abc_parse_header.js:132-134`).
+   */
+  meter: (diagnostic, abc) => ({
+    message: diagnostic.message,
+    column: 0,
+    text: abc.substring(diagnostic.range?.start ?? 0, diagnostic.range?.end ?? 0),
+  }),
   "unknown-directive": (diagnostic, abc) => {
     const name = /%%\s*(\S+)/.exec(diagnostic.message)?.[1];
     const at = diagnostic.range?.start ?? 0;

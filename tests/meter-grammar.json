@@ -1,0 +1,84 @@
+[
+ {
+  "abc": "X:1\nM:xyz\nK:C\nCDEF|",
+  "warnings": [
+   "Music Line:2:1: Expected top number of meter:  <span style=\"text-decoration:underline;font-size:1.3em;font-weight:bold;\">x</span>yz"
+  ],
+  "meter": {},
+  "height": "94.789"
+ },
+ {
+  "abc": "X:1\nM:3/4 x\nK:C\nCDE|",
+  "warnings": [
+   "Music Line:2:1: Expected top number of meter:  <span style=\"text-decoration:underline;font-size:1.3em;font-weight:bold;\">3</span>/4 x"
+  ],
+  "meter": {},
+  "height": "94.789"
+ },
+ {
+  "abc": "X:1\nM: 3/4 x %c\nK:C\nCDE|",
+  "warnings": [
+   "Music Line:2:1: Expected top number of meter:  <span style=\"text-decoration:underline;font-size:1.3em;font-weight:bold;\">3</span>/4 x"
+  ],
+  "meter": {},
+  "height": "94.789"
+ },
+ {
+  "abc": "X:1\nM:(2+3)/8\nK:C\nCDEF|",
+  "warnings": [],
+  "meter": {
+   "type": "specified",
+   "value": [
+    {
+     "num": "2+3",
+     "den": "8"
+    }
+   ]
+  },
+  "height": "94.789"
+ },
+ {
+  "abc": "X:1\nM:3/4)\nK:C\nCDE|",
+  "warnings": [
+   "Music Line:2:1: Expected top number of meter:  <span style=\"text-decoration:underline;font-size:1.3em;font-weight:bold;\">3</span>/4)"
+  ],
+  "meter": {},
+  "height": "94.789"
+ },
+ {
+  "abc": "X:1\nM:3-4\nK:C\nCDE|",
+  "warnings": [
+   "Music Line:2:1: Expected top number of meter:  <span style=\"text-decoration:underline;font-size:1.3em;font-weight:bold;\">3</span>-4"
+  ],
+  "meter": {},
+  "height": "94.789"
+ },
+ {
+  "abc": "X:1\nM:2+3/8\nK:C\nCDEF|",
+  "warnings": [],
+  "meter": {
+   "type": "specified",
+   "value": [
+    {
+     "num": "2+3",
+     "den": "8"
+    }
+   ]
+  },
+  "height": "94.789"
+ },
+ {
+  "abc": "X:1\nM:6/8\nK:C\nCDE|",
+  "warnings": [],
+  "meter": {
+   "type": "specified",
+   "value": [
+    {
+     "num": "6",
+     "den": "8"
+    }
+   ]
+  },
+  "height": "94.789"
+ }
+]

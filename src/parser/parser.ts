@@ -581,12 +581,110 @@ function unknownKeyParameters(
   return out
 }
 
-function parseMeter(content: string): Meter | null {
-  const spec = content.trim()
-  if (spec === 'C') return { numerator: 4, denominator: 4, symbol: 'common' }
-  if (spec === 'C|') return { numerator: 2, denominator: 2, symbol: 'cut' }
-  if (spec === 'none' || spec === '') return null
+/**
+ * **abcjs'S `setMeter` GRAMMAR** (`abc_parse_header.js:24-136`) — `[(] n [(+|.) n]… [)] / d`,
+ * one or more terms — as the terms it reads, or the message it throws.
+ *
+ * ⚠️ **A THROW IS NO METER AT ALL**, not the part before it: `setMeter` catches, warns at
+ * column 0 of the field's value, and returns `null`. So `M:3/4 x` draws no signature in
+ * abcjs and a 3/4 here. And a `(` is SKIPPED, not kept — `(2+3)/8` is the num `"2+3"` —
+ * where ours split the `(2` and got `NaN`, so the bar was 3/8 long.
+ *
+ * A token abcjs reads as `undefined` makes it throw a TypeError, which it then WARNS with
+ * its own crash text (`M:3/` says `TypeError: undefined is not an object…`). That is
+ * `null` here too and says nothing — declined, like the red debug string.
+ */
+function meterTerms(spec: string): { num: string; den?: string }[] | string | null {
+  const tokens = tokenizeKeyValue(spec)
+  const shift = (): KeyToken | undefined => tokens.shift()
+  const CRASH = null
+  const parseNum = (): { num: string } | string | null => {
+    let num = ''
+    let tok = shift()
+    if (tok === undefined) return CRASH
+    if (tok.token === '(') tok = shift()
+    for (;;) {
+      if (tok === undefined) return CRASH
+      if (tok.type !== 'number') return 'Expected top number of meter'
+      num += tok.token
+      if (tokens.length === 0 || tokens[0]?.token === '/') return { num }
+      tok = shift() as KeyToken
+      if (tok.token === ')') {
+        if (tokens.length === 0 || tokens[0]?.token === '/') return { num }
+        return 'Unexpected paren in meter'
+      }
+      if (tok.token !== '.' && tok.token !== '+') return 'Expected top number of meter'
+      num += tok.token
+      if (tokens.length === 0) return 'Expected top number of meter'
+      tok = shift()
+    }
+  }
+  const parseFraction = (): { num: string; den?: string } | string | null => {
+    const ret = parseNum()
+    if (ret === null || typeof ret === 'string' || tokens.length === 0) return ret
+    if (shift()?.token !== '/') return 'Expected slash in meter'
+    const den = shift()
+    if (den === undefined) return CRASH
+    if (den.type !== 'number') return 'Expected bottom number of meter'
+    return { num: ret.num, den: den.token }
+  }
+  if (tokens.length === 0) return 'Expected meter definition in M: line'
+  const terms: { num: string; den?: string }[] = []
+  for (;;) {
+    const term = parseFraction()
+    if (term === null || typeof term === 'string') return term
+    terms.push(term)
+    if (tokens.length === 0) return terms
+  }
+}
 
+/** The spellings `setMeter` answers before its grammar runs. */
+const METER_WORDS: Readonly<Record<string, Meter>> = {
+  C: { numerator: 4, denominator: 4, symbol: 'common' },
+  'C|': { numerator: 2, denominator: 2, symbol: 'cut' },
+}
+
+/**
+ * `M:` → a `Meter`, or `null` for `none`, an empty value — or, in strict, a value
+ * `setMeter`'s grammar rejects, which it reports through `onError` (see `meterTerms`).
+ *
+ * The model's two numbers are `getMeterFraction`'s: the FIRST term, its `+`-parts summed
+ * (`abc_tune.js:196-217`).
+ *
+ * ponytail: a term with no denominator, several terms, a dotted numerator and the four
+ * tempus spellings (`o`, `c`, `o.`, `c.`) are drawn by abcjs from its `value` array and
+ * glyphs our `Meter` has no field for; they take the lenient reading below. Measured
+ * in `Docs/PARITY-STATUS.md` §3d item 8.
+ */
+function parseMeter(
+  content: string,
+  strict = false,
+  onError?: (message: string) => void,
+): Meter | null {
+  const cut = content.indexOf('%')
+  const spec = (cut >= 0 ? content.slice(0, cut) : content).trim()
+  const word = METER_WORDS[spec]
+  if (word !== undefined) return word
+  if (spec === '' || spec.toLowerCase() === 'none') return null
+
+  const read = meterTerms(spec)
+  if (typeof read === 'string') onError?.(read)
+  if (strict && !Array.isArray(read)) return null
+  const first = Array.isArray(read) ? read[0] : undefined
+  if (first !== undefined && first.den !== undefined && /^\d+(\+\d+)*$/.test(first.num)) {
+    const parts = first.num.split('+').map((p) => Number.parseInt(p, 10))
+    const numerator = parts.reduce((sum, p) => sum + p, 0)
+    const denominator = Number.parseInt(first.den, 10)
+    if (numerator > 0 && denominator > 0)
+      return {
+        numerator,
+        denominator,
+        symbol: 'numeric',
+        ...(parts.length > 1 ? { numeratorParts: parts } : {}),
+      }
+  }
+
+  // The lenient reading, for what the model cannot hold and for extended mode.
   const [top, bottom] = spec.split('/')
   const denominator = Number.parseInt(bottom ?? '', 10)
   if (!top || !Number.isFinite(denominator) || denominator <= 0) return null
@@ -5434,6 +5532,18 @@ class Parser {
         builder.recordField('unalignedWords', range)
         return
       case 'M': {
+        /**
+         * `setMeter`'s own warning — `warn(e, line, 0)` over the field's VALUE, comment
+         * stripped and trimmed (`abc_parse_header.js:132-134`) — and in strict its answer,
+         * which is no meter at all. See `meterTerms`.
+         */
+        const meterAt =
+          (contentAt ?? start + (inline ? 3 : 2)) + (content.length - content.trimStart().length)
+        const meterText = (content.includes('%') ? content.slice(0, content.indexOf('%')) : content).trim()
+        const meterOf = (): Meter | null =>
+          parseMeter(value, isStrict(this.mode), (message) =>
+            this.warn('meter', message, sourceRange(meterAt, meterAt + meterText.length), 0),
+          )
         if (builder.bodyStarted) {
           // A STANDALONE `M:` ON A CONTINUED LINE DRAWS WHERE IT STANDS, and that is a
           // THIRD case rather than a variant of either other one.
@@ -5454,11 +5564,11 @@ class Parser {
           // `this.lineContinued` still holds the PREVIOUS line's flag here: a field line
           // returns from `parseLine` before the music path reassigns it.
           if (inline || this.lineContinued || this.continueAll) {
-            builder.voice.setMeterChange(parseMeter(value), range, inline)
-          } else builder.voice.setMeterForNextLine(parseMeter(value), range)
+            builder.voice.setMeterChange(meterOf(), range, inline)
+          } else builder.voice.setMeterForNextLine(meterOf(), range)
           return
         }
-        builder.meter = parseMeter(value)
+        builder.meter = meterOf()
         builder.meterSourceRange = range
         if (!builder.unitExplicit) builder.unitNoteLength = defaultUnitLength(builder.meter)
         return

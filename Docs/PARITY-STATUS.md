@@ -589,8 +589,20 @@ its measurements:
    crosses a whole system and the crossed line reserved nothing. `tests/unclosed-slur.test.ts`
    holds abcjs's heights and arc paths for six shapes, each rule broken in turn.
 
-8. **THE METER GRAMMAR — MEASURED, NOT BUILT.** See item 1's note: `setMeter` throws where
-   ours `split('/')`s, and our `Meter` cannot hold abcjs's `value: [{num, den?}]`.
+8. ✅ **THE METER GRAMMAR — CLOSED 2026-09-24, the part that matters.** abcjs's `setMeter`
+   reads `[(] n [(+|.) n]… [)] / d` term by term and THROWS on anything else; its `catch`
+   warns at column 0 of the value and returns `null` — NO meter, not the part before the junk
+   (`abc_parse_header.js:24-136`). Ours was a lenient `split('/')`: `M:3/4 x` drew 3/4 where
+   abcjs draws nothing and warned nothing where abcjs warns; and a `(` is SKIPPED by abcjs,
+   so `(2+3)/8` is the num `"2+3"` — ours split `(2` into a `NaN` and made the bar **3/8
+   long**, a duration bug under the drawing. Strict now takes the grammar's answer; extended
+   warns and keeps the lenient reading. `tests/meter-grammar.test.ts`, eight rungs.
+   ⚠️ **DECLARED, NOT BUILT: the spellings our `Meter` cannot hold** — a numerator alone
+   (`M:3`: abcjs draws `3` and its `getMeterFraction` answers `NaN` for the denominator),
+   several terms (`M:2/4 3/8`), a dotted numerator (`M:3.2/8`) and the four tempus signs
+   (`M:o`, `c`, `o.`, `c.`, drawn from `timesig.perfectum` & co.). Each needs abcjs's
+   `value: [{num, den?}]` in the model and, for tempus, glyph names with Bravura metrics for
+   extended mode. Measured: every one draws a different prefix width in abcjs.
 9. ✅ **A STAFF'S `voices` ENDS AT THE LAST VOICE THAT SANG — CLOSED 2026-09-24.** abcjs's
    array is indexed by voice number and filled as each voice is created, so a lower voice
    that sits a line out leaves NO slot while an upper one leaves an empty one. Ours published
