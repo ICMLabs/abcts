@@ -365,6 +365,33 @@ const AS_ABCJS: Record<
     return { message: "Can't nest triplets", column: at - start };
   },
   /**
+   * `Can't add words before the first line of music` (`abc_parse.js:223`), at column 0 —
+   * ⚠️ **and the TEXT is the literal `SPACE`**, which is how abcjs's formatter renders the
+   * empty line it hands `warn`. The format is as much of the contract as the wording.
+   */
+  "lyrics-before-music": () => ({
+    message: "Can't add words before the first line of music",
+    column: 0,
+    text: "SPACE",
+  }),
+  /**
+   * **`%%score`'s SIX BRACKET WARNINGS**, each at the offending token's offset within the
+   * directive body — `Can't nest parenthesis in %%score` and `Unexpected close parenthesis in
+   * %%score`, and the same pair for brackets and braces
+   * (`abc_parse_directive.js:1080-1100`). The message travels whole, because the six differ
+   * only in a word and abcjs writes each out.
+   */
+  "score-bracket": (diagnostic, abc) => {
+    const at = diagnostic.range?.start ?? 0;
+    const text = abc.substring(at, diagnostic.range?.end ?? at);
+    return {
+      message: diagnostic.message,
+      column: diagnostic.column ?? 0,
+      // The TEXT is the directive body without its `%%`, which is what abcjs hands `warn`.
+      text: text.replace(/^%%/, ""),
+    };
+  },
+  /**
    * `Missing the closing '}' while parsing grace note`, at the `{` itself
    * (`abc_parse_music.js:674-676`) — raised from `getBrackettedSubstring`'s FAILURE, so it
    * is the unterminated case only, and abcjs follows it with an `Unknown character ignored`

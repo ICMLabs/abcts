@@ -1324,7 +1324,22 @@ function padOverlays(measures: readonly Measure[], _meter: Meter | null): Measur
  * `%%staves` differs from `%%score` in exactly one way — it connects barlines after EVERY
  * voice, where `%%score` connects only where the directive writes `|`.
  */
-function parseStaffGroups(spec: string, directive: 'score' | 'staves'): MutableStaffGroup[] {
+/**
+ * **AND EVERY MISMATCHED BRACKET IS A WARNING, SIX OF THEM.** abcjs's loop is a switch over
+ * the same three flags this one carries and warns at each: `Can't nest parenthesis in
+ * %%score` / `Unexpected close parenthesis in %%score`, and the same pair for brackets and
+ * braces (`abc_parse_directive.js:1080-1100`). ⚠️ **AND `justOpen…` IS PART OF THE CLOSE
+ * TEST** — `if (!openParen || justOpenParen)` — so `()` warns on the `)` because the group is
+ * EMPTY, where `(1 2)` does not.
+ *
+ * The flags were all here and none of them warned; `warn` is passed in because this is a
+ * pure helper and the column abcjs reports is the token's offset within the directive body.
+ */
+function parseStaffGroups(
+  spec: string,
+  directive: 'score' | 'staves',
+  warn: (message: string, at: number) => void = () => {},
+): MutableStaffGroup[] {
   const staves: MutableStaffGroup[] = []
   const voiceStaff = new Map<string, number>()
 
@@ -1371,24 +1386,30 @@ function parseStaffGroups(spec: string, directive: 'score' | 'staves'): MutableS
 
   // Tokens are the punctuation characters and runs of everything else, which is what a
   // voice id is — `RH`, `LH`, `1`, `mpguitarlow`.
-  for (const token of spec.match(/[()[\]{}|]|[^\s()[\]{}|]+/g) ?? []) {
+  for (const match of spec.matchAll(/[()[\]{}|]|[^\s()[\]{}|]+/g)) {
+    const token = match[0]
+    const at = match.index ?? 0
     switch (token) {
       case '(':
-        if (!openParen) {
+        if (openParen) warn("Can't nest parenthesis in %%score", at)
+        else {
           openParen = true
           justOpenParen = true
         }
         break
       case ')':
+        if (!openParen || justOpenParen) warn('Unexpected close parenthesis in %%score', at)
         openParen = false
         break
       case '[':
-        if (!openBracket) {
+        if (openBracket) warn("Can't nest brackets in %%score", at)
+        else {
           openBracket = true
           justOpenBracket = true
         }
         break
       case ']':
+        if (!openBracket || justOpenBracket) warn('Unexpected close bracket in %%score', at)
         openBracket = false
         if (lastStaff !== null) {
           const staff = staves[lastStaff]
@@ -1396,12 +1417,14 @@ function parseStaffGroups(spec: string, directive: 'score' | 'staves'): MutableS
         }
         break
       case '{':
-        if (!openBrace) {
+        if (openBrace) warn("Can't nest braces in %%score", at)
+        else {
           openBrace = true
           justOpenBrace = true
         }
         break
       case '}':
+        if (!openBrace || justOpenBrace) warn('Unexpected close brace in %%score', at)
         openBrace = false
         if (lastStaff !== null) {
           const staff = staves[lastStaff]
@@ -3625,10 +3648,23 @@ class ScoreBuilder {
     this.lastVoiceId = id
   }
 
+  /**
+   * Whether `flush` may drop this builder on the floor. abcjs has no such test — every
+   * chunk of the book is a tune — so this only stands in for the chunking ours does
+   * inline: a builder holding NOTHING is the gap between two tunes, not a tune.
+   *
+   * ⚠️ **A `W:` OR A `%%text` IS CONTENT.** The test was `X:`, `T:` and music only, so
+   * `W:x` alone rendered 37.56px of empty page where abcjs draws the words and 134.09px,
+   * and `%%text hi` alone lost its line outright.
+   */
   get isEmpty(): boolean {
     return (
       this.tuneNumber === null &&
       this.titles.length === 0 &&
+      Object.keys(this.fieldRanges).length === 0 &&
+      this.textAbove.length === 0 &&
+      this.textBelow.length === 0 &&
+      this.pendingTextBefore.blocks.length === 0 &&
       [...this.voices.values()].every((v) => v.isEmpty)
     )
   }
@@ -3853,6 +3889,18 @@ class Parser {
     }
     this.flush()
 
+    /**
+     * **AN EMPTY TUNE IS STILL A TUNE.** abcjs's splitter always hands the parser at least
+     * one string — `numberOfTunes('')` is 1 (`abc_tunebook.js:26-33`) and `parseOnly`
+     * builds one slot per counted tune — so `renderAbc(div, '')[0]` is a tune object with
+     * `lines: []` and a page 37.56px tall. Ours dropped the empty builder on the floor and
+     * handed back nothing, which is `undefined` where a host reads `[0]`.
+     */
+    if (this.scores.length === 0) {
+      this.scores.push(this.ensureScore(0).finish())
+      this.builder = null
+    }
+
     const errors = this.diagnostics.filter((d) => d.severity === 'error')
     if (errors.length > 0) {
       return { ok: false, errors, scores: this.scores, diagnostics: this.diagnostics }
@@ -3942,9 +3990,17 @@ class Parser {
     return this.builder
   }
 
+  /** Set by an empty line: everything up to the next `X:` is not this book's. See below. */
+  private skippingChunk = false
+
   private processLine(start: number, endIn: number): void {
     let end = endIn
     let line = this.src.slice(start, end).replace(/\r$/, '')
+
+    if (this.skippingChunk) {
+      if (!/^X:/.test(line)) return
+      this.skippingChunk = false
+    }
 
     // A `%%begintext` block runs to `%%endtext`. Its content lines carry no `%%` prefix,
     // so they must be claimed here — otherwise ordinary English prose parses as music and
@@ -3996,10 +4052,27 @@ class Parser {
       return
     }
 
-    if (line.trim() === '') {
-      this.flush() // A blank line ends the tune.
+    /**
+     * **A BLANK LINE DOES NOT START A NEW TUNE — IT ENDS THE CHUNK, AND THE REST OF THE
+     * CHUNK IS THROWN AWAY.** abcjs cuts the book on `"\nX:"` and nothing else
+     * (`abc_parse_book.js:12-33`), then walks ONE chunk with `while (line)`
+     * (`abc_parse.js:548-563`) — so the first EMPTY line falls out of the loop and every
+     * line after it in that chunk is never parsed. `X:1 / CDEF| / <blank> / GABc|` is ONE
+     * tune of ONE line for abcjs; ours made a SECOND TUNE of `GABc|`, so
+     * `renderAbc([d1, d2], abc)` wrote a staff into `d2` that abcjs leaves empty and
+     * returned 2 where our own `numberOfTunes` says 1.
+     *
+     * ⚠️ **AND WHITESPACE IS NOT EMPTY.** `nextLine()` hands back the raw line, so `" "` is
+     * TRUTHY and the loop keeps going; `parseLine` strips it to nothing and returns
+     * (`:413-414`). A space on the line between two music lines therefore joins them into
+     * one tune of TWO staves, where ours ended the tune. Only `""` — after abcjs's global
+     * `\r\n?` → `\n` (`:498`) — stops the walk.
+     */
+    if (line === '') {
+      this.skippingChunk = true
       return
     }
+    if (line.trim() === '') return
     if (line.startsWith('%%')) {
       // LEADING WHITESPACE IS NOT PART OF THE NAME. abcjs tokenizes the line and takes the
       // first WORD as the command (`abc_parse_directive.js:44-49`), so `%% barnumbers 1`
@@ -4183,7 +4256,19 @@ class Parser {
     const scoreDirective = /^(score|staves)\s+(.*)$/.exec(body)
     if (scoreDirective?.[2]) {
       const builder = this.ensureScore(start)
-      const groups = parseStaffGroups(scoreDirective[2], scoreDirective[1] as 'score' | 'staves')
+      /**
+       * …**AND ITS MISMATCHED BRACKETS WARN, AT THEIR OFFSET WITHIN THE DIRECTIVE BODY** —
+       * abcjs's `warn(msg, str, t.start)` where `str` is the body without the `%%`, so the
+       * column counts from `score` and not from the argument. See `parseStaffGroups`.
+       */
+      const argsAt = body.length - scoreDirective[2].length
+      const groups = parseStaffGroups(
+        scoreDirective[2],
+        scoreDirective[1] as 'score' | 'staves',
+        (message, at) => {
+          this.warn('score-bracket', message, sourceRange(start, end), argsAt + at)
+        },
+      )
       builder.staffGroups = groups
       // Voice ORDER falls out of the grouping: staves top to bottom, voices within each.
       builder.scoreOrder = groups.flatMap((g) => g.voiceIds)
@@ -5363,6 +5448,25 @@ class Parser {
         return
       }
       case 'w': {
+        /**
+         * **A `w:` BEFORE ANY MUSIC IS A WARNING AND THE WORDS ARE DROPPED.**
+         * `if (!line) { warn("Can't add words before the first line of music", line, 0);
+         * return }` (`abc_parse.js:223`) — `line` being the last music line, so this fires
+         * in the header and before the first note of the body alike.
+         *
+         * ⚠️ **AND THE TEXT abcjs SHOWS IS THE LITERAL `SPACE`**, because it hands `warn` the
+         * EMPTY line it just failed to find and the formatter renders an empty string that
+         * way. Reproduced rather than tidied: the format is as much of the contract as the
+         * wording. Ours added the words to a voice with no music and said nothing.
+         */
+        if (!builder.beganMusic) {
+          this.warn(
+            'lyrics-before-music',
+            "can't add words before the first line of music",
+            sourceRange(start, end),
+          )
+          return
+        }
         // `w:` follows the music line it belongs to. Offset by 2 for the `w:` prefix.
         // `takeLyricLine` also sets `lyricContinues` from a trailing `\`.
         builder.voice.addLyricLine(this.takeLyricLine(content, start + 2, builder))

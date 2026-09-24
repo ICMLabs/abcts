@@ -403,7 +403,8 @@ artefact. Ask what a host DOES, not what the nearest gate measures.
 57 controls written to pin a rule — so *"what does a drop-in do with input a user is halfway
 through typing?"* had no gate at all. `scripts/zzfuzz.mjs` runs 35 malformed shapes through
 BOTH engines in one WebKit page and compares the tune count, the warning strings, the element
-stream per voice and the page height. It found **six** defects on its first run; two are fixed:
+stream per voice and the page height. It is **41 shapes** now — the six added with the chunk
+rule are its own regression net — and it found **six** defects on its first run; two are fixed:
 
 * ✅ **A LINE OF NOTHING BUT BARLINES WAS DELETED.** `|`, `||`, `|]`, `[|]`, `||||::|]` and
   `-|-` each give abcjs a staff and gave this engine NO LINES AT ALL — the voice's emptiness
@@ -420,8 +421,8 @@ stream per voice and the page height. It found **six** defects on its first run;
   not consume the pending line start, so `|:|:C:|:|` came out as TWO systems (187px against
   94.789). Fixed by having it take the line start, as a real measure does.
 
-**FOUR CLASSES REMAIN, all DECLARED in the script with their measurements**, and the first is
-the one a host feels:
+**FIVE CLASSES WERE NAMED, THREE ARE CLOSED**, and the two that are left are DECLARED in the
+script with their measurements:
 
 1. ✅ **RECOVERY FROM AN UNTERMINATED CONSTRUCT — CLOSED 2026-09-23, AND IT WAS ONE SHARED
    PRIMITIVE.** `getBrackettedSubstring` clamps a missing close to a per-construct BUDGET
@@ -465,11 +466,39 @@ the one a host feels:
    halfway. It is the same rule as "an ending with no `end` emits nothing", ported for the
    volta years ago and never for the tuplet. `TupletMark.closes`.
 
-   **What is LEFT: `%%score (((` and a `w:` before any music.**
-3. **AN EMPTY TUNE IS STILL A TUNE.** `''` gives abcjs ONE tune object and a 37.56px page;
-   ours gives zero tunes and no SVG, so `renderAbc(div, '')[0]` is undefined where abcjs hands
-   back an object.
-4. **A BARE `&` LAYER** — `&|` gives abcjs no lines where ours draws a barline, and `C&|` gives
+   ✅ **AND THE LAST TWO CLOSED THE SAME DAY.** `%%score (((` — the flags for all six bracket
+   warnings were already parsed and not one of them warned, and `justOpenBracket` is part of
+   the CLOSE test, so `()` warns on an EMPTY group. A `w:` before any music is DROPPED with a
+   warning whose text is the literal `SPACE`, which is abcjs's formatter rendering the empty
+   line it was handed. **The class is closed.**
+3. ✅ **WHAT A CHUNK OF THE BOOK IS — CLOSED 2026-09-23, AND IT WAS THREE RULES.** abcjs cuts
+   the book on `"\nX:"` ALONE and then truncates each chunk at its first `\n\n`
+   (`abc_parse_book.js:18-37`); the parse loop says the same thing a second way by falling out
+   of `while (line)` on the first EMPTY line (`abc_parse.js:548-563`).
+   * **An empty tune is still a tune.** `''`, `'\n\n\n'`, `' '` and `'%% nothing'` each give
+     abcjs ONE tune object and a 37.56px page, where `renderAbc(div, '')[0]` was `undefined`.
+   * ⭐ **A blank line ENDS the chunk — it does not START a tune.** `X:1 / CDEF| / ⏎ / GABc|`
+     is ONE tune of ONE line for abcjs and the rest is thrown away; this engine made a SECOND
+     TUNE of it, wrote a staff into a second div abcjs leaves empty, returned 2 tunes from
+     `renderAbc([d1, d2], abc)` — and DISAGREED WITH OUR OWN `numberOfTunes`, which
+     implements abcjs's split and said 1. Two answers to "how many tunes is this?" inside one
+     library.
+   * **Whitespace is not empty.** `nextLine()` hands back the raw line, so `" "` is truthy and
+     only `parseLine`'s strip-to-nothing test fires (`abc_parse.js:413`): a space on the line
+     between two music lines joins them into one tune of TWO staves, where ours ended the tune.
+   ⚠️ **AND A CHUNK HOLDING ONLY A `W:` OR A `%%text` IS NOT EMPTY.** `flush` dropped a builder
+   with no `X:`, no `T:` and no music, so `W:x` rendered 37.56px of nothing against abcjs's
+   134.09 and `%%text hi` lost its line outright. `tests/chunking.test.ts` is the ladder, eight
+   rungs, every number abcjs's own — and it counts `parse().scores`, because `parseOnly` opens
+   one slot per `numberOfTunes` and CANNOT SEE the extra tune.
+4. **THE LEADING CHUNK'S `%%` LINES ARE PREPENDED TO EVERY TUNE.** `%%text hi` above the first
+   `X:` draws a text row in the tune below it — 189.88px against our 94.79 — because abcjs
+   prepends the leading chunk's `%%` lines to each tune STRING
+   (`abc_parse_book.js:22-37`). Ours keeps that chunk's FORMATTING (`fileDefaults`) and nothing
+   else, so a `%%text`, `%%center` or `%%begintext` up there is lost. MEASURED, not built: the
+   prepend also shifts every `startChar` in the tune by the block's length, and that shift has
+   to be reproduced with it or not at all.
+5. **A BARE `&` LAYER** — `&|` gives abcjs no lines where ours draws a barline, and `C&|` gives
    abcjs `stem note bar stem` where ours gives `note bar`. MEASURED, not built: `createVoice`'s
    stem pair survives the empty layer's removal, and a half-understood fix there is worth less
    than the note.

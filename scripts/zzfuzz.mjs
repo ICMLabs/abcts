@@ -57,23 +57,40 @@ const VERBOSE = process.argv.includes('-v')
  *    its count draws NOTHING in abcjs (`endTriplet` is never stamped and a `TripletElem` with
  *    no end is never drawn), where we drew a bracket and a number — 19.4px on a shape a user
  *    makes by typing `(3` and stopping. `TupletMark.closes`.
- *    **What is LEFT: `%%score (((` and a `w:` before any music.**
- * 3. **AN EMPTY TUNE IS STILL A TUNE.** `''` and `'\n\n\n'` give abcjs ONE tune object and a
- *    37.56px page; ours gives zero tunes and no SVG, so `renderAbc(div, '')[0]` is undefined
- *    where abcjs hands back an object.
- * 4. **A BARE `&` LAYER.** `&|` and `&&&|` give abcjs NO lines where ours draws a barline, and
+ *    ✅ **AND THE LAST TWO CLOSED TOO**: `%%score`'s six bracket warnings (the flags were all
+ *        there and none of them warned — and `justOpen…` is part of the CLOSE test, so `()`
+ *        warns on an EMPTY group), and a `w:` before any music, which abcjs DROPS with a
+ *        warning whose text is the literal `SPACE`. **The class is closed.**
+ * 3. ✅ **WHAT A CHUNK OF THE BOOK IS — CLOSED 2026-09-23**, and it was three rules, not one.
+ *    abcjs cuts the book on `"\nX:"` ALONE and then truncates each chunk at its first `\n\n`
+ *    (`abc_parse_book.js:18-37`), which the parse loop confirms by falling out of
+ *    `while (line)` on the first EMPTY line (`abc_parse.js:548-563`):
+ *      • **an empty tune is still a tune** — `''` gives ONE tune and a 37.56px page, where
+ *        `renderAbc(div, '')[0]` was `undefined`;
+ *      • **a blank line ENDS the chunk, it does not start a tune** — `X:1 / CDEF| / ⏎ /
+ *        GABc|` is one tune of one line and the rest is DISCARDED, where we made a second
+ *        tune and wrote a staff into a second div abcjs leaves empty, disagreeing with our
+ *        own `numberOfTunes`;
+ *      • **whitespace is not empty** — `" "` is truthy to `nextLine()`, so a space on the
+ *        line between two music lines joins them into ONE tune of two staves.
+ *    ⚠️ **And a chunk holding only a `W:` or a `%%text` is not empty**: `flush` dropped it,
+ *    losing 96.5px of words and a whole text line.
+ * 4. **THE LEADING CHUNK'S `%%` LINES ARE PREPENDED TO EVERY TUNE.** `%%text hi` above the
+ *    first `X:` draws a text row in the tune below it (189.88px vs our 94.79px); we keep the
+ *    leading chunk's FORMATTING (`fileDefaults`) and nothing else, so a `%%text`, `%%center`
+ *    or `%%begintext` up there is lost. MEASURED, not built: abcjs prepends the lines to the
+ *    tune STRING (`abc_parse_book.js:36`), which also shifts every `startChar` in the tune by
+ *    the block's length, and that shift has to be reproduced with it or not at all.
+ * 5. **A BARE `&` LAYER.** `&|` and `&&&|` give abcjs NO lines where ours draws a barline, and
  *    `C&|` gives abcjs `stem note bar stem` — `createVoice`'s stem pair survives the empty
  *    layer's removal — where ours gives `note bar`. MEASURED, not built: `resolveOverlays`
  *    and `createVoice` interact here and a half-understood fix is worth less than this note.
  */
 const DECLARED = new Set([
-  'empty',
-  'blank lines',
+  'leading text directive',
   'unterminated slur',
   'unterminated bracket field',
   'huge duration',
-  'unicode',
-  'directive garbage',
   'overlay only',
   'bare overlay after a note',
 ])
