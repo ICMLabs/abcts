@@ -17,10 +17,11 @@ Harvested by `/ponytail-debt`. One row per deliberate shortcut.
 > - **Stale, rewritten (4)**: `layout.ts` cross-system curves (abcjs's own behaviour),
 >   `model.ts` text between lines (placed correctly), the `parser.ts` header's `s:`
 >   deferral (implemented), and `compat/index.ts`'s tune methods (present and gated).
-> - **Still required, measured failing (8 sites, 7 defects)**: a hairpin crossing a break and
->   closing on a barline; an inline `[P:]` after `|:`; `K:` beside `%%text` under wrap (both
->   orders); `K:Cbmin`'s `acc` in `tune.lines`; `&` on a shared staff; an inline `[M:]` on
->   one voice's later line; the `%%voicecolor` element. Each marker says what differs.
+> - **Measured failing (8 sites, 7 defects) — ALL FIXED THE SAME DAY**, with two more the
+>   controls found (`%%gchordfont box`'s face, a two-row annotation) and four siblings the
+>   ladders found (a clef after a line's first bar, a zero-length hairpin on a last bar,
+>   overlay MIDI track order, annotation group order). Each has a test beside it; the one
+>   row left open is `meter:after-continuation` in `zzledger`'s KNOWN.
 > - **Still required by design, or extended-only ceilings (14)**: unchanged.
 >
 > The rows below are the 2026-09-16 harvest and their line numbers have moved.
