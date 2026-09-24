@@ -1,0 +1,77 @@
+[
+ {
+  "abc": "X:1\nL:1/4\nV:1\nK:C\nV:1\nCDEF|\nGA\n%%voicecolor red\nBc|\nCDEF|\n",
+  "lines": [
+   "C D E F |",
+   "G A COLOR:red",
+   "COLOR:red B c |",
+   "COLOR:red C D E F |"
+  ]
+ },
+ {
+  "abc": "X:1\nL:1/4\nV:1\nK:C\nV:1\nCDEF|\n%%MIDI program 3\n%%voicecolor red\nGABc|\n",
+  "lines": [
+   "C D E F | MIDI COLOR:red",
+   "COLOR:red G A B c |"
+  ]
+ },
+ {
+  "abc": "X:1\nL:1/4\nV:1\nK:C\nV:1\nCDEF|\n%%voicecolor red\n%%MIDI program 3\nGABc|\n",
+  "lines": [
+   "C D E F | COLOR:red MIDI",
+   "COLOR:red G A B c |"
+  ]
+ },
+ {
+  "abc": "X:1\nL:1/4\nV:1\nK:C\nV:1\nCDEF|GA\n%%voicecolor red\nBc|\nCDEF|\n",
+  "lines": [
+   "C D E F | G A COLOR:red",
+   "COLOR:red B c |",
+   "COLOR:red C D E F |"
+  ]
+ },
+ {
+  "abc": "X:1\nL:1/4\nV:1\nV:2\nK:C\nV:1\nCD\n%%voicecolor red\nEF|\nV:2\nCDEF|\n",
+  "lines": [
+   "C D COLOR:red // C D E F |",
+   "COLOR:red E F |"
+  ]
+ },
+ {
+  "abc": "X:1\nL:1/4\nV:1\n%%voicecolor blue\nK:C\nCDEF|\n%%voicecolor red\nGABc|\nCDEF|\n",
+  "lines": [
+   "COLOR:blue C D E F | COLOR:red",
+   "COLOR:red G A B c |",
+   "COLOR:red C D E F |"
+  ]
+ },
+ {
+  "abc": "X:1\nL:1/4\nK:C\nCD\n%%MIDI program 3\nEF|GABc|\n",
+  "lines": [
+   "C D MIDI",
+   "E F | G A B c |"
+  ]
+ },
+ {
+  "abc": "X:1\nL:1/4\nV:1\nK:C\nV:1\nCDEF|\n%%voicecolor red\nGABc|\nCDEF|\n",
+  "lines": [
+   "C D E F | COLOR:red",
+   "COLOR:red G A B c |",
+   "COLOR:red C D E F |"
+  ]
+ },
+ {
+  "abc": "X:1\nL:1/4\nK:C\nCDEF|\n%%voicecolor red\nGABc|\n",
+  "lines": [
+   "C D E F |",
+   "G A B c |"
+  ]
+ },
+ {
+  "abc": "X:1\nL:1/4\nV:1\nK:C\n%%voicecolor red\nCDEF|\nGABc|\n",
+  "lines": [
+   "COLOR:red C D E F |",
+   "COLOR:red G A B c |"
+  ]
+ }
+]

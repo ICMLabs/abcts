@@ -1536,7 +1536,16 @@ export interface Measure {
   readonly midiCommands?: readonly {
     readonly cmd: string
     readonly params: readonly (string | number)[]
+    /** Where the directive was written — see `colorChange`. */
+    readonly at?: number
   }[]
+  /**
+   * A `%%voicecolor` written after the music began — abcjs's `changeVoiceColor` appends a
+   * `color` ELEMENT to the stream (`tune-builder.js:332-334`) and every line opened after it
+   * carries the colour at its head. `at` is where the directive was written, which is where
+   * the element sorts — a directive between two source lines can fall mid-measure.
+   */
+  readonly colorChange?: { readonly color: string; readonly at: number }
   readonly startsSystem: boolean
   /**
    * **A WRAP DISSOLVED THE SOURCE LINE BREAK HERE, AND THE LINE'S STAFF KEY / METER / CLEF
@@ -1899,6 +1908,11 @@ export interface Voice {
    * SVG `fill`, so `blue`, `#c00` and nonsense all reach the attribute alike.
    */
   readonly color: string | null
+  /**
+   * The colour set BEFORE the music began — what the first line's head carries. A later
+   * `%%voicecolor` is `Measure.colorChange` instead, and `color` is the last of them.
+   */
+  readonly headColor?: string
   /**
    * `V:… name=` — the label printed to the left of the FIRST system. `null` means none.
    * abcjs reserves horizontal space for it, shifting the staff (and its notes) right.

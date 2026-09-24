@@ -1751,6 +1751,8 @@ class VoiceBuilder {
   scale: number | null = null
   /** `%%voicecolor` — see `Voice.color`. */
   color: string | null = null
+  /** See `Voice.headColor`. */
+  headColor: string | null = null
   clef: Clef | null = null
   /** `V:… name=` / `subname=` — labels printed left of the staff. See `Voice`. */
   name: string | null = null
@@ -1828,7 +1830,8 @@ class VoiceBuilder {
   private pendingClefChange: Clef | null = null
   private pendingTempoChange: Tempo | null = null
   private pendingTempoChangeRange: SourceRange | null = null
-  private pendingMidi: { cmd: string; params: readonly (string | number)[] }[] = []
+  private pendingMidi: { cmd: string; params: readonly (string | number)[]; at?: number }[] = []
+  private pendingColor: { color: string; at: number } | null = null
   private pendingKeyChangeRange: SourceRange | null = null
   private pendingMeterChange: Meter | null = null
   private pendingMeterChangeRange: SourceRange | null = null
@@ -2003,8 +2006,13 @@ class VoiceBuilder {
    * for everything the flattener does with one (`gchord`, `drum`, `bassprog` and the
    * volume commands all take effect from a bar boundary either way).
    */
-  addMidiCommand(cmd: string, params: readonly (string | number)[]): void {
-    this.pendingMidi.push({ cmd, params })
+  addMidiCommand(cmd: string, params: readonly (string | number)[], at?: number): void {
+    this.pendingMidi.push({ cmd, params, ...(at === undefined ? {} : { at }) })
+  }
+
+  /** A `%%voicecolor` inside the music — see `Measure.colorChange`. */
+  addColorChange(color: string, at: number): void {
+    this.pendingColor = { color, at }
   }
 
   /** A `Q:` after the first — printed where it stands. */
@@ -2111,6 +2119,7 @@ class VoiceBuilder {
       tempoChange: this.pendingTempoChange,
       tempoChangeSourceRange: this.pendingTempoChangeRange,
       ...(this.pendingMidi.length > 0 ? { midiCommands: this.pendingMidi } : {}),
+      ...(this.pendingColor === null ? {} : { colorChange: this.pendingColor }),
       keyChangeSourceRange: this.pendingKeyChangeRange,
       ...(this.pendingKeyChangeInline ? { keyChangeInline: true } : {}),
       ...(this.pendingKeyChangeKeywarn === undefined
@@ -2138,6 +2147,7 @@ class VoiceBuilder {
     this.pendingTempoChange = null
     this.pendingTempoChangeRange = null
     this.pendingMidi = []
+    this.pendingColor = null
     this.pendingKeyChangeRange = null
     this.pendingMeterChange = null
     this.pendingMeterChangeStandalone = false
@@ -3262,6 +3272,7 @@ class VoiceBuilder {
       stemDirection: this.stemDirection,
       scale: this.scale,
       color: this.color,
+      ...(this.headColor === null ? {} : { headColor: this.headColor }),
       name: this.name,
       subname: this.subname,
       measures: padded.measures,
@@ -4683,7 +4694,8 @@ class Parser {
      *
      * The token is taken raw and never validated — see `Voice.color`.
      *
-     * ponytail: abcjs appends a `color` ELEMENT to the voice stream, so a second
+     * abcjs appends a `color` ELEMENT to the voice stream (`Measure.colorChange` since
+     * 2026-09-24, which is what `tune.lines` reads), so a second
      * `%%voicecolor` mid-tune repaints from there on and `drawVoice` colours the whole LINE
      * it lands in, retroactively. We hold ONE colour per voice.
      * ✅ **MEASURED 2026-09-09 AND THE PREDICTION HELD** — a second `%%voicecolor` between
@@ -4700,8 +4712,14 @@ class Parser {
     const voiceColor = /^voicecolor\s+(\S+)\s*$/.exec(body)
     if (voiceColor?.[1] !== undefined) {
       const builder = this.ensureScore(start)
-      if (builder.declaredVoiceId !== null)
-        builder.voiceFor(builder.declaredVoiceId).color = voiceColor[1]
+      if (builder.declaredVoiceId !== null) {
+        const voice = builder.voiceFor(builder.declaredVoiceId)
+        voice.color = voiceColor[1]
+        // Before the music it is the head's colour; after, an element of the stream, which
+        // `appendElement` puts on the voice music is LANDING in.
+        if (builder.beganMusic) builder.voice.addColorChange(voiceColor[1], start)
+        else voice.headColor = voiceColor[1]
+      }
       return
     }
     /**
@@ -5346,7 +5364,7 @@ class Parser {
       // `if (hasBeginMusic()) appendElement('midi', …) else formatting['midi'][cmd] = params`
       // (`abc_parse_directive.js:718-724`) — the two are exclusive, which is the same split
       // `addMidiCommand` already makes here.
-      if (builder.beganMusic) builder.voice.addMidiCommand(cmd, params)
+      if (builder.beganMusic) builder.voice.addMidiCommand(cmd, params, start)
       else {
         builder.midi[cmd] = params
         builder.noteFormatting('midi')

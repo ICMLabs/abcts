@@ -82,6 +82,13 @@ export interface AbcPitch {
  * selectable array holds it, `getElementFromChar` returns it, and a host that stamps one
  * must see it through the other.
  */
+/**
+ * The `color` elements a `%%voicecolor` APPENDED, as opposed to `createVoice`'s head ones —
+ * same `el_type`, and only these are read while `tune.lineNum` points at the line above,
+ * exactly as a `%%MIDI` is. See `hoistLeadingStaffFields`.
+ */
+const STREAM_COLORS = new WeakSet<AbcElement>();
+
 export interface AbcElement {
   el_type: string;
   /**
@@ -1456,6 +1463,12 @@ function voiceElements(
      */
     const midis: AbcElement[] = [];
     for (const midi of measure.midiCommands ?? []) {
+      if (midi.at !== undefined) {
+        const e: AbcElement = { el_type: "midi", startChar: -1, endChar: -1, cmd: midi.cmd, params: midi.params };
+        sortAt.set(e, midi.at);
+        out.push(e);
+        continue;
+      }
       const e: AbcElement = {
         el_type: "midi",
         startChar: -1,
@@ -1464,6 +1477,12 @@ function voiceElements(
         params: midi.params,
       };
       midis.push(e);
+      out.push(e);
+    }
+    if (measure.colorChange !== undefined) {
+      const e: AbcElement = { el_type: "color", color: measure.colorChange.color };
+      STREAM_COLORS.add(e);
+      sortAt.set(e, measure.colorChange.at);
       out.push(e);
     }
     const measureFrom = out.length;
@@ -1489,11 +1508,10 @@ function voiceElements(
       ),
     );
     // ponytail: a mid-tune `[K:]` and `[M:]` carry source ranges and a `[V:… clef=]`,
-    // `[Q:]`, `%%MIDI`, `!style=!`, `%%voicecolor` and `P:` do not yet — so those six
+    // `[Q:]`, `%%MIDI`, `!style=!` and `P:` do not yet — so those five
     // element types are absent from the projection. `tests/lines.test.ts` measures which
     // characters that costs, rather than the gap being a claim.
-    // ⏳ STILL REQUIRED — MEASURED 2026-09-24: a mid-voice `%%voicecolor red` publishes abcjs's
-    // `{el_type: 'color'}` element and we publish none.
+    // ✅ `%%voicecolor` — FIXED 2026-09-24: `Measure.colorChange`, sorted at its own offset.
     // **A STANDALONE `K:` OR `M:` LINE IS NOT IN THE STREAM — IT RESTAMPS THE STAFF.**
     // Only the INLINE form is an element (`[K:…]`, `[M:…]`); a field on a line of its own
     // goes to `staff.key` / `staff.meter`, which is the same rule that lets `%%keywarn`
@@ -2813,8 +2831,11 @@ const VOICE_FURNITURE = new Set(["style", "stem", "color", "scale"]);
       )
         upto += 1;
       const moved: AbcElement[] = [];
-      for (let j = upto - 1; j >= 0; j -= 1)
-        if (STAFF_FIELD.has(line[j]?.el_type ?? "")) moved.unshift(...line.splice(j, 1));
+      for (let j = upto - 1; j >= 0; j -= 1) {
+        const e = line[j];
+        if (e !== undefined && (STAFF_FIELD.has(e.el_type ?? "") || STREAM_COLORS.has(e)))
+          moved.unshift(...line.splice(j, 1));
+      }
       if (moved.length === 0) continue;
       // The line above, if it has music of its own to be appended after.
       const above = voiceLines[i - 1];
@@ -2841,6 +2862,9 @@ const VOICE_FURNITURE = new Set(["style", "stem", "color", "scale"]);
          * (`:988`). This unshifted to 0 and put a `%%MIDI program` ahead of the stem;
          * abcjs's own answer for `S7-voices` is `stem` then `midi`. 8 rows.
          */
+        // A stream `color` is DROPPED here, like a staff field: measured on
+        // `visual-layout-09-endings`, where `V:1` / `%%voicecolor blue` gives the head's
+        // colour and no element — the line did not exist yet when it was appended.
         const midi = moved.filter((e) => e.el_type === "midi");
         let at = 0;
         while (VOICE_FURNITURE.has(line[at]?.el_type ?? "")) at += 1;
@@ -3428,7 +3452,14 @@ const VOICE_FURNITURE = new Set(["style", "stem", "color", "scale"]);
           const voiceScale = score.voices[k]?.scale;
           if (voiceScale != null && voiceScale !== 0)
             head.push({ el_type: "scale", size: voiceScale });
-          const color = score.voices[k]?.color;
+          // The colour IN FORCE AS THE LINE OPENED — the head's, then the last
+          // `%%voicecolor` written before this line's first element.
+          const opensAt =
+            voice.find((e) => (e.startChar ?? -1) >= 0)?.startChar ?? Number.POSITIVE_INFINITY;
+          let color = score.voices[k]?.headColor;
+          for (const m of score.voices[k]?.measures ?? [])
+            if (m.colorChange !== undefined && m.colorChange.at < opensAt)
+              color = m.colorChange.color;
           if (color != null) head.push({ el_type: "color", color });
           voice.splice(0, 0, ...head);
         });
