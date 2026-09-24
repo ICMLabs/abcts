@@ -22,6 +22,7 @@
  */
 import { describe, expect, it } from 'vitest'
 import { ABCJS_KEYS } from '../src/core/keys-abcjs.js'
+import { parseOnly } from '../src/compat/index.js'
 import type { DiatonicStep, KeySignature, Mode } from '../src/core/model.js'
 import { Accidental, abcjsKeepsKey, keyFifths } from '../src/core/model.js'
 
@@ -95,4 +96,26 @@ describe("abcjs's key table", () => {
     expect(rows.filter(([, v]) => v.keeps).length).toBe(37)
     expect(rows.filter(([, v]) => !v.keeps).length).toBe(110)
   })
+})
+
+/**
+ * **AND `tune.lines` NAMES THE SEED, NOT THE SPELLING.** An unreadable header key publishes
+ * the key in force — `{root: "none", acc: ""}` — with only the mode overwritten. Measured
+ * against abcjs 6.7.1 in WebKit, 2026-09-24, over fifteen spellings.
+ */
+describe('an unreadable header key in tune.lines', () => {
+  const published = (k: string) => {
+    const t = parseOnly(`X:1\nL:1/4\nK:${k}\nCDEF|\n`)[0] as unknown as {
+      lines: { staff: { key: { root: string; acc: string; mode: string } }[] }[]
+    }
+    const { root, acc, mode } = t.lines[0]!.staff[0]!.key
+    return `${root}|${acc}|${mode}`
+  }
+  const ABCJS: [string, string][] = [
+    ['Cbmin', 'none||m'], ['Fb', 'none||'], ['B#m', 'none||m'], ['Cbdor', 'none||Dor'],
+    ['Cbmin clef=bass', 'none||m'],
+    // …and the readable neighbours keep their own spelling.
+    ['Cb', 'C|b|'], ['E#', 'E|#|'], ['C#mix', 'C|#|Mix'],
+  ]
+  for (const [k, want] of ABCJS) it(k, () => expect(published(k)).toBe(want))
 })

@@ -5,7 +5,7 @@ import type {
   MusicEvent,
   Pitch,
 } from "../core/model.js";
-import { DEFAULT_STAFF_LINES, keyFifths, ratToNumber, stepIndex } from "../core/model.js";
+import { DEFAULT_STAFF_LINES, abcjsKeepsKey, keyFifths, ratToNumber, stepIndex } from "../core/model.js";
 import type { Layout, LayoutElement } from "../renderer/layout.js";
 import type { SelectableRecord } from "../renderer/svg.js";
 import {
@@ -651,9 +651,14 @@ export const keyElement = (key: KeySignature, clef: Clef): AbcElement => {
     // its tonic (`abc_parse_key_voice.js:261`), and the same string is what the implicit
     // pre-`K:` key carries. `accidentals` is empty either way, so this is the only field
     // that separates `K:none` from `K:C`.
-    root: key.none ? "none" : key.tonic.step.toUpperCase(),
+    // …**AND SO DOES A KEY abcjs CANNOT READ** (`Cbm`, `Fb`): `transpose.keySignature` hands
+    // back the key IN FORCE and only the mode is overwritten, and a header's key in force is
+    // the `{root: 'none', acc: ''}` seed. An inline or body one never gets this far — the
+    // parser keeps the previous key outright.
+    root: key.none || abcjsKeepsKey(key) ? "none" : key.tonic.step.toUpperCase(),
     acc:
       key.none ||
+      abcjsKeepsKey(key) ||
       key.tonic.accidental === null ||
       key.tonic.accidental === 0
         ? ""

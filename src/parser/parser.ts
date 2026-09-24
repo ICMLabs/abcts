@@ -373,8 +373,8 @@ function parseKeyAccidentals(content: string): KeyAccidental[] {
  * the 189 key spellings probed, because `standardKey` returns a truthy object rather than
  * `undefined`. What the control actually caught is the SIGNATURE: see `keyFifths`.
  *
- * ⏳ **STILL REQUIRED — MEASURED 2026-09-24.** The drawing agrees, but `tune.lines` does not:
- * for `K:Cbmin` abcjs publishes `acc: ""` and we publish `acc: "b"`.
+ * ✅ **AND `tune.lines` — FIXED 2026-09-24.** It published `root: "C", acc: "b"` where abcjs
+ * publishes the seed's `none` / `""`; see `keyElement` in `compat/selectables.ts`.
  */
 interface KeyToken {
   type: 'quote' | 'alpha' | 'number' | 'punct'
