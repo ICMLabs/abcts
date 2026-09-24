@@ -1,0 +1,279 @@
+[
+ {
+  "abc": "X:1\nM:4/4\nL:1/4\nK:C\n|:[P:A]CDEF|1 GABc:|2 cdef|]\n",
+  "order": [
+   "staff-extra clef",
+   "clefs.G",
+   "staff-extra time-signature",
+   "bar",
+   "bar",
+   "bar",
+   "part",
+   "bar",
+   "bar",
+   "bar",
+   "bar",
+   "bar",
+   "bar",
+   "bar",
+   "bar"
+  ]
+ },
+ {
+  "abc": "X:1\nM:4/4\nL:1/4\nK:C\n|:[P:A]CDEF|GABc:|\n",
+  "order": [
+   "staff-extra clef",
+   "clefs.G",
+   "staff-extra time-signature",
+   "bar",
+   "bar",
+   "bar",
+   "part",
+   "bar",
+   "bar",
+   "bar",
+   "bar",
+   "bar"
+  ]
+ },
+ {
+  "abc": "X:1\nM:4/4\nL:1/4\nK:C\n|[P:A]CDEF|GABc|\n",
+  "order": [
+   "staff-extra clef",
+   "clefs.G",
+   "staff-extra time-signature",
+   "bar",
+   "bar",
+   "part",
+   "bar",
+   "bar",
+   "bar",
+   "bar"
+  ]
+ },
+ {
+  "abc": "X:1\nM:4/4\nL:1/4\nK:C\n[P:A]CDEF|GABc|\n",
+  "order": [
+   "staff-extra clef",
+   "clefs.G",
+   "staff-extra time-signature",
+   "part",
+   "bar",
+   "bar",
+   "bar",
+   "bar"
+  ]
+ },
+ {
+  "abc": "X:1\nM:4/4\nL:1/4\nK:C\nCDEF|[P:A]GABc|\n",
+  "order": [
+   "staff-extra clef",
+   "clefs.G",
+   "staff-extra time-signature",
+   "bar",
+   "bar",
+   "part",
+   "bar",
+   "bar"
+  ]
+ },
+ {
+  "abc": "X:1\nM:4/4\nL:1/4\nK:C\nCDEF|:[P:A]GABc:|\n",
+  "order": [
+   "staff-extra clef",
+   "clefs.G",
+   "staff-extra time-signature",
+   "bar",
+   "bar",
+   "bar",
+   "part",
+   "bar",
+   "bar",
+   "bar"
+  ]
+ },
+ {
+  "abc": "X:1\nM:4/4\nL:1/4\nK:C\nP:A\n|:CDEF|GABc:|\n",
+  "order": [
+   "staff-extra clef",
+   "clefs.G",
+   "staff-extra time-signature",
+   "part",
+   "bar",
+   "bar",
+   "bar",
+   "bar",
+   "bar",
+   "bar",
+   "bar",
+   "bar"
+  ]
+ },
+ {
+  "abc": "X:1\nM:4/4\nL:1/4\nK:C\nCDEF|\n[K:D]|:[P:A]CDEF|GABc:|\n",
+  "order": [
+   "staff-extra clef",
+   "clefs.G",
+   "staff-extra time-signature",
+   "bar",
+   "bar",
+   "staff-extra key-signature",
+   "staff-extra clef",
+   "clefs.G",
+   "staff-extra key-signature",
+   "bar",
+   "bar",
+   "bar",
+   "part",
+   "bar",
+   "bar",
+   "bar",
+   "bar",
+   "bar"
+  ]
+ },
+ {
+  "abc": "X:1\nM:4/4\nL:1/4\nK:C\nCDEF|\n|:[K:D][P:A]CDEF|GABc:|\n",
+  "order": [
+   "staff-extra clef",
+   "clefs.G",
+   "staff-extra time-signature",
+   "bar",
+   "bar",
+   "staff-extra clef",
+   "clefs.G",
+   "bar",
+   "bar",
+   "bar",
+   "staff-extra key-signature",
+   "part",
+   "bar",
+   "bar",
+   "bar",
+   "bar",
+   "bar"
+  ]
+ },
+ {
+  "abc": "X:1\nM:4/4\nL:1/4\nK:C\n|:[P:A][M:3/4]CDE|GAB:|\n",
+  "order": [
+   "staff-extra clef",
+   "clefs.G",
+   "staff-extra time-signature",
+   "bar",
+   "bar",
+   "bar",
+   "part",
+   "staff-extra time-signature",
+   "bar",
+   "bar",
+   "bar",
+   "bar",
+   "bar"
+  ]
+ },
+ {
+  "abc": "X:1\nM:4/4\nL:1/4\n%%score 1 2\nV:1\nV:2\nK:C\nV:1\n|:[P:A]CDEF|GABc:|\nV:2\n|:C,D,E,F,|G,A,B,C:|\n",
+  "order": [
+   "staff-extra clef",
+   "clefs.G",
+   "staff-extra time-signature",
+   "bar",
+   "bar",
+   "bar",
+   "part",
+   "bar",
+   "bar",
+   "bar",
+   "bar",
+   "bar",
+   "staff-extra clef",
+   "clefs.G",
+   "staff-extra time-signature",
+   "bar",
+   "bar",
+   "bar",
+   "bar",
+   "bar",
+   "bar",
+   "bar",
+   "bar"
+  ]
+ },
+ {
+  "abc": "X:1\nM:4/4\nL:1/4\nK:C\nCDEF|\n|:[P:A][K:D]CDEF|GABc:|\n",
+  "order": [
+   "staff-extra clef",
+   "clefs.G",
+   "staff-extra time-signature",
+   "bar",
+   "bar",
+   "staff-extra clef",
+   "clefs.G",
+   "bar",
+   "bar",
+   "bar",
+   "part",
+   "staff-extra key-signature",
+   "bar",
+   "bar",
+   "bar",
+   "bar",
+   "bar"
+  ]
+ },
+ {
+  "abc": "X:1\nM:4/4\nL:1/4\nK:C\n|:[M:3/4][P:A]CDE|GAB:|\n",
+  "order": [
+   "staff-extra clef",
+   "clefs.G",
+   "staff-extra time-signature",
+   "bar",
+   "bar",
+   "bar",
+   "staff-extra time-signature",
+   "part",
+   "bar",
+   "bar",
+   "bar",
+   "bar",
+   "bar"
+  ]
+ },
+ {
+  "abc": "X:1\nM:4/4\nL:1/4\nK:C\n|:[P:A][Q:1/4=90]CDEF|GABc:|\n",
+  "order": [
+   "staff-extra clef",
+   "clefs.G",
+   "staff-extra time-signature",
+   "bar",
+   "bar",
+   "bar",
+   "part",
+   "tempo",
+   "bar",
+   "bar",
+   "bar",
+   "bar",
+   "bar"
+  ]
+ },
+ {
+  "abc": "X:1\nM:4/4\nL:1/4\nK:C\n|:[Q:1/4=90][P:A]CDEF|GABc:|\n",
+  "order": [
+   "staff-extra clef",
+   "clefs.G",
+   "staff-extra time-signature",
+   "bar",
+   "bar",
+   "bar",
+   "tempo",
+   "part",
+   "bar",
+   "bar",
+   "bar",
+   "bar",
+   "bar"
+  ]
+ }
+]

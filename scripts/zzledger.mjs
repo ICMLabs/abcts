@@ -182,6 +182,8 @@ const CASES = [
     "X:1\nM:4/4\nL:1/4\nK:C\n\"^a\"\"<l\"\"_c\"\"^b\"\">r\"\"<m\"CDEF|\n"],
   ["gchordfont:box", "%%gchordfont box keeps the face in force",
     "X:1\nM:4/4\nL:1/4\n%%gchordfont Arial 14\n%%gchordfont box\nK:C\n\"C\"CDEF|\n"],
+  ["part:after-bar-key", "an inline [P:] between |: and [K:], in source order",
+    "X:1\nM:4/4\nL:1/4\nK:C\nCDEF|\n|:[P:A][K:D]CDEF|GABc:|\n"],
   ["model.ts:2178", "a FILE-header %%landscape over two tunes",
     "%%landscape 1\n\nX:1\nK:C\nC|\n\nX:2\nK:C\nD|\n"],
 ]
@@ -238,7 +240,6 @@ const KNOWN = new Map([
   // ⏳ OPEN, 2026-09-24 — the third sweep's six SVG-visible divergences, each still carrying
   // its `ponytail:` with the measurement written at the marker.
   ['layout.ts:7329', 'OPEN: a hairpin crossing a break and closing on a barline — abcjs is 27px taller'],
-  ['layout.ts:21052', 'OPEN: an inline [P:] straight after |: — our svg width reads 700.96'],
   ['wrap.ts:675', 'OPEN: K: change beside %%text under wrap — the new key sits 3.56px right'],
   ['wrap.ts:675b', 'OPEN: the same, text first'],
   ['parser.ts:1340', 'OPEN: an & overlay on a shared staff draws its notes elsewhere'],

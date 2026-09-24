@@ -12240,21 +12240,33 @@ function layoutMeasure(
       }
     }
   }
+  // …but an INLINE `[P:]` written AFTER the bar (`|:[P:A]`) is an element of the voice
+  // after it, and abcjs draws it there, in SOURCE ORDER among the fields that follow the
+  // bar — `|:[P:A][K:D]` is bar, part, key; `|:[K:D][P:A]` is bar, key, part.
+  const partAfterBar = partAfter > openingBarAt
+  const partIfBefore = (range: SourceRange | null | undefined): void => {
+    if (partAfterBar && range != null && partAfter < range.start) drawPart()
+  }
   if (keyChangeAt < openingBarAt) {
     drawTempoChange()
     drawClefChange()
     drawKeyChange()
-    if (!staffMeterHere) drawPart()
+    if (!staffMeterHere && !partAfterBar) drawPart()
     drawMeterChange()
     drawWrapInjected()
+    if (!partAfterBar) drawPart()
+    drawOpeningBar()
     drawPart()
-    drawOpeningBar()
   } else {
-    if (!staffMeterHere) drawPart()
+    if (!staffMeterHere && !partAfterBar) drawPart()
     drawOpeningBar()
+    partIfBefore(measure.tempoChangeSourceRange)
     drawTempoChange()
+    partIfBefore(measure.clefChangeSourceRange)
     drawClefChange()
+    partIfBefore(measure.keyChangeSourceRange)
     drawKeyChange()
+    partIfBefore(measure.meterChanges?.[0]?.range ?? measure.meterChangeSourceRange)
     drawMeterChange()
     drawWrapInjected()
     drawPart()
@@ -21112,9 +21124,8 @@ function anchorBelowStaff<
  * genuine refactor of the most regression-prone code in the file; this gets the common case
  * exact without touching it.
  *
- * ⏳ **STILL REQUIRED — MEASURED 2026-09-24.** The P:-field and inline-[Q:] shapes agree; an
- * inline `[P:A]` straight after `|:` does not — our svg width reads 700.96 where abcjs's
- * is 700. `zzledger` row `layout.ts:21052`.
+ * ✅ An inline `[P:A]` straight after `|:` — FIXED 2026-09-24: drawn after the bar, in source
+ * order among the fields there (`partIfBefore`). `tests/part-after-bar.test.ts`.
  */
 /**
  * A REST GETS OUT OF THE OTHER VOICE'S WAY — abcjs's `fixVoiceCollisions`.
