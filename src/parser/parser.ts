@@ -1230,17 +1230,23 @@ const soundingLength = (measure: Measure): Rational =>
     rational(0, 1),
   )
 
-function padOverlays(measures: readonly Measure[], _meter: Meter | null): Measure[] {
-  if (!measures.some((m) => m.overlays.length > 0)) return [...measures]
+function padOverlays(
+  measures: readonly Measure[],
+  _meter: Meter | null,
+): { measures: Measure[]; mainDeleted: boolean } {
+  if (!measures.some((m) => m.overlays.length > 0)) return { measures: [...measures], mainDeleted: false }
 
   // ── abcjs's own view: one LINE per system, one staff, one voice ──
   const lines: OverlayLine[] = []
   const lineMeasures: number[][] = []
   const measureOfBar = new Map<OverlayElement, number>()
   let voice: OverlayElement[] = []
+  /** Each line's MAIN voice — `resolveOverlays` splices it in place, so this stays it. */
+  const mains: OverlayElement[][] = []
   measures.forEach((measure, index) => {
     if (index === 0 || measure.startsSystem) {
       voice = []
+      mains.push(voice)
       lines.push({ staff: [{ voices: [voice] }] })
       lineMeasures.push([])
     }
@@ -1260,6 +1266,18 @@ function padOverlays(measures: readonly Measure[], _meter: Meter | null): Measur
   })
 
   resolveOverlays(lines)
+
+  // ── The `stem` markers it left on each main voice, read the way the engraver reads them:
+  // each is the voice's direction until the next, and a line starts with none.
+  const stemOf = new Map<MusicEvent, 'up' | 'auto'>()
+  for (const main of mains) {
+    let dir: 'up' | 'auto' | undefined
+    for (const el of main) {
+      if (el.el_type === 'stem') dir = el.direction === 'up' ? 'up' : 'auto'
+      else if (el.el_type === 'note' && dir !== undefined && el.ref !== undefined)
+        stemOf.set(el.ref as MusicEvent, dir)
+    }
+  }
 
   // ── Read the layers back. A chunk NAMES its measure rather than being counted into it:
   // the bars in a layer voice are the very objects the main voice holds.
@@ -1303,11 +1321,20 @@ function padOverlays(measures: readonly Measure[], _meter: Meter | null): Measur
     }
   })
 
-  return measures.map((measure, index) => {
+  // `deleteVoice` removes an index across every line, so one line tells for all of them.
+  const mainDeleted = lines[0]?.staff?.[0]?.voices[0] !== mains[0]
+  const padded = measures.map((measure, index) => {
     const layers = resolved[index] ?? []
-    if (layers.length === 0 && measure.overlays.length === 0) return measure
-    return { ...measure, overlays: layers }
+    const stem = measure.events.map((e) => stemOf.get(e)).find((d) => d !== undefined)
+    if (layers.length === 0 && measure.overlays.length === 0 && stem === undefined) return measure
+    return {
+      ...measure,
+      overlays: layers,
+      ...(stem === undefined ? {} : { overlayStem: stem }),
+      ...(measure.overlays.length === 0 ? {} : { writtenOverlays: measure.overlays }),
+    }
   })
+  return { measures: padded, mainDeleted }
 }
 
 /**
@@ -2942,6 +2969,7 @@ class VoiceBuilder {
       ? this.measures.map((m, i) => shiftMeasure(m, this.measureShifts[i] ?? 0))
       : this.measures
     // An `&` overlay is a voice, so it spans the whole tune — see `padOverlays`.
+    const padded = padOverlays(moveTrailingBarNumbers(measures), this.meterForOverlays)
     return {
       id: this.id,
       octaveShift: this.octaveShift ?? this.keyOctave.value,
@@ -2953,7 +2981,8 @@ class VoiceBuilder {
       color: this.color,
       name: this.name,
       subname: this.subname,
-      measures: padOverlays(moveTrailingBarNumbers(measures), this.meterForOverlays),
+      measures: padded.measures,
+      ...(padded.mainDeleted ? { deletedByOverlay: true as const } : {}),
     }
   }
 

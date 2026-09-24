@@ -421,7 +421,7 @@ rule and the normalizations are its own regression net — and it found **six** 
   not consume the pending line start, so `|:|:C:|:|` came out as TWO systems (187px against
   94.789). Fixed by having it take the line start, as a real measure does.
 
-**SIX CLASSES WERE NAMED, FIVE ARE CLOSED**, and what is left is DECLARED in the script with
+**SIX CLASSES WERE NAMED, ALL SIX ARE CLOSED**, and what is left is DECLARED in the script with
 its measurements:
 
 1. ✅ **RECOVERY FROM AN UNTERMINATED CONSTRUCT — CLOSED 2026-09-23, AND IT WAS ONE SHARED
@@ -527,10 +527,28 @@ its measurements:
    here, exactly the three `\r`s before it. MEASURED, not built — reproducing that hybrid means
    chunking the raw source and giving each chunk its own offset base, which is a different
    parser entry rather than a rewrite. The first tune of a CRLF book is exact either way.
-6. **A BARE `&` LAYER** — `&|` gives abcjs no lines where ours draws a barline, and `C&|` gives
-   abcjs `stem note bar stem` where ours gives `note bar`. MEASURED, not built: `createVoice`'s
-   stem pair survives the empty layer's removal, and a half-understood fix there is worth less
-   than the note.
+6. ✅ **A BARE `&` LAYER — CLOSED 2026-09-24, AND THE ROW WAS HIDING A GENERAL DEFECT.**
+   ⭐ **AN `&` FORCES THE VOICE IT INTERRUPTS UP, FOR ITS OWN MEASURE, AND THIS ENGINE HAD
+   NEVER DONE IT.** `resolveOverlays` leaves a `stem up` before the barline that opens the
+   `&`'s measure and a `stem auto` after the one that closes it (`tune-builder.js:601-606`),
+   and the engraver takes each as the voice's `stemdir` until the next — `auto` is
+   `undefined`, which beats even a declared `stems=` (`abstract-engraver.js:342-343`). So
+   `c2&e2|` stems its `c` UP over the layer's `e`; ours followed pitch and stemmed it DOWN
+   into it, 1.07px of page and a collision. **The corpus overlays pass only because their main
+   voices sit low enough to stem up by pitch** — `G8 & C4 D4` is the textbook shape, and
+   it happens to agree. `Measure.overlayStem` carries the marker, read from the very stems
+   our port of `resolveOverlays` already left behind and nothing consumed.
+   * **An empty layer is still an `&`** — `letter_to_overlay` answers a length ≥ 1 for any
+     `&`, so `C&|` appends the marker and its `stem up … stem auto` survives the layer's
+     deletion. `Measure.writtenOverlays` keeps the layers as written, because
+     `overlays` is what resolution LEFT.
+   * **A voice that sings nothing is deleted after overlays resolve — the main one too**
+     (`voiceUseful`/`deleteVoice`, `tune-builder.js:113-123`). `&|` is a staff with no
+     voices and a 37.56px page, where we drew a staff and a barline. `Voice.deletedByOverlay`;
+     the drawing skips it and `tune.lines` keeps the empty staff, as abcjs's does.
+   * **A run of `&` belongs to nothing** — each is its own `parseMusic` iteration.
+   `tests/overlay-stems.test.ts` is the ladder, five rungs, each checked against its own
+   break.
 
 ## 4. Everything else that is measured
 

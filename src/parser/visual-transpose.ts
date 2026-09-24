@@ -237,10 +237,23 @@ export function visualTranspose(score: Score, steps: number): Score {
       graceNotes: e.graceNotes.map((g) => ({ ...g, ...pitch(g) })),
     }
   }
+  // ONE copy per event: a written `&` layer and the resolved one hold the SAME objects
+  // (`Measure.writtenOverlays`), and the projection joins them by identity.
+  const copies = new Map<MusicEvent, MusicEvent>()
+  const once = (e: MusicEvent): MusicEvent => {
+    const done = copies.get(e)
+    if (done !== undefined) return done
+    const made = event(e)
+    copies.set(e, made)
+    return made
+  }
   const measure = (m: Measure): Measure => ({
     ...m,
-    events: m.events.map(event),
-    overlays: m.overlays.map((o) => o.map(event)),
+    events: m.events.map(once),
+    overlays: m.overlays.map((o) => o.map(once)),
+    ...(m.writtenOverlays === undefined
+      ? {}
+      : { writtenOverlays: m.writtenOverlays.map((o) => o.map(once)) }),
     ...(m.keyChange === null ? {} : { keyChange: plan(m.keyChange, steps)?.key ?? m.keyChange }),
   })
   const voice = (v: Voice): Voice => ({ ...v, measures: v.measures.map(measure) })

@@ -1552,6 +1552,26 @@ export interface Measure {
    * `expandOverlays`; absent everywhere else.
    */
   readonly overlayPad?: true
+  /**
+   * **THE STEM DIRECTION AN `&` LEAVES ON THE VOICE IT INTERRUPTS.** `resolveOverlays` puts
+   * a `stem up` before the barline that opens the `&`'s measure and a `stem auto` after the
+   * one that closes it (`tune-builder.js:601-606`), and the engraver takes each as the
+   * voice's `stemdir` until the next — `auto` is `undefined`, which beats even a declared
+   * `stems=` (`abstract-engraver.js:342-343`). So the main voice's notes stem UP in the
+   * `&`'s measure whatever their pitch, and fall back to pitch for the rest of the line.
+   *
+   * Absent where no marker is in force. Set by `padOverlays` from the markers themselves.
+   */
+  readonly overlayStem?: 'up' | 'auto'
+  /**
+   * **THE `&` LAYERS AS WRITTEN — EMPTY ONES INCLUDED.** `overlays` is what
+   * `resolveOverlays` leaves, and it has DELETED a layer that sings nothing
+   * (`voiceUseful`, `tune-builder.js:113-123`). But the `&` still stood in abcjs's stream
+   * and `tune.lines` publishes what that stream resolves to — `stem note bar stem` for
+   * `C&|` — so the projection reads the layers from here. Set by `padOverlays` wherever a
+   * measure held an `&`.
+   */
+  readonly writtenOverlays?: readonly (readonly MusicEvent[])[]
   /** …the meter, on the same rule. See `wrapInjectedKey`. */
   readonly wrapInjectedMeter?: true
   /** …and the clef. See `wrapInjectedKey`. */
@@ -1748,6 +1768,15 @@ export interface Measure {
 
 export interface Voice {
   readonly id: string
+  /**
+   * **AN `&` DELETED THIS VOICE, AND ONLY `tune.lines` STILL SEES WHERE IT STOOD.** After
+   * resolving overlays abcjs deletes every voice that sings nothing — no pitched note, no
+   * chord symbol — across the whole tune (`voiceUseful`/`deleteVoice`,
+   * `tune-builder.js:113-123`), the MAIN voice included: `&|` leaves a staff with no
+   * voices, a 37.56px page, where we drew a staff and a barline. The drawing skips it; the
+   * projection keeps it, because abcjs's `lines` still holds the empty staff.
+   */
+  readonly deletedByOverlay?: true
   /**
    * **WHERE THIS VOICE'S `V:` STANDS, WHICH IS NOT WHERE `%%score` PUTS IT.**
    *

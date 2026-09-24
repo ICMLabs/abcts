@@ -12782,7 +12782,20 @@ interface VoicePlan {
  * one label beside the staff, not one per layer. It keeps the parent's barlines and
  * volta, exactly as a second `V:` on a shared staff does — they draw at the same x.
  */
-export function expandOverlays(score: Score): Score {
+export function expandOverlays(input: Score): Score {
+  // A voice the `&` resolution deleted is not drawn — see `Voice.deletedByOverlay`.
+  const gone = new Set(input.voices.filter((v) => v.deletedByOverlay).map((v) => v.id))
+  const score: Score =
+    gone.size === 0
+      ? input
+      : {
+          ...input,
+          voices: input.voices.filter((v) => !gone.has(v.id)),
+          staves: input.staves.map((g) => ({
+            ...g,
+            voiceIds: g.voiceIds.filter((id) => !gone.has(id)),
+          })),
+        }
   const layersOf = (voice: Score['voices'][number]): number =>
     Math.max(0, ...voice.measures.map((m) => m.overlays.length))
   if (score.voices.every((v) => layersOf(v) === 0)) return score
@@ -12804,8 +12817,10 @@ export function expandOverlays(score: Score): Score {
         name: null,
         subname: null,
         measures: voice.measures.map((m) => {
+          // The layer's own direction is its voice's `stem down`, not the parent's marker.
+          const { overlayStem: _parents, ...parent } = m
           const own = m.overlays[layer] ?? []
-          if (own.length > 0) return { ...m, events: own, overlays: [] }
+          if (own.length > 0) return { ...parent, events: own, overlays: [] }
           /**
            * ⭐ **A SILENT LAYER MEASURE TAKES AN INVISIBLE REST OF THE PARENT'S DURATION.**
            * `resolveOverlays` does exactly this (`core/overlays.ts`), and without it the
@@ -12830,9 +12845,9 @@ export function expandOverlays(score: Score): Score {
               ),
             rational(0),
           )
-          if (ratToNumber(sounding) <= 0) return { ...m, events: [], overlays: [] }
+          if (ratToNumber(sounding) <= 0) return { ...parent, events: [], overlays: [] }
           return {
-            ...m,
+            ...parent,
             events: [
               {
                 ...EMPTY_BAR_EVENT,
@@ -13324,6 +13339,15 @@ function layoutScoped(input: Score, options: LayoutOptions = {}): Layout {
    * needs collision detection this engine does not have yet. abcjs does the same thing
    * here, forcing every voice after the first down, so strict has nothing to answer for.
    */
+  /**
+   * A measure's own `overlayStem` first — the marker an `&` left, which the engraver obeys
+   * over every convention (`Measure.overlayStem`) — and the voice's convention otherwise.
+   */
+  const stemForMeasure = (index: number, measureIndex: number): boolean | null => {
+    const marked = voices[index]?.measures[measureIndex]?.overlayStem
+    if (marked !== undefined) return marked === 'up' ? true : null
+    return stemForVoiceOn(index, lineOfMeasure[measureIndex] ?? 0)
+  }
   const stemForVoiceOn = (index: number, line: number): boolean | null => {
     /**
      * **`%%bagpipes` FORCES EVERY STEM DOWN**, and it does it as a VOICE convention rather
@@ -13643,7 +13667,7 @@ function layoutScoped(input: Score, options: LayoutOptions = {}): Layout {
       voice?.staffLineOverride == null ? c : { ...c, staffLines: voice.staffLineOverride }
     const clef = withStaffLines(resolved)
     const directions = beamDirections(voice, clef, (measureIndex) =>
-      stemForVoiceOn(voiceIndex, lineOfMeasure[measureIndex] ?? 0),
+      stemForMeasure(voiceIndex, measureIndex),
     )
     // The key in force, accumulated forward. `Measure.keyChange` is a DELTA — the model
     // deliberately keeps `score.key` as the header key and leaves accumulation to the
@@ -13891,7 +13915,7 @@ function layoutScoped(input: Score, options: LayoutOptions = {}): Layout {
         directions,
         spacingScale,
         strict,
-        stemForVoiceOn(voiceIndex, lineOfMeasure[measureIndex] ?? 0),
+        stemForMeasure(voiceIndex, measureIndex),
         keyInForce,
         hasVocalsAt(measureIndex),
         // ONLY THE VOICE THAT CARRIES THE ENDING PAYS FOR IT. abcjs adds

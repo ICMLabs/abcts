@@ -557,7 +557,9 @@ function tile(
      */
     for (const r of unreadable)
       if (r.end > start && r.start < reach) start = Math.max(start, r.end);
-    return abc[start] === "&" ? start + 1 : start;
+    // …and EVERY `&` of a run: each is its own iteration, appending a marker with no span.
+    while (abc[start] === "&") start += 1;
+    return start;
   });
   elements.forEach((e, i) => {
     e.startChar = opened[i] ?? e.startChar ?? 0;
@@ -1775,7 +1777,11 @@ function voiceElements(
      * but it never survives `resolveOverlays` — the snip removes it — so the only thing
      * its position has to do is sort it between the main voice's notes and the layer's.
      */
-    measure.overlays.forEach((layer) => {
+    /** An EMPTY layer's marker, placed once the written ones are — see below. */
+    const unplaced: { marker: AbcElement; next: number }[] = [];
+    const layerKeys: (number | null)[] = [];
+    // What was WRITTEN — a measure the layer only pads wrote no `&` (`Measure.writtenOverlays`).
+    (measure.writtenOverlays ?? []).forEach((layer) => {
       /**
        * **ONLY THE LAYER ACTUALLY WRITTEN IN THIS MEASURE IS AN `&`.** The parser resolves
        * the model's overlays through the SAME pass this projection runs (`padOverlays` →
@@ -1792,8 +1798,24 @@ function voiceElements(
       const written = layer.filter(
         (e) => e.sourceRange != null && !(e.type === "rest" && e.overlayPad === true),
       );
-      if (written[0]?.sourceRange?.start === undefined) return;
       const marker: AbcElement = { el_type: "overlay" };
+      /**
+       * ⚠️ **AN EMPTY LAYER IS STILL AN `&`.** `letter_to_overlay` answers a length of at
+       * least one for any `&` (`abc_parse_music.js:735-743`), so `C&|` appends the marker
+       * with nothing after it — and `resolveOverlays` then leaves its `stem up … stem auto`
+       * on the main voice and `voiceUseful` deletes the layer it made. Ours skipped the
+       * marker, and with it every consequence: `C&|` published `note bar` where abcjs
+       * publishes `stem note bar stem`, and `&|` a staff where abcjs publishes none.
+       *
+       * It has no element of its own to sort by, so it sorts just ahead of whatever follows
+       * it in the measure: the next written layer's marker, or the closing barline.
+       */
+      if (written.length === 0) {
+        out.push(marker);
+        unplaced.push({ marker, next: layerKeys.length });
+        layerKeys.push(null);
+        return;
+      }
       out.push(marker);
       const layerFrom = out.length;
       for (const event of written) note(event);
@@ -1809,7 +1831,14 @@ function voiceElements(
       const opensAt = out
         .slice(layerFrom)
         .flatMap((e) => (e == null ? [] : [e.startChar ?? Number.POSITIVE_INFINITY]));
-      sortAt.set(marker, Math.min(...opensAt, Number.POSITIVE_INFINITY) - 0.25);
+      const key = Math.min(...opensAt, Number.POSITIVE_INFINITY) - 0.25;
+      sortAt.set(marker, key);
+      layerKeys.push(key);
+    });
+    unplaced.forEach(({ marker, next }, i) => {
+      const after = layerKeys.slice(next + 1).find((k) => k !== null);
+      const before = after ?? measure.closingBarlineSourceRange?.start ?? Number.POSITIVE_INFINITY;
+      sortAt.set(marker, before - 0.5 + i * 0.001);
     });
     out.push(
       bar(

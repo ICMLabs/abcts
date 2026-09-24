@@ -98,18 +98,22 @@ const VERBOSE = process.argv.includes('-v')
  *    `X:1⏎C|⏎⏎X:2⏎D|` is `note15,16` to abcjs and `note12,13` here, the three `\r`s before it.
  *    MEASURED, not built: reproducing it means chunking the raw source and giving each chunk
  *    its own offset base, which is a different parser entry, not a rewrite.
- * 6. **A BARE `&` LAYER.** `&|` and `&&&|` give abcjs NO lines where ours draws a barline, and
- *    `C&|` gives abcjs `stem note bar stem` — `createVoice`'s stem pair survives the empty
- *    layer's removal — where ours gives `note bar`. MEASURED, not built: `resolveOverlays`
- *    and `createVoice` interact here and a half-understood fix is worth less than this note.
+ * 6. ✅ **A BARE `&` LAYER — CLOSED 2026-09-24, AND IT WAS NOT A FUZZ ROW AT ALL.** Chasing
+ *    `C&|` found that an `&` forces the voice it interrupts UP for its own measure — a
+ *    `stem up` before the barline opening it, a `stem auto` after the one closing it
+ *    (`tune-builder.js:601-606`), each the engraver's `stemdir` until the next — and ours
+ *    had NEVER modelled it: `c2&e2|` stemmed its `c` down into the layer's `e`. The corpus
+ *    overlays pass only because their main voices sit low enough to stem up anyway.
+ *    `Measure.overlayStem` carries the marker. And the fuzz rows themselves: an EMPTY layer
+ *    is still an `&` (`Measure.writtenOverlays`), a run of `&` belongs to nothing, and a
+ *    voice that sings nothing is DELETED after overlays resolve, the main one included
+ *    (`Voice.deletedByOverlay`) — `&|` is a staff with no voices and a 37.56px page.
  */
 const DECLARED = new Set([
   'cr two tunes',
   'unterminated slur',
   'unterminated bracket field',
   'huge duration',
-  'overlay only',
-  'bare overlay after a note',
 ])
 
 const cases = JSON.parse(readFileSync(`${REPO}/tests/corpus-fuzz/cases.json`, 'utf-8'))
