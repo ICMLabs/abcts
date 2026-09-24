@@ -313,7 +313,18 @@ export const defaultClef: Clef = {
 
 // ─── Meter ───────────────────────────────────────────────────────────────────
 
-export type MeterSymbol = 'numeric' | 'common' | 'cut'
+/**
+ * `numeric`, `C`, `C|` — and the four tempus signs abcjs draws from `timesig.perfectum` & co.,
+ * named as abcjs's own `meter.type` names them (`abc_parse_header.js:38-60`).
+ */
+export type MeterSymbol =
+  | 'numeric'
+  | 'common'
+  | 'cut'
+  | 'tempus_perfectum'
+  | 'tempus_imperfectum'
+  | 'tempus_perfectum_prolatio'
+  | 'tempus_imperfectum_prolatio'
 
 export interface Meter {
   readonly numerator: number
@@ -329,6 +340,14 @@ export interface Meter {
    * duration either way.
    */
   readonly numeratorParts?: readonly number[]
+  /**
+   * **abcjs's `value` ARRAY, WHERE ONE FRACTION CANNOT SAY IT** — several terms
+   * (`M:2/4 3/8`), a numerator with no denominator (`M:3`), a dotted numerator
+   * (`M:3.2/8`). Drawn term by term, a `+` between (`create-time-signature.js:10-33`).
+   * `numerator`/`denominator` stay `getMeterFraction`'s answer from the FIRST term, and
+   * the missing denominator abcjs reads as `NaN` is 4 here.
+   */
+  readonly terms?: readonly { readonly num: string; readonly den?: string }[]
 }
 
 export const measureDuration = (m: Meter): Rational => rational(m.numerator, m.denominator)

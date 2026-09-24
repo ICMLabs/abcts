@@ -444,7 +444,12 @@ export function midiFile(score: Score, options: MidiFileOptions = {}): string {
               m.numeratorParts === undefined
                 ? m.numerator
                 : m.numeratorParts.reduce((t, part) => t + part, 0),
-            den: m.denominator,
+            // `M:3` has no denominator: `getMeterFraction` answers `NaN`, and the writer's
+            // `if (!den)` then leaves the time signature out of the file altogether.
+            den:
+              m.terms?.[0] !== undefined && m.terms[0].den === undefined
+                ? Number.NaN
+                : m.denominator,
           }
 
   // ponytail: abcjs's COMPOUND-METER tempo fix is not ported — for `den === 8` with a

@@ -1602,7 +1602,16 @@ function layoutMeter(x: number, meter: Meter, strict = true): LayoutElement {
   // both — `ox` without a `dx`, which is the signature of a prefix rather than a spacing
   // rule. `M:2/2` and `M:4/4`, the same meters written as digits, were exact throughout.
   if (meter.symbol !== 'numeric') {
-    const name: GlyphName = meter.symbol === 'cut' ? 'timeSigCutCommon' : 'timeSigCommon'
+    // …and the four TEMPUS signs, each its own glyph on the middle line too
+    // (`create-time-signature.js:41-52`).
+    const name: GlyphName = {
+      common: 'timeSigCommon',
+      cut: 'timeSigCutCommon',
+      tempus_perfectum: 'mensuralProlation2',
+      tempus_perfectum_prolatio: 'mensuralProlation1',
+      tempus_imperfectum: 'mensuralProlation6',
+      tempus_imperfectum_prolatio: 'mensuralProlation5',
+    }[meter.symbol] as GlyphName
     return {
       type: 'timeSignature',
       sourceMeter: meter,
@@ -1614,36 +1623,99 @@ function layoutMeter(x: number, meter: Meter, strict = true): LayoutElement {
       texts: [],
     }
   }
-  // AN ADDITIVE METER IS DRAWN TERM BY TERM. abcjs keeps the numerator as the string it
-  // was written as — the golden's own `data-name="2+3"` — and lays out one glyph per
-  // character (`create-time-signature.js:17-27`). Summing to `5` cost `2+3/8` 17.08px of
-  // prefix and moved every note on the line.
-  const top =
-    meter.numeratorParts === undefined
-      ? digitNames(meter.numerator)
-      : meter.numeratorParts.flatMap((part, i) =>
-          i === 0 ? digitNames(part) : ['timeSigPlus' as GlyphName, ...digitNames(part)],
-        )
-  // The numerator AS WRITTEN — abcjs keeps the string, which is why its golden reads
-  // `data-name="2+3"` rather than `5`.
-  const topLabel =
-    meter.numeratorParts === undefined
-      ? String(meter.numerator)
-      : meter.numeratorParts.join('+')
-  const bottom = digitNames(meter.denominator)
-  const width = Math.max(totalAdvance(top), totalAdvance(bottom))
-  // Numerator and denominator centre on steps +2 and -2 — symmetric about the middle
-  // line, each filling half the staff. Standard engraving.
+  // EVERY numeric meter takes abcjs's loop — its denominator-width quirk moves the rows of
+  // any `x/16` with a one-digit numerator, which a separate plain path measured correctly
+  // and so wrongly: `M:3/16` was 9.16px of prefix off. The additive `2+3/8` rides the same
+  // loop, its `+` a glyph of the numerator.
+  return layoutMeterTerms(
+    x,
+    meter,
+    meter.terms ?? [
+      {
+        num:
+          meter.numeratorParts === undefined
+            ? String(meter.numerator)
+            : meter.numeratorParts.join('+'),
+        den: String(meter.denominator),
+      },
+    ],
+    strict,
+  )
+}
+
+/**
+ * **abcjs's `specified` LOOP, FOR A METER ONE FRACTION CANNOT SAY** — `M:2/4 3/8`, `M:3`
+ * (`create-time-signature.js:10-33`). Each term after the first is preceded by a `+` at
+ * `x + 1` on the middle line, then `x += width('+') + 2`; a term with a denominator
+ * centres its two rows in the wider of them, and one without sits on the middle line.
+ *
+ * ⚠️ **AND THE DENOMINATOR's WIDTH IS MEASURED OVER THE NUMERATOR's LENGTH** — its loop
+ * reads `elem.value[i].num.length` for both rows, so `12/8`'s `8` is measured as `8` plus
+ * an `undefined` worth nothing, and `3/16` as a `1` alone. Reproduced, because it places
+ * the rows.
+ *
+ * ponytail: a `.` in a numerator (`M:3.2/8`) has no glyph here — abcjs prints its `.`
+ * glyph — so it draws the digits alone. Add a `timeSigDot` name if anyone writes one.
+ */
+function layoutMeterTerms(
+  x: number,
+  meter: Meter,
+  terms: readonly { readonly num: string; readonly den?: string }[],
+  strict: boolean,
+): LayoutElement {
+  const nameOf = (ch: string | undefined): GlyphName | null =>
+    ch === undefined
+      ? null
+      : ch === '+'
+        ? 'timeSigPlus'
+        : /\d/.test(ch)
+          ? (DIGIT_GLYPHS[Number(ch)] ?? null)
+          : null
+  const names = (text: string): GlyphName[] =>
+    [...text].flatMap((ch) => {
+      const n = nameOf(ch)
+      return n === null ? [] : [n]
+    })
+  const width = (text: string, over = text.length): number => {
+    let w = 0
+    for (let i = 0; i < over; i++) {
+      const n = nameOf(text[i])
+      if (n !== null) w += glyphsFor(strict).advance(n)
+    }
+    return w
+  }
+  const glyphs: PlacedGlyph[] = []
+  const shift = (placed: PlacedGlyph[], by: number): PlacedGlyph[] =>
+    placed.map((g) => ({ ...g, dx: (g.dx ?? 0) + by }))
+  let at = 0
+  terms.forEach((term, i) => {
+    if (i !== 0) {
+      glyphs.push(...shift(digitGlyphs(['timeSigPlus'], x + at + spaces(1), totalAdvance(['timeSigPlus'], strict), 0, strict, '+'), at + spaces(1)))
+      at += glyphsFor(strict).advance('timeSigPlus') + spaces(2)
+    }
+    if (term.den !== undefined) {
+      const numWidth = width(term.num)
+      const denWidth = width(term.den, term.num.length)
+      const max = Math.max(numWidth, denWidth)
+      const top = names(term.num)
+      const bottom = names(term.den)
+      glyphs.push(
+        ...shift(digitGlyphs(top, x + at + (max - numWidth) / 2, totalAdvance(top, strict), 2, strict, term.num), at + (max - numWidth) / 2),
+        ...shift(digitGlyphs(bottom, x + at + (max - denWidth) / 2, totalAdvance(bottom, strict), -2, strict, term.den), at + (max - denWidth) / 2),
+      )
+      at += max
+    } else {
+      glyphs.push(...shift(digitGlyphs(names(term.num), x + at, width(term.num), 0, strict, term.num), at))
+      at += width(term.num)
+    }
+  })
   return {
     type: 'timeSignature',
     sourceMeter: meter,
     x,
-    width,
+    width: at,
     staffSteps: [],
-    glyphs: [
-      ...digitGlyphs(top, x, width, 2, strict, topLabel),
-      ...digitGlyphs(bottom, x, width, -2, strict, String(meter.denominator)),
-    ],
+    glyphs,
     lines: [],
     texts: [],
   }

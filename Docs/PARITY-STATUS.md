@@ -597,12 +597,16 @@ its measurements:
    so `(2+3)/8` is the num `"2+3"` — ours split `(2` into a `NaN` and made the bar **3/8
    long**, a duration bug under the drawing. Strict now takes the grammar's answer; extended
    warns and keeps the lenient reading. `tests/meter-grammar.test.ts`, eight rungs.
-   ⚠️ **DECLARED, NOT BUILT: the spellings our `Meter` cannot hold** — a numerator alone
-   (`M:3`: abcjs draws `3` and its `getMeterFraction` answers `NaN` for the denominator),
-   several terms (`M:2/4 3/8`), a dotted numerator (`M:3.2/8`) and the four tempus signs
-   (`M:o`, `c`, `o.`, `c.`, drawn from `timesig.perfectum` & co.). Each needs abcjs's
-   `value: [{num, den?}]` in the model and, for tempus, glyph names with Bravura metrics for
-   extended mode. Measured: every one draws a different prefix width in abcjs.
+   ✅ **AND THE SPELLINGS ONE FRACTION CANNOT SAY — BUILT 2026-09-24.** `M:2/4 3/8`, `M:3`
+   and the four tempus signs (`o`, `c`, `o.`, `c.`) are abcjs's `value` array and its
+   `timesig.perfectum` & co.: `Meter.terms` carries the array and SMuFL's mensural prolation
+   signs map onto abcjs's four glyphs. Porting its loop found two more: `L:`'s default sums
+   EVERY term (`2/4 3/8` is eighths — we spread its notes as sixteenths), and the
+   denominator's width is measured over the NUMERATOR's length, which had moved the rows of
+   every `x/16` with a one-digit numerator (`M:3/16`, 9.16px of prefix) all along. `M:3`'s
+   `NaN` denominator leaves the MIDI file's time signature out, as abcjs's writer does.
+   ⚠️ Still open, marked `ponytail:` in `layoutMeterTerms`: a DOTTED numerator
+   (`M:3.2/8`) — abcjs prints its `.` glyph, which has no SMuFL name here.
 9. ✅ **A STAFF'S `voices` ENDS AT THE LAST VOICE THAT SANG — CLOSED 2026-09-24.** abcjs's
    array is indexed by voice number and filled as each voice is created, so a lower voice
    that sits a line out leaves NO slot while an upper one leaves an empty one. Ours published

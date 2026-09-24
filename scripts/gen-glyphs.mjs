@@ -121,6 +121,11 @@ const GLYPHS = [
   'timeSigPlus',
   'timeSigCommon',
   'timeSigCutCommon',
+  // The four tempus signs — `M:o`, `M:o.`, `M:c`, `M:c.` (`create-time-signature.js:41-52`).
+  'mensuralProlation1',
+  'mensuralProlation2',
+  'mensuralProlation5',
+  'mensuralProlation6',
   // Augmentation
   'augmentationDot',
   // Barlines — the dots of a repeat sign.

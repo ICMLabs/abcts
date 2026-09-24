@@ -642,6 +642,11 @@ function meterTerms(spec: string): { num: string; den?: string }[] | string | nu
 const METER_WORDS: Readonly<Record<string, Meter>> = {
   C: { numerator: 4, denominator: 4, symbol: 'common' },
   'C|': { numerator: 2, denominator: 2, symbol: 'cut' },
+  // The tempus signs — 4/4 to `getMeterFraction`, which has no case for them.
+  o: { numerator: 4, denominator: 4, symbol: 'tempus_perfectum' },
+  c: { numerator: 4, denominator: 4, symbol: 'tempus_imperfectum' },
+  'o.': { numerator: 4, denominator: 4, symbol: 'tempus_perfectum_prolatio' },
+  'c.': { numerator: 4, denominator: 4, symbol: 'tempus_imperfectum_prolatio' },
 }
 
 /**
@@ -651,10 +656,9 @@ const METER_WORDS: Readonly<Record<string, Meter>> = {
  * The model's two numbers are `getMeterFraction`'s: the FIRST term, its `+`-parts summed
  * (`abc_tune.js:196-217`).
  *
- * ponytail: a term with no denominator, several terms, a dotted numerator and the four
- * tempus spellings (`o`, `c`, `o.`, `c.`) are drawn by abcjs from its `value` array and
- * glyphs our `Meter` has no field for; they take the lenient reading below. Measured
- * in `Docs/PARITY-STATUS.md` §3d item 8.
+ * The spellings one fraction cannot say keep abcjs's terms (`Meter.terms`); the tempus
+ * signs are symbols. What is left for the lenient reading is extended mode's answer to a
+ * value the grammar rejects.
  */
 function parseMeter(
   content: string,
@@ -671,6 +675,22 @@ function parseMeter(
   if (typeof read === 'string') onError?.(read)
   if (strict && !Array.isArray(read)) return null
   const first = Array.isArray(read) ? read[0] : undefined
+  // …and the spellings one fraction cannot hold keep abcjs's terms — see `Meter.terms`.
+  if (
+    Array.isArray(read) &&
+    first !== undefined &&
+    (read.length > 1 || first.den === undefined || first.num.includes('.'))
+  ) {
+    const parts =
+      first.num.indexOf('+') > 0 ? first.num.split('+').map((p) => Number.parseInt(p, 10)) : null
+    return {
+      numerator: parts ? parts.reduce((sum, p) => sum + p, 0) : Number.parseInt(first.num, 10),
+      denominator: first.den === undefined ? 4 : Number.parseInt(first.den, 10),
+      symbol: 'numeric',
+      ...(parts !== null && parts.length > 1 ? { numeratorParts: parts } : {}),
+      terms: read,
+    }
+  }
   if (first !== undefined && first.den !== undefined && /^\d+(\+\d+)*$/.test(first.num)) {
     const parts = first.num.split('+').map((p) => Number.parseInt(p, 10))
     const numerator = parts.reduce((sum, p) => sum + p, 0)
@@ -709,9 +729,25 @@ function parseUnitLength(content: string): Rational | null {
   return rational(numerator, denominator)
 }
 
-/** ABC's meter-derived default: shorter than 3/4 implies 1/16, otherwise 1/8. */
-const defaultUnitLength = (meter: Meter | null): Rational =>
-  meter && ratLt(measureDuration(meter), rational(3, 4)) ? rational(1, 16) : rational(1, 8)
+/**
+ * ABC's meter-derived default: shorter than 3/4 implies 1/16, otherwise 1/8.
+ *
+ * ⚠️ **"SHORTER" IS EVERY TERM SUMMED** — `totalLength += ret.value` over the whole value
+ * array, and a term with no denominator is its numerator undivided
+ * (`abc_parse_header.js:97-131`). `M:2/4 3/8` is 0.875 and so eighths; its first term alone
+ * said sixteenths and spread every note twice as wide.
+ */
+const defaultUnitLength = (meter: Meter | null): Rational => {
+  if (!meter) return rational(1, 8)
+  const total =
+    meter.terms === undefined
+      ? ratToNumber(measureDuration(meter))
+      : meter.terms.reduce((sum, t) => {
+          const num = t.num.split(/[+.]/).reduce((n, p) => n + (Number.parseInt(p, 10) || 0), 0)
+          return sum + (t.den === undefined ? num : num / Number.parseInt(t.den, 10))
+        }, 0)
+  return total < 0.75 ? rational(1, 16) : rational(1, 8)
+}
 
 const BARLINES: Record<string, Barline> = {
   '[': 'invisible',

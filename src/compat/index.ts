@@ -83,6 +83,7 @@ import {
   findSelectable,
   stampEngravedSystems,
   keyElement,
+  meterFields,
   type Selectable,
   selectablesOf,
 } from "./selectables.js";
@@ -438,8 +439,16 @@ export interface AbcjsParams {
  * why `getMeterFraction` calls `parseInt` on them (`abc_tune.js:181-220`).
  */
 export interface AbcjsMeter {
-  readonly type: "common_time" | "cut_time" | "specified";
-  readonly value?: readonly { readonly num: string; readonly den: string }[];
+  readonly type:
+    | "common_time"
+    | "cut_time"
+    | "specified"
+    | "tempus_perfectum"
+    | "tempus_imperfectum"
+    | "tempus_perfectum_prolatio"
+    | "tempus_imperfectum_prolatio";
+  /** `den` is absent for a term written without one — `M:3` (see `Meter.terms`). */
+  readonly value?: readonly { readonly num: string; readonly den?: string }[];
 }
 
 /** `getMeterFraction()` — the same meter reduced to two integers (`abc_tune.js:196-219`). */
@@ -785,33 +794,10 @@ const formattingOf = (score: Score): Record<string, unknown> => {
   return out;
 };
 
-const abcjsMeter = (score: Score): AbcjsMeter => {
-  const m = getMeter(score);
-  // A tune with no music has no staff and therefore no meter — `getMeter` falls through
-  // to `common_time`, which is 4/4 whatever the header said.
-  if (m.symbol === "common") return { type: "common_time" };
-  if (m.symbol === "cut") return { type: "cut_time" };
-  return {
-    type: "specified",
-    /**
-     * **THE NUMERATOR IS THE ONE AS WRITTEN, `2+3` AND NOT `5`.** `getMeter()` hands back
-     * the parsed meter object and `getMeterFraction()` is the one that sums — which is why
-     * that function splits on `+` at all. `TimingCallbacks` is what said so: its irregular
-     * -meter branch tests `meter.value[0].num.indexOf('+') > 0`
-     * (`abc_timing_callbacks.js:50-52`), so a summed numerator sent `M:2+3/8` down the
-     * REGULAR beat path and reported five beats where abcjs reports six.
-     */
-    value: [
-      {
-        num:
-          m.numeratorParts === undefined
-            ? String(m.numerator)
-            : m.numeratorParts.join("+"),
-        den: String(m.denominator),
-      },
-    ],
-  };
-};
+const abcjsMeter = (score: Score): AbcjsMeter =>
+  // A tune with no music has no staff and therefore no meter — `getMeter` falls through to
+  // `common_time`, which is 4/4 whatever the header said. See `meterFields`.
+  meterFields(getMeter(score)) as AbcjsMeter;
 
 /**
  * What `renderAbc` hands back, per tune.
@@ -1625,7 +1611,7 @@ function renderInto(
                 .split("+")
                 .reduce((t, p) => t + Number.parseInt(p, 10), 0)
             : Number.parseInt(first.num, 10);
-        return { num, den: Number.parseInt(first.den, 10) };
+        return { num, den: Number.parseInt(first.den ?? "", 10) /* `M:3` — abcjs's NaN */ };
       },
       /**
        * `getKeySignature()` — the FIRST key on any staff of any line, or `{}`
@@ -1650,7 +1636,7 @@ function renderInto(
                 .split("+")
                 .reduce((t, part) => t + Number.parseInt(part, 10), 0)
             : Number.parseInt(first.num, 10);
-        return { num, den: Number.parseInt(first.den, 10) };
+        return { num, den: Number.parseInt(first.den ?? "", 10) };
       })(),
       formatting: formattingOf(score),
       /**

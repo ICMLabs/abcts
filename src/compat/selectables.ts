@@ -685,25 +685,37 @@ const abcName = (index: number): string => {
       : letter.toUpperCase() + ",".repeat(4 - octave);
 };
 
-/** The same shape `getMeter()` returns — `{type, value: [{num, den}]}`, numbers as STRINGS. */
-export const meterElement = (meter: Meter): AbcElement => ({
-  el_type: "timeSignature",
-  ...(meter.symbol === "common"
+/**
+ * abcjs's meter object — `{type}` for the words, `{type: "specified", value: [{num, den}]}`
+ * with the numbers as STRINGS otherwise. The tempus signs' types ARE our symbol names, and
+ * a meter one fraction cannot say carries abcjs's own terms (`Meter.terms`).
+ */
+export const meterFields = (
+  meter: Meter,
+): { type: string; value?: readonly { num: string; den?: string }[] } =>
+  meter.symbol === "common"
     ? { type: "common_time" }
     : meter.symbol === "cut"
       ? { type: "cut_time" }
-      : {
-          type: "specified",
-          value: [
-            {
-              num:
-                meter.numeratorParts === undefined
-                  ? String(meter.numerator)
-                  : meter.numeratorParts.join("+"),
-              den: String(meter.denominator),
-            },
-          ],
-        }),
+      : meter.symbol !== "numeric"
+        ? { type: meter.symbol }
+        : {
+            type: "specified",
+            value: meter.terms ?? [
+              {
+                num:
+                  meter.numeratorParts === undefined
+                    ? String(meter.numerator)
+                    : meter.numeratorParts.join("+"),
+                den: String(meter.denominator),
+              },
+            ],
+          };
+
+/** The same shape `getMeter()` returns — see `meterFields`. */
+export const meterElement = (meter: Meter): AbcElement => ({
+  el_type: "timeSignature",
+  ...meterFields(meter),
 });
 
 /**

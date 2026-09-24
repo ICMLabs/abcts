@@ -132,6 +132,12 @@ export const SMUFL_TO_ABCJS: Readonly<Record<string, string>> = {
   timeSigPlus: '+',
   timeSigCommon: 'timesig.common',
   timeSigCutCommon: 'timesig.cut',
+  // The tempus signs: `M:o` perfectum, `M:o.` perfectum with prolation, `M:c` imperfectum,
+  // `M:c.` imperfectum with prolation — SMuFL's mensural prolation signs by their own names.
+  mensuralProlation2: 'timesig.perfectum',
+  mensuralProlation1: 'timesig.perfectum2',
+  mensuralProlation6: 'timesig.imperfectum',
+  mensuralProlation5: 'timesig.imperfectum2',
 
   // Dots
   augmentationDot: 'dots.dot',
@@ -210,10 +216,6 @@ export const UNMAPPED_ABCJS = [
   'flags.dgrace',
   'tab.big',
   'tab.tiny',
-  'timesig.imperfectum',
-  'timesig.imperfectum2',
-  'timesig.perfectum',
-  'timesig.perfectum2',
   // Text glyphs abcjs draws inline in chord symbols and annotations — a `,` in a figured
   // bass. abcts sets prose in <text>, so it has no outline for it and needs none. (`+` is
   // no longer here: an additive meter draws one, so it is mapped from `timeSigPlus`; nor

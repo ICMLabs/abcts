@@ -138,7 +138,7 @@ export interface AbcElement {
   root?: string;
   acc?: string;
   mode?: string;
-  value?: readonly { num: string; den: string }[];
+  value?: readonly { num: string; den?: string }[];
   // ── a note (and a rest, which abcjs also calls a note) ──
   pitches?: AbcPitch[];
   /**
