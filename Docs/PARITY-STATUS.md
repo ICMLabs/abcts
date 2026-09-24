@@ -537,13 +537,19 @@ its measurements:
      198.86px and a warning where abcjs draws 94.789 and says nothing.
    * **A `T:` or a stray line above the first `X:` is never parsed** — only the `%%` lines up
      there survive, prepended to every tune. Ours read them and kept their warnings.
-   ⚠️ **WHAT IS LEFT IS THE CHUNKING, WHICH abcjs DOES ON THE RAW STRING.** It cuts the book on
-   `"\nX:"` BEFORE any normalizing, so `X:1\rC|\rX:2\rD|` is ONE tune of two lines to abcjs
-   where ours is two tunes, and in a CRLF book a later tune's offsets are its RAW start plus its
-   NORMALIZED interior: tune 2 of `X:1⏎C|⏎⏎X:2⏎D|` is `note15,16` to abcjs and `note12,13`
-   here, exactly the three `\r`s before it. MEASURED, not built — reproducing that hybrid means
-   chunking the raw source and giving each chunk its own offset base, which is a different
-   parser entry rather than a rewrite. The first tune of a CRLF book is exact either way.
+   ✅ **AND THE CHUNKING, WHICH abcjs DOES ON THE RAW STRING — CLOSED 2026-09-24.** It cuts the
+   book on `"\nX:"` BEFORE any normalizing and parses each tune from its RAW start, so a CRLF
+   tune's offsets are its raw start plus its NORMALIZED interior — tune 2 of `X:1⏎C|⏎⏎X:2⏎D|`
+   is `note15,16` — and a lone-`\r` book is ONE tune, since the split finds no `\n` and a
+   mid-tune `X:` is `case 'X': break;`. ⚠️ **The whole-book normalization this section first
+   shipped made that WORSE**: tune 2 went from one character off to three, and the error grew
+   through a Windows tunebook by one per line. `normalizeBook` now makes the same cut, pads
+   each normalized chunk back to its raw length, and hands the parser the chunk starts; a
+   leading `%%` block shifts every tune back by its own `\r`s, which abcjs counts in the start
+   and not in the walk. Measured live over the WHOLE corpus as `\r\n` and as lone `\r` — every
+   element's span, 697 tunes — and held in node by `tests/crlf-offsets.test.ts`, which moves
+   the gated LF answer by abcjs's rule. The two sweep rows left are #9 below, and LF has them
+   too.
 6. ✅ **A BARE `&` LAYER — CLOSED 2026-09-24, AND THE ROW WAS HIDING A GENERAL DEFECT.**
    ⭐ **AN `&` FORCES THE VOICE IT INTERRUPTS UP, FOR ITS OWN MEASURE, AND THIS ENGINE HAD
    NEVER DONE IT.** `resolveOverlays` leaves a `stem up` before the barline that opens the
@@ -582,6 +588,18 @@ its measurements:
    inter-system separation clamp, the layout-unit family" — was wrong: that fixture's slur
    crosses a whole system and the crossed line reserved nothing. `tests/unclosed-slur.test.ts`
    holds abcjs's heights and arc paths for six shapes, each rule broken in turn.
+
+8. **THE METER GRAMMAR — MEASURED, NOT BUILT.** See item 1's note: `setMeter` throws where
+   ours `split('/')`s, and our `Meter` cannot hold abcjs's `value: [{num, den?}]`.
+9. **AN EMPTY VOICE ARRAY ON A CONTINUED LINE — MEASURED, NOT BUILT.** On
+   `abcjs-visual-parsing-06-score-t-b` and `-07`, whose `%%score (T B)` voices continue with
+   `\`, ours publishes line 2's staff as `[["note44 bar45", ""]]` where abcjs has one voice.
+   `corpus-lines` compares element SPANS and cannot see an empty voice; the `\r\n` sweep kept
+   the structure, and found it in LF as well.
+10. **MUSIC BEFORE THE FIRST `V:` IS THAT VOICE — MEASURED, NOT BUILT.** `CDEF| / V:2 / GABc|`
+   is ONE voice of two systems to abcjs — the implicit voice has no entry in
+   `multilineVars.voices`, so the first `V:` takes staff 0 — and two simultaneous staves
+   here: different music, and it sounds different.
 
 ## 4. Everything else that is measured
 

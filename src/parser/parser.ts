@@ -3820,6 +3820,8 @@ class Parser {
   constructor(
     private readonly src: string,
     private readonly mode: CompatibilityMode = defaultMode,
+    /** Where abcjs's book split starts a tune — see `normalizeBook`. */
+    private readonly chunkStarts: ReadonlySet<number> = new Set([0]),
   ) {}
 
   parse(): ParseResult {
@@ -3844,7 +3846,8 @@ class Parser {
      */
     this.leadingEnd = this.src.startsWith('X:', lineStart)
       ? 0
-      : this.src.indexOf('\nX:', lineStart) + 1
+      : Math.min(...[...this.chunkStarts].filter((c) => c > lineStart), Number.POSITIVE_INFINITY)
+    if (!Number.isFinite(this.leadingEnd)) this.leadingEnd = 0
     while (lineStart <= this.src.length) {
       let lineEnd = this.src.indexOf('\n', lineStart)
       if (lineEnd === -1) lineEnd = this.src.length
@@ -4013,7 +4016,7 @@ class Parser {
     let line = this.src.slice(start, end).replace(/\r$/, '')
 
     if (this.skippingChunk) {
-      if (!/^X:/.test(line)) return
+      if (!/^X:/.test(line) || !this.chunkStarts.has(start)) return
       this.skippingChunk = false
     }
     if (start < this.leadingEnd) {
@@ -5215,6 +5218,9 @@ class Parser {
     const range = sourceRange(start, end)
 
     if (letter === 'X') {
+      // ONLY abcjs's BOOK SPLIT STARTS A TUNE — an `X:` anywhere else is `case 'X': break;`
+      // (`abc_parse_header.js:557-558`). See `normalizeBook`.
+      if (!this.chunkStarts.has(start)) return
       // A `%%` DIRECTIVE BEFORE THE FIRST `X:` IS THE FILE HEADER and applies to every
       // tune (ABC 2.1 §4.1). The builder holding it looks EMPTY — no `X:`, no `T:`, no
       // music — so `flush` was dropping it and `%%stretchlast 1` written above `X:1`
@@ -8703,8 +8709,58 @@ const blankLatexLines = (source: string): string =>
  * opened at character 0. The parser had it right and the projection was reading a different
  * string — the same class as `%%visualTranspose` reaching the layout and not the audio.
  */
-export const normalizeSource = (source: string): string =>
-  escapePercent(blankLatexLines(normalizeLineEndings(source)))
+export const normalizeSource = (source: string): string => normalizeBook(source).text
+
+/**
+ * **abcjs CUTS THE BOOK BEFORE IT NORMALIZES ANYTHING**, and each tune keeps its RAW start.
+ * `bookParser` splits the stripped book on `"\nX:"` (`abc_parse_book.js:9-21`) and each
+ * tune is then normalized on its own and parsed from its raw `startPos`
+ * (`abc_tunebook.js:84`, `abc_parse.js:497-528`). So a `\r\n` book reports each tune's
+ * offsets as its RAW start plus its NORMALIZED interior — tune 2 of `X:1⏎C|⏎⏎X:2⏎D|` is
+ * `note15,16` — and normalizing the book whole put every later tune off by every `\r`
+ * before it, an error that grew through a Windows tunebook one line at a time.
+ *
+ * So each chunk is normalized alone and PADDED back to its raw length — a whitespace line,
+ * or an empty one, at its end, where both engines read nothing — and the next chunk opens
+ * exactly where abcjs's does.
+ *
+ * ⚠️ **AND WHERE THE CHUNKS ARE IS abcjs's CUT, NOT THE `X:` LINES.** A classic-Mac book
+ * has no `\n` for the split to find, so it is ONE tune however many `X:` lines the `\r`s
+ * turn up — and a mid-tune `X:` is `case 'X': break;` (`abc_parse_header.js:557-558`).
+ * `chunkStarts` is what `Parser` honours an `X:` at.
+ */
+export function normalizeBook(source: string): { text: string; chunkStarts: ReadonlySet<number> } {
+  const lead = /^\s*/.exec(source)?.[0].length ?? 0
+  const pieces = source.slice(lead).split('\nX:')
+  const chunkStarts = new Set<number>()
+  let text = source.slice(0, lead)
+  /**
+   * ⚠️ **AND A LEADING `%%` BLOCK MOVES EVERY TUNE BACK BY ITS OWN `\r`s.** Its lines are
+   * kept RAW — `split('\n')` leaves each one's `\r` on it — and prepended to each tune,
+   * which is parsed from `startPos - header.length` and THEN normalized
+   * (`abc_parse_book.js:26-37`). The `\r`s count in the start and not in the walk, so
+   * every tune's offsets land one character early per header line.
+   */
+  const header =
+    pieces.length > 1 && !pieces[0]?.startsWith('X:')
+      ? (pieces[0] ?? '').split('\n').filter((l) => l.startsWith('%%') && l.endsWith('\r')).length
+      : 0
+  pieces.forEach((raw, k) => {
+    const piece = k === 0 ? raw : `X:${raw}`
+    chunkStarts.add(text.length)
+    let norm = escapePercent(blankLatexLines(normalizeLineEndings(piece)))
+    let pad = piece.length - norm.length - (k === 0 ? header : 0)
+    // …and where that asks for LESS than the chunk's own length, what goes is the newline
+    // its last `\r` became — the split ate the `\n` after it, so it ends the chunk.
+    while (pad < 0 && /\s$/.test(norm)) {
+      norm = norm.slice(0, -1)
+      pad += 1
+    }
+    text += norm + (pad > 0 ? `\n${' '.repeat(pad - 1)}` : '')
+    if (k < pieces.length - 1) text += '\n'
+  })
+  return { text, chunkStarts }
+}
 
 export function parse(source: string, options: ParseOptions = {}): ParseResult {
   HOST_TRANSPOSE = options.visualTranspose ?? 0
@@ -8714,7 +8770,8 @@ export function parse(source: string, options: ParseOptions = {}): ParseResult {
   // fourteen `decodeTextString` call sites, which is the shape `JAZZ_CHORDS` and
   // `PERC_MAP` already take in the renderer. See `setAbcjsEscapes`.
   setAbcjsEscapes(isStrict(mode))
-  return deepFreeze(new Parser(normalizeSource(source), mode).parse())
+  const book = normalizeBook(source)
+  return deepFreeze(new Parser(book.text, mode, book.chunkStarts).parse())
 }
 
 /**

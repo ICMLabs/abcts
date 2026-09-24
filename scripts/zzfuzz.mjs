@@ -93,13 +93,11 @@ const VERBOSE = process.argv.includes('-v')
  *    THE PROJECTION WAS READING A DIFFERENT STRING FROM THE PARSE**: `tune.lines` tiles spans
  *    per source line and tiled from character 0 with no `\n` to find, so the parser had it
  *    right and the tune object did not. `normalizeSource` is now the one door both use.
- *    ⚠️ **WHAT IS LEFT IS THE CHUNKING, WHICH abcjs DOES ON THE RAW STRING**: it cuts the book
- *    on `"\nX:"` BEFORE normalizing, so `X:1\rC|\rX:2\rD|` is ONE tune of two lines to abcjs
- *    (its split finds no `\n`) where ours is two tunes, and in a CRLF book a later tune's
- *    offsets are its RAW start plus its NORMALIZED interior — tune 2 of
- *    `X:1⏎C|⏎⏎X:2⏎D|` is `note15,16` to abcjs and `note12,13` here, the three `\r`s before it.
- *    MEASURED, not built: reproducing it means chunking the raw source and giving each chunk
- *    its own offset base, which is a different parser entry, not a rewrite.
+ *    ✅ **AND THE CHUNKING, WHICH abcjs DOES ON THE RAW STRING — CLOSED 2026-09-24.** It cuts
+ *    the book on `"\nX:"` BEFORE normalizing and parses each tune from its RAW start, so a
+ *    CRLF tune's offsets are its raw start plus its normalized interior, and a lone-`\r` book
+ *    is ONE tune. `normalizeBook` does the same cut and pads each chunk back to its raw
+ *    length; `tests/crlf-offsets.test.ts` holds the whole corpus as `\r\n` files.
  * 6. ✅ **A BARE `&` LAYER — CLOSED 2026-09-24, AND IT WAS NOT A FUZZ ROW AT ALL.** Chasing
  *    `C&|` found that an `&` forces the voice it interrupts UP for its own measure — a
  *    `stem up` before the barline opening it, a `stem auto` after the one closing it
@@ -112,7 +110,6 @@ const VERBOSE = process.argv.includes('-v')
  *    (`Voice.deletedByOverlay`) — `&|` is a staff with no voices and a 37.56px page.
  */
 const DECLARED = new Set([
-  'cr two tunes',
   /**
    * ⚖️ **RULED, NOT OPEN.** `C99999999|` is a note past every glyph abcjs has, and abcjs
    * draws its own red DEBUG TEXT for it — `pitch is undefined`, an `abcjs-debug-msg` — which

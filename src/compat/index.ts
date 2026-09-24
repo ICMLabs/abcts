@@ -1063,7 +1063,9 @@ function renderInto(
   // `AbcjsParams.mode`, which is `abcjs-strict` unless a host asks otherwise — and the
   // ONE place it is resolved, so the parse, the layout and the emitter cannot disagree.
   const mode: CompatibilityMode = params.mode ?? "abcjs-strict";
-  const result = parse(abc, {
+  // The RAW source: `parse` cuts the book before normalizing, as abcjs does — see
+  // `normalizeBook`. `abc` is that same normalization, for what reads the text.
+  const result = parse(source, {
     mode,
     ...(params.visualTranspose
       ? { visualTranspose: params.visualTranspose }
