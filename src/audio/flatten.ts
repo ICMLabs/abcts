@@ -1592,12 +1592,8 @@ function spliceDrumIntro(
  * overlay voice "so they are not repeated". Those are VOLTAS, and a volta left on both
  * voices would unroll them differently.
  *
- * ponytail: appended after ALL main voices, in (voice, layer) order. abcjs appends per
- * STAFF — `staff.voices.push(ov.voice)` — so a two-staff tune where only the second staff
- * has an overlay numbers its tracks differently from this. Nothing in the corpus does it,
- * and the ranked table will say so if anything ever does.
- * ✅ MEASURED 2026-09-24: an overlay on the SECOND staff only agrees on the svg,
- * `tune.lines`, warnings and MIDI.
+ * **APPENDED PER STAFF** — `staff.voices.push(ov.voice)` — so a staff's overlays follow
+ * that staff's own voices and come before the next staff's. See `trackOrder`.
  */
 function overlayVoices(voices: readonly Voice[]): Voice[] {
   const out: Voice[] = []
@@ -1615,6 +1611,30 @@ function overlayVoices(voices: readonly Voice[]): Voice[] {
         })),
       })
     }
+  }
+  return out
+}
+
+/**
+ * **THE TRACK ORDER IS STAFF-MAJOR, EACH STAFF'S OVERLAYS AFTER ITS VOICES.** Ours put every
+ * overlay after every main voice, which agrees until an overlay sits on a staff with another
+ * staff BELOW it: `%%score 1 2` with `G4&EFGA` on V:1 is V:1, V:1&, V:2 in abcjs's MIDI file
+ * and was V:1, V:2, V:1& here. Measured 2026-09-24. A voice no `%%score` names is a staff of
+ * its own.
+ */
+function trackOrder(score: Score): Voice[] {
+  const overlays = overlayVoices(score.voices)
+  const byId = new Map(score.voices.map((v) => [v.id, v]))
+  const staves = score.staves.map((g) => g.voiceIds)
+  const placed = new Set(staves.flat())
+  for (const v of score.voices) if (!placed.has(v.id)) staves.push([v.id])
+  const out: Voice[] = []
+  for (const ids of staves) {
+    for (const id of ids) {
+      const v = byId.get(id)
+      if (v !== undefined) out.push(v)
+    }
+    for (const id of ids) out.push(...overlays.filter((o) => o.id.startsWith(`${id}&`)))
   }
   return out
 }
@@ -1842,7 +1862,7 @@ export function flattenAudio(
   // The overlay voices are REAL voices by the time abcjs's flattener runs — the parser put
   // them there — so everything downstream counts them: the chord track's channel, the drum
   // track's, and `voicesOff`'s indices.
-  const allVoices: readonly Voice[] = [...score.voices, ...overlayVoices(score.voices)]
+  const allVoices: readonly Voice[] = trackOrder(score)
   const startMeter = score.meter ?? { numerator: 4, denominator: 4, symbol: 'numeric' as const }
   const chordTrack = new ChordTrack(allVoices.length, options.chordsOff === true, midi, {
     num: startMeter.numerator,
