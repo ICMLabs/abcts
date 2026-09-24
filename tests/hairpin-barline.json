@@ -1,0 +1,54 @@
+[
+ {
+  "abc": "X:1\nM:4/4\nL:1/4\nK:C\nCDEF|\ndefg!crescendo)!|\n",
+  "height": "214.072",
+  "hairpins": [
+   "M 49.05 179.95 L 218.76 175.95 M 49.05 179.95 L 218.76 183.95"
+  ]
+ },
+ {
+  "abc": "X:1\nM:4/4\nL:1/4\nK:C\n!crescendo(!CDEF|\ndefg!crescendo)!|\n",
+  "height": "214.072",
+  "hairpins": [
+   "M 70.85 87.79 L 684 83.79 M 70.85 87.79 L 684 91.79",
+   "M 49.05 179.95 L 218.76 175.95 M 49.05 179.95 L 218.76 183.95"
+  ]
+ },
+ {
+  "abc": "X:1\nM:4/4\nL:1/4\nK:C\n!diminuendo(!CDEF|GABc|\ndefg!diminuendo)!|\n",
+  "height": "214.072",
+  "hairpins": [
+   "M 70.85 87.49 L 684 91.49 M 70.85 95.49 L 684 91.49",
+   "M 49.05 175.95 L 218.76 179.95 M 49.05 183.95 L 218.76 179.95"
+  ]
+ },
+ {
+  "abc": "X:1\nM:4/4\nL:1/4\nK:C\nCDEF!crescendo(!|\ndefg!crescendo)!|\n",
+  "height": "214.072",
+  "hairpins": [
+   "M 684 87.79 L 684 83.79 M 684 87.79 L 684 91.79",
+   "M 49.05 179.95 L 218.76 175.95 M 49.05 179.95 L 218.76 183.95"
+  ]
+ },
+ {
+  "abc": "X:1\nM:4/4\nL:1/4\nK:C\nCDEF!crescendo(!|\ndefg|\n",
+  "height": "186.947",
+  "hairpins": [
+   "M 684 87.79 L 684 83.79 M 684 87.79 L 684 91.79"
+  ]
+ },
+ {
+  "abc": "X:1\nM:4/4\nL:1/4\nK:C\n!crescendo(!CDEF|defg!crescendo)!|\n",
+  "height": "121.914",
+  "hairpins": [
+   "M 70.85 87.79 L 421.26 83.79 M 70.85 87.79 L 421.26 91.79"
+  ]
+ },
+ {
+  "abc": "X:1\nM:4/4\nL:1/4\nK:C\nCDEF|\ndefg!crescendo)!|\nw:a b c d e f g h\n",
+  "height": "209.66575",
+  "hairpins": [
+   "M 53.3 95.77 L 223.01 91.77 M 53.3 95.77 L 223.01 99.77"
+  ]
+ }
+]

@@ -7376,9 +7376,9 @@ function noteText(
  * arrive already filtered to one system. v1 draws a stub and resumes on the next; worth
  * doing when a fixture needs it.
  *
- * ⏳ **STILL REQUIRED — MEASURED 2026-09-24.** A crescendo that crosses a break and closes on a
- * note agrees; one that closes on a BARLINE (`!crescendo(!CDEF|\ndefg!crescendo)!|`)
- * leaves abcjs's svg 27px taller (214.07 against 186.95). `zzledger` row `layout.ts:7329`.
+ * ✅ **AND THE BARLINE CASE — FIXED 2026-09-24.** One closing on a bar after a break was
+ * 27px short: `hasHairpin` read the notes alone, so the lane was never reserved. See
+ * `tests/hairpin-barline.test.ts`.
  */
 /**
  * Spanning decorations: hairpins and glissandi.
@@ -7398,7 +7398,7 @@ function noteText(
  * resolving after the whole tune is packed; hairpins can move to that machinery when a
  * fixture needs it. **MEASURED: `abcts-ledger-gaps-4` tune 1 spans one and is byte-exact,
  * because abcjs drops it too** — its `crescendo` element is per LINE like the tie's.
- * ⏳ Except when the close sits on a barline — see the marker above (2026-09-24).
+ * The barline-close case was a missing lane reserve, fixed 2026-09-24.
  */
 const SPANNER_OPEN: Readonly<Record<string, 'crescendo' | 'diminuendo' | 'glissando'>> = {
   '<(': 'crescendo',
@@ -7595,6 +7595,7 @@ function layoutSpanners(
    * which is the order abcjs's `otherchildren` is built in.
    */
   barSites: readonly SpannerSite[] = [],
+  strict = true,
 ): PlacedLine[][] {
   const out: PlacedLine[][] = bounds.map(() => [])
   // A third borrowed weight: this was `LINE_WEIGHTS.staffLine`, which is abcjs's 0.6px
@@ -7619,7 +7620,9 @@ function layoutSpanners(
     /** The element it was `addOther`'d at — its class counters come from there. */
     atElement?: number,
   ): void => {
-    if (x2 - x1 < ENGRAVE.spannerMinLength) return
+    // abcjs HAS NO MINIMUM: `CDEF!<(!|` at a line's end opens on the bar and `endLine`
+    // closes it on the same bar, and `drawCrescendo` draws the zero-length pair it gets.
+    if (!strict && x2 - x1 < ENGRAVE.spannerMinLength) return
     /**
      * **THE MOUTH IS CENTRED EIGHT PIXELS BELOW THE LANE'S PITCH.** `drawCrescendo` takes
      * `y = calcY(params.pitch) + 4` as "the top pixel to use (it is offset a little so that
@@ -16549,7 +16552,19 @@ function layoutScoped(input: Score, options: LayoutOptions = {}): Layout {
         const kind = SPANNER_OPEN[name] ?? SPANNER_CLOSE[name]
         return kind === 'crescendo' || kind === 'diminuendo'
       }
-      const hasHairpin = systemAnchors.some((a) => a.event.decorations.some(isHairpin))
+      // …**AND A BARLINE CAN CARRY ONE TOO.** `!crescendo)!|` puts the close on the bar
+      // (`abstract-engraver.js:1001-1002`), and with no open on this line abcjs starts it at
+      // `firstNote` — a CrescendoElem like any other, reserving `dynamicHeightBelow`. Reading
+      // the notes alone left that line 27px short with the hairpin drawn off the page.
+      const hasHairpin =
+        systemAnchors.some((a) => a.event.decorations.some(isHairpin)) ||
+        plan.measures
+          .slice(span.start, span.end)
+          .some((m) =>
+            [...(m.openingBarlineDecorations ?? []), ...(m.closingBarlineDecorations ?? [])].some(
+              isHairpin,
+            ),
+          )
       const tuplets = layoutTuplets(systemAnchors, elements, beams, strict)
       /**
        * **A TIE THAT CROSSES A SYSTEM BREAK RESERVES ON THE RECEIVING SIDE.** abcjs splits
@@ -17349,7 +17364,7 @@ function layoutScoped(input: Score, options: LayoutOptions = {}): Layout {
   // lost HALF the hairpins in S1-decorations tune 2 — it wraps to six systems and the
   // pairs straddle the breaks.
   const spannersBySystem = voiceAnchors.map((anchors, v) =>
-    layoutSpanners(anchors, systemBounds, (i) => hasVocalsAt(spans[i]?.start ?? 0), voiceSites[v] ?? []),
+    layoutSpanners(anchors, systemBounds, (i) => hasVocalsAt(spans[i]?.start ?? 0), voiceSites[v] ?? [], strict),
   )
   const withCurves = systems.map((system, systemIndex) => ({
     ...system,
