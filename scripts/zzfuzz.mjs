@@ -113,7 +113,6 @@ const VERBOSE = process.argv.includes('-v')
  */
 const DECLARED = new Set([
   'cr two tunes',
-  'unterminated slur',
   /**
    * ⚖️ **RULED, NOT OPEN.** `C99999999|` is a note past every glyph abcjs has, and abcjs
    * draws its own red DEBUG TEXT for it — `pitch is undefined`, an `abcjs-debug-msg` — which

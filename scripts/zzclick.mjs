@@ -52,19 +52,20 @@ const SKIP = new Set(['abcts-rests-and-bars-tune14','abcts-unknown-clef-tune0','
  * that is not the interactive port. A row that goes UP fails; one that goes DOWN says this
  * comment is out of date.
  *
- * ⚠️ **THE ONE DECLARED FIXTURE IS `staffPos`, AND IT IS A LAYOUT DIFFERENCE, NOT A CLICK
- * ONE.** `abcts-ledger-gaps-3-tune3` reports `staffPos.top` 155.45 / `height` 60.932 where
- * abcjs reports 142.757 / 73.625 — and `zero` is EXACT, `top + height` is EXACT, so the
- * staff origin and the group's bottom both agree and only the SPLIT between the two is
- * ours. The 12.693px is the inter-system separation CLAMP: abcjs folds it into
- * `staff.top`, which its `startY` is then measured back from, and our layout spends it in
- * the system advance instead — so `originPitch` is 13.724 where abcjs's `staff.top` is 17.
- * The same family as the layout-unit round trip, and it moves no ink.
+ * ✅ **THE ONE DECLARED FIXTURE CLOSED 2026-09-24, AND ITS RECORDED CAUSE WAS WRONG.**
+ * `abcts-ledger-gaps-3-tune3` reported `staffPos.top` 155.45 / `height` 60.932 against
+ * abcjs's 142.757 / 73.625, with `zero` and `top + height` exact — and the note here called
+ * the 12.693px "the inter-system separation CLAMP … the same family as the layout-unit
+ * round trip". It was a MISSING RESERVE: that tune's slur crosses a whole system, and abcjs
+ * recreates an open slur at the head of every line it is open on, where `getYBounds`
+ * reserves its flat 3 at pitch 14 (`tie-element.js:206-213`). Ours reserved nothing on the
+ * crossed line, so the staff's top came from its notes and the difference went into the
+ * system advance. Found by closing the unterminated-slur fuzz row, not by looking here.
  */
 const MODES = [
-  ['plain', {}, 1],
-  ['dragging', { dragging: true }, 1],
-  ['selectTypes', { selectTypes: true, dragging: true }, 1],
+  ['plain', {}, 0],
+  ['dragging', { dragging: true }, 0],
+  ['selectTypes', { selectTypes: true, dragging: true }, 0],
 ]
 
 const every = Number(process.argv[2] ?? 1)

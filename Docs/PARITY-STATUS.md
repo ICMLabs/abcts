@@ -421,7 +421,7 @@ rule and the normalizations are its own regression net — and it found **six** 
   not consume the pending line start, so `|:|:C:|:|` came out as TWO systems (187px against
   94.789). Fixed by having it take the line start, as a real measure does.
 
-**SIX CLASSES WERE NAMED, ALL SIX ARE CLOSED**, and what is left is DECLARED in the script with
+**SEVEN CLASSES WERE NAMED, ALL SEVEN ARE CLOSED**, and what is left is DECLARED in the script with
 its measurements:
 
 1. ✅ **RECOVERY FROM AN UNTERMINATED CONSTRUCT — CLOSED 2026-09-23, AND IT WAS ONE SHARED
@@ -566,6 +566,22 @@ its measurements:
    * **A run of `&` belongs to nothing** — each is its own `parseMusic` iteration.
    `tests/overlay-stems.test.ts` is the ladder, five rungs, each checked against its own
    break.
+
+7. ✅ **AN UNCLOSED SLUR — CLOSED 2026-09-24, AND IT WAS FILED AS "A 4px RESERVE".** A `(`
+   nothing closes runs to the END OF THE TUNE: `createABCVoice` recreates every open slur at
+   the head of each line with no anchors (`abstract-engraver.js:236-243`), so each later line
+   draws an arc and reserves `getYBounds`' flat 3 at `above ? 14 : 0` (`tie-element.js:206-213`).
+   Ours drew the first line's half and nothing after — `(CDEF| / GABc|` was 7.75px short. On
+   the opening line the reserve now takes `calcSlurY`'s ONE-anchor arm (the anchor's pitch;
+   the beam rule is two-anchor only, and it was what made `(CD|` 4.047px tall where `(C|` was
+   exact), and every drawn half lifts over its own line's internal notes —
+   `avoidCollisionAbove` runs last in `drawTie`'s `layout` whatever `isTie` came to, and the
+   port had gated it on slur-shaped curves. A slur ARRIVING from the line above is now on
+   that line's stack too: a close takes `setEndAnchor`'s `±4` ink plus the flat 3.
+   ⭐ **AND IT CLOSED `zzclick`'s ONLY DECLARED ROW**, whose recorded cause — "the
+   inter-system separation clamp, the layout-unit family" — was wrong: that fixture's slur
+   crosses a whole system and the crossed line reserved nothing. `tests/unclosed-slur.test.ts`
+   holds abcjs's heights and arc paths for six shapes, each rule broken in turn.
 
 ## 4. Everything else that is measured
 

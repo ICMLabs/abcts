@@ -8294,7 +8294,10 @@ function buildCurve(
    * 202k-byte file.
    */
   const raw = { from: endY(from, true), to: endY(to, false) }
-  if (strict && above && kind === 'slur' && internalHigh !== undefined) {
+  // ⚠️ **ON EVERY DRAWN CURVE, NOT ONLY A SLUR-SHAPED ONE.** `layout` calls it last
+  // whatever `isTie` came to (`draw/tie.js:54`), and a slur HALF is drawn as a tie with its
+  // internal notes intact. Only slurs collect internal notes, so a real tie has none.
+  if (strict && above && internalHigh !== undefined) {
     const inner = stepToY(internalHigh)
     // A HIGHER PITCH IS A SMALLER y, so abcjs's two `>` are two `<` here.
     if (inner < raw.from && inner < raw.to) {
@@ -8447,7 +8450,12 @@ function layoutCurves(
    * a `(` closed by a REST — the engraver never sees the close — and a slur written INSIDE
    * a chord, whose open is numbered 101 and whose close is 201.
    */
-  const emitHalf = (a: NoteAnchor, side: 'out' | 'in'): void => {
+  const emitHalf = (
+    a: NoteAnchor,
+    side: 'out' | 'in',
+    /** `avoidCollisionAbove`'s internal notes, where this half has any — see `buildCurve`. */
+    internalHigh?: number,
+  ): void => {
     const at = bounds[a.system]
     if (at === undefined) return
     const x =
@@ -8457,9 +8465,15 @@ function layoutCurves(
     const halfKind = 'tie' as const
     curves[a.system]?.push(
       side === 'out'
-        ? buildCurve(a, { ...a, left: x, right: x }, halfKind, voicePos, strict, {
-            start: a.element,
-          })
+        ? buildCurve(
+            a,
+            { ...a, left: x, right: x },
+            halfKind,
+            voicePos,
+            strict,
+            { start: a.element },
+            internalHigh,
+          )
         : buildCurve({ ...a, left: x, right: x }, a, halfKind, voicePos, strict, {
             end: a.element,
           }),
@@ -8526,6 +8540,14 @@ function layoutCurves(
    * A chord with no slur of its own keeps each head's own pitch, so its maximum is simply
    * its top head.
    */
+  /** `[lo, hi)` for `internalHighOf` covering system `sys` — its anchors are contiguous. */
+  const onSystem = (sys: number): [number, number] => {
+    const first = anchors.findIndex((a) => a.system === sys)
+    if (first < 0) return [0, 0]
+    let last = first
+    while (last + 1 < anchors.length && anchors[last + 1]?.system === sys) last += 1
+    return [first - 1, last + 1]
+  }
   const internalHighOf = (
     from: number,
     to: number,
@@ -8577,6 +8599,62 @@ function layoutCurves(
       .slice(from + 1, to)
       .some((a) => a.event.type !== 'rest' && a.event.slurEnds === 0 && !a.stemUp)
 
+  /**
+   * **A LINE A SLUR IS OPEN ACROSS, WITH NEITHER ANCHOR ON IT** — one it only crosses, or
+   * one after a `(` nothing ever closes: `createABCVoice` recreates every open slur at the
+   * head of each line (`abstract-engraver.js:236-243`).
+   *
+   * **NEITHER ANCHOR, SO NEITHER RULE THE HALVES TAKE.** `calcX` falls past
+   * `startLimitX` — which only a line that OPENS a slur ever gets — to `lineStartX`,
+   * and `drawVoice` hands it `params.startx + 10` (`draw/voice.js:85`). The other end
+   * is `lineEndX`, the same `w - 1` the outgoing half takes.
+   *
+   * **AND THE PITCH IS abcjs's OWN 14, ABOVE** — `startY = endY = this.above ? 14 : 0`
+   * under its comment *"This is the case where the slur covers the entire line"*
+   * (`tie-element.js:206-213`), with `calcSlurDirection` answering ABOVE for an
+   * anchorless curve. Instrumented on this fixture: `DRAWTIE start=10,14 end=1000,14
+   * above=true`.
+   *
+   * ⚠️ **AND IT LIFTS OVER THE LINE'S NOTES**, every one of which joined its
+   * `internalNotes` — `avoidCollisionAbove` runs last in `drawTie`'s `layout`.
+   */
+  const anchorlessArc = (
+    sys: number,
+    template: NoteAnchor,
+    style: { dotted?: true },
+    collects: boolean,
+  ): void => {
+    const across = bounds[sys]
+    if (across === undefined) return
+    const left = (across.staffLeft ?? across.left) + ENGRAVE.crossedLineStart
+    const right = across.right - ENGRAVE.lineEndInset
+    const step = ENGRAVE.crossedLinePitch - PITCH_ORIGIN
+    const anchorless: NoteAnchor = {
+      ...template,
+      left,
+      right: left,
+      pitchStep: step,
+      // …and a HALF is drawn as a tie, which reads `pitchY` outright — see `endY`.
+      pitchY: stepToY(step),
+      stemUp: false,
+      system: sys,
+    }
+    const [lo, hi] = onSystem(sys)
+    curves[sys]?.push({
+      ...buildCurve(
+        anchorless,
+        { ...anchorless, left: right, right },
+        'tie',
+        voicePos,
+        strict,
+        {},
+        collects ? internalHighOf(lo, hi) : undefined,
+      ),
+      ...style,
+      carried: true,
+    })
+  }
+
   const emit = (
     from: NoteAnchor,
     to: NoteAnchor,
@@ -8601,6 +8679,11 @@ function layoutCurves(
     internalDown?: boolean,
     /** Extra fields for a curve inside a GRACE GROUP — see `PlacedCurve.graceSeq`. */
     extra?: { graceSeq: number; groupX: number },
+    /**
+     * The two ends' anchor INDICES, for a curve the break splits: abcjs keeps one
+     * `TieElem` PER LINE and each collects only its own line's internal notes.
+     */
+    span?: { from: number; to: number },
   ): void => {
     // `.-` and `.(` — the STYLE rides on the element the curve OPENS at, one flag for the
     // tie it starts and one for the slurs opening on it. See `PlacedCurve.dotted`.
@@ -8651,10 +8734,19 @@ function layoutCurves(
      * and we drew both halves as SLURS: six `data-name="slur"` against abcjs's four.
      */
     const halfKind = 'tie' as const
+    /** A half's own line's internal notes — see `span`. A TIE collects none. */
+    const lift = (lo: number, hi: number, opener?: NoteAnchor): number | undefined =>
+      span === undefined || writtenAs !== 'slur' ? undefined : internalHighOf(lo, hi, opener)
     curves[from.system]?.push({
-      ...buildCurve(from, { ...from, left: lineEndX, right: lineEndX }, halfKind, voicePos, strict, {
-        start: from.element,
-      }),
+      ...buildCurve(
+        from,
+        { ...from, left: lineEndX, right: lineEndX },
+        halfKind,
+        voicePos,
+        strict,
+        { start: from.element },
+        lift(span?.from ?? 0, onSystem(from.system)[1], from),
+      ),
       ...style,
     })
     /**
@@ -8723,9 +8815,15 @@ function layoutCurves(
         ? end.prefixEnd
         : to.left - ENGRAVE.curveContinuation
     curves[to.system]?.push({
-      ...buildCurve({ ...to, left: resume, right: resume }, to, halfKind, voicePos, strict, {
-        end: to.element,
-      }),
+      ...buildCurve(
+        { ...to, left: resume, right: resume },
+        to,
+        halfKind,
+        voicePos,
+        strict,
+        { end: to.element },
+        lift(onSystem(to.system)[0], span?.to ?? 0),
+      ),
       ...style,
       carried: true,
     })
@@ -8739,47 +8837,8 @@ function layoutCurves(
      * nothing between them. A `ponytail:` here predicted the shape and said no corpus
      * fixture has one.
      */
-    for (let sys = from.system + 1; sys < to.system; sys += 1) {
-      const across = bounds[sys]
-      if (across === undefined) continue
-      /**
-       * **NEITHER ANCHOR, SO NEITHER RULE THE HALVES TAKE.** `calcX` falls past
-       * `startLimitX` — which only a line that OPENS a slur ever gets — to `lineStartX`,
-       * and `drawVoice` hands it `params.startx + 10` (`draw/voice.js:85`). The other end
-       * is `lineEndX`, the same `w - 1` the outgoing half takes.
-       *
-       * **AND THE PITCH IS abcjs's OWN 14, ABOVE** — `startY = endY = this.above ? 14 : 0`
-       * under its comment *"This is the case where the slur covers the entire line"*
-       * (`tie-element.js:206-213`), with `calcSlurDirection` answering ABOVE for an
-       * anchorless curve. Instrumented on this fixture: `DRAWTIE start=10,14 end=1000,14
-       * above=true`.
-       */
-      const left = (across.staffLeft ?? across.left) + ENGRAVE.crossedLineStart
-      const right = across.right - ENGRAVE.lineEndInset
-      const step = ENGRAVE.crossedLinePitch - PITCH_ORIGIN
-      const anchorless: NoteAnchor = {
-        ...to,
-        left,
-        right: left,
-        pitchStep: step,
-        // …and a HALF is drawn as a tie, which reads `pitchY` outright — see `endY`.
-        pitchY: stepToY(step),
-        stemUp: false,
-        system: sys,
-      }
-      curves[sys]?.push({
-        ...buildCurve(
-          anchorless,
-          { ...anchorless, left: right, right },
-          halfKind,
-          voicePos,
-          strict,
-          {},
-        ),
-        ...style,
-        carried: true,
-      })
-    }
+    for (let sys = from.system + 1; sys < to.system; sys += 1)
+      anchorlessArc(sys, to, style, writtenAs === 'slur')
   }
 
   anchors.forEach((anchor, i) => {
@@ -9073,6 +9132,8 @@ function layoutCurves(
           internalHighOf(start ?? 0, i, from),
           openSeq.get(depth),
           internalDownOf(start ?? 0, i),
+          undefined,
+          { from: start ?? 0, to: i },
         )
       }
     }
@@ -9204,7 +9265,22 @@ function layoutCurves(
   })
 
   // …**AND WHATEVER IS STILL OPEN RUNS OFF THE END OF ITS LINE.** See `emitHalf`.
-  for (const rec of open) emitHalf(rec.from ?? (anchors[rec.i] as NoteAnchor), 'out')
+  /**
+   * **A SLUR NOTHING CLOSES STILL LIFTS OVER ITS NOTES.** `drawTie`'s `layout` ends with
+   * `avoidCollisionAbove()` whatever the anchors (`draw/tie.js:54`), and every note after
+   * the `(` on the line joined `internalNotes` — so `(cdef|` hangs at the `f`'s height less
+   * one, 7.75px above where ours hung it off the `c`.
+   */
+  for (const rec of open) {
+    const a = rec.from ?? (anchors[rec.i] as NoteAnchor)
+    let end = rec.i + 1
+    while (end < anchors.length && anchors[end]?.system === a.system) end += 1
+    emitHalf(a, 'out', internalHighOf(rec.i, end, a))
+    // …**AND IT RUNS TO THE END OF THE TUNE**, one anchorless arc on every later line.
+    const style: { dotted?: true } =
+      'slurDotted' in a.event && a.event.slurDotted ? { dotted: true } : {}
+    for (let sys = a.system + 1; sys < bounds.length; sys += 1) anchorlessArc(sys, a, style, true)
+  }
 
   return curves
 }
@@ -9241,6 +9317,8 @@ function curveReserves(
   voicePos: number,
   /** Does a tie arrive from the system above? See the call site. */
   tiedIntoSystem = false,
+  /** How many slurs arrive OPEN from the systems above — see the call site. */
+  slursIntoSystem = 0,
 ): { ink: CurveReserve[]; post: CurveReserve[] } {
   const reserves: CurveReserve[] = []
   /**
@@ -9264,7 +9342,30 @@ function curveReserves(
    * for the same reason.
    */
   const open: { i: number; from?: NoteAnchor; graceGi?: number }[] = []
+  /**
+   * **A SLUR ARRIVING OPEN FROM THE LINE ABOVE IS A `TieElem` OF THIS LINE'S OWN.**
+   * `createABCVoice` recreates every open slur at the head of each line, with no anchors
+   * (`abstract-engraver.js:236-243`), and it sits at the BOTTOM of the stack: it opened
+   * first. `i: -1` marks one — see `arrivingCloses` and the loop at the foot.
+   */
+  for (let n = 0; n < slursIntoSystem; n++) open.push({ i: -1 })
   const centre = (a: NoteAnchor) => a.pitchY
+  /** `calcSlurDirection`'s `hasDownStem` over this system's notes in `[from, to)`. */
+  const downStemIn = (from: number, to: number): boolean =>
+    anchors
+      .slice(from, to)
+      .some((b) => b.event.type !== 'rest' && b.event.slurEnds === 0 && !b.stemUp)
+  /**
+   * An ARRIVING slur closing on `anchor`: `setEndAnchor` runs, so it takes its INK box —
+   * `anchor2.pitch ± 4` in the no-`anchor1` arm (`tie-element.js:35-38`) — and then
+   * `getYBounds`' flat 3 at `anchor2.pitch`, pointed by every internal note before it.
+   */
+  const arrivingCloses = (anchor: NoteAnchor, at: number): void => {
+    ink.push({ top: centre(anchor) - four, bottom: centre(anchor) + four })
+    const above = curveIsAbove(anchor, anchor, voicePos, 'slur', downStemIn(0, at))
+    const y = anchor.pitchY
+    reserves.push(above ? { top: y - three, bottom: y } : { top: y, bottom: y + three })
+  }
   /**
    * `parent.fixed` — the element's OWN box over its fixed children, so on a beamed note
    * the beam-retargeted stem end, and on the other side the notehead's. Not the stem
@@ -9666,6 +9767,10 @@ function curveReserves(
     if (anchor.event.type === 'rest') return
     for (let n = 0; n < anchor.event.slurEnds; n++) {
       const rec = open.pop()
+      if (rec?.i === -1) {
+        arrivingCloses(anchor, i)
+        continue
+      }
       const from = rec === undefined ? undefined : (rec.from ?? anchors[rec.i])
       if (from !== undefined) add(from, anchor, 'slur')
       else unopened(anchor)
@@ -9718,11 +9823,37 @@ function curveReserves(
   //
   // Its INK box is NOT taken: `this.top = max(anchor1.pitch, anchor2.pitch) + 4` is set in
   // `setEndAnchor`, which never runs. So the post-lane reserve and nothing else.
+  //
+  // ⚠️ **AND ITS ONE-ANCHOR ARM IS NOT THE TWO-ANCHOR ONE.** `calcSlurY` takes the
+  // mid-stem and beam retargets only `if (this.anchor1 && this.anchor2)`; with the close
+  // missing it is `startY = endY = anchor1.pitch` and nothing else (`tie-element.js:197`).
+  // `endAt` is the two-anchor arm, so `(CD|` — the `C` beamed to the `D` — reserved off
+  // the beam and came out 4.047px taller than abcjs, where `(C|` alone was exact. And the
+  // DIRECTION is `calcSlurDirection` over every internal note, which here is every note
+  // after the `(` on the system.
   for (const rec of open) {
+    /**
+     * **AND ONE STILL OPEN AT THE END OF THE LINE HAS NEITHER ANCHOR** — it crosses this
+     * line, or nothing ever closes it. `calcSlurY`'s last arm is `startY = endY =
+     * this.above ? 14 : 0` (`tie-element.js:206-213`) and `calcSlurDirection` reads the
+     * internal notes, which are every note on the line. ⚠️ The DRAWING is above regardless
+     * — `drawTie` recomputes it as a tie, and an anchorless tie's reference pitch is 14 — so
+     * a line of up-stems reserves BELOW an arc drawn ABOVE, and that is abcjs's.
+     */
+    if (rec.i === -1) {
+      // `calcSlurDirection` with no anchors: the voice's side, else `hasDownStem`.
+      const above = voicePos === 0 ? true : voicePos > 0 ? false : downStemIn(0, anchors.length)
+      const y = stepToY((above ? ENGRAVE.crossedLinePitch : 0) - PITCH_ORIGIN)
+      reserves.push(above ? { top: y - three, bottom: y } : { top: y, bottom: y + three })
+      continue
+    }
     const a = rec.from ?? anchors[rec.i]
     if (a === undefined) continue
-    const above = curveIsAbove(a, a, voicePos, 'slur')
-    const y = endAt(a, above, true)
+    const internalDown = anchors
+      .slice(rec.i + 1)
+      .some((b) => b.event.type !== 'rest' && b.event.slurEnds === 0 && !b.stemUp)
+    const above = curveIsAbove(a, a, voicePos, 'slur', internalDown)
+    const y = a.pitchY
     reserves.push(above ? { top: y - three, bottom: y } : { top: y, bottom: y + three })
   }
   /**
@@ -16291,11 +16422,20 @@ function layoutScoped(input: Score, options: LayoutOptions = {}): Layout {
         (previous?.type === 'note' || previous?.type === 'chord') &&
         (previous.tiedToNext ||
           (previous.type === 'chord' && (previous.tiedPitches ?? []).some(Boolean)))
+      // …**AND SO DOES A SLUR**, which abcjs recreates at the head of every line it is still
+      // open on — see `curveReserves`. The same stack both curve passes keep: a close with
+      // nothing open is a half and pops nothing, and a rest takes no part.
+      let slursIntoSystem = 0
+      for (const a of first === undefined ? [] : all.slice(0, all.indexOf(first))) {
+        if (a.event.type === 'rest') continue
+        slursIntoSystem = Math.max(0, slursIntoSystem - a.event.slurEnds) + a.event.slurStarts
+      }
       const curves = curveReserves(
         systemAnchors,
         elements,
         voicePosOf(voiceIndex),
         tiedIntoSystem,
+        slursIntoSystem,
       )
       // Melismas resolve here for the same reason tuplets do, and must run AFTER the
       // elements are final: in strict mode this rewrites the syllable's text in place.
