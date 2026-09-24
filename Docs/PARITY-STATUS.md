@@ -591,11 +591,14 @@ its measurements:
 
 8. **THE METER GRAMMAR — MEASURED, NOT BUILT.** See item 1's note: `setMeter` throws where
    ours `split('/')`s, and our `Meter` cannot hold abcjs's `value: [{num, den?}]`.
-9. **AN EMPTY VOICE ARRAY ON A CONTINUED LINE — MEASURED, NOT BUILT.** On
-   `abcjs-visual-parsing-06-score-t-b` and `-07`, whose `%%score (T B)` voices continue with
-   `\`, ours publishes line 2's staff as `[["note44 bar45", ""]]` where abcjs has one voice.
-   `corpus-lines` compares element SPANS and cannot see an empty voice; the `\r\n` sweep kept
-   the structure, and found it in LF as well.
+9. ✅ **A STAFF'S `voices` ENDS AT THE LAST VOICE THAT SANG — CLOSED 2026-09-24.** abcjs's
+   array is indexed by voice number and filled as each voice is created, so a lower voice
+   that sits a line out leaves NO slot while an upper one leaves an empty one. Ours published
+   every member, so any `%%score (T B)` line without `B` read `[[d], []]` — not a
+   continuation quirk, as first filed: plain `V:` lines do it too. ⚠️ **NO GATE COULD SEE
+   IT**: `corpus-lines` compares every character's element, an empty voice maps none, and
+   `voices-array` records layout rows. `tests/lines-shape.test.ts` is a new oracle for the
+   SHAPE — each staff's clef and voice count, every tune of both corpora, 822 of them.
 10. ✅ **MUSIC BEFORE THE FIRST `V:` IS THAT VOICE — CLOSED 2026-09-24, WITH TWO DEFECTS
    BEHIND IT.** abcjs gives the implicit voice no entry in `multilineVars.voices`, so the first
    body `V:` naming a NEW id takes staff 0 / voice 0 — the implicit music's own slot — and its

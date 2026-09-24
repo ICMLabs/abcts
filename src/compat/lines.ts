@@ -3479,9 +3479,17 @@ const VOICE_FURNITURE = new Set(["style", "stem", "color", "scale"]);
             ),
         )
         .map(({ members, s }) => {
-          const staff: AbcStaff = {
-            voices: members.map((k) => lineVoices[k] ?? []),
-          };
+          /**
+           * **A STAFF'S `voices` ENDS AT THE LAST VOICE THAT SANG ON THIS LINE.** It is a
+           * plain array indexed by voice number, filled as each voice is created
+           * (`tune-builder.js:961-989`), so a lower voice that sits a line out leaves NO
+           * slot — while an upper one that does leaves an EMPTY one, because a later index
+           * was written. `%%score (T B)` with a last line of `[V:T]d|` alone publishes
+           * `[[d]]`, and ours published `[[d], []]` on every such line.
+           */
+          const voices = members.map((k) => lineVoices[k] ?? []);
+          while (voices.length > 1 && voices[voices.length - 1]?.length === 0) voices.pop();
+          const staff: AbcStaff = { voices };
           /**
            * **THE VOICE NAMES, AND WHICH ONE DEPENDS ON THE LINE.** `createVoice` stamps
            * `{name, subname}` per voice and `cleanUp` resolves it once the lines are known:
