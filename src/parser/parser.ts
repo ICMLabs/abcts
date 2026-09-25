@@ -1966,7 +1966,9 @@ class VoiceBuilder {
     keywarn?: boolean,
   ): void {
     this.pendingKeyChange = key
-    this.pendingKeyChangeAtLineHead = !inline && this.lineStartedEmpty
+    // An INLINE one reaches the head only when a voice SWITCH opened the line — see
+    // `openedBySwitch`. On a line ours opened eagerly abcjs has not, so it lands above.
+    this.pendingKeyChangeAtLineHead = this.lineStartedEmpty && (!inline || this.openedBySwitch)
     this.pendingKeyChangeRange = range
     this.pendingKeyChangeClef = clef
     this.pendingKeyChangeInline = inline
@@ -1988,7 +1990,7 @@ class VoiceBuilder {
   ): void {
     this.pendingClefChangeFromVoice = fromVoice
     // A line a switch already opened, with nothing on it yet — `Measure.clefChangeAtLineHead`.
-    this.pendingClefChangeAtLineHead = !inline && this.lineStartedEmpty
+    this.pendingClefChangeAtLineHead = this.lineStartedEmpty && (!inline || this.openedBySwitch)
     this.pendingClefChange = clef
     this.pendingClefChangeRange = range
     this.pendingClefChangeInline = inline
@@ -2367,6 +2369,7 @@ class VoiceBuilder {
     // It still TAKES it, copying it to every other staff: `startNewLine` runs for that
     // music line too, and a staff already made ignores the `params.meter` it hands over.
     this.freshLine = !alreadyOpen && !openedByField
+    this.openedBySwitch = openedByField
     this.takeLineMeter(alreadyOpen)
   }
 
@@ -2444,7 +2447,17 @@ class VoiceBuilder {
 
   switchedTo(): void {
     if (this.hasLineContent) this.beginMusicLine()
+    // …and a switch onto a line already open and still EMPTY counts too.
+    this.openedBySwitch = this.lineStartedEmpty
   }
+
+  /**
+   * A voice switch — a `V:` field, or an inline `[V:]` to a voice with music on this line —
+   * opened the current line. For an inline `[K:]` read now abcjs has either run
+   * `startNewLine` already or pointed `lineNum` past the last line, so the key never reaches
+   * the line above: it is the new line's own.
+   */
+  private openedBySwitch = false
 
   /**
    * **A LINE `startNewLine` HAS ALREADY OPENED, WITH NOTHING ON IT YET** — by a `V:` switch
@@ -4765,6 +4778,13 @@ class Parser {
      * painted a whole tune abcjs leaves black, and a colour written after a `V:1` / `V:2`
      * pair painted voice 1 where abcjs paints voice 2. See `declaredVoiceId`.
      */
+    // `%%continueall` — `multilineVars.continueall = true`, whatever follows the word, `0`
+    // included (`abc_parse_directive.js:966-968`). It was never read: the flag existed and
+    // the directive warned "Unknown", so every line opened a system of its own.
+    if (/^continueall(\s|$)/.test(body)) {
+      this.continueAll = true
+      return
+    }
     const voiceColor = /^voicecolor\s+(\S+)\s*$/.exec(body)
     if (voiceColor?.[1] !== undefined) {
       const builder = this.ensureScore(start)
