@@ -100,7 +100,7 @@ import {
   supportsAudio,
   SynthSequence,
 } from "./synth.js";
-import { numberOfTunes } from "./tunebook.js";
+import { numberOfTunes, TuneBook } from "./tunebook.js";
 import { normalizeSource, parse } from "../parser/parser.js";
 import { EngraverController, Parse } from "./engraver.js";
 import { strTranspose as transposeString } from "../str/transpose.js";
@@ -1133,17 +1133,29 @@ function renderInto(
       ? 0
       : Number.parseInt(String(params.startingTune), 10);
 
+  const bookAbc = abc;
   const render = (
     score: (typeof result.scores)[number],
     paper: { innerHTML: string } | null,
+    /**
+     * **THE WRAP'S RE-PARSE.** abcjs measures the tune as parsed, then — when the wrap moved
+     * a break — PARSES AGAIN, the tune's own `book.tunes[i].abc` (the header's `%%` lines
+     * and the tune, cut at its first blank line) from offset 0, and everything the tune
+     * object publishes is THAT tune's: every span tune-relative, and the re-parse's warnings
+     * where it has any (`abc_tunebook_svg.js:136-145`). Measured 2026-09-25: a second tune's
+     * first note is 57 unwrapped and 20 wrapped.
+     */
+    reparse?: {
+      readonly source: string;
+      readonly warnings: string[] | undefined;
+      readonly wrap: NonNullable<ReturnType<typeof calcLineWraps>>;
+    },
   ): TuneObject => {
+    const abc = reparse?.source ?? bookAbc;
     /** See `warningsOf` — the file header's are repeated on every tune, as abcjs's are. */
-    const warnings = warningsOf(
-      result.diagnostics,
-      result.scores,
-      result.scores.indexOf(score),
-      abc,
-    );
+    const warnings =
+      reparse?.warnings ??
+      warningsOf(result.diagnostics, result.scores, result.scores.indexOf(score), bookAbc);
     /**
      * **`noteTimings` AND THE TOTALS ARE STATE, not derived on read.** `setTiming` writes
      * all three onto the tune and the three getters just read the fields
@@ -1186,6 +1198,7 @@ function renderInto(
       lineBreaks: number[][];
       reParse: boolean;
     } | null = null;
+    if (reparse !== undefined) wrapCache = reparse.wrap;
     const wrapSearch = (): typeof wrapCache => {
       if (wrapCache !== null) return wrapCache;
       if (paper === null || params.wrap === undefined || params.staffwidth === undefined)
@@ -1198,6 +1211,27 @@ function renderInto(
       wrapCache = calcLineWraps(sections, staffwidth, params.wrap, params.scale);
       return wrapCache;
     };
+    if (reparse === undefined) {
+      const ret = wrapSearch();
+      const index = result.scores.indexOf(score);
+      const text = ret?.reParse === true ? new TuneBook(bookAbc).tunes[index]?.abc : undefined;
+      if (ret !== null && text !== undefined) {
+        const source = normalizeSource(text);
+        const re = parse(text, {
+          mode,
+          ...(params.visualTranspose ? { visualTranspose: params.visualTranspose } : {}),
+        });
+        const reScore = re.scores[0];
+        if (reScore !== undefined) {
+          const reWarnings = warningsOf(re.diagnostics, re.scores, 0, source);
+          return render(reScore, paper, {
+            source,
+            warnings: reWarnings !== undefined && reWarnings.length > 0 ? reWarnings : warnings,
+            wrap: ret,
+          });
+        }
+      }
+    }
     let wrapped: Score | null = null;
     /**
      * **WHAT THE SYNTH SEQUENCES** — abcjs's tune object IS the wrapped one, so its MIDI
