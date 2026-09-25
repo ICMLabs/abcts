@@ -2791,6 +2791,8 @@ export function projectionOf(
   let carriedTileEnd: number | undefined
   /** Every tiled element's end so far — the carry is the last of them BEFORE this line's. */
   const tiledEnds: number[] = []
+  /** The previous line's voice arrays — a trailing opening bar is moved onto them. */
+  let previousLineVoices: AbcElement[][] | null = null
   const lengths = score.voices.map((v) => v.measures.length);
   const totalMeasures = Math.max(...lengths, 0);
   const breaks = [
@@ -3480,6 +3482,24 @@ const VOICE_FURNITURE = new Set(["style", "stem", "color", "scale"]);
       wrapped ? tiledEnds : undefined,
     );
     for (const e of tiled) if (e.endChar !== undefined) tiledEnds.push(e.endChar);
+    /**
+     * **A WRAP'S BREAK-BAR IS THE LAST ELEMENT OF THE LINE IT CLOSES** — the opening `|:`
+     * or `[1` of this line's first measure, when the wrap broke ON it (see
+     * `Measure.openingBarlineTrails`). The drawing already put it there; the projection
+     * published it at this line's head. Measured 2026-09-25.
+     */
+    const previousLineBefore = previousLineVoices;
+    if (previousLineVoices !== null)
+      score.voices.forEach((v, k) => {
+        if (v.measures[from]?.openingBarlineTrails !== true) return;
+        const voice = lineVoices[k];
+        const at = voice?.findIndex((e) => e.el_type === "bar") ?? -1;
+        if (voice === undefined || at < 0) return;
+        if (voice.slice(0, at).some((e) => e.el_type === "note")) return;
+        const [bar] = voice.splice(at, 1);
+        if (bar !== undefined) previousLineVoices?.[k]?.push(bar);
+      });
+    previousLineVoices = lineVoices;
     // …and what THIS line closed at, for a line the source did not break — see `tile`.
     carriedTileEnd = tiled[tiled.length - 1]?.endChar;
     /**
@@ -3524,6 +3544,8 @@ const VOICE_FURNITURE = new Set(["style", "stem", "color", "scale"]);
           Number.POSITIVE_INFINITY,
         );
       const created = new Set<number>();
+      /** Where a voice's moved furniture begins on the line above — the splice's index 0. */
+      const movedAt = new Map<number, number>();
       [...members.keys()]
         .sort((a, b) => opened(members[a] ?? 0) - opened(members[b] ?? 0))
         .forEach((j) => {
@@ -3544,7 +3566,9 @@ const VOICE_FURNITURE = new Set(["style", "stem", "color", "scale"]);
           if (lineStyle !== undefined)
             head.push({ el_type: "style", head: lineStyle });
           const carried = wrapRan && i > 0 ? lastStem.get(k) : undefined;
-          if (carried !== undefined) head.push({ el_type: "stem", direction: carried });
+          const carriedStem: AbcElement | undefined =
+            carried === undefined ? undefined : { el_type: "stem", direction: carried };
+          if (carriedStem !== undefined) head.push(carriedStem);
           const opensSource =
             !wrapRan || i === 0 || score.voices[k]?.measures[from]?.wrapSourceLineStart === true;
           const stem = score.voices[k]?.stemDirection;
@@ -3559,8 +3583,25 @@ const VOICE_FURNITURE = new Set(["style", "stem", "color", "scale"]);
               (!wrapRan ||
                 i === 0 ||
                 score.voices[members[0] ?? 0]?.measures[from]?.wrapSourceLineStart === true)
-            )
-              firstOfStaff?.splice(0, 0, { el_type: "stem", direction: "up" });
+            ) {
+              // …onto the LINE ABOVE, before its break-bar, when this line's opening bar
+              // trails there — see the furniture note below.
+              const first = members[0] ?? 0;
+              const previous = previousLineBefore?.[first];
+              if (
+                wrapRan &&
+                i > 0 &&
+                previous !== undefined &&
+                score.voices[first]?.measures[from]?.openingBarlineTrails === true &&
+                previous[previous.length - 1]?.el_type === "bar"
+              ) {
+                previous.splice(movedAt.get(first) ?? previous.length - 1, 0, {
+                  el_type: "stem",
+                  direction: "up",
+                });
+                lastStem.set(first, "up");
+              } else firstOfStaff?.splice(0, 0, { el_type: "stem", direction: "up" });
+            }
             head.push({ el_type: "stem", direction: "down" });
           }
           /**
@@ -3585,6 +3626,28 @@ const VOICE_FURNITURE = new Set(["style", "stem", "color", "scale"]);
             if (m.colorChange !== undefined && m.colorChange.at < opensAt)
               color = m.colorChange.color;
           if (color != null) head.push({ el_type: "color", color });
+          /**
+           * …**AND WHEN THE WRAP BROKE ON THIS LINE'S OPENING BAR, THE SOURCE LINE'S
+           * FURNITURE WENT WITH THE BAR** — it precedes the `|:` in the merged voice, so it
+           * ends the line above, before the bar, and this line opens on the carried stem
+           * alone. Measured on `visual-layout-09-endings`.
+           */
+          const previous = previousLineBefore?.[k];
+          if (
+            wrapRan &&
+            i > 0 &&
+            previous !== undefined &&
+            score.voices[k]?.measures[from]?.openingBarlineTrails === true &&
+            previous[previous.length - 1]?.el_type === "bar"
+          ) {
+            const moved = head.filter((e) => e !== carriedStem);
+            movedAt.set(k, previous.length - 1);
+            previous.splice(previous.length - 1, 0, ...moved);
+            const lastMoved = moved.filter((e) => e.el_type === "stem").pop()?.direction;
+            if (lastMoved !== undefined && carriedStem === undefined)
+              head.splice(0, head.length, { el_type: "stem", direction: lastMoved });
+            else head.splice(0, head.length, ...(carriedStem === undefined ? [] : [carriedStem]));
+          }
           voice.splice(0, 0, ...head);
         });
       /**
