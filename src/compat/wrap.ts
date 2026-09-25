@@ -976,3 +976,80 @@ export function applyLineBreaks(
     ? { ...score, voices, wrapDroppedMeter: true as const }
     : { ...score, voices };
 }
+
+
+/**
+ * **WHAT `deline` MERGES WHEN THE VOICES DISAGREE ABOUT THEIR LINES.** A tune line holds
+ * only the staves that have music on it, COMPACTED — a line V:1 has no source line on keeps
+ * V:2 at `staff[0]` (both engines' `tune.lines` say so) — and `deline` concatenates
+ * `staff[k].voices[j]` across lines BY INDEX. So V:2's second line joins V:1's voice, and the
+ * wrap re-breaks that merged voice: abcjs draws V:2's bars on the TOP staff from there on.
+ *
+ * Slot `(k, j)` of the result is the j-th voice of the k-th staff PRESENT on each line, its
+ * measures that line's measures of whichever voice held the slot, and its setup the first
+ * such voice's. The identity when every line holds every voice. Measured 2026-09-25.
+ */
+export function compactForDeline(score: Score): Score {
+  if (!score.voices.some((v) => v.measures.some((m) => m.lineAbsent === true))) return score;
+  const byId = new Map(score.voices.map((v) => [v.id, v]));
+  const staves =
+    score.staves.length > 0
+      ? score.staves.map((g) => g.voiceIds)
+      : score.voices.map((v) => [v.id]);
+  const starts = new Set<number>([0]);
+  for (const v of score.voices) v.measures.forEach((m, i) => m.startsSystem && starts.add(i));
+  const columns = Math.max(0, ...score.voices.map((v) => v.measures.length));
+  const bounds = [...starts].filter((i) => i < columns).sort((a, b) => a - b);
+  const real = (id: string, from: number, to: number) =>
+    (byId.get(id)?.measures ?? []).slice(from, to).filter((m) => m.lineAbsent !== true);
+  const slots = new Map<string, { head: Score["voices"][number]; measures: Measure[] }>();
+  const order: string[] = [];
+  bounds.forEach((from, l) => {
+    const to = bounds[l + 1] ?? columns;
+    // …and on a SHARED staff an upper voice with nothing here keeps its slot, empty — the
+    // staff's `voices` is `[[], V:2]` — so the voices up to the last present one stay.
+    const present = staves
+      .map((ids) => {
+        let last = -1;
+        ids.forEach((id, i) => {
+          if (real(id, from, to).length > 0) last = i;
+        });
+        return ids.slice(0, last + 1);
+      })
+      .filter((ids) => ids.length > 0);
+    present.forEach((ids, k) =>
+      ids.forEach((id, j) => {
+        const key = `${k}/${j}`;
+        let slot = slots.get(key);
+        if (slot === undefined) {
+          const head = byId.get(id);
+          if (head === undefined) return;
+          slot = { head, measures: [] };
+          slots.set(key, slot);
+          order.push(key);
+        }
+        slot.measures.push(...real(id, from, to));
+      }),
+    );
+  });
+  const voices = order
+    .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }))
+    .map((key) => {
+      const slot = slots.get(key)!;
+      return { ...slot.head, measures: slot.measures };
+    });
+  const staffCount = Math.max(0, ...order.map((key) => Number(key.split("/")[0]) + 1));
+  return {
+    ...score,
+    voices,
+    staves:
+      score.staves.length === 0
+        ? []
+        : Array.from({ length: staffCount }, (_, k) => ({
+            ...(score.staves[k] ?? score.staves[0]!),
+            voiceIds: order
+              .filter((key) => key.startsWith(`${k}/`))
+              .map((key) => slots.get(key)!.head.id),
+          })),
+  };
+}

@@ -56,6 +56,7 @@ import {
 import { type DelineOptions, delineOf } from "./deline.js";
 import {
   applyLineBreaks,
+  compactForDeline,
   calcLineWraps,
   findLineBreaks,
   type WrapExplanation,
@@ -822,6 +823,9 @@ const abcjsMeter = (score: Score): AbcjsMeter =>
  * anything else a host might want hung here; the two it names are no longer absent, and
  * the debt row that said so is closed.
  */
+/** Each rendered tune's `sequencedScore` — see there. Kept off the public shape. */
+const SEQUENCED = new WeakMap<TuneObject, () => Score>();
+
 export interface TuneObject {
   /** The rendered markup, also injected into the target when there is a DOM. */
   readonly svg: string;
@@ -1195,10 +1199,25 @@ function renderInto(
       return wrapCache;
     };
     let wrapped: Score | null = null;
+    /**
+     * **WHAT THE SYNTH SEQUENCES** — abcjs's tune object IS the wrapped one, so its MIDI
+     * reads the wrapped lines. Where the voices agree about their lines that changes nothing
+     * the sequencer counts; where they do not, `deline` has merged them (`compactForDeline`)
+     * and the tracks follow the merge. Only then is it the drawn score. Measured 2026-09-25.
+     */
+    const sequencedScore = (): Score => {
+      const ret = wrapSearch();
+      return ret !== null && ret.reParse && compactForDeline(score) !== score
+        ? drawnScore()
+        : score;
+    };
     const drawnScore = (): Score => {
       if (wrapped !== null) return wrapped;
       const ret = wrapSearch();
-      wrapped = ret !== null && ret.reParse ? applyLineBreaks(score, ret.lineBreaks) : score;
+      // …over the score `deline` merges, when the voices disagree about their lines — see
+      // `compactForDeline`.
+      wrapped =
+        ret !== null && ret.reParse ? applyLineBreaks(compactForDeline(score), ret.lineBreaks) : score;
       return wrapped;
     };
     /**
@@ -1498,7 +1517,7 @@ function renderInto(
       time: number | undefined;
       beats: number | undefined;
     } = { rows: [], time: undefined, beats: undefined };
-    return {
+    const tuneObject: TuneObject = {
       svg: ((): string => {
         /**
          * **AND NOTHING IS DRAWN WHEN NOTHING ENGRAVED.** `parseOnly` never reaches a
@@ -1698,7 +1717,7 @@ function renderInto(
       getTotalBeats: () => timings.beats,
 
       setUpAudio: (options: AudioOptions = {}) => {
-        const audio = flattenAudio(score, options);
+        const audio = flattenAudio(sequencedScore(), options);
         // **THE FLATTENER WRITES BACK ONTO THE ELEMENT** — `currentTrackMilliseconds`,
         // `currentTrackWholeNotes` and `midiPitches` land on the very `tune.lines` element
         // a host then reads (`abc_midi_flattener.js:526-596`). It is a THIRD surface over
@@ -1786,6 +1805,8 @@ function renderInto(
       },
       addElementToEvents,
     };
+    SEQUENCED.set(tuneObject, sequencedScore);
+    return tuneObject;
   };
 
   return withLiveTextMetrics(() =>
@@ -2545,7 +2566,7 @@ export const synth = {
         ? (renderEngine((_el, tune) => tune, "*", source, {}) as TuneObject[])
         : one(source);
     const files = getMidiFileFor(
-      tunes.map((t) => t.score),
+      tunes.map((t) => SEQUENCED.get(t)?.() ?? t.score),
       // The MIDI track name, which is the title as a plain string — a RICH title is not one
       // and abcjs's own writer would put `[object Object]` there, so it is skipped instead.
       tunes.map((t) =>

@@ -31,8 +31,9 @@ Harvested by `/ponytail-debt`. One row per deliberate shortcut.
 > `Measure.earlierKeyChanges` (every `[K:]` in a measure, `tests/key-chain.test.ts`) and
 > `alignVoiceLines` (each voice keeps its own source lines, MIDI tracks counted per line,
 > `tests/voice-lines.test.ts`) — which is what the `parser.ts` back-fill marker and the
-> `flatten.ts` voice-major marker were both pointing at. One row left, declared:
-> `lines:wrap-mismatch`, a wrap over voices whose lines disagree.
+> `flatten.ts` voice-major marker were both pointing at. The wrap over voices whose lines
+> disagree closed the same day (`compactForDeline`: `deline` merges compacted staves by
+> index, and the synth sequences the merged tune). `zzledger`: 88 controls, 0 known.
 >
 > The rows below are the 2026-09-16 harvest and their line numbers have moved.
 **Re-harvested 2026-09-16: 53 markers**, 21 naming no trigger, 16 carrying a resolution.

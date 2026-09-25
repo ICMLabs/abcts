@@ -210,6 +210,18 @@ const CASES = [
     "X:1\nM:4/4\nL:1/4\nV:1\nV:2\nK:C\nV:1\n|:CDEF|1GABc:|2cdef|]\nV:2\n|:C,D,E,F,|\n[1G,A,B,C:|2C,D,E,F,|]\n"],
   ["lines:barnumber", "a trailing bar number carried to the voice left on the next line",
     "X:1\nM:4/4\nL:1/4\n%%barnumbers 1\nV:1\nV:2\nK:C\nV:1\nCDEF|GABc|\nV:2\nC,D,E,F,|\nG,A,B,C|\n"],
+  ["lines:wrap-shape1-wrap2", "deline over voices whose lines disagree",
+    "X:1\nM:4/4\nL:1/4\nV:1\nV:2\nK:C\nV:1\nCDEF|GABc|\nV:2\nC,D,E,F,|\nG,A,B,C|\n", { wrap: { minSpacing: 1.8, maxSpacing: 2.7, preferredMeasuresPerLine: 2 }, staffwidth: 400 }],
+  ["lines:wrap-shape2-wrap2", "deline over voices whose lines disagree",
+    "X:1\nM:4/4\nL:1/4\nV:1\nV:2\nK:C\nV:1\nCDEF|\nGABc|\nV:2\nC,D,E,F,|G,A,B,C|\n", { wrap: { minSpacing: 1.8, maxSpacing: 2.7, preferredMeasuresPerLine: 2 }, staffwidth: 400 }],
+  ["lines:wrap-shape6-wrap2", "deline over voices whose lines disagree",
+    "X:1\nM:4/4\nL:1/4\nV:1\nV:2\nK:C\nV:1\nCDEF|\nGABc|cdef|\nV:2\nC,D,E,F,|G,A,B,C|\nC,D,E,F,|\n", { wrap: { minSpacing: 1.8, maxSpacing: 2.7, preferredMeasuresPerLine: 2 }, staffwidth: 400 }],
+  ["lines:wrap-shape6-wrap3", "deline over voices whose lines disagree",
+    "X:1\nM:4/4\nL:1/4\nV:1\nV:2\nK:C\nV:1\nCDEF|\nGABc|cdef|\nV:2\nC,D,E,F,|G,A,B,C|\nC,D,E,F,|\n", { wrap: { minSpacing: 1.8, maxSpacing: 2.7, preferredMeasuresPerLine: 3 }, staffwidth: 400 }],
+  ["lines:wrap-shared-staff-wrap", "deline over voices whose lines disagree",
+    "X:1\nM:4/4\nL:1/4\n%%score (1 2)\nV:1\nV:2\nK:C\nV:1\nCDEF|GABc|cdef|gabc'|\nV:2\nC,D,E,F,|G,A,B,C|\nC,D,E,F,|G,A,B,C|\n", { wrap: { minSpacing: 1.8, maxSpacing: 2.7, preferredMeasuresPerLine: 2 }, staffwidth: 400 }],
+  ["lines:wrap-three-voices-wrap", "deline over voices whose lines disagree",
+    "X:1\nM:4/4\nL:1/4\nV:1\nV:2\nV:3\nK:C\nV:1\nCDEF|GABc|cdef|\nV:2\nC,D,E,F,|\nG,A,B,C|C,D,E,F,|\nV:3\nE,F,G,A,|B,CDE|EFGA|\n", { wrap: { minSpacing: 1.8, maxSpacing: 2.7, preferredMeasuresPerLine: 2 }, staffwidth: 400 }],
   ["model.ts:2178", "a FILE-header %%landscape over two tunes",
     "%%landscape 1\n\nX:1\nK:C\nC|\n\nX:2\nK:C\nD|\n"],
 ]
@@ -270,10 +282,6 @@ const KNOWN = new Map([
   // already is), and each voice's own source LINES rather than one line structure shared
   // by every voice. The second is also what numbers abcjs's MIDI tracks — a running count
   // over the voices present on each line — which no SVG row can see.
-  // ⏳ OPEN, 2026-09-25 — `deline` then `findLineBreaks` over voices whose SOURCE lines
-  // differ: abcjs puts V:2's next bar beside V:1's last on one system, time-shifted. A wrap
-  // over voices that disagree about their own lines; the unwrapped shape is exact.
-  ['lines:wrap-mismatch', 'OPEN: wrap over voices with different line breaks — abcjs merges them oddly'],
 ])
 
 const rows = []
