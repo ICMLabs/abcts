@@ -1204,7 +1204,20 @@ function sequenceVoice(
       clefPercussion = clef.shape === 'percussion'
       applyClefOctave(clef)
     }
-    if (measure.keyChange !== null) key = measure.keyChange
+    /**
+     * **AND THE KEY CHANGES AT THE `[K:]`, NOT AT THE MEASURE** — the clef's rule above, for
+     * the same reason: it is an element of the stream. `CD[K:D]EF|` sounds 60, 62, 64, 66 in
+     * abcjs; ours sharpened the `C` too. Measured 2026-09-24.
+     */
+    const keyChangeAt =
+      measure.keyChange === null || measure.keyChangeSourceRange == null
+        ? 0
+        : measure.events.filter(
+            (e) =>
+              (e.sourceRange?.start ?? Number.POSITIVE_INFINITY) <
+              (measure.keyChangeSourceRange?.start ?? 0),
+          ).length
+    if (measure.keyChange !== null && keyChangeAt === 0) key = measure.keyChange
     if (measure.meterChange !== null) meter = measure.meterChange
     if (measure.midiCommands !== undefined) {
       out.push({
@@ -1230,6 +1243,8 @@ function sequenceVoice(
     // `resolveRepeats`'s `truncate`. `take` is 1 wherever it is set at all.
     const events = take === undefined ? measure.events : measure.events.slice(0, take)
     for (const [eventIndex, event] of events.entries()) {
+      if (measure.keyChange !== null && keyChangeAt > 0 && eventIndex === keyChangeAt)
+        key = measure.keyChange
       // …and a change written INSIDE the measure turns the drummap on at that note.
       if (clef != null && clefChangeAt > 0 && eventIndex === clefChangeAt) {
         clefPercussion = clef.shape === 'percussion'
@@ -1375,6 +1390,9 @@ function sequenceVoice(
       time += Math.round(dur * tempoFactor * MICRO)
       first = false
     }
+    // …and one written after the measure's last note takes effect for what follows.
+    if (measure.keyChange !== null && keyChangeAt >= events.length && keyChangeAt > 0)
+      key = measure.keyChange
     // A MEASURE BOUNDARY IS NOT ALWAYS A BARLINE. Our model closes a measure at a line
     // break whether or not a `|` was written; abcjs's voice carries a `bar` element only
     // where one actually is. Emitting one either way restarted the beat-stress clock at

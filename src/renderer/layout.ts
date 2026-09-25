@@ -2107,7 +2107,10 @@ function layoutKeyChange(
    * tune modulates that far.
    */
   const kept = new Set(incoming.map((entry) => entry.letter))
-  const cancelled = outgoing.filter((entry) => !kept.has(entry.letter))
+  // …**AND `K:none` CANCELS NOTHING.** Its arm builds the key outright —
+  // `multilineVars.key = {root: "none", accidentals: [], …}` (`abc_parse_key_voice.js:261`) —
+  // and never reaches the loop that makes `impliedNaturals`.
+  const cancelled = to.none ? [] : outgoing.filter((entry) => !kept.has(entry.letter))
   if (cancelled.length === 0 && incoming.length === 0) return null
 
   const glyphs: PlacedGlyph[] = []
@@ -12609,7 +12612,18 @@ function layoutMeasure(
 
   // …AND A `[M:]` WRITTEN AFTER THE LAST EVENT IS STILL AN ELEMENT — abcjs's voice ends
   // `timeSig 60.59` on `[M:2/4]y[M:3/4]y[M:4/4]`.
+  // …and so is a `[K:]` — `CDEF[K:D]|` draws the key before the bar. The key never reached
+  // the loop's `keyAt === eventIndex`, so it was not drawn at all. Measured 2026-09-24.
+  const trailingKeyAt = meterEventIndex(measure.keyChangeSourceRange)
+  const keyTrails = trailingKeyAt > 0 && trailingKeyAt === measure.events.length
+  const keyFirst =
+    (measure.keyChangeSourceRange?.start ?? 0) <
+    (measure.meterChanges?.[measure.meterChanges.length - 1]?.range?.start ??
+      measure.meterChangeSourceRange?.start ??
+      Number.POSITIVE_INFINITY)
+  if (keyTrails && keyFirst) drawKeyChange(true)
   drawMetersBefore(measure.events.length)
+  if (keyTrails && !keyFirst) drawKeyChange(true)
 
   // Every event preceded the `P:` — the label belongs after them, before the barline.
   if (measure.partLabel !== null && partIndex === -1) {

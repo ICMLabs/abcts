@@ -575,6 +575,8 @@ export const impliedNaturals = (
   newKey: KeySignature,
   clef: Clef,
 ): { acc: string; note: string; verticalPos: number }[] => {
+  // `K:none` cancels nothing — its arm never builds `impliedNaturals` (`abc_parse_key_voice.js:261`).
+  if (newKey.none) return [];
   const mid = clefVerticalPos(clef);
   const now = new Set(
     (keyElement(newKey, clef).accidentals ?? []).map((a) => a.note.toLowerCase()),
