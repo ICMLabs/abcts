@@ -194,6 +194,16 @@ const CASES = [
     "X:1\nM:4/4\nL:1/4\nV:1\nK:C\nCDEF|\\\n[M:3/4]GAB|\n"],
   ["meter:parked-discarded", "a line-start [M:] after a V: field is taken and discarded",
     "X:1\nM:4/4\nL:1/4\nV:1\nV:2\nK:C\nV:1\nCDEF|\nV:2\nC,D,E,F,|\nV:1\n[M:3/4]GAB|\nV:2\nG,A,B,|\nV:1\nCDE|\nV:2\nC,D,E,|\n"],
+  ["key:trailing", "a [K:] after the measure's last note is drawn before the bar",
+    "X:1\nM:4/4\nL:1/4\nK:C\nCDEF[K:D]|GABc|\n"],
+  ["continueall", "%%continueall joins every music line",
+    "X:1\nM:4/4\nL:1/4\n%%continueall\nK:C\nCDEF|\nGABc|\ncdef|\n"],
+  ["key:after-switch", "an inline [K:] after an inline voice switch is the new line's key",
+    "X:1\nM:4/4\nL:1/4\n%%score 1 2\nV:1\nV:2\nK:C\n[V:1]CDEF|\n[V:2]C,D,E,F,|\n[V:1][K:D]GABc|\n[V:2]G,A,B,C|\n"],
+  ["key:two-in-a-row", "[K:D][K:Bb] — two key elements, and the second cancels the first",
+    "X:1\nM:4/4\nL:1/4\nK:C\nCDEF|G[K:D][K:Bb]ABc|\n"],
+  ["lines:per-voice", "voices breaking their lines in different places",
+    "X:1\nM:4/4\nL:1/4\nV:1\nV:2\nK:C\nV:1\nCDEF|GABc|\nV:2\nC,D,E,F,|\nG,A,B,C|\n"],
   ["model.ts:2178", "a FILE-header %%landscape over two tunes",
     "%%landscape 1\n\nX:1\nK:C\nC|\n\nX:2\nK:C\nD|\n"],
 ]
@@ -249,6 +259,13 @@ const KNOWN = new Map([
   // not its verse's.
   // ⏳ OPEN, 2026-09-24 — the third sweep's six SVG-visible divergences, each still carrying
   // its `ponytail:` with the measurement written at the marker.
+  // ⏳ OPEN, 2026-09-24 — the fourth sweep's two structural rows. Both need the MODEL to
+  // carry something it does not: a LIST of key changes at one position (as `meterChanges`
+  // already is), and each voice's own source LINES rather than one line structure shared
+  // by every voice. The second is also what numbers abcjs's MIDI tracks — a running count
+  // over the voices present on each line — which no SVG row can see.
+  ['key:two-in-a-row', 'OPEN: two [K:] at one position — abcjs keeps both elements and chains the naturals'],
+  ['lines:per-voice', 'OPEN: voices with different line breaks — abcjs keeps each voice’s own lines'],
 ])
 
 const rows = []

@@ -25,6 +25,14 @@ Harvested by `/ponytail-debt`. One row per deliberate shortcut.
 >   controls, 0 known.
 > - **Still required by design, or extended-only ceilings (14)**: unchanged.
 >
+> 🔎 **FOURTH SWEEP, 2026-09-24** — 61 controls over `[K:]`/`[L:]` in odd positions,
+> `%%continueall`, mid-tune `%%MIDI`, inline fields (`tests/sweep-2026-09-24.test.ts`). Seven
+> defects fixed. **Two left, both structural**, both declared in `zzledger`:
+> `key:two-in-a-row` (the model holds one key change per position) and `lines:per-voice`
+> (the model shares one line structure across voices; abcjs keeps each voice's own, and
+> numbers its MIDI tracks by a running count over the voices on each line — so the
+> `parser.ts` back-fill marker and the `flatten.ts` voice-major marker are both THIS).
+>
 > The rows below are the 2026-09-16 harvest and their line numbers have moved.
 **Re-harvested 2026-09-16: 53 markers**, 21 naming no trigger, 16 carrying a resolution.
 
