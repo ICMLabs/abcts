@@ -1,11 +1,12 @@
-# NEXT AGENT PROMPT — abcts, 2026-09-23
+# NEXT AGENT PROMPT — abcts, 2026-09-25
 
 Paste the block below.
 
 ---
 
 ```
-start here: **`Docs/PARITY-STATUS.md`** — it is the only file re-measured after the abcjs
+start here: **`Docs/HANDOFF-2026-09-25.md`** (newest: per-voice lines, the wrapped
+`tune.lines` gate and the `addLineBreaks` port), then **`Docs/PARITY-STATUS.md`** — the only file re-measured after the abcjs
 **6.7.1** re-harvest (2026-09-21/22) and is current; §3b is a class the older docs predate,
 the NAMED OPEN ROWS of the tune-object oracles. Then `tests/open-rows.ts`, whose header says
 what each row is. Then CHECKPOINT-2026-09-16.md §3 for the rules — two are CORRECTIONS to
@@ -27,13 +28,15 @@ persist between tool calls and the workspace ROOT collects every sibling repo's 
     cp -R ../abcMusicKit/Docs/References/abcjs/abcjs-6.7.1/src /tmp/gp/abcjs
 …then `cd` back into the repo — that `cd` resets the shell's CWD for the next call.
 
-    suite       104 files, 2,838 tests, NO expected-fails — every recorded rung landed
+    suite       128 files, 3,446 tests (re-run 2026-09-25)
+    zzwraplines 2 of 697, both DECLARED — abcts-vskip 0/2, where abcjs throws. NEW
+                2026-09-25: the wrapped `tune.lines` a host reads after `{wrap}`.
     svg-bytes   0 of 697 in-repo, 0 of 359 sibling
     mode-bytes  11 — every one DECLARED
     midi-bytes  0 of 697 — 19 ruled divergent
     zzlive      0 of 691  WebKit AND Chrome        zzselect 0 of 691  WebKit AND Chrome
                 (re-run 2026-09-23 after the parser changes; Chrome is at zero too)
-    zzclick     1 of 691 DECLARED ×3               zzledger 0 differ, 0 KNOWN, 41 agree
+    zzclick     0 on every row                     zzledger 0 differ, 0 KNOWN, 88 agree
     zzopts      26 rows, every one at its declared count. 4 differing of 17,966 —
                 `wrap+staffwidth` alone, and that is ITS floor: two debug markers the
                 owner declined and two tunes abcjs CRASHES on. Every other row is 0.
@@ -49,7 +52,7 @@ persist between tool calls and the workspace ROOT collects every sibling repo's 
                 rule it turns off. ⚠️ THE FORMATTER IS OFF ON PURPOSE — 127 files disagree
                 with it and adopting a format is its own commit, never a side effect.
     package     2.0 MB packed / 6.9 MB unpacked, 25 files, version 6.7.1 — NOT PUBLISHED
-    debt        84 `ponytail:` / 19 `abcjs-debt:` markers (re-counted 2026-09-23; the
+    debt        79 `ponytail:` / 19 `abcjs-debt:` markers (re-counted 2026-09-25; the
                 instrument has moved three times, the code less). §A restated as
                 decisions, §B swept, and its `millisecondsPerMeasure` row is CLOSED.
 
