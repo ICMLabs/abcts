@@ -364,6 +364,28 @@ user-supplied input is a denial of service, not a rendering difference.
 
 ---
 
+## 3b-wrap. The WRAPPED `tune.lines` — a surface no gate read, measured 2026-09-25
+
+`zzopts` compares the SVG under `wrap`; every `tune.lines` gate compares the UNWRAPPED
+parse. A host reading `tune.lines` after `renderAbc(…, {wrap})` read a structure nothing
+checked. `scripts/zzwraplines.mjs` compares it live, both engines, over all 697 tunes, and
+is a named ratchet (`scripts/zzwraplines-known.json`).
+
+**529 of 697 differed when it was written; 26 do now.** What closed them:
+- abcjs **re-parses the tune's own text** (`book.tunes[i].abc`, header `%%` lines + tune)
+  from offset 0 when the wrap moves a break, so every span is tune-relative — ours kept
+  book offsets (457 tunes);
+- spans **carry in source order** across a wrap line that opens mid-source-line;
+- a closing bar takes the **next line's volta** (`:|3` at a break);
+- **stems**: the previous slice's last stem is carried, and a source line opening inside a
+  wrapped line brings its `createVoice` stems at the join;
+- a voice ending **exactly on a break** gets the final empty slice (drawn as a bare staff).
+
+**Open, named**: `deline`'s injections at a dissolved join — a `font` element and a
+mid-measure clef not injected, one key injected that abcjs does not (it may compare key
+objects by reference; instrument before porting), overlay stems at joins, a `%%staffnonote`
+line abcjs removes, and `abcts-vskip` where abcjs itself throws.
+
 ## 3c. WebAudio — the surface that had no gate at all, and was BROKEN
 
 ⚠️ **FOUND 2026-09-23, and it is the sharpest example in this file of a green board over a
