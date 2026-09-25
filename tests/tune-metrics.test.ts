@@ -63,6 +63,8 @@ const table = (): Row[] =>
 
 /** Tunes whose every section agrees. Grows, never shrinks. */
 const PASSING: readonly string[] = [
+  /** A line `%%staffnonote` emptied still opens a section (`engraver-controller.js:147-157`). */
+  "repo/abcts-staffnonote-empty-staves-tune0",
   /** `abcts-voice-scale` — abcjs's `voiceScale`, exact on arrival. */
   /** `abcts-pitch-style` — a per-PITCH `!style=…!`. Eight tunes, exact on arrival. */
   "repo/abcts-pitch-style-tune0",
@@ -395,6 +397,6 @@ describe("tuneMetrics — each measure's minimum width", () => {
     const arrived = rows
       .filter((r) => !PASSING.includes(r.slug) && r.agree === r.total)
       .map((r) => r.slug);
-    expect(arrived.length, `${arrived.length} tunes agree — re-ratchet`).toBe(0);
+    expect(arrived, `${arrived.length} tunes agree — re-ratchet`).toEqual([]);
   });
 });

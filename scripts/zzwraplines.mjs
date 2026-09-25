@@ -32,9 +32,8 @@ for (const f of readdirSync(fixtures).filter((x) => x.endsWith('.abc')).sort()) 
 /**
  * The rows that differ TODAY, by slug, in `zzwraplines-known.json` — a RATCHET that names
  * them: a new difference fails as undeclared, a row that starts agreeing fails as STALE so
- * the file shrinks. 529 of 697 when the gate was written, 2026-09-25: element SPANS on
- * wrapped lines (the tile), each dissolved source line's own `createVoice` stems at its
- * join inside the merged voice, and a handful of keys and meters.
+ * the file shrinks. 529 of 697 when the gate was written, 2026-09-25; 2 the same day, once
+ * `addLineBreaks` was ported. The two left are `abcts-vskip`, where abcjs THROWS — declared.
  */
 const KNOWN = new Map(
   JSON.parse(readFileSync(join(import.meta.dirname, 'zzwraplines-known.json'), 'utf-8')).map((s) => [s, 'open']),

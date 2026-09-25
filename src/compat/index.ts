@@ -59,6 +59,7 @@ import {
   compactForDeline,
   calcLineWraps,
   findLineBreaks,
+  addLineBreaks,
   type WrapExplanation,
   type WrapLineBreak,
   type WrapParams,
@@ -1310,6 +1311,29 @@ function renderInto(
       });
       return laidOutCache;
     };
+    /**
+     * **UNDER A WRAP, `tune.lines` IS `wrapLines`'s, BUILT THE WAY abcjs BUILDS IT** —
+     * `addLineBreaks(deline(lines), findLineBreaks(…))` over the tune AS PARSED
+     * (`wrap_lines.js:3-15`), which this projection already reproduces exactly. The
+     * elements are the parsed projection's own, so `byEvent` still reaches them; a
+     * non-music line is `deline`'s CLONE, so it is swapped back for the original that
+     * `blockOf` knows.
+     */
+    const wrappedLines = (parsed: AbcLine[], breaks: readonly (readonly number[])[]): AbcLine[] => {
+      const delined = delineOf(parsed, { lineBreaks: false });
+      const originals = parsed.filter((l) => l.staff === undefined);
+      const clones = delined.filter((l) => l.staff === undefined);
+      const back = new Map(clones.map((c, i) => [c, originals[i] ?? c]));
+      const out = addLineBreaks(delined, findLineBreaks(delined, breaks), score.barNumbersDirective === true);
+      // …and the engraver names what it draws: `deline`'s `key` and `meter` become the
+      // stream's own `keySignature` and `timeSignature` once engraved.
+      if (engraved)
+        for (const l of out)
+          for (const e of (l.staff ?? []).flatMap((st) => st.voices.flat()))
+            if (e.el_type === "key") e.el_type = "keySignature";
+            else if (e.el_type === "meter") e.el_type = "timeSignature";
+      return out.map((l) => back.get(l) ?? l);
+    };
     const projection = (): {
       byEvent: ReadonlyMap<MusicEvent, AbcElement>;
       byRange: ReadonlyMap<number, AbcElement>;
@@ -1329,8 +1353,9 @@ function renderInto(
          * `drawnScore()` IS `score` whenever no wrap applies, so every other render is
          * untouched by this.
          */
-        const p = projectionOf(drawnScore(), abc, engraved);
-        lineCache = p.lines;
+        const p = projectionOf(score, abc, engraved);
+        const wrap = wrapSearch();
+        lineCache = wrap?.reParse === true ? wrappedLines(p.lines, wrap.lineBreaks) : p.lines;
         blockOf = p.blockOf;
         eventIndex = { byEvent: p.byEvent, byRange: p.byRange };
       }

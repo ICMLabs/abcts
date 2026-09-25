@@ -439,6 +439,71 @@ export function findLineBreaks(
 }
 
 /**
+ * **`addLineBreaks` — THE WRAPPED `tune.lines`, CUT OUT OF THE DELINED ONE.** A line-by-line
+ * port of `wrap_lines.js:17-104`: each `findLineBreaks` row slices one voice of one original
+ * line into its target line, the staff's fields are copied from the first row to reach it
+ * (the meter on line 0 only), a changed key carries forward without its naturals, the last
+ * stem carries onto the next slice, and `%%barnumbers` renumbers every bar from 1.
+ *
+ * ⚠️ **IT MUTATES THE BARS IT SLICES** (`barNumber`), as abcjs does — pass it a fresh
+ * projection.
+ */
+export function addLineBreaks(
+  lines: readonly AbcLine[],
+  linesBreakElements: readonly WrapLineBreak[],
+  barNumbers: boolean,
+): AbcLine[] {
+  type Staff = Record<string, unknown> & { voices: Record<string, unknown>[][] };
+  const outputLines: ({ staff: (Staff | undefined)[] } | AbcLine)[] = [];
+  const lastKeySig: Record<string, unknown>[] = [];
+  const lastStem: string[] = [];
+  let currentBarNumber = 1;
+  for (const action of linesBreakElements) {
+    const og = lines[action.ogLine] as unknown as { staff?: Staff[] };
+    if (og.staff === undefined || action.staff === undefined || action.voice === undefined) {
+      outputLines[action.line] = lines[action.ogLine] as AbcLine;
+      continue;
+    }
+    const inputStaff = og.staff[action.staff] as Staff;
+    const line = (outputLines[action.line] ??= { staff: [] }) as { staff: (Staff | undefined)[] };
+    let staff = line.staff[action.staff];
+    if (staff === undefined) {
+      staff = { voices: [] };
+      if (barNumbers && action.staff === 0 && action.line > 0) staff["barNumber"] = currentBarNumber;
+      for (const key of Object.keys(inputStaff))
+        if (key !== "voices" && !(key === "meter" && action.line !== 0)) staff[key] = inputStaff[key];
+      if (lastKeySig[action.staff]) staff["key"] = lastKeySig[action.staff];
+      line.staff[action.staff] = staff;
+    }
+    const voice = (inputStaff.voices[action.voice] ?? []).slice(action.start, (action.end ?? 0) + 1);
+    const stem = lastStem[action.staff * 10 + action.voice];
+    if (stem !== undefined) voice.unshift({ el_type: "stem", direction: stem });
+    staff.voices[action.voice] = voice;
+    // The parse names it `key`; our projection may already carry the engraver's name.
+    const key = [...voice].reverse().find((e) => e["el_type"] === "key" || e["el_type"] === "keySignature");
+    if (key !== undefined)
+      lastKeySig[action.staff] = {
+        root: key["root"],
+        acc: key["acc"],
+        mode: key["mode"],
+        accidentals: ((key["accidentals"] ?? []) as { acc: string }[]).filter((a) => a.acc !== "natural"),
+      };
+    const lastStemEl = [...voice].reverse().find((e) => e["el_type"] === "stem");
+    if (lastStemEl !== undefined) lastStem[action.staff * 10 + action.voice] = lastStemEl["direction"] as string;
+    if (barNumbers && action.staff === 0 && action.voice === 0)
+      voice.forEach((e, kk) => {
+        if (e["el_type"] !== "bar") return;
+        currentBarNumber += 1;
+        if (kk === voice.length - 1) delete e["barNumber"];
+        else e["barNumber"] = currentBarNumber;
+      });
+  }
+  return outputLines.map((line) =>
+    line.staff === undefined ? line : { ...line, staff: line.staff.filter((s) => s != null) },
+  ) as AbcLine[];
+}
+
+/**
  * **APPLY THE BREAKS TO THE SCORE** — the third stage, and where this engine and abcjs part
  * company on MECHANISM while agreeing on answer.
  *

@@ -89,15 +89,6 @@ export interface AbcPitch {
  */
 const STREAM_COLORS = new WeakSet<AbcElement>();
 
-/**
- * The clef, key and meter `deline` injected at a dissolved join — unshifted onto the joined
- * line's voice AFTER the parse, so never read onto the line above: the hoist leaves them.
- */
-const INJECTED = new WeakSet<AbcElement>();
-
-/** A wrap's break-bar moved to the end of the line above — what is hoisted goes BEFORE it. */
-const TRAILING_BARS = new WeakSet<AbcElement>();
-
 export interface AbcElement {
   el_type: string;
   /**
@@ -1608,41 +1599,6 @@ function voiceElements(
           return e;
         })(),
       );
-    /**
-     * **AND A WRAP THAT DISSOLVED THIS LINE'S BREAK RE-EMITS ITS STAFF PROPERTY**, with
-     * `startChar`/`endChar` of **-1** — see `Measure.wrapInjectedKey`. `deline` unshifts the
-     * merged line's staff clef/key/meter onto the voice (`data/deline-tune.js:126-151`), so
-     * it lands after the warning that carries the source range and before the voice's own
-     * elements: abcjs's shape is `keySignature@26 keySignature@-1`.
-     *
-     * ⚠️ **THIS IS THE SECOND SURFACE, AND IT IS NOT THE ONE THE GATE MEASURES.** The
-     * drawn ink comes from `layout.ts`; this is `tune.lines`, which a HOST reads and no
-     * byte gate renders. The meter rule three commits ago needed both sites too, and
-     * fixing only the ink left the model wrong and silent.
-     */
-    /**
-     * ⚠️ **AND IT NEEDS A `sortAt` ENTRY, BECAUSE `startChar: -1` SORTS TO THE FRONT OF THE
-     * LINE AND IS THEN DROPPED.** `stream` orders `out` by `keyOf`, which falls back to
-     * `startChar`, so a -1 lands ahead of every note; `hoistLeadingStaffFields` then finds
-     * a STAFF_FIELD before the first note or bar, tries to move it to the line above, and
-     * — with nothing above holding music — **drops it**, which that function says in so
-     * many words. The element was in `out` and absent from `tune.lines`, silently.
-     *
-     * So it is pinned just before this measure's first event, in the same
-     * fractional-offset way a `%%MIDI` marker is (`sortAt.set(marker, first - 0.25)`), and
-     * the three fractions keep abcjs's clef-then-key-then-meter order among themselves.
-     */
-    const injectedAt =
-      measure.events[0]?.sourceRange?.start ??
-      measure.closingBarlineSourceRange?.start ??
-      0;
-    const pushInjected = (type: string, fill: object | null, nth: number): void => {
-      const e: AbcElement = { el_type: type, startChar: -1, endChar: -1 };
-      if (fill !== null) Object.assign(e, fill, { el_type: type, startChar: -1, endChar: -1 });
-      sortAt.set(e, injectedAt - 0.3 + nth * 0.05);
-      INJECTED.add(e);
-      out.push(e);
-    };
     // **THE EARLIER `[K:]`s OF THE MEASURE FIRST, each its own element cancelling the one
     // before it** — see `Measure.earlierKeyChanges`. Built the way the main one is below.
     // …and inside a chain the CLEF IN FORCE moves with it: `[K:D clef=bass][K:Bb]` pitches
@@ -1808,15 +1764,6 @@ function voiceElements(
         for (const m of all)
           out.push(withMeter(el(drawnName("timeSignature"), m.range ?? null), m.meter));
     }
-    // …**AND THE WRAP'S INJECTED STAFF PROPERTIES COME AFTER ALL THREE WARNINGS**, in the
-    // order clef, key, meter — `deline` unshifts them meter-first onto the FRONT of the
-    // voice, which reverses to that (`data/deline-tune.js:126-151`). See `pushInjected`.
-    if (measure.wrapInjectedClef === true && clefNow != null)
-      pushInjected("clef", clefElement(clefNow), 0);
-    if (measure.wrapInjectedKey === true && keyNow !== undefined)
-      pushInjected(drawnName("keySignature"), keyElement(keyNow, clefNow ?? defaultClef), 1);
-    if (measure.wrapInjectedMeter === true && measure.meterChange != null)
-      pushInjected(drawnName("timeSignature"), meterElement(measure.meterChange), 2);
     out.push(
       tempoElement(measure.tempoChange, measure.tempoChangeSourceRange, byRange, engraved),
     );
@@ -2801,10 +2748,6 @@ export function projectionOf(
   let carriedTileEnd: number | undefined
   /** Every tiled element's end so far — the carry is the last of them BEFORE this line's. */
   const tiledEnds: number[] = []
-  /** Indices into `lines` of the wrap's mid-source-line slices — see the hoist. */
-  const wrapSlices = new Set<number>()
-  /** The previous line's voice arrays — a trailing opening bar is moved onto them. */
-  let previousLineVoices: AbcElement[][] | null = null
   const lengths = score.voices.map((v) => v.measures.length);
   const totalMeasures = Math.max(...lengths, 0);
   const breaks = [
@@ -2868,8 +2811,6 @@ const VOICE_FURNITURE = new Set(["style", "stem", "color", "scale"]);
 
   const hoistLeadingStaffFields = (
     voiceLines: AbcElement[][],
-    /** Per line: a wrap slice, whose head stays where it is. */
-    slice: readonly boolean[] = [],
   ): void => {
     const STAFF_FIELD = new Set([
       "clef",
@@ -2886,7 +2827,7 @@ const VOICE_FURNITURE = new Set(["style", "stem", "color", "scale"]);
     ]);
     for (let i = 0; i < voiceLines.length; i += 1) {
       const line = voiceLines[i];
-      if (line === undefined || slice[i] === true) continue;
+      if (line === undefined) continue;
       /**
        * **THE TEST IS "BEFORE ANY NOTE OR BAR", NOT "AT THE HEAD".** `appendStartingElement`
        * scans the voice for a `note` or a `bar` and stops at the first one (`:273-292`);
@@ -2908,7 +2849,6 @@ const VOICE_FURNITURE = new Set(["style", "stem", "color", "scale"]);
         const e = line[j];
         if (
           e !== undefined &&
-          !INJECTED.has(e) &&
           (STAFF_FIELD.has(e.el_type ?? "") || STREAM_COLORS.has(e))
         )
           moved.unshift(...line.splice(j, 1));
@@ -2919,12 +2859,8 @@ const VOICE_FURNITURE = new Set(["style", "stem", "color", "scale"]);
       if (
         above !== undefined &&
         above.some((e) => e.el_type === "note" || e.el_type === "bar")
-      ) {
-        // …before a break-bar a wrap moved there, which in the merged voice comes after.
-        const last = above[above.length - 1];
-        if (last !== undefined && TRAILING_BARS.has(last)) above.splice(above.length - 1, 0, ...moved);
-        else above.push(...moved);
-      }
+      )
+        above.push(...moved);
       /**
        * **AND A `%%MIDI` IS NEVER DROPPED, WHERE A STAFF FIELD IS.** `appendElement`
        * pushes it onto the current voice unconditionally (`tune-builder.js:174-179`)
@@ -3050,27 +2986,6 @@ const VOICE_FURNITURE = new Set(["style", "stem", "color", "scale"]);
           .map((om) => musicStartsAt(om)),
       );
     let previousLineOpenedAt = -1;
-    /**
-     * **AND A WRAPPED SYSTEM'S STAFF CLEF IS THE DELINED LINE'S, NOT THE ONE IN FORCE.**
-     *
-     * `addLineBreaks` copies the INPUT staff's clef onto every output line and has no
-     * `lastClef` to match `lastKeySig` (`wrap_lines.js:41-50`), so every system cut out of
-     * a merged run carries that run's OPENING clef. `synth-flattener-20` is one source line
-     * whose second system abcjs opens **treble+8**, the line's own clef, where the clef in
-     * force is treble-8.
-     *
-     * ⚠️ **THE RENDERER HAS THE SAME RULE UNDER THE SAME NAME AND THEY ARE TWO SURFACES.**
-     * The ink was corrected first and `tune.lines` still said treble-8 — which no gate
-     * asked, because the goldens are unwrapped and `wrapSourceLine` is stamped only under
-     * `{wrap}`.
-     */
-    const clefAtSection = new Map<number, Clef>();
-    const wrapHeadClef = (m: Measure, now: Clef): Clef => {
-      const section = m.wrapSourceLine;
-      if (section === undefined) return now;
-      if (!clefAtSection.has(section)) clefAtSection.set(section, now);
-      return clefAtSection.get(section) ?? now;
-    };
     (voice?.measures ?? []).forEach((m, i) => {
       /**
        * A mid-tune clef governs from the START of its measure — the renderer reads it the
@@ -3089,15 +3004,10 @@ const VOICE_FURNITURE = new Set(["style", "stem", "color", "scale"]);
       if (m.clefChange != null && !clefDeferred) clefInForce = m.clefChange;
       let consumedHere = false;
       if (i === 0 || m.startsSystem) {
-        // …and NONE leads a line the WRAP opened: `addLineBreaks` stamps the carried
-        // `lastKeySig` on it and the change stays in the stream — `keyChangeLeadsLine`'s
-        // rule, and `Measure.wrapLineHeadKey` is the carried key.
-        const wrapHead = staffVoices.some((o) => o.measures[i]?.wrapLineHeadKey !== undefined);
         const restamp = staffVoices
           .map((other) => other.measures[i])
           .filter(
             (om): om is Measure =>
-              !wrapHead &&
               om !== undefined &&
               om.keyChange != null &&
               leadsLine(om, om.keyChangeSourceRange?.start),
@@ -3106,10 +3016,8 @@ const VOICE_FURNITURE = new Set(["style", "stem", "color", "scale"]);
         // …**AND AN EARLIER `[K:]` OF THE MEASURE CAN LEAD WHEN THE MAIN ONE DOES NOT** —
         // `[K:D]GA[K:Bb]Bc` opens the line in D. The last leading one is the line's key, and
         // it cancels the one before it. See `Measure.earlierKeyChanges`.
-        const earlierLead = wrapHead
-          ? []
-          : (m.earlierKeyChanges ?? []).filter((k) => leadsLine(m, k.range?.start));
-        const mainLeads = !wrapHead && leadsLine(m, m.keyChangeSourceRange?.start);
+        const earlierLead = (m.earlierKeyChanges ?? []).filter((k) => leadsLine(m, k.range?.start));
+        const mainLeads = leadsLine(m, m.keyChangeSourceRange?.start);
         const leadCancels = mainLeads
           ? ((m.earlierKeyChanges ?? [])[(m.earlierKeyChanges ?? []).length - 1]?.key ??
             keyInForce)
@@ -3168,16 +3076,8 @@ const VOICE_FURNITURE = new Set(["style", "stem", "color", "scale"]);
             : undefined);
         const meter =
           // …**AND A LINE `%%barsperstaff` CUT OUT KEEPS THE METER IT WAS COPIED WITH** —
-          // see `Measure.wrappedLine`.
-          // …**AND A WRAP THAT PUSHED THE MUSIC OFF OUTPUT LINE 0 TAKES IT FROM THE FIRST
-          // LINE TOO** — see `Score.wrapDroppedMeter`.
-          // …**AND A HOST WRAP DROPS IT ON EVERY OUTPUT LINE PAST 0, `%%barsperstaff` LINES
-          // INCLUDED.** `addLineBreaks` skips `meter` for `action.line !== 0` whatever made
-          // the line, and when both features run the host wrap is applied LAST. The
-          // renderer carries the same rule at `prefixMeter` — two surfaces, and the model
-          // still said 4/4 on line 1 after the ink was corrected.
-          (i === 0 && score.wrapDroppedMeter !== true) ||
-          (m.wrappedLine === true && (i === 0 || m.wrapSourceLine === undefined))
+          // see `Measure.wrappedLine`. (A HOST wrap's meter rule is `addLineBreaks`'s own.)
+          i === 0 || m.wrappedLine === true
             ? /**
                * ⚠️ **AND A PENDING HEADER `M:` OVERWRITES WHAT A LEADING `[M:]` SET.**
                * abcjs 6.7.0's inline branch writes
@@ -3284,9 +3184,8 @@ const VOICE_FURNITURE = new Set(["style", "stem", "color", "scale"]);
             ? []
             : leadingKey != null
               ? impliedNaturals(leadCancels, key, keyClef)
-              : switched || pendingChange === null || wrapHead
-                ? // …and a WRAP's carried `lastKeySig` carries no cancellations.
-                  []
+              : switched || pendingChange === null
+                ? []
                 : impliedNaturals(pendingChange.from, pendingChange.to, keyClef);
         // …and a change consumed by THIS push must not also be left pending below.
         consumedHere = leadingKey != null;
@@ -3298,7 +3197,7 @@ const VOICE_FURNITURE = new Set(["style", "stem", "color", "scale"]);
               ? built
               : { ...built, accidentals: [...(built.accidentals ?? []), ...naturals] },
           clef: clefElement(
-            wrapHeadClef(m, clefInForce),
+            clefInForce,
             voice?.transpose,
             voice?.staffLineOverride,
           ),
@@ -3384,21 +3283,6 @@ const VOICE_FURNITURE = new Set(["style", "stem", "color", "scale"]);
   const stampedFonts = (names: readonly string[]): Record<string, unknown> | undefined =>
     stampedFrom((name) => inForceFont.get(name), names);
 
-  /**
-   * **A WRAPPED LINE IS A SLICE OF A MERGED VOICE, NOT A LINE `createVoice` OPENED.** So its
-   * stems are `addLineBreaks`'s: the last stem direction the voice's previous slice held is
-   * `unshift`ed onto it (`wrap_lines.js` `lastStem`), and the source line's own `createVoice`
-   * stems are there only where a SOURCE line begins inside it — which is how `[[up], [down]]`
-   * becomes `down, down` on a slice opening at a merged join. And a voice whose music ends
-   * exactly at a break gets the final, EMPTY slice. Measured 2026-09-25.
-   */
-  const wrapRan = score.voices.some((v) => v.measures.some((m) => m.wrapSourceLine !== undefined));
-  const lastStem = new Map<number, string>();
-  const lastReal = score.voices.map((v) => {
-    let l = v.measures.length - 1;
-    while (l >= 0 && v.measures[l]?.lineAbsent === true) l -= 1;
-    return l;
-  });
   breaks.forEach((from, i) => {
     const to = breaks[i + 1] ?? totalMeasures;
     // The line's own `%%…font` changes, from whichever voice recorded them — abcjs's
@@ -3444,8 +3328,6 @@ const VOICE_FURNITURE = new Set(["style", "stem", "color", "scale"]);
      * `tile` mutates in place, so the per-voice arrays below still hold the same objects —
      * which is the identity `getElementFromChar` and the selectable array both rest on.
      */
-    /** The voices on their final, EMPTY wrap slice here — see `wrapRan`. */
-    const graceHere = new Set<number>();
     const lineVoices = score.voices.map((v, k) => {
       const slurs = openSlurs[k] ?? {};
       openSlurs[k] = slurs;
@@ -3487,15 +3369,7 @@ const VOICE_FURNITURE = new Set(["style", "stem", "color", "scale"]);
      * there took 30 notes of `parse-tie-slur-01-staffwidth-200` back a character, because a
      * NOTE closes over its trailing newline and the guard could not tell the two apart.
      */
-    // …**AND SO DOES A WRAP'S LINE THAT OPENS MID-SOURCE-LINE** — abcjs re-parses with the
-    // breaks, and a span is where its tokenizer began, which is the previous element's end
-    // whatever line that is on. One opening a source line tiles from that line as usual.
-    const wrapped = score.voices.some(
-      (v) =>
-        v.measures[from]?.wrappedLine === true ||
-        (v.measures[from]?.wrapSourceLine !== undefined &&
-          v.measures[from]?.wrapSourceLineStart !== true),
-    );
+    const wrapped = score.voices.some((v) => v.measures[from]?.wrappedLine === true);
     // The carry is the previous element in SOURCE order — the latest end at or before this
     // line's first element — not the previous line's last, which is another voice's when the
     // voices are written a line at a time.
@@ -3512,30 +3386,6 @@ const VOICE_FURNITURE = new Set(["style", "stem", "color", "scale"]);
       wrapped ? tiledEnds : undefined,
     );
     for (const e of tiled) if (e.endChar !== undefined) tiledEnds.push(e.endChar);
-    /**
-     * **A WRAP'S BREAK-BAR IS THE LAST ELEMENT OF THE LINE IT CLOSES** — the opening `|:`
-     * or `[1` of this line's first measure, when the wrap broke ON it (see
-     * `Measure.openingBarlineTrails`). The drawing already put it there; the projection
-     * published it at this line's head. Measured 2026-09-25.
-     */
-    const previousLineBefore = previousLineVoices;
-    if (previousLineVoices !== null)
-      score.voices.forEach((v, k) => {
-        if (v.measures[from]?.openingBarlineTrails !== true) return;
-        const voice = lineVoices[k];
-        const at = voice?.findIndex((e) => e.el_type === "bar") ?? -1;
-        if (voice === undefined || at < 0) return;
-        if (voice.slice(0, at).some((e) => e.el_type === "note")) return;
-        // …with whatever precedes it in the merged voice — a `%%MIDI` read between the
-        // two source lines was appended ahead of the next line's `|`.
-        const moved = voice.splice(0, at + 1);
-        const bar = moved[moved.length - 1];
-        if (bar !== undefined) {
-          TRAILING_BARS.add(bar);
-          previousLineVoices?.[k]?.push(...moved);
-        }
-      });
-    previousLineVoices = lineVoices;
     // …and what THIS line closed at, for a line the source did not break — see `tile`.
     carriedTileEnd = tiled[tiled.length - 1]?.endChar;
     /**
@@ -3580,16 +3430,12 @@ const VOICE_FURNITURE = new Set(["style", "stem", "color", "scale"]);
           Number.POSITIVE_INFINITY,
         );
       const created = new Set<number>();
-      /** Where a voice's moved furniture begins on the line above — the splice's index 0. */
-      const movedAt = new Map<number, number>();
       [...members.keys()]
         .sort((a, b) => opened(members[a] ?? 0) - opened(members[b] ?? 0))
         .forEach((j) => {
           const k = members[j] ?? 0;
           const voice = lineVoices[k];
-          const grace = wrapRan && i > 0 && (lastReal[k] ?? -1) + 1 === from;
-          if (voice === undefined || (voice.length === 0 && !grace)) return;
-          if (grace) graceHere.add(k);
+          if (voice === undefined || voice.length === 0) return;
           created.add(j);
           const head: AbcElement[] = [];
           /**
@@ -3601,43 +3447,10 @@ const VOICE_FURNITURE = new Set(["style", "stem", "color", "scale"]);
           const lineStyle = score.voices[k]?.measures[from]?.lineStyle;
           if (lineStyle !== undefined)
             head.push({ el_type: "style", head: lineStyle });
-          const carried = wrapRan && i > 0 ? lastStem.get(k) : undefined;
-          const carriedStem: AbcElement | undefined =
-            carried === undefined ? undefined : { el_type: "stem", direction: carried };
-          if (carriedStem !== undefined) head.push(carriedStem);
-          const opensSource =
-            !wrapRan || i === 0 || score.voices[k]?.measures[from]?.wrapSourceLineStart === true;
           const stem = score.voices[k]?.stemDirection;
-          if (!opensSource) {
-            // A slice with no source line opening in it has no `createVoice` furniture.
-          } else if (stem != null) head.push({ el_type: "stem", direction: stem });
+          if (stem != null) head.push({ el_type: "stem", direction: stem });
           else if (j > 0) {
-            // …onto a first voice `createVoice` made on THIS source line — under a wrap, one
-            // with no source line opening here was never there to splice into.
-            if (
-              created.has(0) &&
-              (!wrapRan ||
-                i === 0 ||
-                score.voices[members[0] ?? 0]?.measures[from]?.wrapSourceLineStart === true)
-            ) {
-              // …onto the LINE ABOVE, before its break-bar, when this line's opening bar
-              // trails there — see the furniture note below.
-              const first = members[0] ?? 0;
-              const previous = previousLineBefore?.[first];
-              if (
-                wrapRan &&
-                i > 0 &&
-                previous !== undefined &&
-                score.voices[first]?.measures[from]?.openingBarlineTrails === true &&
-                previous[previous.length - 1]?.el_type === "bar"
-              ) {
-                previous.splice(movedAt.get(first) ?? previous.length - 1, 0, {
-                  el_type: "stem",
-                  direction: "up",
-                });
-                lastStem.set(first, "up");
-              } else firstOfStaff?.splice(0, 0, { el_type: "stem", direction: "up" });
-            }
+            if (created.has(0)) firstOfStaff?.splice(0, 0, { el_type: "stem", direction: "up" });
             head.push({ el_type: "stem", direction: "down" });
           }
           /**
@@ -3662,77 +3475,8 @@ const VOICE_FURNITURE = new Set(["style", "stem", "color", "scale"]);
             if (m.colorChange !== undefined && m.colorChange.at < opensAt)
               color = m.colorChange.color;
           if (color != null) head.push({ el_type: "color", color });
-          /**
-           * …**AND WHEN THE WRAP BROKE ON THIS LINE'S OPENING BAR, THE SOURCE LINE'S
-           * FURNITURE WENT WITH THE BAR** — it precedes the `|:` in the merged voice, so it
-           * ends the line above, before the bar, and this line opens on the carried stem
-           * alone. Measured on `visual-layout-09-endings`.
-           */
-          const previous = previousLineBefore?.[k];
-          if (
-            wrapRan &&
-            i > 0 &&
-            previous !== undefined &&
-            score.voices[k]?.measures[from]?.openingBarlineTrails === true &&
-            previous[previous.length - 1]?.el_type === "bar"
-          ) {
-            const moved = head.filter((e) => e !== carriedStem);
-            movedAt.set(k, previous.length - 1);
-            previous.splice(previous.length - 1, 0, ...moved);
-            const lastMoved = moved.filter((e) => e.el_type === "stem").pop()?.direction;
-            if (lastMoved !== undefined && carriedStem === undefined)
-              head.splice(0, head.length, { el_type: "stem", direction: lastMoved });
-            else head.splice(0, head.length, ...(carriedStem === undefined ? [] : [carriedStem]));
-          }
           voice.splice(0, 0, ...head);
         });
-      /**
-       * …**AND A SOURCE LINE THAT OPENS INSIDE A WRAPPED LINE BRINGS ITS OWN `createVoice`
-       * STEMS, AT THE JOIN** — the merged voice still holds them: a second voice's `down`
-       * before its source line's music, and the `up` it splices onto the first voice.
-       * Measured on `parse-tie-slur-03`, two voices interleaved line by line.
-       */
-      if (wrapRan)
-        for (let m = from + 1; m < to; m += 1) {
-          const opening = members.filter(
-            (k) => score.voices[k]?.measures[m]?.wrapSourceLineStart === true,
-          );
-          if (opening.length === 0) continue;
-          const atOf = (k: number): number => {
-            const measure = score.voices[k]?.measures[m];
-            return Math.min(
-              measure?.openingBarlineSourceRange?.start ?? Number.POSITIVE_INFINITY,
-              ...(measure?.events ?? []).map((e) => e.sourceRange?.start ?? Number.POSITIVE_INFINITY),
-            );
-          };
-          const insert = (k: number, direction: string): void => {
-            const voice = lineVoices[k];
-            if (voice === undefined) return;
-            const at = atOf(k);
-            // By END, not start: the spans are already tiled, so the first element of the
-            // source line starts back at the previous one's end.
-            let i = voice.findIndex((e) => (e.endChar ?? -1) > at);
-            if (i < 0) i = voice.length;
-            voice.splice(i, 0, { el_type: "stem", direction });
-          };
-          for (const k of opening) {
-            const j = members.indexOf(k);
-            const declared = score.voices[k]?.stemDirection;
-            if (declared != null) insert(k, declared);
-            else if (j > 0) {
-              const first = members[0];
-              if (first !== undefined && opening.includes(first)) insert(first, "up");
-              insert(k, "down");
-            }
-          }
-        }
-      // The stem each voice's slice ENDS on is what the next slice is handed.
-      if (wrapRan)
-        for (const k of members) {
-          const stems = (lineVoices[k] ?? []).filter((e) => e.el_type === "stem");
-          const last = stems[stems.length - 1]?.direction;
-          if (last !== undefined) lastStem.set(k, last);
-        }
     });
     // **FREE TEXT AND MID-TUNE SUBTITLES BETWEEN TWO SYSTEMS ARE LINES OF THEIR OWN**,
     // read off the same first measure the renderer's own block does (`Measure.textBefore`).
@@ -3762,19 +3506,12 @@ const VOICE_FURNITURE = new Set(["style", "stem", "color", "scale"]);
       .map((v) => v.measures[from]?.vskip ?? 0)
       .find((n) => n > 0);
     const firstMusicLine = !lines.some((l) => l.staff !== undefined);
-    // UNDER A WRAP EVERY LINE IS A SLICE of `deline`'s merged voice, cut after a bar — so
-    // what the parse hoisted to the end of a source line sits after that bar, and the cut
-    // puts it at the head of the NEXT slice. Nothing is hoisted across a wrapped break.
-    // …but only inside a run of MUSIC lines: `deline` does not merge across a subtitle or
-    // a text row, so the first line after one keeps the parse's own rules.
-    if (wrapRan && i > 0 && lines[lines.length - 1]?.staff !== undefined)
-      wrapSlices.add(lines.length);
     lines.push({
       ...(vskip === undefined ? {} : { vskip }),
       staff: voicesOfStaff
         .map((members, s) => ({ members, s }))
         .filter(({ members }) =>
-          members.some((k) => (lineVoices[k] ?? []).length > 0 || graceHere.has(k)),
+          members.some((k) => (lineVoices[k] ?? []).length > 0),
         )
         /**
          * **`%%staffnonote 0` DROPS EVERY STAFF THAT HOLDS NOTHING BUT RESTS**, and it is
@@ -3813,8 +3550,7 @@ const VOICE_FURNITURE = new Set(["style", "stem", "color", "scale"]);
           const voices = members.map((k) => lineVoices[k] ?? []);
           while (
             voices.length > 1 &&
-            voices[voices.length - 1]?.length === 0 &&
-            !graceHere.has(members[voices.length - 1] ?? -1)
+            voices[voices.length - 1]?.length === 0
           )
             voices.pop();
           const staff: AbcStaff = { voices };
@@ -4051,7 +3787,6 @@ const VOICE_FURNITURE = new Set(["style", "stem", "color", "scale"]);
           const v = l.staff?.[j]?.voices[k];
           return v === undefined ? [] : [v as AbcElement[]];
         }),
-        lines.flatMap((l, n) => (l.staff?.[j]?.voices[k] === undefined ? [] : [wrapSlices.has(n)])),
       );
   }
 

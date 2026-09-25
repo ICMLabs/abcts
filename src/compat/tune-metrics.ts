@@ -87,13 +87,14 @@ export function measureWidthsOf(
       section = null
       continue
     }
-    const system = doc.systems[systemIndex]
-    systemIndex += 1
-    if (system === undefined) continue
+    // The section opens on any music line, even one `%%staffnonote` emptied (`:147-157`).
     if (section === null) {
       section = { left: 0, measureWidths: [], total: 0 }
       out.push(section)
     }
+    const system = doc.systems[systemIndex]
+    systemIndex += 1
+    if (system === undefined) continue
     // "At this point, the voices are laid out so that the bar lines are even with each
     // other. So we just need to get the placement of the first voice." (`:167`)
     // **PROSE IS NOT A VOICE CHILD** — the same filter `makeVoicesArray` needs, and for the

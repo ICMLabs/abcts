@@ -371,20 +371,26 @@ parse. A host reading `tune.lines` after `renderAbc(…, {wrap})` read a structu
 checked. `scripts/zzwraplines.mjs` compares it live, both engines, over all 697 tunes, and
 is a named ratchet (`scripts/zzwraplines-known.json`).
 
-**529 of 697 differed when it was written; 26 do now.** What closed them:
-- abcjs **re-parses the tune's own text** (`book.tunes[i].abc`, header `%%` lines + tune)
-  from offset 0 when the wrap moves a break, so every span is tune-relative — ours kept
-  book offsets (457 tunes);
-- spans **carry in source order** across a wrap line that opens mid-source-line;
-- a closing bar takes the **next line's volta** (`:|3` at a break);
-- **stems**: the previous slice's last stem is carried, and a source line opening inside a
-  wrapped line brings its `createVoice` stems at the join;
-- a voice ending **exactly on a break** gets the final empty slice (drawn as a bare staff).
+**529 of 697 differed when it was written; 0 do now, bar the two declared rows** —
+`abcts-vskip` tunes 0 and 2, where **abcjs itself throws** under a wrap (also declared in
+`zzopts`).
 
-**Open, named**: `deline`'s injections at a dissolved join — a `font` element and a
-mid-measure clef not injected, one key injected that abcjs does not (it may compare key
-objects by reference; instrument before porting), overlay stems at joins, a `%%staffnonote`
-line abcjs removes, and `abcts-vskip` where abcjs itself throws.
+⭐ **WHAT CLOSED THE LAST 26 WAS A PORT, NOT MORE RULES.** abcjs builds the wrapped lines as
+`addLineBreaks(deline(lines), findLineBreaks(…))` over the tune AS PARSED
+(`wrap_lines.js:3-15`), and our UNWRAPPED `tune.lines` was already exact. Porting
+`addLineBreaks` (`compat/wrap.ts`) and running the two ported stages over that projection
+(`compat/index.ts` `wrappedLines`) closed every row at once — overlay stems at joins,
+`deline`'s `font` elements, injected clefs, meter positions — and **deleted ~290 lines** of
+`lines.ts` that had been reconstructing the same answer from the wrapped score one measured
+case at a time (stem carries, trailing break-bars, hoist exemptions, head keys and clefs).
+The drawing is unchanged: the renderer still lays out the wrapped score, and still declines
+to DRAW the `font` element (`Docs/ABCJS-DIFFERENCES.md`); only the host's object carries it.
+
+Two findings on the way:
+- a line `%%staffnonote` emptied still opens a width SECTION (`engraver-controller.js:147-157`);
+  without it the wrap punted as "narrower than the margin" and never re-parsed;
+- `cleanUp` runs before `wrapLines`, so that emptied line offers `findLineBreaks` nothing
+  and vanishes from the wrapped `tune.lines` — which the port gets for free.
 
 ## 3c. WebAudio — the surface that had no gate at all, and was BROKEN
 
