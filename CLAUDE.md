@@ -28,7 +28,7 @@ this file keeps only what is true of every session.
 ## First Step — Always
 **THE STANDING ORDER IS 100% PARITY WITH ABCJS ON EVERY TUNE** — the 47-fixture sibling
 corpus, the 237-fixture in-repo corpus (180 harvested from abcjs 6.7.1's own tests + 57
-hand-written controls, 697 tunes), Gonzato, and the audio feature set. Work until it is reached;
+hand-written controls, 697 tunes) and the audio feature set. Work until it is reached;
 checkpoint and hand off as you go so no context is lost.
 
 > ⚖️ **THE RULING THAT GOVERNS THE GLYPH/METRIC SPLIT** (Lance, 2026-08-05): the Bravura
@@ -159,10 +159,12 @@ checkpoint and hand off as you go so no context is lost.
 > names a rule; a FIXTURE NAME IS NOT EVIDENCE, and `stretchlast-1`'s defect had nothing to
 > do with `%%stretchlast`.
 
-> ⚖️ **THE ARC DECISION** (Lance, 2026-08-08): *"Defer Gonzato and focus on the remaining
-> geometric tail and audio."* **GONZATO IS DEFERRED** — it has no fixture, no gate and no
-> owner, it is a COVERAGE question rather than a geometry one, and it is the only part of
-> the standing order whose INPUTS are not already in this repo.
+> ⚖️ **GONZATO IS NOT AN abcjs-PARITY TARGET** (Lance, 2026-09-25, superseding the
+> 2026-08-08 deferral): *"abcjs was never able to render all of Gonzato's examples as they
+> are based on abcm2ps and abc2svg."* The book documents abcm2ps/abc2svg behaviour, so
+> abcjs is not an oracle for it and strict cannot be held to it. It was REMOVED from the
+> standing order above. If it returns, it returns as an `abcjs-extended` coverage question
+> measured against abcm2ps/abc2svg OUTPUT (clean-room), never as a strict gate.
 
 > ⚖️ **AND v1 HAS ALREADY ANSWERED THE ARCHITECTURAL QUESTION** (Lance, 2026-08-10b: *"v1
 > port from js encountered similar rounding issue — so v1 may have the solution used to get
