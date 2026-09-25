@@ -1219,7 +1219,17 @@ function sequenceVoice(
           ).length
     if (measure.keyChange !== null && keyChangeAt === 0) key = measure.keyChange
     if (measure.meterChange !== null) meter = measure.meterChange
-    if (measure.midiCommands !== undefined) {
+    /**
+     * **A `%%MIDI` IS AN ELEMENT WHERE IT IS WRITTEN**, which can be inside the measure —
+     * `CD[I:MIDI program 40]EF` changes the program after the `D`, and whether the flattener
+     * then rewrites the track's last event or pushes a new one depends on that. Those
+     * written after an event are emitted before the first event written after them.
+     */
+    let pendingMidi = [...(measure.midiCommands ?? [])]
+    const emitMidi = (before: number): void => {
+      const due = pendingMidi.filter((c) => (c.at ?? -1) < before)
+      if (due.length === 0) return
+      pendingMidi = pendingMidi.filter((c) => !due.includes(c))
       out.push({
         kind: 'midi',
         line,
@@ -1234,15 +1244,17 @@ function sequenceVoice(
         clefTranspose,
       percussion: clefPercussion,
         tiedOver: false,
-        midi: measure.midiCommands,
+        midi: due,
       })
       durations.push(0)
     }
+    emitMidi(measure.events[0]?.sourceRange?.start ?? Number.POSITIVE_INFINITY)
     let first = true
     // …and a TRUNCATED copy takes only its first event and writes no barline — see
     // `resolveRepeats`'s `truncate`. `take` is 1 wherever it is set at all.
     const events = take === undefined ? measure.events : measure.events.slice(0, take)
     for (const [eventIndex, event] of events.entries()) {
+      if (eventIndex > 0) emitMidi(event.sourceRange?.start ?? Number.POSITIVE_INFINITY)
       if (measure.keyChange !== null && keyChangeAt > 0 && eventIndex === keyChangeAt)
         key = measure.keyChange
       // …and a change written INSIDE the measure turns the drummap on at that note.
@@ -1390,6 +1402,7 @@ function sequenceVoice(
       time += Math.round(dur * tempoFactor * MICRO)
       first = false
     }
+    if (take === undefined) emitMidi(Number.POSITIVE_INFINITY)
     // …and one written after the measure's last note takes effect for what follows.
     if (measure.keyChange !== null && keyChangeAt >= events.length && keyChangeAt > 0)
       key = measure.keyChange
@@ -2133,6 +2146,8 @@ export function flattenAudio(
       },
     ]
     if (instrument === undefined) instrument = voiceProgram
+    /** The voice's last `instrument` element — `addIfDifferent`'s comparison. */
+    let lastInstrument = voiceProgram
 
     let accidentals = percussion ? [0, 0, 0, 0, 0, 0, 0] : keyAccidentals(score.key)
     let barAccidentals = new Map<string, number>()
@@ -2337,6 +2352,30 @@ export function flattenAudio(
             case 'beataccents':
               doBeatAccents = true
               continue
+            /**
+             * **A MID-TUNE `%%MIDI program` CHANGES THE TRACK'S PROGRAM.** The sequencer adds an
+             * `instrument` element only if it differs from the voice's last
+             * (`addIfDifferent`, `abc_midi_sequencer.js:354-356, 676-685`), reading `params[0]`
+             * alone; the flattener rewrites the track's last event if it is a `program`, and
+             * otherwise pushes one unless the last `program` already says the same
+             * (`abc_midi_flattener.js:170-182`). The file writer then puts every program ahead
+             * of the notes. Ours ignored the command. Measured 2026-09-24.
+             */
+            case 'program': {
+              const to = params[0]
+              if (typeof to !== 'number' || to === lastInstrument) continue
+              lastInstrument = to
+              const last = track[track.length - 1]
+              if (last?.cmd === 'program') track[track.length - 1] = { ...last, instrument: to }
+              else {
+                let found: MidiEvent | undefined
+                for (let k = track.length - 1; k >= 0 && found === undefined; k--)
+                  if (track[k]?.cmd === 'program') found = track[k]
+                if (found === undefined || (found.cmd === 'program' && found.instrument !== to))
+                  track.push({ cmd: 'program', channel: 0, instrument: to })
+              }
+              continue
+            }
             case 'nobeataccents':
               doBeatAccents = false
               continue

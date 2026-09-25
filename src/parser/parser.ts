@@ -4793,7 +4793,7 @@ class Parser {
         voice.color = voiceColor[1]
         // Before the music it is the head's colour; after, an element of the stream, which
         // `appendElement` puts on the voice music is LANDING in.
-        if (builder.beganMusic) builder.voice.addColorChange(voiceColor[1], start)
+        if (this.musicHasBegun(builder)) builder.voice.addColorChange(voiceColor[1], start)
         else voice.headColor = voiceColor[1]
       }
       return
@@ -5440,7 +5440,7 @@ class Parser {
       // `if (hasBeginMusic()) appendElement('midi', …) else formatting['midi'][cmd] = params`
       // (`abc_parse_directive.js:718-724`) — the two are exclusive, which is the same split
       // `addMidiCommand` already makes here.
-      if (builder.beganMusic) builder.voice.addMidiCommand(cmd, params, start)
+      if (this.musicHasBegun(builder)) builder.voice.addMidiCommand(cmd, params, start)
       else {
         builder.midi[cmd] = params
         builder.noteFormatting('midi')
@@ -6312,6 +6312,16 @@ class Parser {
    * `CDEF|\` / `[Q:1/4=90]GABc|` / `cdef|`'s tempo on `cdef`. Replayed when that line opens.
    */
   private heldForNextLine: (() => void)[] = []
+  /** The line being scanned is the tune's FIRST music line — see `musicHasBegun`. */
+  private scanningFirstMusicLine = false
+  /**
+   * abcjs's `hasBeginMusic()` for a directive read NOW. Ours opens the first music line when
+   * the scan starts; abcjs opens it at the first music token, so an inline `[I:…]` before
+   * that token still finds no music — `[I:MIDI program 40]CDEF|` is a TUNE setting.
+   */
+  private musicHasBegun(builder: ScoreBuilder): boolean {
+    return builder.beganMusic && !(this.inlineFieldAtLineStart && this.scanningFirstMusicLine)
+  }
 
   private scanMusic(start: number, end: number, continued = false): void {
     // ⚠️ **AN INLINE `[V:` OPENS A LINE ON A NON-CONTINUED LINE, WHATEVER THE VOICE.** See
@@ -6333,6 +6343,7 @@ class Parser {
     // and before the first note is a TUNE setting to abcjs and a mid-tune element to
     // anything that reads `bodyStarted` — `flatten-decorations` is exactly that shape.
     builder.musicStarted = true
+    this.scanningFirstMusicLine = !builder.beganMusic
     builder.beganMusic = true
     // THE VOCALFONT A LYRIC DRAWS IN IS THE ONE IN FORCE WHEN ITS MUSIC LINE BEGAN, not
     // when its `w:` line was read. `%%vocalfont` is a CHANGING font
