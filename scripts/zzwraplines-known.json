@@ -1,6 +1,4 @@
 [
-"abcjs-parse-tie-slur-03-onestaff",
-"abcjs-parse-tie-slur-03-staffwidth-200",
 "abcjs-synth-flattener-07-metronome",
 "abcjs-synth-flattener-17-midi-grace-notes",
 "abcjs-synth-flattener-21-c4-d4",
@@ -8,8 +6,6 @@
 "abcjs-synth-flattener-38-c-zz-d-z-e-z",
 "abcjs-synth-flattener-46-c8-1-d8-2-e8-3-f8",
 "abcjs-visual-layout-09-endings",
-"abcjs-visual-multi-voice-01-score-top-bottom",
-"abcjs-visual-parsing-08-score-t-b",
 "abcjs-visual-parsing-10-main",
 "abcjs-visual-parsing-11-c2-d2-e2-f2-k-f-g2-a2-b2-c2",
 "abcjs-visual-parsing-x10",
@@ -20,7 +16,6 @@
 "abcjs-visual-tablature-20-score-1-2",
 "abcjs-visual-tablature-24-stretchlast",
 "abcjs-visual-transpose-01-f2-f-f-f-f-f2-e2-e-e-e-e-e2-k-ab-f2-f-f-",
-"abcjs-visual-wrap-04-wrap-quartet",
 "abcts-clef-midmeasure-tune20",
 "abcts-clef-midmeasure-tune7",
 "abcts-endings-tune2",

@@ -3587,6 +3587,46 @@ const VOICE_FURNITURE = new Set(["style", "stem", "color", "scale"]);
           if (color != null) head.push({ el_type: "color", color });
           voice.splice(0, 0, ...head);
         });
+      /**
+       * …**AND A SOURCE LINE THAT OPENS INSIDE A WRAPPED LINE BRINGS ITS OWN `createVoice`
+       * STEMS, AT THE JOIN** — the merged voice still holds them: a second voice's `down`
+       * before its source line's music, and the `up` it splices onto the first voice.
+       * Measured on `parse-tie-slur-03`, two voices interleaved line by line.
+       */
+      if (wrapRan)
+        for (let m = from + 1; m < to; m += 1) {
+          const opening = members.filter(
+            (k) => score.voices[k]?.measures[m]?.wrapSourceLineStart === true,
+          );
+          if (opening.length === 0) continue;
+          const atOf = (k: number): number => {
+            const measure = score.voices[k]?.measures[m];
+            return Math.min(
+              measure?.openingBarlineSourceRange?.start ?? Number.POSITIVE_INFINITY,
+              ...(measure?.events ?? []).map((e) => e.sourceRange?.start ?? Number.POSITIVE_INFINITY),
+            );
+          };
+          const insert = (k: number, direction: string): void => {
+            const voice = lineVoices[k];
+            if (voice === undefined) return;
+            const at = atOf(k);
+            // By END, not start: the spans are already tiled, so the first element of the
+            // source line starts back at the previous one's end.
+            let i = voice.findIndex((e) => (e.endChar ?? -1) > at);
+            if (i < 0) i = voice.length;
+            voice.splice(i, 0, { el_type: "stem", direction });
+          };
+          for (const k of opening) {
+            const j = members.indexOf(k);
+            const declared = score.voices[k]?.stemDirection;
+            if (declared != null) insert(k, declared);
+            else if (j > 0) {
+              const first = members[0];
+              if (first !== undefined && opening.includes(first)) insert(first, "up");
+              insert(k, "down");
+            }
+          }
+        }
       // The stem each voice's slice ENDS on is what the next slice is handed.
       if (wrapRan)
         for (const k of members) {
