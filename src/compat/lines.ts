@@ -89,6 +89,12 @@ export interface AbcPitch {
  */
 const STREAM_COLORS = new WeakSet<AbcElement>();
 
+/**
+ * The clef, key and meter `deline` injected at a dissolved join — unshifted onto the joined
+ * line's voice AFTER the parse, so never read onto the line above: the hoist leaves them.
+ */
+const INJECTED = new WeakSet<AbcElement>();
+
 export interface AbcElement {
   el_type: string;
   /**
@@ -1631,6 +1637,7 @@ function voiceElements(
       const e: AbcElement = { el_type: type, startChar: -1, endChar: -1 };
       if (fill !== null) Object.assign(e, fill, { el_type: type, startChar: -1, endChar: -1 });
       sortAt.set(e, injectedAt - 0.3 + nth * 0.05);
+      INJECTED.add(e);
       out.push(e);
     };
     // **THE EARLIER `[K:]`s OF THE MEASURE FIRST, each its own element cancelling the one
@@ -2791,6 +2798,8 @@ export function projectionOf(
   let carriedTileEnd: number | undefined
   /** Every tiled element's end so far — the carry is the last of them BEFORE this line's. */
   const tiledEnds: number[] = []
+  /** Indices into `lines` of the wrap's mid-source-line slices — see the hoist. */
+  const wrapSlices = new Set<number>()
   /** The previous line's voice arrays — a trailing opening bar is moved onto them. */
   let previousLineVoices: AbcElement[][] | null = null
   const lengths = score.voices.map((v) => v.measures.length);
@@ -2854,7 +2863,11 @@ export function projectionOf(
 /** What `createVoice` puts at the head of a voice, in its own order (`:971-998`). */
 const VOICE_FURNITURE = new Set(["style", "stem", "color", "scale"]);
 
-  const hoistLeadingStaffFields = (voiceLines: AbcElement[][]): void => {
+  const hoistLeadingStaffFields = (
+    voiceLines: AbcElement[][],
+    /** Per line: a wrap slice, whose head stays where it is. */
+    slice: readonly boolean[] = [],
+  ): void => {
     const STAFF_FIELD = new Set([
       "clef",
       "keySignature",
@@ -2870,7 +2883,7 @@ const VOICE_FURNITURE = new Set(["style", "stem", "color", "scale"]);
     ]);
     for (let i = 0; i < voiceLines.length; i += 1) {
       const line = voiceLines[i];
-      if (line === undefined) continue;
+      if (line === undefined || slice[i] === true) continue;
       /**
        * **THE TEST IS "BEFORE ANY NOTE OR BAR", NOT "AT THE HEAD".** `appendStartingElement`
        * scans the voice for a `note` or a `bar` and stops at the first one (`:273-292`);
@@ -2890,7 +2903,11 @@ const VOICE_FURNITURE = new Set(["style", "stem", "color", "scale"]);
       const moved: AbcElement[] = [];
       for (let j = upto - 1; j >= 0; j -= 1) {
         const e = line[j];
-        if (e !== undefined && (STAFF_FIELD.has(e.el_type ?? "") || STREAM_COLORS.has(e)))
+        if (
+          e !== undefined &&
+          !INJECTED.has(e) &&
+          (STAFF_FIELD.has(e.el_type ?? "") || STREAM_COLORS.has(e))
+        )
           moved.unshift(...line.splice(j, 1));
       }
       if (moved.length === 0) continue;
@@ -3065,10 +3082,15 @@ const VOICE_FURNITURE = new Set(["style", "stem", "color", "scale"]);
       if (m.clefChange != null && !clefDeferred) clefInForce = m.clefChange;
       let consumedHere = false;
       if (i === 0 || m.startsSystem) {
+        // …and NONE leads a line the WRAP opened: `addLineBreaks` stamps the carried
+        // `lastKeySig` on it and the change stays in the stream — `keyChangeLeadsLine`'s
+        // rule, and `Measure.wrapLineHeadKey` is the carried key.
+        const wrapHead = staffVoices.some((o) => o.measures[i]?.wrapLineHeadKey !== undefined);
         const restamp = staffVoices
           .map((other) => other.measures[i])
           .filter(
             (om): om is Measure =>
+              !wrapHead &&
               om !== undefined &&
               om.keyChange != null &&
               leadsLine(om, om.keyChangeSourceRange?.start),
@@ -3077,10 +3099,10 @@ const VOICE_FURNITURE = new Set(["style", "stem", "color", "scale"]);
         // …**AND AN EARLIER `[K:]` OF THE MEASURE CAN LEAD WHEN THE MAIN ONE DOES NOT** —
         // `[K:D]GA[K:Bb]Bc` opens the line in D. The last leading one is the line's key, and
         // it cancels the one before it. See `Measure.earlierKeyChanges`.
-        const earlierLead = (m.earlierKeyChanges ?? []).filter((k) =>
-          leadsLine(m, k.range?.start),
-        );
-        const mainLeads = leadsLine(m, m.keyChangeSourceRange?.start);
+        const earlierLead = wrapHead
+          ? []
+          : (m.earlierKeyChanges ?? []).filter((k) => leadsLine(m, k.range?.start));
+        const mainLeads = !wrapHead && leadsLine(m, m.keyChangeSourceRange?.start);
         const leadCancels = mainLeads
           ? ((m.earlierKeyChanges ?? [])[(m.earlierKeyChanges ?? []).length - 1]?.key ??
             keyInForce)
@@ -3255,8 +3277,9 @@ const VOICE_FURNITURE = new Set(["style", "stem", "color", "scale"]);
             ? []
             : leadingKey != null
               ? impliedNaturals(leadCancels, key, keyClef)
-              : switched || pendingChange === null
-                ? []
+              : switched || pendingChange === null || wrapHead
+                ? // …and a WRAP's carried `lastKeySig` carries no cancellations.
+                  []
                 : impliedNaturals(pendingChange.from, pendingChange.to, keyClef);
         // …and a change consumed by THIS push must not also be left pending below.
         consumedHere = leadingKey != null;
@@ -3726,6 +3749,18 @@ const VOICE_FURNITURE = new Set(["style", "stem", "color", "scale"]);
       .map((v) => v.measures[from]?.vskip ?? 0)
       .find((n) => n > 0);
     const firstMusicLine = !lines.some((l) => l.staff !== undefined);
+    // A line the WRAP opened mid-source-line is a slice of `addLineBreaks`, not a line
+    // `startNewLine` opened lazily — nothing at its head was read onto the line above.
+    if (
+      wrapRan &&
+      i > 0 &&
+      score.voices.some(
+        (v) =>
+          v.measures[from]?.wrapSourceLine !== undefined &&
+          v.measures[from]?.wrapSourceLineStart !== true,
+      )
+    )
+      wrapSlices.add(lines.length);
     lines.push({
       ...(vskip === undefined ? {} : { vskip }),
       staff: voicesOfStaff
@@ -4008,6 +4043,7 @@ const VOICE_FURNITURE = new Set(["style", "stem", "color", "scale"]);
           const v = l.staff?.[j]?.voices[k];
           return v === undefined ? [] : [v as AbcElement[]];
         }),
+        lines.flatMap((l, n) => (l.staff?.[j]?.voices[k] === undefined ? [] : [wrapSlices.has(n)])),
       );
   }
 
