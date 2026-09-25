@@ -20,8 +20,9 @@ Harvested by `/ponytail-debt`. One row per deliberate shortcut.
 > - **Measured failing (8 sites, 7 defects) — ALL FIXED THE SAME DAY**, with two more the
 >   controls found (`%%gchordfont box`'s face, a two-row annotation) and four siblings the
 >   ladders found (a clef after a line's first bar, a zero-length hairpin on a last bar,
->   overlay MIDI track order, annotation group order). Each has a test beside it; the one
->   row left open is `meter:after-continuation` in `zzledger`'s KNOWN.
+>   overlay MIDI track order, annotation group order). Each has a test beside it; and the last
+>   open row, fields at a `\`-continued line's start, closed with them. `zzledger`: 74
+>   controls, 0 known.
 > - **Still required by design, or extended-only ceilings (14)**: unchanged.
 >
 > The rows below are the 2026-09-16 harvest and their line numbers have moved.

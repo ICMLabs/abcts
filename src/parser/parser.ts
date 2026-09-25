@@ -5813,7 +5813,9 @@ class Parser {
         // a different feature — it closes the top-text block in `partsfont` — and it is
         // the LAST row abcjs writes there (`top-text.js:73-77`), for 24px.
         if (builder.bodyStarted && value.trim() !== '') {
-          builder.voice.setPartLabel(value.trim(), range)
+          if (inline && this.inlineFieldAtLineStart && this.inlineFieldOnContinuedLine)
+            this.heldForNextLine.push(() => builder.voice.setPartLabel(value.trim(), range))
+          else builder.voice.setPartLabel(value.trim(), range)
         } else if (!builder.bodyStarted) {
           builder.partOrder = parseFontChangeLine(decodeTextString(value), builder.setfont)
           builder.recordField('partOrder', range)
@@ -5846,14 +5848,19 @@ class Parser {
         // reaches it, so the mark is drawn from the element and the clock never hears it.
         // It still changes the tempo where it stands, so it is recorded as a change too —
         // `tempoInline` is what lets audio take the one and not the other.
+        const setTempo = (): void => {
+          const change = (): void =>
+            builder.voice.setTempoChange(parseTempo(value, builder.printTempo === false), range)
+          if (inline && this.inlineFieldAtLineStart && this.inlineFieldOnContinuedLine)
+            this.heldForNextLine.push(change)
+          else change()
+        }
         if (builder.tempo === null) {
           builder.tempo = parseTempo(value, builder.printTempo === false)
           builder.tempoSourceRange = range
           builder.tempoInline = inline
-          if (inline && builder.bodyStarted)
-            builder.voice.setTempoChange(parseTempo(value, builder.printTempo === false), range)
-        } else if (builder.bodyStarted)
-          builder.voice.setTempoChange(parseTempo(value, builder.printTempo === false), range)
+          if (inline && builder.bodyStarted) setTempo()
+        } else if (builder.bodyStarted) setTempo()
         return
       }
       case 'w': {
@@ -6276,6 +6283,15 @@ class Parser {
    * (`abc_parse_music.js:119-159`). See `setStaffMeterForNextLine`.
    */
   private inlineFieldAtLineStart = false
+  /** …and whether that line CONTINUES the one above, so no `startNewLine` will run for it. */
+  private inlineFieldOnContinuedLine = false
+  /**
+   * **`partForNextLine` AND `tempoForNextLine`** — an inline `[P:]` or `[Q:]` at a line's start
+   * is held for the next `startNewLine` (`abc_parse_header.js:373-376, 390-395`). On a line
+   * that continues the one above there is none, so it waits for the line after — abcjs puts
+   * `CDEF|\` / `[Q:1/4=90]GABc|` / `cdef|`'s tempo on `cdef`. Replayed when that line opens.
+   */
+  private heldForNextLine: (() => void)[] = []
 
   private scanMusic(start: number, end: number, continued = false): void {
     // ⚠️ **AN INLINE `[V:` OPENS A LINE ON A NON-CONTINUED LINE, WHATEVER THE VOICE.** See
@@ -6330,7 +6346,12 @@ class Parser {
      * fires here after the loop instead, because `beginMusicLine` is our own bookkeeping
      * and a line that opens none is not a shape abcjs has to model.
      */
-    if (!continued) builder.voice.beginMusicLine()
+    if (!continued) {
+      builder.voice.beginMusicLine()
+      const held = this.heldForNextLine
+      this.heldForNextLine = []
+      for (const apply of held) apply()
+    }
     /**
      * ⚠️ **BOTH FONT SNAPSHOTS ARE DEFERRED, AND `beginMusicLine` IS NOT.** Deferring the
      * WHOLE block — the shape abcjs has — costs `flatten-treble-8` an octave on its first
@@ -7492,10 +7513,12 @@ class Parser {
            */
           if (colon === 1 && 'VKMQP'.includes(text[0] as string)) closeBeamRun()
           if (colon === 1) {
+            // `startLine` is the line's own `start_new_line`, true on a continued line too;
+            // only the `startNewLine` it gates also asks `!this.lineContinuation`.
             this.inlineFieldAtLineStart =
-              !continued &&
               !this.continueAll &&
               tokens.slice(0, i).every((t) => t.kind === 'inlineField' || t.kind === 'whitespace')
+            this.inlineFieldOnContinuedLine = continued
             this.applyField(
               text[0] as string,
               text.slice(2),
@@ -7504,6 +7527,7 @@ class Parser {
               true,
             )
             this.inlineFieldAtLineStart = false
+            this.inlineFieldOnContinuedLine = false
           }
           i++
           break
