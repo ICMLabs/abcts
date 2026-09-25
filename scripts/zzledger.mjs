@@ -264,7 +264,6 @@ const KNOWN = new Map([
   // already is), and each voice's own source LINES rather than one line structure shared
   // by every voice. The second is also what numbers abcjs's MIDI tracks — a running count
   // over the voices present on each line — which no SVG row can see.
-  ['lines:per-voice', 'OPEN: voices with different line breaks — abcjs keeps each voice’s own lines'],
 ])
 
 const rows = []

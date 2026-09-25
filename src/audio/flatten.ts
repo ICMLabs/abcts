@@ -1667,15 +1667,119 @@ function trackOrder(score: Score): Voice[] {
   const staves = score.staves.map((g) => g.voiceIds)
   const placed = new Set(staves.flat())
   for (const v of score.voices) if (!placed.has(v.id)) staves.push([v.id])
-  const out: Voice[] = []
+  const groups: Voice[][] = []
   for (const ids of staves) {
+    const group: Voice[] = []
     for (const id of ids) {
       const v = byId.get(id)
-      if (v !== undefined) out.push(v)
+      if (v !== undefined) group.push(v)
     }
-    for (const id of ids) out.push(...overlays.filter((o) => o.id.startsWith(`${id}&`)))
+    for (const id of ids) group.push(...overlays.filter((o) => o.id.startsWith(`${id}&`)))
+    groups.push(group)
   }
-  return out
+  return tracksByLine(groups)
+}
+
+/**
+ * **A TRACK IS A POSITION ON THE LINE, NOT A VOICE.** The sequencer resets `voiceNumber` on
+ * every line and counts the voices that line actually holds, staff by staff, overlays after
+ * their staff (`abc_midi_sequencer.js:148-170`); each voice's slice of the line is appended
+ * to `voices[voiceNumber]`. So a voice missing from a line shifts every voice after it down
+ * one track for that line — `%%score (1 2) 3` with V:2 on the first line only puts V:3's
+ * second line on V:2's track. The track keeps the setup of the first voice that opened it.
+ *
+ * The IDENTITY whenever every line holds the same voices, which is every tune whose voices
+ * agree. Measured 2026-09-25.
+ */
+function tracksByLine(groups: readonly (readonly Voice[])[]): Voice[] {
+  const ordered = groups.flat()
+  const starts = new Set<number>([0])
+  for (const v of ordered) v.measures.forEach((m, i) => m.startsSystem && starts.add(i))
+  const columns = Math.max(0, ...ordered.map((v) => v.measures.length))
+  const bounds = [...starts].filter((i) => i < columns).sort((a, b) => a - b)
+  const lines = bounds.map((from, k) => ({ from, to: bounds[k + 1] ?? columns }))
+  const overlay = (v: Voice): boolean => v.id.includes('&')
+  // An overlay voice is on a line only where the line writes an `&` — its padding rests
+  // (`overlayPad`) fill the rest of the voice and are not music.
+  const sounds = (v: Voice, from: number, to: number): boolean =>
+    v.measures
+      .slice(from, to)
+      .some(
+        (m) =>
+          m.lineAbsent !== true &&
+          (!overlay(v) || m.events.some((e) => !(e.type === 'rest' && e.overlayPad === true))),
+      )
+  // …and on a SHARED staff a voice above one that is present keeps its slot, empty — the
+  // staff's `voices` array has an entry for it (`[[], V:2]`).
+  const onLine = lines.map(({ from, to }) =>
+    groups.flatMap((group) => {
+      const mains = group.filter((v) => !overlay(v))
+      const last = mains.reduce((k, v, i) => (sounds(v, from, to) ? i : k), -1)
+      return [
+        ...mains.filter((_, i) => i <= last),
+        ...group.filter((v) => overlay(v) && sounds(v, from, to)),
+      ]
+    }),
+  )
+  const same = onLine.every(
+    (vs) => vs.length === ordered.length && vs.every((v, k) => v === ordered[k]),
+  )
+  if (same) return [...ordered]
+  /**
+   * …**BUT EACH SLICE KEEPS ITS OWN TIME.** abcjs's note times are the tune's, not the
+   * track's running sum — a track that opens on the second line starts on the second line —
+   * so a line a track skips is filled with SILENCE of that line's length, taken off the
+   * line's first voice with every sounding and every setting part stripped.
+   */
+  const silence = (m: Voice['measures'][number]): Voice['measures'][number] => {
+    const length = m.events.reduce(
+      (sum, e) => (e.type === 'rest' && e.kind === 'spacer' ? sum : sum + ratToNumber(e.duration)),
+      0,
+    )
+    const duration = { numerator: Math.round(length * 1_000_000), denominator: 1_000_000 }
+    const rest = {
+      type: 'rest',
+      kind: 'invisible',
+      overlayPad: true,
+      duration,
+      notatedDuration: duration,
+      decorations: [],
+      decorationSourceRanges: [],
+      chordSymbol: null,
+      chordSymbolSourceRange: null,
+      chordFont: null,
+      annotations: [],
+      annotationSourceRanges: [],
+      graceNotes: [],
+      tuplet: null,
+      measureCount: 0,
+      sourceRange: null,
+    } as unknown as MusicEvent
+    const { midiCommands: _midi, colorChange: _color, ...rest_ } = m
+    return {
+      ...rest_,
+      events: length > 0 ? [rest] : [],
+      overlays: [],
+      keyChange: null,
+      tempoChange: null,
+    } as Voice['measures'][number]
+  }
+  const count = Math.max(0, ...onLine.map((vs) => vs.length))
+  return Array.from({ length: count }, (_, k) => {
+    const lastLine = onLine.reduce((last, vs, l) => (vs[k] !== undefined ? l : last), -1)
+    const head = onLine.find((vs) => vs[k] !== undefined)?.[k]
+    const measures = onLine.slice(0, lastLine + 1).flatMap((vs, l) => {
+      const line = lines[l]
+      if (line === undefined) return []
+      const v = vs[k]
+      const source = v ?? vs[0]
+      if (source === undefined) return []
+      const slice = source.measures.slice(line.from, line.to).filter((m) => m.lineAbsent !== true)
+      return v === undefined ? slice.map(silence) : slice
+    })
+    return { ...(head as Voice), measures }
+  })
+
 }
 
 /** abcjs's `interpretTempo`: `Q:` is stated at some beat, the sequencer wants another. */

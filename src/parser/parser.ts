@@ -26,6 +26,7 @@ import {
 } from '../core/overlays.js'
 import {
   abcjsKeepsKey,
+  alignVoiceLines,
   ABC_FONT_DEFAULT_PT,
   type AbcFontType,
   Accidental,
@@ -4055,7 +4056,12 @@ class ScoreBuilder {
     return [...kept, ...extra]
   }
 
+  /** The score, each voice keeping its own source lines — see `alignVoiceLines`. */
   finish(): Score {
+    return alignVoiceLines(this.finishVoices())
+  }
+
+  private finishVoices(): Score {
     const metadata: ScoreMetadata = {
       tuneNumber: this.tuneNumber,
       titles: this.titles,

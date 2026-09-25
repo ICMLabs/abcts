@@ -13980,12 +13980,13 @@ function layoutScoped(input: Score, options: LayoutOptions = {}): Layout {
     )
   /** `thisStaff.voices[n] = []` — does this voice open at all on that line? */
   const opensOnLine = (v: number, line: number): boolean =>
-    (voices[v]?.measures ?? []).some((_, i) => lineOfMeasure[i] === line)
+    (voices[v]?.measures ?? []).some((m, i) => lineOfMeasure[i] === line && m.lineAbsent !== true)
   /** Where on that line it opens, which is the order `createVoice` sees them in. */
   const opensAtOn = (v: number, line: number): number => {
     const measures = voices[v]?.measures ?? []
     for (const [i, m] of measures.entries()) {
-      if (lineOfMeasure[i] === line) return m.sourceRange?.start ?? Number.POSITIVE_INFINITY
+      if (lineOfMeasure[i] === line && m.lineAbsent !== true)
+        return m.sourceRange?.start ?? Number.POSITIVE_INFINITY
     }
     return Number.POSITIVE_INFINITY
   }
@@ -14157,7 +14158,11 @@ function layoutScoped(input: Score, options: LayoutOptions = {}): Layout {
      */
     let pendingNaturalsFrom: KeySignature | null = null
     let sourceLineOpenedAt = -1
+    // …**AND A PLACEHOLDER IS NO BLOCK AT ALL** — the voice has no bar in this column of
+    // this system (`alignVoiceLines`), which is the same "nothing here" a shorter voice's
+    // missing tail already means to every reader of `plan.blocks`.
     const blocks = (voice?.measures ?? []).map((measure, measureIndex) => {
+      if (measure.lineAbsent === true) return undefined as unknown as MeasureBlock
       /**
        * A mid-tune clef prints at the START of its measure and governs it — abcjs's
        * `staff-extra clef` is emitted before the measure's notes, and everything after it
@@ -15152,7 +15157,9 @@ function layoutScoped(input: Score, options: LayoutOptions = {}): Layout {
      * the number is whichever voice the parser stamped it on. See `prefix`'s
      * `systemNumber`.
      */
-    const firstHere = plans.findIndex((p) => p.measures.length > span.start)
+    const firstHere = plans.findIndex((p) =>
+        p.measures.slice(span.start, span.end).some((m) => m.lineAbsent !== true),
+      )
     const numberHere = plans
       .map((p) => p.measures[span.start]?.systemBarNumber)
       .find((n) => n !== undefined)
@@ -15789,7 +15796,9 @@ function layoutScoped(input: Score, options: LayoutOptions = {}): Layout {
        * from a render that was otherwise byte-exact, and `visual-mouse-click-01` loses its
        * `Inserted subtitle` the moment anything is typed after it.
        */
-      const carrier = plans.findIndex((p) => p.measures.length > span.start)
+      const carrier = plans.findIndex((p) =>
+        p.measures.slice(span.start, span.end).some((m) => m.lineAbsent !== true),
+      )
       const midTune =
         voiceIndex !== (carrier < 0 ? 0 : carrier)
           ? []
@@ -15952,9 +15961,9 @@ function layoutScoped(input: Score, options: LayoutOptions = {}): Layout {
        */
       const lastLineOf = (m: number): number => {
         let last = -1
-        ;(voices[m]?.measures ?? []).forEach((_, i) => {
+        ;(voices[m]?.measures ?? []).forEach((measure, i) => {
           const l = lineOfMeasure[i]
-          if (l !== undefined && l > last) last = l
+          if (l !== undefined && l > last && measure.lineAbsent !== true) last = l
         })
         return last
       }
@@ -16880,7 +16889,11 @@ function layoutScoped(input: Score, options: LayoutOptions = {}): Layout {
      */
     const voicesHere = voicesOfStaff.filter((members) =>
       members.some(
-        (v) => (plans[v]?.measures.length ?? 0) > span.start && !overlaySilentHere(v),
+        (v) =>
+          // A voice with no REAL measure here — run out, or a `lineAbsent` placeholder for
+          // a system its source lines do not reach (`alignVoiceLines`) — is not on it.
+          (plans[v]?.measures.slice(span.start, span.end).some((m) => m.lineAbsent !== true) ??
+            false) && !overlaySilentHere(v),
       ),
     )
     const merged = voicesHere.map((staffMembers) => {

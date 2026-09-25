@@ -1562,6 +1562,13 @@ export interface Measure {
   readonly colorChange?: { readonly color: string; readonly at: number }
   readonly startsSystem: boolean
   /**
+   * **A PLACEHOLDER, NOT A MEASURE** — this voice has no bar in this column of the system.
+   * Set only by `alignVoiceLines`, which gives every voice's k-th SOURCE LINE to system k, as
+   * abcjs does, and pads the shorter ones so a column is still one time slot. Nothing is
+   * drawn, published or played for it.
+   */
+  readonly lineAbsent?: true
+  /**
    * **A WRAP DISSOLVED THE SOURCE LINE BREAK HERE, AND THE LINE'S STAFF KEY / METER / CLEF
    * MUST BE RE-EMITTED AS A VOICE ELEMENT.**
    *
@@ -2594,4 +2601,73 @@ export function abcjsKeyId(key: KeySignature): string {
  */
 export function abcjsKeepsKey(key: KeySignature): boolean {
   return ABCJS_KEYS[abcjsKeyId(key)]?.keeps === true
+}
+
+
+/**
+ * **EACH VOICE KEEPS ITS OWN SOURCE LINES — system k holds every voice's k-th line.**
+ *
+ * abcjs's `tune.lines[k]` is built from the k-th music line each voice wrote, so a voice
+ * that writes two bars on one line beside a voice that splits them across two puts both of
+ * its bars on line 0, and the second voice's second bar alone on line 1
+ * (`tune-builder.js` `startNewLine` / `setCurrentVoice`). Ours broke every voice wherever ANY
+ * voice broke. This regroups the measures by source line and pads each system's shorter
+ * voices with `lineAbsent` placeholders, so a column is still one time slot.
+ *
+ * The IDENTITY on every tune whose voices break together — which is every tune whose voices
+ * agree — so nothing downstream moves unless the voices disagree. Measured 2026-09-25.
+ */
+export function alignVoiceLines(score: Score): Score {
+  const linesOf = (measures: readonly Measure[]): Measure[][] => {
+    const lines: Measure[][] = []
+    measures.forEach((m, i) => {
+      if (i === 0 || m.startsSystem || lines.length === 0) lines.push([])
+      lines[lines.length - 1]?.push(m)
+    })
+    return lines
+  }
+  const perVoice = score.voices.map((v) => linesOf(v.measures))
+  const count = Math.max(0, ...perVoice.map((l) => l.length))
+  const widths = Array.from({ length: count }, (_, k) =>
+    Math.max(0, ...perVoice.map((l) => l[k]?.length ?? 0)),
+  )
+  const aligned = perVoice.every(
+    (lines) =>
+      lines.length === count && lines.every((line, k) => line.length === widths[k]),
+  )
+  if (aligned) return score
+  const placeholder = (startsSystem: boolean): Measure => ({
+    events: [],
+    overlays: [],
+    keyChange: null,
+    keyChangeSourceRange: null,
+    meterChange: null,
+    meterChangeSourceRange: null,
+    volta: null,
+    voltaSourceRange: null,
+    partLabel: null,
+    partLabelSourceRange: null,
+    startsSystem,
+    lineAbsent: true,
+    openingBarline: null,
+    openingBarlineSourceRange: null,
+    closingBarline: null,
+    sourceRange: null,
+    closingBarlineSourceRange: null,
+  })
+  return {
+    ...score,
+    voices: score.voices.map((voice, v) => ({
+      ...voice,
+      measures: widths.flatMap((width, k) => {
+        const line = perVoice[v]?.[k] ?? []
+        return [
+          ...line.map((m, i) => (i === 0 && !m.startsSystem ? { ...m, startsSystem: true } : m)),
+          ...Array.from({ length: width - line.length }, (_, i) =>
+            placeholder(line.length === 0 && i === 0),
+          ),
+        ]
+      }),
+    })),
+  }
 }
