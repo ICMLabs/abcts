@@ -95,6 +95,9 @@ const STREAM_COLORS = new WeakSet<AbcElement>();
  */
 const INJECTED = new WeakSet<AbcElement>();
 
+/** A wrap's break-bar moved to the end of the line above — what is hoisted goes BEFORE it. */
+const TRAILING_BARS = new WeakSet<AbcElement>();
+
 export interface AbcElement {
   el_type: string;
   /**
@@ -1808,8 +1811,8 @@ function voiceElements(
     // …**AND THE WRAP'S INJECTED STAFF PROPERTIES COME AFTER ALL THREE WARNINGS**, in the
     // order clef, key, meter — `deline` unshifts them meter-first onto the FRONT of the
     // voice, which reverses to that (`data/deline-tune.js:126-151`). See `pushInjected`.
-    if (measure.wrapInjectedClef === true && measure.clefChange != null)
-      pushInjected("clef", clefElement(measure.clefChange), 0);
+    if (measure.wrapInjectedClef === true && clefNow != null)
+      pushInjected("clef", clefElement(clefNow), 0);
     if (measure.wrapInjectedKey === true && keyNow !== undefined)
       pushInjected(drawnName("keySignature"), keyElement(keyNow, clefNow ?? defaultClef), 1);
     if (measure.wrapInjectedMeter === true && measure.meterChange != null)
@@ -2916,8 +2919,12 @@ const VOICE_FURNITURE = new Set(["style", "stem", "color", "scale"]);
       if (
         above !== undefined &&
         above.some((e) => e.el_type === "note" || e.el_type === "bar")
-      )
-        above.push(...moved);
+      ) {
+        // …before a break-bar a wrap moved there, which in the merged voice comes after.
+        const last = above[above.length - 1];
+        if (last !== undefined && TRAILING_BARS.has(last)) above.splice(above.length - 1, 0, ...moved);
+        else above.push(...moved);
+      }
       /**
        * **AND A `%%MIDI` IS NEVER DROPPED, WHERE A STAFF FIELD IS.** `appendElement`
        * pushes it onto the current voice unconditionally (`tune-builder.js:174-179`)
@@ -3519,8 +3526,14 @@ const VOICE_FURNITURE = new Set(["style", "stem", "color", "scale"]);
         const at = voice?.findIndex((e) => e.el_type === "bar") ?? -1;
         if (voice === undefined || at < 0) return;
         if (voice.slice(0, at).some((e) => e.el_type === "note")) return;
-        const [bar] = voice.splice(at, 1);
-        if (bar !== undefined) previousLineVoices?.[k]?.push(bar);
+        // …with whatever precedes it in the merged voice — a `%%MIDI` read between the
+        // two source lines was appended ahead of the next line's `|`.
+        const moved = voice.splice(0, at + 1);
+        const bar = moved[moved.length - 1];
+        if (bar !== undefined) {
+          TRAILING_BARS.add(bar);
+          previousLineVoices?.[k]?.push(...moved);
+        }
       });
     previousLineVoices = lineVoices;
     // …and what THIS line closed at, for a line the source did not break — see `tile`.
@@ -3749,17 +3762,12 @@ const VOICE_FURNITURE = new Set(["style", "stem", "color", "scale"]);
       .map((v) => v.measures[from]?.vskip ?? 0)
       .find((n) => n > 0);
     const firstMusicLine = !lines.some((l) => l.staff !== undefined);
-    // A line the WRAP opened mid-source-line is a slice of `addLineBreaks`, not a line
-    // `startNewLine` opened lazily — nothing at its head was read onto the line above.
-    if (
-      wrapRan &&
-      i > 0 &&
-      score.voices.some(
-        (v) =>
-          v.measures[from]?.wrapSourceLine !== undefined &&
-          v.measures[from]?.wrapSourceLineStart !== true,
-      )
-    )
+    // UNDER A WRAP EVERY LINE IS A SLICE of `deline`'s merged voice, cut after a bar — so
+    // what the parse hoisted to the end of a source line sits after that bar, and the cut
+    // puts it at the head of the NEXT slice. Nothing is hoisted across a wrapped break.
+    // …but only inside a run of MUSIC lines: `deline` does not merge across a subtitle or
+    // a text row, so the first line after one keeps the parse's own rules.
+    if (wrapRan && i > 0 && lines[lines.length - 1]?.staff !== undefined)
       wrapSlices.add(lines.length);
     lines.push({
       ...(vskip === undefined ? {} : { vskip }),

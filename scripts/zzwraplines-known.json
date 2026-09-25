@@ -1,16 +1,11 @@
 [
-"abcjs-synth-flattener-07-metronome",
-"abcjs-synth-flattener-21-c4-d4",
-"abcjs-synth-flattener-22-b-c4-d4",
-"abcjs-synth-flattener-38-c-zz-d-z-e-z",
-"abcjs-visual-selection-03-c4",
-"abcjs-visual-tablature-17-stretchlast",
-"abcts-clef-midmeasure-tune20",
-"abcts-clef-midmeasure-tune7",
-"abcts-ledger-gaps-4-tune5",
-"abcts-model-gaps-tune7",
-"abcts-staffnonote-empty-staves-tune0",
-"abcts-staffnonote-empty-staves-tune1",
-"abcts-vskip-tune0",
-"abcts-vskip-tune2"
+  "abcjs-synth-flattener-21-c4-d4",
+  "abcjs-synth-flattener-22-b-c4-d4",
+  "abcjs-synth-flattener-38-c-zz-d-z-e-z",
+  "abcjs-visual-tablature-17-stretchlast",
+  "abcts-model-gaps-tune7",
+  "abcts-staffnonote-empty-staves-tune0",
+  "abcts-staffnonote-empty-staves-tune1",
+  "abcts-vskip-tune0",
+  "abcts-vskip-tune2"
 ]
