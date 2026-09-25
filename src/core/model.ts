@@ -1300,6 +1300,20 @@ export interface Measure {
    */
   readonly keyChangeKeywarn?: boolean
   /**
+   * **EVERY `[K:]` IN THE MEASURE, NOT JUST THE ONE IN FORCE** — the ones written BEFORE
+   * `keyChange`, in order. abcjs appends each as an element where it stands and each cancels
+   * the one before it (`appendStartingElement` + `impliedNaturals`), so `[K:D][K:Bb]` is two
+   * elements, the second cancelling D, and `A[K:D]B[K:Bb]c` sounds `B` in D. `keyChange`
+   * stays the LAST, the key in force after the measure — the role `meterChange` has beside
+   * `meterChanges`. Absent unless a measure has more than one.
+   */
+  readonly earlierKeyChanges?: readonly {
+    readonly key: KeySignature
+    readonly range?: SourceRange
+    readonly clef?: Clef
+    readonly keywarn?: boolean
+  }[]
+  /**
    * Where the `K:` that named this clef was written, and whether it was bracketed.
    *
    * A CLEF is its own element in `tune.lines` — `if (result.foundClef)

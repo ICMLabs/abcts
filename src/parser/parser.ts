@@ -1818,6 +1818,7 @@ class VoiceBuilder {
   meterForOverlays: Meter | null = null
   /** A mid-tune `K:`/`M:` applies to the measure it opens, so it pends until close. */
   private pendingKeyChange: KeySignature | null = null
+  private pendingEarlierKeys: NonNullable<Measure['earlierKeyChanges']>[number][] = []
   /** The clef an INLINE `[K:]` pitches its accidentals for — see `Measure.keyChangeClef`. */
   private pendingKeyChangeClef: Clef | undefined = undefined
   /** `[K:…]` rather than a standalone `K:` line — see `Measure.keyChangeInline`. */
@@ -1965,6 +1966,17 @@ class VoiceBuilder {
     /** `%%keywarn` AT THIS `K:` — see `Measure.keyChangeKeywarn`. */
     keywarn?: boolean,
   ): void {
+    // A SECOND `[K:]` in the measure does not replace the first — both are elements of the
+    // stream. The earlier one is kept; see `Measure.earlierKeyChanges`.
+    if (inline && this.pendingKeyChange !== null && this.pendingKeyChangeInline)
+      this.pendingEarlierKeys.push({
+        key: this.pendingKeyChange,
+        ...(this.pendingKeyChangeRange === null ? {} : { range: this.pendingKeyChangeRange }),
+        ...(this.pendingKeyChangeClef === undefined ? {} : { clef: this.pendingKeyChangeClef }),
+        ...(this.pendingKeyChangeKeywarn === undefined
+          ? {}
+          : { keywarn: this.pendingKeyChangeKeywarn }),
+      })
     this.pendingKeyChange = key
     // An INLINE one reaches the head only when a voice SWITCH opened the line — see
     // `openedBySwitch`. On a line ours opened eagerly abcjs has not, so it lands above.
@@ -2108,6 +2120,7 @@ class VoiceBuilder {
   takeChanges() {
     const changes = {
       keyChange: this.pendingKeyChange,
+      ...(this.pendingEarlierKeys.length > 0 ? { earlierKeyChanges: this.pendingEarlierKeys } : {}),
       ...(this.pendingKeyChangeClef === undefined
         ? {}
         : { keyChangeClef: this.pendingKeyChangeClef }),
@@ -2153,6 +2166,7 @@ class VoiceBuilder {
     this.pendingMidi = []
     this.pendingColor = null
     this.pendingKeyChangeRange = null
+    this.pendingEarlierKeys = []
     this.pendingMeterChange = null
     this.pendingMeterChangeStandalone = false
     this.pendingMeterChangeRange = null
@@ -6162,7 +6176,11 @@ class Parser {
             builder.voice.setKeyChange(
               abcjsKeepsKey(parseKey(value)) ? builder.key : parseKey(value),
               range,
-              inline ? (midClef ?? defaultClef) : undefined,
+              // …the clef the last `K:` NAMED, not the voice's — abcjs's `multilineVars.clef`,
+              // which a `V:` never writes. Treble until a `K:` says otherwise, which is
+              // `ragtime-nightingale`'s bass staff; `[K:D clef=bass][K:Bb]` pitches the Bb
+              // in bass. Measured 2026-09-24.
+              inline ? (midClef ?? builder.clefInForce) : undefined,
               inline,
               builder.keywarn,
             )

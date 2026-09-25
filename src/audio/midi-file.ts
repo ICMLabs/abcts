@@ -540,11 +540,17 @@ export function midiFile(score: Score, options: MidiFileOptions = {}): string {
             ? (first.closingBarlineSourceRange?.start ?? Number.POSITIVE_INFINITY)
             : Number.POSITIVE_INFINITY,
         )
+  // …the LAST `[K:]` written before the music, earlier ones of the measure included — see
+  // `Measure.earlierKeyChanges`. `[K:D]AB[K:Bb]` is a file in D.
   const leadingKey =
-    first?.keyChange != null &&
-    (first.keyChangeSourceRange?.start ?? Number.POSITIVE_INFINITY) < firstMusic
-      ? first.keyChange
-      : null
+    [
+      ...(first?.earlierKeyChanges ?? []).map((k) => ({ key: k.key, at: k.range?.start })),
+      ...(first?.keyChange != null
+        ? [{ key: first.keyChange, at: first.keyChangeSourceRange?.start }]
+        : []),
+    ]
+      .filter((k) => (k.at ?? Number.POSITIVE_INFINITY) < firstMusic)
+      .pop()?.key ?? null
   const keyForFile = score.voices.length === 0 ? undefined : (leadingKey ?? score.key)
   midi.setGlobalInfo(tempo, title, keyForFile, time)
 

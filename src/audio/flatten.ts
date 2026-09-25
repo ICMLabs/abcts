@@ -36,6 +36,7 @@ import {
   type Rational,
   ratToNumber,
   type Score,
+  type SourceRange,
   stepIndex,
   type Tempo,
   type Clef,
@@ -1209,15 +1210,24 @@ function sequenceVoice(
      * the same reason: it is an element of the stream. `CD[K:D]EF|` sounds 60, 62, 64, 66 in
      * abcjs; ours sharpened the `C` too. Measured 2026-09-24.
      */
-    const keyChangeAt =
-      measure.keyChange === null || measure.keyChangeSourceRange == null
+    const eventIndexOf = (range: SourceRange | null | undefined): number =>
+      range == null
         ? 0
         : measure.events.filter(
-            (e) =>
-              (e.sourceRange?.start ?? Number.POSITIVE_INFINITY) <
-              (measure.keyChangeSourceRange?.start ?? 0),
+            (e) => (e.sourceRange?.start ?? Number.POSITIVE_INFINITY) < range.start,
           ).length
-    if (measure.keyChange !== null && keyChangeAt === 0) key = measure.keyChange
+    // …**EVERY ONE OF THEM** — the earlier `[K:]`s of the measure too, each from where it
+    // was written. See `Measure.earlierKeyChanges`.
+    const keyChanges: { key: KeySignature; at: number }[] = [
+      ...(measure.earlierKeyChanges ?? []).map((k) => ({ key: k.key, at: eventIndexOf(k.range) })),
+      ...(measure.keyChange === null
+        ? []
+        : [{ key: measure.keyChange, at: eventIndexOf(measure.keyChangeSourceRange) }]),
+    ]
+    const keysAt = (at: number): void => {
+      for (const k of keyChanges) if (k.at === at) key = k.key
+    }
+    keysAt(0)
     if (measure.meterChange !== null) meter = measure.meterChange
     /**
      * **A `%%MIDI` IS AN ELEMENT WHERE IT IS WRITTEN**, which can be inside the measure —
@@ -1255,8 +1265,7 @@ function sequenceVoice(
     const events = take === undefined ? measure.events : measure.events.slice(0, take)
     for (const [eventIndex, event] of events.entries()) {
       if (eventIndex > 0) emitMidi(event.sourceRange?.start ?? Number.POSITIVE_INFINITY)
-      if (measure.keyChange !== null && keyChangeAt > 0 && eventIndex === keyChangeAt)
-        key = measure.keyChange
+      if (eventIndex > 0) keysAt(eventIndex)
       // …and a change written INSIDE the measure turns the drummap on at that note.
       if (clef != null && clefChangeAt > 0 && eventIndex === clefChangeAt) {
         clefPercussion = clef.shape === 'percussion'
@@ -1404,8 +1413,7 @@ function sequenceVoice(
     }
     if (take === undefined) emitMidi(Number.POSITIVE_INFINITY)
     // …and one written after the measure's last note takes effect for what follows.
-    if (measure.keyChange !== null && keyChangeAt >= events.length && keyChangeAt > 0)
-      key = measure.keyChange
+    if (events.length > 0) keysAt(events.length)
     // A MEASURE BOUNDARY IS NOT ALWAYS A BARLINE. Our model closes a measure at a line
     // break whether or not a `|` was written; abcjs's voice carries a `bar` element only
     // where one actually is. Emitting one either way restarted the beat-stress clock at

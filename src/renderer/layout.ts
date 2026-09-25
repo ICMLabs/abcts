@@ -11437,6 +11437,27 @@ const musicStartsAt = (measure: Measure): number =>
     ...measure.events.map((e) => e.sourceRange?.start ?? Number.POSITIVE_INFINITY),
   )
 
+/**
+ * **THE KEY CHANGES THAT LEAD THE LINE, IN ORDER** — the earlier `[K:]`s of the measure
+ * written before its music (see `Measure.earlierKeyChanges`), and the main one if it leads.
+ * Each is an element abcjs appended to the line above, and the last is the line's own key.
+ */
+const leadingKeysOf = (
+  measure: Measure | undefined,
+): { key: KeySignature; range: SourceRange | null }[] => {
+  if (measure === undefined || !measure.startsSystem) return []
+  // …and none under a wrap that put this measure at a line head — the rule
+  // `keyChangeLeadsLine` states for the main one: the chain is stream elements there.
+  if (measure.wrapLineHeadKey !== undefined) return []
+  const opens = musicStartsAt(measure)
+  const out = (measure.earlierKeyChanges ?? [])
+    .filter((k) => (k.range?.start ?? Number.POSITIVE_INFINITY) < opens)
+    .map((k) => ({ key: k.key, range: k.range ?? null }))
+  if (keyChangeLeadsLine(measure) && measure.keyChange !== null)
+    out.push({ key: measure.keyChange, range: measure.keyChangeSourceRange ?? null })
+  return out
+}
+
 const keyChangeLeadsLine = (measure: Measure | undefined): boolean => {
   if (measure === undefined || !measure.startsSystem || measure.keyChange === null) return false
   // …**AND NOT WHEN A WRAP PUT THIS MEASURE AT A LINE HEAD.** abcjs's head key is the
@@ -11700,6 +11721,8 @@ function layoutMeasure(
    * `visual-tablature-20-score-1-2` and `visual-layout-09-endings`.
    */
   chargesEndingRoom = true,
+  /** The cautionary keys BEFORE `trailingKey`, when the next line opens on several. */
+  trailingKeysBefore: readonly (readonly [KeySignature, KeySignature, SourceRange | null])[] = [],
 ): MeasureBlock {
   const elements: LayoutElement[] = []
   /**
@@ -11824,27 +11847,67 @@ function layoutMeasure(
      * the new key as the outgoing one is how a change with nothing to cancel is stated
      * here. `abcjs-visual-parsing-x10`'s `[K:A]` is the case: three sharps and no natural.
      */
-    const cancelling = (measure.keyChangeKeywarn ?? KEYWARN) ? keyInForce : measure.keyChange
+    if (measure.keyChange === null) return
+    // …and it cancels the LAST earlier `[K:]` of the measure, not the key it opened in.
+    const before = earlierKeys[earlierKeys.length - 1]?.key ?? keyInForce
+    drawKey(
+      measure.keyChange,
+      measure.keyChangeSourceRange ?? null,
+      measure.keyChangeClef,
+      measure.keyChangeKeywarn,
+      before,
+      // …inside a chain the naturals follow the chain's clef too — see `drawEarlierKeysAt`.
+      earlierKeys.length === 0 ? undefined : (measure.keyChangeClef ?? chainClefOf(earlierKeys.length)),
+    )
+  }
+  /** One key element, cancelling `before` — the main change's path, shared. */
+  const drawKey = (
+    key: KeySignature,
+    range: SourceRange | null,
+    ownClef: Clef | undefined,
+    keywarn: boolean | undefined,
+    before: KeySignature,
+    naturalsClef?: Clef,
+  ): void => {
+    const cancelling = (keywarn ?? KEYWARN) ? before : key
     const change = layoutKeyChange(
       x,
       cancelling,
-      measure.keyChange,
-      measure.keyChangeClef ?? clef,
+      key,
+      ownClef ?? clef,
       strict,
       false,
       // …and the cancelling NATURALS keep the staff's own clef — see `naturalsClef`.
-      clef,
+      naturalsClef ?? clef,
     )
     if (change === null) return
     // A MID-TUNE `K:` OWNS ITS FIELD'S CHARACTERS, exactly as its clef does — see
     // `trailingClefRange`.
-    elements.push(
-      measure.keyChangeSourceRange == null
-        ? change
-        : { ...change, sourceRange: measure.keyChangeSourceRange },
-    )
+    elements.push(range == null ? change : { ...change, sourceRange: range })
     fixed(change.width + ENGRAVE.prefixGap, ENGRAVE.prefixGap, 'other', 0, change.width)
     x += change.width + ENGRAVE.prefixGap
+  }
+  /**
+   * **THE EARLIER `[K:]`s OF THE MEASURE, each where it was written** — see
+   * `Measure.earlierKeyChanges`. One that leads the line is the prefix's, as the main one is.
+   */
+  const earlierKeys = measure.earlierKeyChanges ?? []
+  /** The last clef the chain's first `n` keys named — the clef in force inside it. */
+  const chainClefOf = (n: number): Clef | undefined =>
+    earlierKeys.slice(0, n).reduce<Clef | undefined>((c, k) => k.clef ?? c, undefined)
+  const drawEarlierKeysAt = (eventIndex: number): void => {
+    earlierKeys.forEach((k, i) => {
+      if (meterEventIndex(k.range) !== eventIndex) return
+      if (leadingKeysOf(measure).some((lead) => lead.range === (k.range ?? null))) return
+      drawKey(
+        k.key,
+        k.range ?? null,
+        k.clef ?? chainClefOf(i),
+        k.keywarn,
+        earlierKeys[i - 1]?.key ?? keyInForce ?? k.key,
+        k.clef ?? chainClefOf(i),
+      )
+    })
   }
   let openingBarIndex: number | null = null
   let trailingBarIndex: number | null = null
@@ -12224,7 +12287,10 @@ function layoutMeasure(
         injectedKeyCancels !== null
           ? injectedKeyCancels
           : (measure.keyChangeKeywarn ?? KEYWARN)
-            ? (keyInForce ?? now)
+            ? // …the LAST earlier `[K:]` of the measure where there is a chain.
+              (measure.earlierKeyChanges?.[measure.earlierKeyChanges.length - 1]?.key ??
+              keyInForce ??
+              now)
             : now
       const el =
         now === null || cancelFrom === null
@@ -12256,6 +12322,7 @@ function layoutMeasure(
   if (keyChangeAt < openingBarAt) {
     drawTempoChange()
     drawClefChange()
+    drawEarlierKeysAt(0)
     drawKeyChange()
     if (!staffMeterHere && !partAfterBar) drawPart()
     drawMeterChange()
@@ -12271,6 +12338,7 @@ function layoutMeasure(
     partIfBefore(measure.clefChangeSourceRange)
     drawClefChange()
     partIfBefore(measure.keyChangeSourceRange)
+    drawEarlierKeysAt(0)
     drawKeyChange()
     partIfBefore(measure.meterChanges?.[0]?.range ?? measure.meterChangeSourceRange)
     drawMeterChange()
@@ -12322,6 +12390,7 @@ function layoutMeasure(
     drawTempoBefore(eventIndex)
     // …and a mid-measure key change — see `keyChangeIndex`.
     const keyAt = meterEventIndex(measure.keyChangeSourceRange)
+    if (eventIndex > 0) drawEarlierKeysAt(eventIndex)
     if (keyAt > 0 && keyAt === eventIndex) drawKeyChange(true)
     if (measure.partLabel !== null && eventIndex === partIndex && partIndex > 0) {
       elements.push(layoutPart(x, measure.partLabel, measure.partLabelSourceRange))
@@ -12621,6 +12690,7 @@ function layoutMeasure(
     (measure.meterChanges?.[measure.meterChanges.length - 1]?.range?.start ??
       measure.meterChangeSourceRange?.start ??
       Number.POSITIVE_INFINITY)
+  if (measure.events.length > 0) drawEarlierKeysAt(measure.events.length)
   if (keyTrails && keyFirst) drawKeyChange(true)
   drawMetersBefore(measure.events.length)
   if (keyTrails && !keyFirst) drawKeyChange(true)
@@ -12776,6 +12846,13 @@ function layoutMeasure(
   }
 
   // …AND THE NEXT SYSTEM'S KEY CHANGE with it. See `trailingKey` and `keyChangeLeadsLine`.
+  for (const [from, to, range] of trailingKeysBefore) {
+    const trailing = layoutKeyChange(x, from, to, clef, strict)
+    if (trailing === null) continue
+    elements.push(range === null ? trailing : { ...trailing, sourceRange: range })
+    fixed(trailing.width + ENGRAVE.prefixGap, ENGRAVE.prefixGap, 'other', 0, trailing.width)
+    x += trailing.width + ENGRAVE.prefixGap
+  }
   if (trailingKey !== null) {
     const trailing = layoutKeyChange(x, trailingKey[0], trailingKey[1], clef, strict)
     if (trailing !== null) {
@@ -14028,6 +14105,8 @@ function layoutScoped(input: Score, options: LayoutOptions = {}): Layout {
     const keyBeforeLine: KeySignature[] = []
     let keyAtLineStart = score.key
     let keyAtPreviousLine = score.key
+    /** See where it is set: the next line cancels this, not the key its line opened in. */
+    let chainCancels: KeySignature | null = null
     /**
      * ⚠️ **AND A VOICE SWITCH THROWS THE PENDING CANCELLATION AWAY** — the rule the note
      * below was missing, measured by instrumenting abcjs's own `impliedNaturals`.
@@ -14144,7 +14223,12 @@ function layoutScoped(input: Score, options: LayoutOptions = {}): Layout {
         clefAtSection.set(measure.wrapSourceLine, clefInForce)
       if (measure.clefChange != null && !clefLeadsHere) clefInForce = measure.clefChange
       if (measure.startsSystem) {
-        const leads = keyChangeLeadsLine(measure)
+        // …the LAST of the leading keys, and it cancels the one before it — see
+        // `leadingKeysOf`. A single leading change is the whole list.
+        const leading = leadingKeysOf(measure)
+        const leads = leading.length > 0
+        const leadKey = leading[leading.length - 1]?.key ?? null
+        const leadCancels = leading[leading.length - 2]?.key ?? keyInForce
         // WHAT THE PREFIX CANCELS IS THE KEY IN FORCE AT THE CHANGE, NOT THE PREVIOUS
         // LINE'S KEY. abcjs's naturals are `impliedNaturals`, which `parseKey` computes
         // from the old key AT THE MOMENT OF THE CHANGE (`abc_parse_key_voice.js:295-311`).
@@ -14196,12 +14280,15 @@ function layoutScoped(input: Score, options: LayoutOptions = {}): Layout {
               // concatenate. Suppressing only the cautionary key at the line END, which is
               // where the other two `KEYWARN` guards sit, left a natural abcjs never drew.
               (measure.keyChange ?? keyInForce)
-            : leads || switched
-              ? keyInForce
-              : keyAtLineStart
+            : leads
+              ? leadCancels
+              : switched
+                ? keyInForce
+                : (chainCancels ?? keyAtLineStart)
+        chainCancels = null
         // A change that LEADS the line is already in `multilineVars.key` when abcjs stamps
         // `params.key`, so the prefix shows the NEW key. See `keyChangeLeadsLine`.
-        keyAtLineStart = leads ? (measure.keyChange ?? keyInForce) : keyInForce
+        keyAtLineStart = leads ? (leadKey ?? keyInForce) : keyInForce
       }
       let injectedCancels: KeySignature | null = null
       if (opensSourceLine(measure)) {
@@ -14304,7 +14391,8 @@ function layoutScoped(input: Score, options: LayoutOptions = {}): Layout {
            * A first attempt suppressed the line-leading key as well and took line 2's
            * notes 18.25px left of abcjs's.
            */
-          if (!keyChangeLeadsLine(next) || next?.keyChange == null) return null
+          const leading = leadingKeysOf(next)
+          if (leading.length === 0 || next === undefined) return null
           // …nor when a switch already opened the voice's next line — see
           // `Measure.keyChangeAtLineHead`.
           if (next.keyChangeAtLineHead === true) return null
@@ -14315,7 +14403,11 @@ function layoutScoped(input: Score, options: LayoutOptions = {}): Layout {
           // a measure with NO change answers `undefined`, falls back to the tune-level flag
           // and suppresses a key element abcjs publishes — four `parseOnly` value rows and
           // an `extractMeasures` row said so.
-          if (!(next.keyChangeKeywarn ?? KEYWARN)) return null
+          // ⚠️ **AN INLINE `[K:]` IS EXEMPT** — the guard is `appendStartingElement`'s, the
+          // STANDALONE field's route; an inline one is an element whatever `%%keywarn` says,
+          // and only loses its naturals. Measured 2026-09-24.
+          const warns = next.keyChangeKeywarn ?? KEYWARN
+          if (!warns && next.keyChangeInline !== true) return null
           /**
            * **AND NOT BEFORE A SUBTITLE** — `noWarnBeforeTitle` pops the courtesy key back
            * off the line above whenever the next line is a `subtitle`, under abcjs's own
@@ -14328,7 +14420,11 @@ function layoutScoped(input: Score, options: LayoutOptions = {}): Layout {
           // The key as THIS measure ends is what the cancellation is measured against, and
           // `keyInForce` is still that: `measure.keyChange` is applied below.
           const from = measure.keyChange ?? keyInForce
-          return from === null ? null : ([from, next.keyChange] as const)
+          if (from === null) return null
+          const last = leading[leading.length - 1]
+          const before = leading[leading.length - 2]?.key ?? from
+          if (last === undefined) return null
+          return [warns ? before : last.key, last.key] as const
         })(),
         (() => {
           const next = (voice?.measures ?? [])[measureIndex + 1]
@@ -14342,8 +14438,9 @@ function layoutScoped(input: Score, options: LayoutOptions = {}): Layout {
         })(),
         (() => {
           const next = (voice?.measures ?? [])[measureIndex + 1]
-          return keyChangeLeadsLine(next) && !subtitleLeads(next)
-            ? (next?.keyChangeSourceRange ?? null)
+          const leading = leadingKeysOf(next)
+          return leading.length > 0 && !subtitleLeads(next)
+            ? (leading[leading.length - 1]?.range ?? null)
             : null
         })(),
         // `parent$layer`, and ONLY on a line it does not sing on — see `layerSingsOn` and
@@ -14373,9 +14470,35 @@ function layoutScoped(input: Score, options: LayoutOptions = {}): Layout {
         // …**AND ONLY VOICE 0 PAYS FOR AN ENDING'S ROOM**, the same gate the `voltaAfter`
         // argument above already had — see `chargesEndingRoom`.
         voiceIndex === 0,
+        // …and every leading key BEFORE the last, each cancelling the one before it — see
+        // `leadingKeysOf`. Under the same guards as the last one.
+        (() => {
+          const next = (voice?.measures ?? [])[measureIndex + 1]
+          const leading = leadingKeysOf(next)
+          if (leading.length < 2 || next === undefined) return []
+          if (next.keyChangeAtLineHead === true || subtitleLeads(next)) return []
+          let from = measure.keyChange ?? keyInForce
+          if (from === null) return []
+          const out: (readonly [KeySignature, KeySignature, SourceRange | null])[] = []
+          // Every earlier one is INLINE, so `%%keywarn 0` only takes its naturals.
+          const warnAt = new Map(
+            (next.earlierKeyChanges ?? []).map((k) => [k.key, k.keywarn ?? KEYWARN] as const),
+          )
+          for (const k of leading.slice(0, -1)) {
+            out.push([warnAt.get(k.key) === false ? k.key : from, k.key, k.range] as const)
+            from = k.key
+          }
+          return out
+        })(),
       )
+      // A mid-line change after earlier `[K:]`s of its measure cancelled the LAST of them,
+      // and its naturals outlive it onto the next line — see `Measure.earlierKeyChanges`.
       if (measure.keyChange !== null && !keyChangeLeadsLine(measure))
-        pendingNaturalsFrom = (measure.keyChangeKeywarn ?? KEYWARN) ? keyInForce : null
+        chainCancels = measure.earlierKeyChanges?.[measure.earlierKeyChanges.length - 1]?.key ?? null
+      if (measure.keyChange !== null && !keyChangeLeadsLine(measure))
+        pendingNaturalsFrom = (measure.keyChangeKeywarn ?? KEYWARN)
+          ? (measure.earlierKeyChanges?.[measure.earlierKeyChanges.length - 1]?.key ?? keyInForce)
+          : null
       if (measure.keyChange !== null) keyInForce = measure.keyChange
       if (measure.meterChange != null) meterInForce = measure.meterChange
       return block

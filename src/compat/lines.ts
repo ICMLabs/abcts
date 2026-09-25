@@ -1612,6 +1612,30 @@ function voiceElements(
       sortAt.set(e, injectedAt - 0.3 + nth * 0.05);
       out.push(e);
     };
+    // **THE EARLIER `[K:]`s OF THE MEASURE FIRST, each its own element cancelling the one
+    // before it** — see `Measure.earlierKeyChanges`. Built the way the main one is below.
+    // …and inside a chain the CLEF IN FORCE moves with it: `[K:D clef=bass][K:Bb]` pitches
+    // the Bb — naturals and flats — for the bass clef the D named. Measured 2026-09-24.
+    let chainClef: Clef | undefined;
+    for (const k of measure.earlierKeyChanges ?? []) {
+      if (k.clef !== undefined) chainClef = k.clef;
+      const e = el(drawnName("keySignature"), k.range ?? null);
+      if (e === null) continue;
+      const keyClef = k.clef ?? chainClef ?? clefNow ?? defaultClef;
+      const built = keyElement(k.key, keyClef);
+      const naturals =
+        (k.keywarn ?? keywarn) === false || keyNow === undefined
+          ? []
+          : impliedNaturals(keyNow, k.key, chainClef ?? clefNow ?? keyClef);
+      Object.assign(
+        e,
+        built,
+        naturals.length === 0 ? {} : { accidentals: [...naturals, ...(built.accidentals ?? [])] },
+        { startChar: e.startChar, endChar: e.endChar, el_type: e.el_type },
+      );
+      out.push(e);
+      keyNow = k.key;
+    }
     // …**AND THE FLAG IS THE ONE AT THIS `K:`, NOT THE TUNE'S LAST SETTING** — abcjs tests
     // `multilineVars.keywarn !== false` inside `parseKey` itself. See
     // `Measure.keyChangeKeywarn`.
@@ -1636,7 +1660,7 @@ function voiceElements(
            * `Measure.keyChangeClef` — and the voice's otherwise.
            */
           if (e !== null && measure.keyChange != null) {
-            const keyClef = measure.keyChangeClef ?? clefNow ?? defaultClef;
+            const keyClef = measure.keyChangeClef ?? chainClef ?? clefNow ?? defaultClef;
             const built = keyElement(measure.keyChange, keyClef);
             /**
              * **AND THE NATURALS THAT CANCEL THE OLD KEY GO IN FRONT** —
@@ -1673,7 +1697,15 @@ function voiceElements(
             const naturals =
               (measure.keyChangeKeywarn ?? keywarn) === false || keyNow === undefined
                 ? []
-                : impliedNaturals(keyNow, measure.keyChange, clefNow ?? keyClef);
+                : impliedNaturals(
+                    keyNow,
+                    measure.keyChange,
+                    ((measure.earlierKeyChanges?.length ?? 0) === 0
+                      ? undefined
+                      : (measure.keyChangeClef ?? chainClef)) ??
+                      clefNow ??
+                      keyClef,
+                  );
             Object.assign(
               e,
               built,
@@ -3017,9 +3049,20 @@ const VOICE_FURNITURE = new Set(["style", "stem", "color", "scale"]);
               leadsLine(om, om.keyChangeSourceRange?.start),
           )
           .pop();
-        const leadingKey = leadsLine(m, m.keyChangeSourceRange?.start)
+        // …**AND AN EARLIER `[K:]` OF THE MEASURE CAN LEAD WHEN THE MAIN ONE DOES NOT** —
+        // `[K:D]GA[K:Bb]Bc` opens the line in D. The last leading one is the line's key, and
+        // it cancels the one before it. See `Measure.earlierKeyChanges`.
+        const earlierLead = (m.earlierKeyChanges ?? []).filter((k) =>
+          leadsLine(m, k.range?.start),
+        );
+        const mainLeads = leadsLine(m, m.keyChangeSourceRange?.start);
+        const leadCancels = mainLeads
+          ? ((m.earlierKeyChanges ?? [])[(m.earlierKeyChanges ?? []).length - 1]?.key ??
+            keyInForce)
+          : (earlierLead[earlierLead.length - 2]?.key ?? keyInForce);
+        const leadingKey = mainLeads
           ? (m.keyChange ?? null)
-          : (restamp?.keyChange ?? null);
+          : (earlierLead[earlierLead.length - 1]?.key ?? restamp?.keyChange ?? null);
         /**
          * ⚠️ **AND A LINE READ BEFORE THE `K:` IS IN THE KEY `none`.** abcjs's key is
          * PARSE-TIME state opened at `{root: 'none', …}` (`abc_parse.js:80`), so music the
@@ -3186,7 +3229,7 @@ const VOICE_FURNITURE = new Set(["style", "stem", "color", "scale"]);
           naturalsOff === false
             ? []
             : leadingKey != null
-              ? impliedNaturals(keyInForce, key, keyClef)
+              ? impliedNaturals(leadCancels, key, keyClef)
               : switched || pendingChange === null
                 ? []
                 : impliedNaturals(pendingChange.from, pendingChange.to, keyClef);
@@ -3222,7 +3265,9 @@ const VOICE_FURNITURE = new Set(["style", "stem", "color", "scale"]);
          */
         if (!consumedHere)
           pendingChange = {
-            from: keyInForce,
+            from:
+              (m.earlierKeyChanges ?? [])[(m.earlierKeyChanges ?? []).length - 1]?.key ??
+              keyInForce,
             to: m.keyChange,
             ...(m.keyChangeKeywarn === undefined ? {} : { keywarn: m.keyChangeKeywarn }),
           };
