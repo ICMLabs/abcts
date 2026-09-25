@@ -324,11 +324,6 @@ function tile(
    * ten characters.
    */
   carried?: number,
-  /**
-   * Under a WRAP, every earlier element's end — a line of the re-parse opens mid-source-line,
-   * so an element's predecessor in SOURCE order can be on the line above, in its own voice.
-   */
-  priorEnds?: readonly number[],
 ): AbcElement[] {
   // **EACH ELEMENT OPENS WHERE THE ONE BEFORE IT CLOSED**, and the first of a line opens
   // at the line. A NOTE closes over its trailing whitespace and a BAR does not — measured
@@ -380,18 +375,7 @@ function tile(
      * The space after an inline `[V: …]` is NOT skipped: that one is inside the line and
      * goes to the element after it, which is why the whitespace walk is on THIS branch only.
      */
-    const inLine = i === 0 ? carried : elements[i - 1]?.endChar;
-    const prior =
-      priorEnds === undefined
-        ? undefined
-        : priorEnds.reduce<number | undefined>(
-            (best, e) => (e <= own && (best === undefined || e > best) ? e : best),
-            undefined,
-          );
-    const before =
-      prior !== undefined && (inLine === undefined || inLine > own || prior > inLine)
-        ? prior
-        : inLine;
+    const before = i === 0 ? carried : elements[i - 1]?.endChar;
     let from: number;
     if (before !== undefined && before >= lineStart(own)) from = before;
     else {
@@ -1398,11 +1382,6 @@ function voiceElements(
     note?: (event: MusicEvent) => Record<string, unknown> | undefined
     bar?: Record<string, unknown>
   } = {},
-  /**
-   * The measure AFTER this slice — its volta labels the barline that closes the slice, and
-   * a wrap can put the two on different lines (`:|3` at a break). See `voltaAt`.
-   */
-  following?: Measure,
 ): AbcElement[] {
   /**
    * **THE NAME THE ENGRAVER WOULD HAVE WRITTEN, OR THE PARSER'S OWN.**
@@ -1438,7 +1417,7 @@ function voiceElements(
    * — which is also how the drawing finds a barline again.
    */
   const voltaAt = new Map<number, string>();
-  for (const m of following === undefined ? measures : [...measures, following])
+  for (const m of measures)
     if (m.volta !== null && m.voltaSourceRange !== null)
       voltaAt.set(m.voltaSourceRange.start, m.volta);
   const voltaOn = (
@@ -2746,8 +2725,6 @@ export function projectionOf(
    */
   /** Where the previous projected line's last element closed — see `tile`'s `carried`. */
   let carriedTileEnd: number | undefined
-  /** Every tiled element's end so far — the carry is the last of them BEFORE this line's. */
-  const tiledEnds: number[] = []
   const lengths = score.voices.map((v) => v.measures.length);
   const totalMeasures = Math.max(...lengths, 0);
   const breaks = [
@@ -3351,7 +3328,6 @@ const VOICE_FURNITURE = new Set(["style", "stem", "color", "scale"]);
         keyAt(v, from),
         engraved,
         elementFonts,
-        v.measures[to],
       );
     });
     /**
@@ -3370,22 +3346,7 @@ const VOICE_FURNITURE = new Set(["style", "stem", "color", "scale"]);
      * NOTE closes over its trailing newline and the guard could not tell the two apart.
      */
     const wrapped = score.voices.some((v) => v.measures[from]?.wrappedLine === true);
-    // The carry is the previous element in SOURCE order — the latest end at or before this
-    // line's first element — not the previous line's last, which is another voice's when the
-    // voices are written a line at a time.
-    const firstOwn = tiled[0]?.startChar ?? 0;
-    const carry = tiledEnds.reduce<number | undefined>(
-      (best, e) => (e <= firstOwn && (best === undefined || e > best) ? e : best),
-      undefined,
-    );
-    tile(
-      abc,
-      tiled,
-      score.unreadable ?? [],
-      wrapped ? (carry ?? carriedTileEnd) : undefined,
-      wrapped ? tiledEnds : undefined,
-    );
-    for (const e of tiled) if (e.endChar !== undefined) tiledEnds.push(e.endChar);
+    tile(abc, tiled, score.unreadable ?? [], wrapped ? carriedTileEnd : undefined);
     // …and what THIS line closed at, for a line the source did not break — see `tile`.
     carriedTileEnd = tiled[tiled.length - 1]?.endChar;
     /**
