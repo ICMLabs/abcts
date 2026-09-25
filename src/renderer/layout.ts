@@ -13979,6 +13979,16 @@ function layoutScoped(input: Score, options: LayoutOptions = {}): Layout {
         m.events.some((e) => !(e.type === 'rest' && e.overlayPad === true)),
     )
   /** `thisStaff.voices[n] = []` — does this voice open at all on that line? */
+  /**
+   * **THE VOICE THAT CARRIES A LINE'S ENDINGS** — `usual` wherever it has music on the line,
+   * and otherwise the first voice that does, in score order: abcjs's "first staff" is the
+   * first one the LINE holds, so a system `usual` has no source line on hands the brackets
+   * and their room to whoever opens it (`alignVoiceLines`). Measured 2026-09-25.
+   */
+  const leadVoiceOn = (line: number, usual: number): number =>
+    opensOnLine(usual, line)
+      ? usual
+      : (voicesOfStaff.flat().find((v) => opensOnLine(v, line)) ?? usual)
   const opensOnLine = (v: number, line: number): boolean =>
     (voices[v]?.measures ?? []).some((m, i) => lineOfMeasure[i] === line && m.lineAbsent !== true)
   /** Where on that line it opens, which is the order `createVoice` sees them in. */
@@ -14338,7 +14348,7 @@ function layoutScoped(input: Score, options: LayoutOptions = {}): Layout {
         // follows; ours had spent that slack on the ending, so the same accidental pushed
         // the shared cursor 12.13 further right. That was the WHOLE of ragtime's dx.
         (() => {
-          if (voiceIndex !== 0) return null
+          if (voiceIndex !== leadVoiceOn(lineOfMeasure[measureIndex] ?? 0, 0)) return null
           const next = (voice?.measures ?? [])[measureIndex + 1]
           // …**AND NOT WHEN THAT MEASURE'S OWN OPENING BARLINE CARRIES IT.** One bar per
           // ending — see `voltaOnOwnOpeningBar`.
@@ -14474,7 +14484,7 @@ function layoutScoped(input: Score, options: LayoutOptions = {}): Layout {
           : null,
         // …**AND ONLY VOICE 0 PAYS FOR AN ENDING'S ROOM**, the same gate the `voltaAfter`
         // argument above already had — see `chargesEndingRoom`.
-        voiceIndex === 0,
+        voiceIndex === leadVoiceOn(lineOfMeasure[measureIndex] ?? 0, 0),
         // …and every leading key BEFORE the last, each cancelling the one before it — see
         // `leadingKeysOf`. Under the same guards as the last one.
         (() => {
@@ -16152,7 +16162,8 @@ function layoutScoped(input: Score, options: LayoutOptions = {}): Layout {
       // per voice put FIVE brackets on `ragtime-nightingale` where abcjs draws one — 15
       // `1` labels against its 3 — and, worse, reserved the ending lane on the BASS staff
       // too, which pushed it 6 pitch clear of the treble on every voltaed system.
-      const drawsVoltas = voiceIndex === voicesOfStaff[0]?.[0]
+      const drawsVoltas =
+        voiceIndex === leadVoiceOn(systemIndex, voicesOfStaff[0]?.[0] ?? 0)
       /** The repeat ending currently open, where its bracket started, and its measure. */
       let openVolta: {
         label: string

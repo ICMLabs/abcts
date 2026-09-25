@@ -2618,6 +2618,13 @@ export function abcjsKeepsKey(key: KeySignature): boolean {
  * agree — so nothing downstream moves unless the voices disagree. Measured 2026-09-25.
  */
 export function alignVoiceLines(score: Score): Score {
+  const voices = alignVoiceMeasures(score.voices)
+  return voices === score.voices ? score : { ...score, voices }
+}
+
+/** `alignVoiceLines` over the voices alone — the parser runs it before its later passes. */
+export function alignVoiceMeasures<V extends Voice>(input: readonly V[]): readonly V[] {
+  const score = { voices: input }
   const linesOf = (measures: readonly Measure[]): Measure[][] => {
     const lines: Measure[][] = []
     measures.forEach((m, i) => {
@@ -2635,7 +2642,7 @@ export function alignVoiceLines(score: Score): Score {
     (lines) =>
       lines.length === count && lines.every((line, k) => line.length === widths[k]),
   )
-  if (aligned) return score
+  if (aligned) return input
   const placeholder = (startsSystem: boolean): Measure => ({
     events: [],
     overlays: [],
@@ -2655,9 +2662,7 @@ export function alignVoiceLines(score: Score): Score {
     sourceRange: null,
     closingBarlineSourceRange: null,
   })
-  return {
-    ...score,
-    voices: score.voices.map((voice, v) => ({
+  return score.voices.map((voice, v) => ({
       ...voice,
       measures: widths.flatMap((width, k) => {
         const line = perVoice[v]?.[k] ?? []
@@ -2668,6 +2673,5 @@ export function alignVoiceLines(score: Score): Score {
           ),
         ]
       }),
-    })),
-  }
+    }))
 }

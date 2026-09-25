@@ -3511,8 +3511,12 @@ const VOICE_FURNITURE = new Set(["style", "stem", "color", "scale"]);
     });
     // **FREE TEXT AND MID-TUNE SUBTITLES BETWEEN TWO SYSTEMS ARE LINES OF THEIR OWN**,
     // read off the same first measure the renderer's own block does (`Measure.textBefore`).
-    for (const b of score.voices[0]?.measures[from]?.textBefore ?? [])
-      lines.push(textLine(b));
+    // …off the FIRST VOICE ON THE SYSTEM, which is not voice 0 when voice 0 has no line
+    // here — see `Measure.lineAbsent`.
+    const opener = score.voices.find(
+      (v) => v.measures[from] !== undefined && v.measures[from]?.lineAbsent !== true,
+    );
+    for (const b of opener?.measures[from]?.textBefore ?? []) lines.push(textLine(b));
     // …**AND A MID-TUNE `%%newpage` IS A LINE OF ITS OWN TOO**, at the point it was
     // written — `addNewPage` pushes it wherever it stands (`tune-builder.js:306-308`).
     // See `Measure.newPageBefore`; a HEADER one is `score.newPage` and goes out above.
@@ -3703,8 +3707,9 @@ const VOICE_FURNITURE = new Set(["style", "stem", "color", "scale"]);
      * `[staff, text]` and this projection — which read `textBefore` off VOICE 0 alone —
      * answered `[staff]` and dropped the row outright.
      */
-    for (const v of score.voices.slice(1))
-      for (const b of v.measures[from]?.textBefore ?? []) lines.push(textLine(b));
+    for (const v of score.voices)
+      if (v !== opener)
+        for (const b of v.measures[from]?.textBefore ?? []) lines.push(textLine(b));
   });
   // …and the hoist runs over the finished lines, per voice, because it moves an element
   // from one line's array into another's.

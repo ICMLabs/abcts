@@ -26,7 +26,7 @@ import {
 } from '../core/overlays.js'
 import {
   abcjsKeepsKey,
-  alignVoiceLines,
+  alignVoiceMeasures,
   ABC_FONT_DEFAULT_PT,
   type AbcFontType,
   Accidental,
@@ -3425,10 +3425,14 @@ function moveTrailingBarNumbers(measures: readonly Measure[]): Measure[] {
  * prints no number on its final barline.
  */
 function carryDanglingBarNumbers(voices: readonly Voice[]): void {
+  // A `lineAbsent` placeholder is not a measure — see `alignVoiceLines`.
   const startsSystemAt = (index: number): Voice | undefined =>
-    voices.find((v) => v.measures[index]?.startsSystem === true)
+    voices.find(
+      (v) => v.measures[index]?.startsSystem === true && v.measures[index]?.lineAbsent !== true,
+    )
   for (const voice of voices) {
-    const last = voice.measures.length - 1
+    let last = voice.measures.length - 1
+    while (last >= 0 && voice.measures[last]?.lineAbsent === true) last -= 1
     const measure = voice.measures[last]
     const number = measure?.closingBarNumber
     if (measure === undefined || number === undefined) continue
@@ -4058,10 +4062,6 @@ class ScoreBuilder {
 
   /** The score, each voice keeping its own source lines — see `alignVoiceLines`. */
   finish(): Score {
-    return alignVoiceLines(this.finishVoices())
-  }
-
-  private finishVoices(): Score {
     const metadata: ScoreMetadata = {
       tuneNumber: this.tuneNumber,
       titles: this.titles,
@@ -4099,12 +4099,16 @@ class ScoreBuilder {
         // `Voice.declaredIndex`. `this.voices` is a Map, so its insertion order IS the
         // order the `V:` fields were read in.
         const declared = new Map([...this.voices.keys()].map((id, i) => [id, i]))
-        const finished = this.orderedVoices().map((v) => {
-          // The meter lives on the score, and a voice needs it to pad an empty overlay
-          // layer to a full measure's silence.
-          v.meterForOverlays = this.meter
-          return { ...v.finish(), declaredIndex: declared.get(v.id) ?? 0 }
-        })
+        // …**EACH VOICE KEEPING ITS OWN SOURCE LINES** — see `alignVoiceLines`. Done first,
+        // so the passes below read the columns abcjs's lines have.
+        const finished = alignVoiceMeasures(
+          this.orderedVoices().map((v) => {
+            // The meter lives on the score, and a voice needs it to pad an empty overlay
+            // layer to a full measure's silence.
+            v.meterForOverlays = this.meter
+            return { ...v.finish(), declaredIndex: declared.get(v.id) ?? 0 }
+          }),
+        )
         // A trailing number crosses to whichever voice is still on the next line.
         carryDanglingBarNumbers(finished)
         /**
