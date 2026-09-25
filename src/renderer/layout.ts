@@ -16898,9 +16898,25 @@ function layoutScoped(input: Score, options: LayoutOptions = {}): Layout {
      * ran 79px tall. Its golden has three `abcjs-top-line` paths, counted rather than
      * assumed.
      */
+    /**
+     * **UNDER A WRAP, A VOICE WHOSE MUSIC ENDS EXACTLY AT A BREAK IS ON THE NEXT SYSTEM TOO,
+     * EMPTY.** `findLineBreaks` pushes a final `{start, end: voice.length}` after its loop
+     * (`wrap_lines.js:143-147`), which is an EMPTY slice only when the voice's last break
+     * fell at its very end — so a voice that stops mid-line gets none, and one that stops on
+     * a break draws a bare staff below the break. Measured 2026-09-25.
+     */
+    const wrapRanHere = voices.some((v) => v?.measures.some((m) => m.wrapSourceLine !== undefined))
+    const graceOn = (v: number): boolean => {
+      if (!wrapRanHere) return false
+      const measures = plans[v]?.measures ?? []
+      let last = measures.length - 1
+      while (last >= 0 && measures[last]?.lineAbsent === true) last -= 1
+      return last >= 0 && last + 1 === span.start
+    }
     const voicesHere = voicesOfStaff.filter((members) =>
       members.some(
         (v) =>
+          graceOn(v) ||
           // A voice with no REAL measure here — run out, or a `lineAbsent` placeholder for
           // a system its source lines do not reach (`alignVoiceLines`) — is not on it.
           (plans[v]?.measures.slice(span.start, span.end).some((m) => m.lineAbsent !== true) ??

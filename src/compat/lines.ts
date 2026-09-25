@@ -3329,6 +3329,21 @@ const VOICE_FURNITURE = new Set(["style", "stem", "color", "scale"]);
   const stampedFonts = (names: readonly string[]): Record<string, unknown> | undefined =>
     stampedFrom((name) => inForceFont.get(name), names);
 
+  /**
+   * **A WRAPPED LINE IS A SLICE OF A MERGED VOICE, NOT A LINE `createVoice` OPENED.** So its
+   * stems are `addLineBreaks`'s: the last stem direction the voice's previous slice held is
+   * `unshift`ed onto it (`wrap_lines.js` `lastStem`), and the source line's own `createVoice`
+   * stems are there only where a SOURCE line begins inside it — which is how `[[up], [down]]`
+   * becomes `down, down` on a slice opening at a merged join. And a voice whose music ends
+   * exactly at a break gets the final, EMPTY slice. Measured 2026-09-25.
+   */
+  const wrapRan = score.voices.some((v) => v.measures.some((m) => m.wrapSourceLine !== undefined));
+  const lastStem = new Map<number, string>();
+  const lastReal = score.voices.map((v) => {
+    let l = v.measures.length - 1;
+    while (l >= 0 && v.measures[l]?.lineAbsent === true) l -= 1;
+    return l;
+  });
   breaks.forEach((from, i) => {
     const to = breaks[i + 1] ?? totalMeasures;
     // The line's own `%%…font` changes, from whichever voice recorded them — abcjs's
@@ -3374,6 +3389,8 @@ const VOICE_FURNITURE = new Set(["style", "stem", "color", "scale"]);
      * `tile` mutates in place, so the per-voice arrays below still hold the same objects —
      * which is the identity `getElementFromChar` and the selectable array both rest on.
      */
+    /** The voices on their final, EMPTY wrap slice here — see `wrapRan`. */
+    const graceHere = new Set<number>();
     const lineVoices = score.voices.map((v, k) => {
       const slurs = openSlurs[k] ?? {};
       openSlurs[k] = slurs;
@@ -3465,7 +3482,9 @@ const VOICE_FURNITURE = new Set(["style", "stem", "color", "scale"]);
         .forEach((j) => {
           const k = members[j] ?? 0;
           const voice = lineVoices[k];
-          if (voice === undefined || voice.length === 0) return;
+          const grace = wrapRan && i > 0 && (lastReal[k] ?? -1) + 1 === from;
+          if (voice === undefined || (voice.length === 0 && !grace)) return;
+          if (grace) graceHere.add(k);
           created.add(j);
           const head: AbcElement[] = [];
           /**
@@ -3477,10 +3496,23 @@ const VOICE_FURNITURE = new Set(["style", "stem", "color", "scale"]);
           const lineStyle = score.voices[k]?.measures[from]?.lineStyle;
           if (lineStyle !== undefined)
             head.push({ el_type: "style", head: lineStyle });
+          const carried = wrapRan && i > 0 ? lastStem.get(k) : undefined;
+          if (carried !== undefined) head.push({ el_type: "stem", direction: carried });
+          const opensSource =
+            !wrapRan || i === 0 || score.voices[k]?.measures[from]?.wrapSourceLineStart === true;
           const stem = score.voices[k]?.stemDirection;
-          if (stem != null) head.push({ el_type: "stem", direction: stem });
+          if (!opensSource) {
+            // A slice with no source line opening in it has no `createVoice` furniture.
+          } else if (stem != null) head.push({ el_type: "stem", direction: stem });
           else if (j > 0) {
-            if (created.has(0))
+            // …onto a first voice `createVoice` made on THIS source line — under a wrap, one
+            // with no source line opening here was never there to splice into.
+            if (
+              created.has(0) &&
+              (!wrapRan ||
+                i === 0 ||
+                score.voices[members[0] ?? 0]?.measures[from]?.wrapSourceLineStart === true)
+            )
               firstOfStaff?.splice(0, 0, { el_type: "stem", direction: "up" });
             head.push({ el_type: "stem", direction: "down" });
           }
@@ -3508,6 +3540,13 @@ const VOICE_FURNITURE = new Set(["style", "stem", "color", "scale"]);
           if (color != null) head.push({ el_type: "color", color });
           voice.splice(0, 0, ...head);
         });
+      // The stem each voice's slice ENDS on is what the next slice is handed.
+      if (wrapRan)
+        for (const k of members) {
+          const stems = (lineVoices[k] ?? []).filter((e) => e.el_type === "stem");
+          const last = stems[stems.length - 1]?.direction;
+          if (last !== undefined) lastStem.set(k, last);
+        }
     });
     // **FREE TEXT AND MID-TUNE SUBTITLES BETWEEN TWO SYSTEMS ARE LINES OF THEIR OWN**,
     // read off the same first measure the renderer's own block does (`Measure.textBefore`).
@@ -3541,7 +3580,9 @@ const VOICE_FURNITURE = new Set(["style", "stem", "color", "scale"]);
       ...(vskip === undefined ? {} : { vskip }),
       staff: voicesOfStaff
         .map((members, s) => ({ members, s }))
-        .filter(({ members }) => members.some((k) => (lineVoices[k] ?? []).length > 0))
+        .filter(({ members }) =>
+          members.some((k) => (lineVoices[k] ?? []).length > 0 || graceHere.has(k)),
+        )
         /**
          * **`%%staffnonote 0` DROPS EVERY STAFF THAT HOLDS NOTHING BUT RESTS**, and it is
          * a per-LINE pass over the built elements: `cleanUp` nulls any STAFF — not voice —
@@ -3577,7 +3618,12 @@ const VOICE_FURNITURE = new Set(["style", "stem", "color", "scale"]);
            * `[[d]]`, and ours published `[[d], []]` on every such line.
            */
           const voices = members.map((k) => lineVoices[k] ?? []);
-          while (voices.length > 1 && voices[voices.length - 1]?.length === 0) voices.pop();
+          while (
+            voices.length > 1 &&
+            voices[voices.length - 1]?.length === 0 &&
+            !graceHere.has(members[voices.length - 1] ?? -1)
+          )
+            voices.pop();
           const staff: AbcStaff = { voices };
           /**
            * **THE VOICE NAMES, AND WHICH ONE DEPENDS ON THE LINE.** `createVoice` stamps
