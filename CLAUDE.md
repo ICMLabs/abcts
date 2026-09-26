@@ -251,6 +251,11 @@ for once, most of them twice.
   MEANS THE CAUSE IS NOT IN THE HISTORY** — seven commits bought what `ls -la` on two inputs
   said at once: an uncommitted fixture edit in `../abcMusicKit`.
 
+- **A GATE THAT COMPARES A ROW'S SHAPE CANNOT SEE WHAT ITS ENTRIES ARE.** The timing gates
+  were at zero while every playback cursor threw on its first note: `elements` held the right
+  COUNT of stand-in objects where abcjs holds live `<g>` nodes. The first real page built on
+  abcts found it in one click (2026-09-25). **Build the consumer, not only the comparison.**
+
 **ON METHOD**
 
 - **READ THE NAMED abcjs FUNCTION, THEN PROBE. Neither half works alone.** Measuring can only
