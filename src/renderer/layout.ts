@@ -11354,7 +11354,7 @@ interface Advance {
   /** Ink reaching LEFT of the element's own x — abcjs's `-child.extraw`. */
   readonly left: number
   /** A barline gets no left clearance when it follows a part label or a tempo mark. */
-  readonly kind: 'bar' | 'part' | 'other'
+  readonly kind: 'bar' | 'part' | 'tempo' | 'other'
   /**
    * **WHETHER THE HOST'S `minPadding` APPLIES TO THIS ELEMENT.** `getExtraWidth` pads a
    * `note` or a `bar` and NOTHING else (`layout/voice-elements.js:110-115`) — and its test
@@ -12206,12 +12206,14 @@ function layoutMeasure(
    * `note note tempo note note bar` where ours was `tempo note note note note bar`.
    */
   const tempoChangeAt = meterEventIndex(measure.tempoChangeSourceRange)
+  let tempoDrawn = false
   const drawTempoChange = (): void => {
-    if (measure.tempoChange == null || tempoChangeAt > 0) return
+    if (measure.tempoChange == null || tempoChangeAt > 0 || tempoDrawn) return
+    tempoDrawn = true
     const tempo = layoutTempo(x, measure.tempoChange, strict, measure.tempoChangeSourceRange, true)
     if (tempo === null) return
     elements.push(tempo)
-    fixed(0, 0)
+    fixed(0, 0, 'tempo')
   }
   /**
    * **AND A WRAP THAT DISSOLVED THIS LINE'S BREAK RE-EMITS ITS STAFF PROPERTY** — see
@@ -12332,6 +12334,10 @@ function layoutMeasure(
     drawPart()
   } else {
     if (!staffMeterHere && !partAfterBar) drawPart()
+    // …**A `[Q:]` WRITTEN BEFORE THE OPENING BAR IS DRAWN BEFORE IT** — `|[Q:1/4=90]|:` is
+    // tempo, then bar, in abcjs's child list, and the bar after a tempo takes no left shift
+    // (`layout/voice-elements.js:66-67`). Drawn after it, the line came out 5px wider.
+    if ((measure.tempoChangeSourceRange?.start ?? Number.POSITIVE_INFINITY) < openingBarAt) drawTempoChange()
     drawOpeningBar()
     partIfBefore(measure.tempoChangeSourceRange)
     drawTempoChange()
@@ -12382,7 +12388,7 @@ function layoutMeasure(
     const tempo = layoutTempo(x, measure.tempoChange, strict, measure.tempoChangeSourceRange, true)
     if (tempo === null) return
     elements.push(tempo)
-    fixed(0, 0)
+    fixed(0, 0, 'tempo')
   }
   for (const [eventIndex, event] of measure.events.entries()) {
     drawMetersBefore(eventIndex)
@@ -14724,7 +14730,7 @@ function layoutScoped(input: Score, options: LayoutOptions = {}): Layout {
         const tempo = layoutTempo(x, score.tempo, strict, score.tempoSourceRange, true)
         if (tempo !== null) {
           elements.push(tempo)
-          advances.push({ rod: 0, gap: 0, duration: 0, left: 0, kind: 'other' })
+          advances.push({ rod: 0, gap: 0, duration: 0, left: 0, kind: 'tempo' })
         }
       }
       return { elements, advances }
@@ -15386,7 +15392,15 @@ function layoutScoped(input: Score, options: LayoutOptions = {}): Layout {
               ? MIN_PADDING
               : 0
           const wants = item.left + pad
-          const shifts = k === 0 || item.kind !== 'bar' || lines[v]?.items[k - 1]?.kind !== 'part'
+          /**
+           * **NO SHIFT FOR A BARLINE RIGHT AFTER A PART LABEL — OR A TEMPO.**
+           * `child.type !== 'bar' || (prev.type !== 'part' && prev.type !== 'tempo')`
+           * (`layout/voice-elements.js:66-67`). Only the part half was ported, so a header
+           * `Q:` over a line opening `|:` put the bar its left clearance, 5px, too far
+           * right — found by the first page built on abcts (2026-09-25); no fixture had both.
+           */
+          const prevKind = lines[v]?.items[k - 1]?.kind
+          const shifts = k === 0 || item.kind !== 'bar' || (prevKind !== 'part' && prevKind !== 'tempo')
           if (shifts && room < wants) {
             // Everything already placed at this time slot moves with the cursor —
             // abcjs's `shiftRight`, which carries each voice's own expectations along.

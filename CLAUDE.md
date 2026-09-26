@@ -27,8 +27,8 @@ this file keeps only what is true of every session.
 
 ## First Step — Always
 **THE STANDING ORDER IS 100% PARITY WITH ABCJS ON EVERY TUNE** — the 47-fixture sibling
-corpus, the 237-fixture in-repo corpus (180 harvested from abcjs 6.7.1's own tests + 57
-hand-written controls, 697 tunes) and the audio feature set. Work until it is reached;
+corpus, the 238-fixture in-repo corpus (180 harvested from abcjs 6.7.1's own tests + 58
+hand-written controls, 706 tunes) and the audio feature set. Work until it is reached;
 checkpoint and hand off as you go so no context is lost.
 
 > ⚖️ **THE RULING THAT GOVERNS THE GLYPH/METRIC SPLIT** (Lance, 2026-08-05): the Bravura

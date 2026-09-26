@@ -1,0 +1,74 @@
+%abc-2.1
+% A barline right after a tempo takes no left shift (layout/voice-elements.js:66-67).
+% Found 2026-09-25 by the first page built on abcts: a header Q: over a line that opens
+% with a barline put the bar 5px right. One variable per rung.
+
+X:1
+T:no tempo, opening repeat
+M:6/8
+L:1/8
+K:G
+|:GAG GAB:|
+
+X:2
+T:header tempo, opening repeat
+M:6/8
+L:1/8
+Q:3/8=116
+K:G
+|:GAG GAB:|
+
+X:3
+T:header tempo, chord symbol, opening repeat
+M:6/8
+L:1/8
+Q:3/8=116
+K:G
+|:"G"GAG GAB:|
+
+X:4
+T:header tempo, plain opening bar
+M:6/8
+L:1/8
+Q:3/8=116
+K:G
+|"G"GAG GAB|
+
+X:5
+T:header tempo, no opening bar
+M:6/8
+L:1/8
+Q:3/8=116
+K:G
+"G"GAG GAB|
+
+X:6
+T:header tempo, opening first ending
+M:4/4
+L:1/4
+Q:1/4=100
+K:C
+[1 CDEF:|
+
+X:7
+T:inline tempo before a mid-line repeat
+M:4/4
+L:1/4
+K:C
+CDEF|[Q:1/4=90]|:GABc:|
+
+X:8
+T:inline tempo before a repeat at a line start
+M:4/4
+L:1/4
+K:C
+CDEF|
+[Q:1/4=90]|:GABc:|
+
+X:9
+T:part label then an opening repeat
+M:4/4
+L:1/4
+P:A
+K:C
+|:CDEF:|

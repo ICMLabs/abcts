@@ -483,10 +483,13 @@ const WITHIN: Readonly<Record<string, number>> = {
   // `synth/timing`, one `visual/layout`, three `visual/parsing`), all at ZERO — the
   // `layout-10-text-a` one after a parser fix (a `%%text` between two UNBARRED lines was
   // claimed by the line above).
-  "0.05": 236,
-  "1": 236,
-  "5": 236,
-  "25": 237,
+  // …and `abcts-tempo-before-bar` (2026-09-25), nine rungs of a barline after a tempo —
+  // found by the first page built on abcts, at zero once the tempo half of the no-shift
+  // rule was ported.
+  "0.05": 237,
+  "1": 237,
+  "5": 237,
+  "25": 238,
 };
 
 const names = readdirSync(fixturesDir)
