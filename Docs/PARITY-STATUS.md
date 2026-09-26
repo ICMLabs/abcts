@@ -4,6 +4,12 @@
 BROWSER gates too, in WebKit and Chrome, against the widened corpus. Every number below is a
 re-run, not a carried-forward claim.*
 
+> ✅ **RE-RUN 2026-09-26** after the corpus grew by one control (`abcts-tempo-before-bar`,
+> nine tunes): **706 tunes, 700 comparable.** Every gate below is at zero or at its declared
+> count at the new size; the tables still carry the 697/691 figures from 2026-09-22 where a
+> row was not re-derived. New since: `zzwraplines` (§3b-wrap), `zzelemset` (§3e), and the
+> render-speed measurement in §3f.
+
 ⚠️ **The browser gates were the last thing to be re-measured and they had been left at their
 6.7.0 numbers for a day** — 685 where the corpus is now 691 comparable tunes. They agree
 (0 of 691 in both engines), so nothing moved; the point is that a file claiming "every number
@@ -40,10 +46,10 @@ together they let a markup difference live forever.
 
 | gate | what it compares | result |
 |---|---|---|
-| `svg-bytes` | 697 in-repo tunes, rendered headless | **0 differ** (6 divergent) |
+| `svg-bytes` | 706 in-repo tunes, rendered headless | **0 differ** (6 divergent) |
 | `svg-bytes-sibling` | 359 tunes from the 47-fixture corpus, in 5 flavours — plain, `--add-classes`, print, stacked, stacked-print | **0 differ** |
-| `zzlive` (WebKit) | abcts and abcjs running **in the same browser page**, diffed live | **0 of 691** (6 divergent) |
-| `zzlive` (Chrome) | the same, in Blink | **0 of 691** (6 divergent) |
+| `zzlive` (WebKit) | abcts and abcjs running **in the same browser page**, diffed live | **0 of 700** (6 divergent) |
+| `zzlive` (Chrome) | the same, in Blink | **0 of 700** (6 divergent) |
 | `dom-contract` | `class`, `data-name` and DOM depth over 25 tunes — what `querySelector` finds | **0 differ** |
 | `pixel-parity` | notehead/ledger/stem centres to 0.05px, against abcjs's own SVGs | **0 of 121** |
 | `corpus-ranked` (diagnostic, not a gate) | worst geometric axis per fixture | **1 of 237** — and it is `abcts-unknown-clef`, a declared divergence (§3) |
@@ -391,6 +397,53 @@ Two findings on the way:
   without it the wrap punted as "narrower than the margin" and never re-parsed;
 - `cleanUp` runs before `wrapLines`, so that emptied line offers `findLineBreaks` nothing
   and vanishes from the wrapped `tune.lines` — which the port gets for free.
+
+## 3e. What a playback cursor is handed — found by the first page built on abcts (2026-09-25)
+
+A local playground page (`~/ICMLabs/Code/abcts-site`, not in any repo) found in one click
+what every gate had missed: **the playback cursor threw on its first note in every browser.**
+`noteTimings`' `elements` and `makeVoicesArray`'s `elemset` held the parsed `abcelem` where
+abcjs holds the drawn `<g>`, and a cursor adds a class to it. The timing gates compared the
+rows' SHAPE, never what the entries were.
+
+Both now come from the drawing's own `DrawnElement` records (`data-name` + ordinal): the live
+`<g>`, `[]` where nothing was drawn, `undefined` for a duplicate voice's bar/meter/clef/key
+(abcjs never draws those). On the way, an EMPTY group left its record behind and shifted
+every later ordinal — so `rangeHighlight` had been lighting the wrong bar near endings.
+
+| gate | what it compares | result |
+|---|---|---|
+| `zzelemset` | every element's `elemset` and every timing row's `elements`, as `data-name:data-index`, both engines live | **6 of 706**, all declared (abcjs debug markers) — 674 with the fix reverted |
+
+The same page found a **5px barline shift**: a barline after a TEMPO takes no left shift,
+exactly as after a part label (`layout/voice-elements.js:66-67`) — only the part half had been
+ported, and no fixture had a header `Q:` over a line opening with a barline. Control
+`abcts-tempo-before-bar`, nine rungs, now in every byte gate.
+
+⚠️ **A reported playback drift was NOT an engine defect.** The cursor ran ahead of the sound on
+the playground in both engines; abcjs's own `examples/full-synth.html`, served from the same
+place, did not; and after reloads every configuration — the original one included — played in
+sync. Audio, note timings and onsets were identical between engines throughout. Recorded so
+that nobody "fixes" TimingCallbacks for it.
+
+## 3f. Render speed — measured 2026-09-26, and the page's first number was unfair
+
+The playground's "Rendered in N ms" showed abcts 2–5× slower than abcjs. **Measured fairly it
+is ~1.4×**, and the difference is almost all ONE design decision:
+
+| WebKit, one tune | abcjs | abcts |
+|---|---|---|
+| Cooley's, 16 bars — render + the layout owed before paint | 5 ms | 7 ms |
+| Cooley's ×8, 64 bars — the same | 26 ms | 36 ms |
+| 64 bars, headless (`renderAbc('*')`) — the engine alone | 15.8 ms | 17.6 ms |
+
+- **The unfair part:** abcjs builds DOM nodes and leaves layout to the next paint; abcts
+  measures text with `getBBox` during the render, which FORCES that layout inside the
+  stopwatch. Timing only the call charged abcts for work abcjs also does.
+- **What is left (~10 ms on 64 bars):** ~7 ms is the browser PARSING abcts's SVG string
+  (`innerHTML`), where abcjs creates its elements directly — the string is what makes byte
+  parity checkable, so this is deliberate (**owner, 2026-09-26: leave it here**). The rest is
+  the parser, ~2.7× abcjs's before `deepFreeze` stopped using a `WeakSet` (parse −29%).
 
 ## 3c. WebAudio — the surface that had no gate at all, and was BROKEN
 

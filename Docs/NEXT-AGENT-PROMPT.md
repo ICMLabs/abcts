@@ -1,4 +1,4 @@
-# NEXT AGENT PROMPT — abcts, 2026-09-25
+# NEXT AGENT PROMPT — abcts, 2026-09-26
 
 Paste the block below.
 
@@ -28,15 +28,17 @@ persist between tool calls and the workspace ROOT collects every sibling repo's 
     cp -R ../abcMusicKit/Docs/References/abcjs/abcjs-6.7.1/src /tmp/gp/abcjs
 …then `cd` back into the repo — that `cd` resets the shell's CWD for the next call.
 
-    suite       128 files, 3,446 tests (re-run 2026-09-25)
-    zzelemset   6 of 697, all DECLARED (abcjs debug markers) — NEW 2026-09-25: the live
+    suite       128 files, 3,448 tests (re-run 2026-09-26) · corpus 706 tunes, 700 comparable
+    zzelemset   6 of 706, all DECLARED (abcjs debug markers) — NEW 2026-09-25: the live
                 `<g>` nodes in `elemset` and the timing rows a playback cursor colours.
-    zzwraplines 2 of 697, both DECLARED — abcts-vskip 0/2, where abcjs throws. NEW
+    zzwraplines 2 of 706, both DECLARED — abcts-vskip 0/2, where abcjs throws. NEW
                 2026-09-25: the wrapped `tune.lines` a host reads after `{wrap}`.
-    svg-bytes   0 of 697 in-repo, 0 of 359 sibling
+    svg-bytes   0 of 706 in-repo, 0 of 359 sibling
     mode-bytes  11 — every one DECLARED
     midi-bytes  0 of 697 — 19 ruled divergent
-    zzlive      0 of 691  WebKit AND Chrome        zzselect 0 of 691  WebKit AND Chrome
+    zzlive      0 of 700  WebKit AND Chrome        zzselect 0 of 700  WebKit
+    speed       ~1.4x abcjs in the browser, render + layout (PARITY-STATUS §3f); the rest is
+                the SVG-string parse, and the owner said LEAVE IT (2026-09-26)
                 (re-run 2026-09-23 after the parser changes; Chrome is at zero too)
     zzclick     0 on every row                     zzledger 0 differ, 0 KNOWN, 88 agree
     zzopts      26 rows, every one at its declared count. 4 differing of 17,966 —
