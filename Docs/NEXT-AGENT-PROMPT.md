@@ -5,8 +5,8 @@ Paste the block below.
 ---
 
 ```
-start here: **`Docs/HANDOFF-2026-09-25.md`** (newest: per-voice lines, the wrapped
-`tune.lines` gate and the `addLineBreaks` port), then **`Docs/PARITY-STATUS.md`** — the only file re-measured after the abcjs
+start here: **`Docs/HANDOFF-2026-09-26.md`** (newest: where things stand, the local
+playground and how to resume), then `Docs/HANDOFF-2026-09-25.md` for the detail, then **`Docs/PARITY-STATUS.md`** — the only file re-measured after the abcjs
 **6.7.1** re-harvest (2026-09-21/22) and is current; §3b is a class the older docs predate,
 the NAMED OPEN ROWS of the tune-object oracles. Then `tests/open-rows.ts`, whose header says
 what each row is. Then CHECKPOINT-2026-09-16.md §3 for the rules — two are CORRECTIONS to
