@@ -594,6 +594,8 @@ measures the machine:
     node scripts/zzselect.mjs         the same with `selectTypes` on
     node scripts/zzopts.mjs           26 host-option rows × 691 tunes
     node scripts/zzclick.mjs          what a click at a point selects
+    node scripts/zzelemset.mjs        the live nodes a playback cursor is handed
+    node scripts/zzwraplines.mjs      the wrapped `tune.lines` a host reads
     node scripts/zzledger.mjs         every `ponytail:` prediction, live
     npm run scale                     the SHAPE of the cost curve
     npm run test:dist                 the built ESM and CJS bundles

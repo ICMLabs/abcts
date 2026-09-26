@@ -25,11 +25,11 @@ import { abcelemOf, type ProjectionIndex } from "./selectables.js";
  *
  * Two things ours cannot hand back, and both are stated rather than faked:
  *
- * - **`elemset` IS `[abcelem]` HERE, AND THE LIVE NODE ON THE TUNE OBJECT.** abcjs keeps the
- *   drawn `<g>` (`draw/absolute.js:57`); this function has no DOM, so it holds the element,
- *   and `makeVoicesArray` / the timing rows swap in the node `setupSelection` bound
- *   (`LIVE_NODE`). A stand-in there broke every playback cursor that adds a class to it —
- *   found 2026-09-25 by the first page built on abcts.
+ * - **`elemset` IS THE LIVE `<g>` WHEN THERE IS A DOM, `[abcelem]` WHEN THERE IS NOT.**
+ *   abcjs keeps the drawn node (`draw/absolute.js:57`), or nothing where the element drew
+ *   nothing (a `K:C` key). The caller passes `liveElemset`, found through the drawing's own
+ *   `DrawnElement` records — `data-name` and ordinal, the join `rangeHighlight` uses. A
+ *   stand-in there broke every playback cursor that adds a class to it (2026-09-25).
  * - **`hint` IS NEVER SET**, because nothing here draws a drag preview.
  */
 
@@ -43,10 +43,14 @@ export interface AbsoluteElementLike {
   readonly w: number;
   readonly duration: number;
   readonly durationClass?: number;
-  readonly elemset: readonly unknown[];
+  /** `undefined` where abcjs never drew the element — see `DUPLICATE_INVISIBLE`. */
+  readonly elemset: readonly unknown[] | undefined;
   readonly startTie?: unknown;
   readonly hint?: boolean;
 }
+
+/** What a duplicate voice leaves undrawn — see `makeVoicesArrayOf`. */
+const DUPLICATE_INVISIBLE: ReadonlySet<string> = new Set(["bar", "timeSignature", "clef", "keySignature"]);
 
 /** One row of `makeVoicesArray` (`data/abc_tune.js:428`). */
 export interface VoiceElementRow {
@@ -191,6 +195,11 @@ export function makeVoicesArrayOf(
   doc: Layout,
   index: ProjectionIndex,
   lines: readonly AbcLine[],
+  /**
+   * The LIVE `elemset` of a drawn element — its `<g>`, or `[]` where it opened none — when
+   * the tune was drawn into a DOM. Absent headless, where the `[abcelem]` stand-in stays.
+   */
+  liveElemset?: (element: LayoutElement) => readonly unknown[],
 ): VoiceElementRow[][] {
   const out: VoiceElementRow[][] = [];
   const measureNumber: number[] = [];
@@ -208,7 +217,7 @@ export function makeVoicesArrayOf(
     const height = bottom - top;
     let v = 0;
     for (const staff of system.staves)
-      for (const voice of staff.voices) {
+      for (const [voiceInStaff, voice] of staff.voices.entries()) {
         const rows = (out[v] ??= []);
         measureNumber[v] ??= 0;
         /**
@@ -226,7 +235,22 @@ export function makeVoicesArrayOf(
             height,
             line,
             measureNumber: measureNumber[v] ?? 0,
-            elem: elemOf(element, index),
+            elem:
+              liveElemset === undefined
+                ? elemOf(element, index)
+                : {
+                    ...elemOf(element, index),
+                    /**
+                     * ⚠️ **A LATER VOICE ON A STAFF NEVER DRAWS ITS BARS, METERS, CLEFS OR
+                     * KEYS** — `voice.duplicate` marks them `invisible`
+                     * (`abstract-engraver.js:150`, `:321-340`) and `drawAbsolute` returns
+                     * before it even sets `elemset = []`, so abcjs leaves it `undefined`.
+                     */
+                    elemset:
+                      voiceInStaff > 0 && DUPLICATE_INVISIBLE.has(element.type)
+                        ? undefined
+                        : liveElemset(element),
+                  },
           });
           if (element.type === "bar" && noteFound)
             measureNumber[v] = (measureNumber[v] ?? 0) + 1;
@@ -298,7 +322,7 @@ export function addElementToEvents(
   const midiPitches = bag["midiPitches"] as unknown[] | undefined;
   const graceNotes = bag["midiGraceNotePitches"] as unknown[] | undefined;
   if (realDuration > 0) {
-    const es = element.elemset.filter((e) => e !== null);
+    const es = (element.elemset ?? []).filter((e) => e !== null);
     const blank = (): TimingEvent => ({
       type: "event",
       milliseconds: voiceTimeMilliseconds,

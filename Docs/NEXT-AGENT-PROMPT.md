@@ -29,6 +29,8 @@ persist between tool calls and the workspace ROOT collects every sibling repo's 
 …then `cd` back into the repo — that `cd` resets the shell's CWD for the next call.
 
     suite       128 files, 3,446 tests (re-run 2026-09-25)
+    zzelemset   6 of 697, all DECLARED (abcjs debug markers) — NEW 2026-09-25: the live
+                `<g>` nodes in `elemset` and the timing rows a playback cursor colours.
     zzwraplines 2 of 697, both DECLARED — abcts-vskip 0/2, where abcjs throws. NEW
                 2026-09-25: the wrapped `tune.lines` a host reads after `{wrap}`.
     svg-bytes   0 of 697 in-repo, 0 of 359 sibling

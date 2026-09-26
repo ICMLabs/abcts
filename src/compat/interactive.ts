@@ -308,14 +308,6 @@ export interface InteractiveParams {
  * unconditionally, but they do nothing observable when `listeners` is empty and nothing is
  * draggable.
  */
-/**
- * **THE LIVE NODE EACH DRAWN `abcelem` WAS BOUND TO** — abcjs's `elemset`, which holds the
- * SVG `<g>` itself (`draw/absolute.js:57`). A playback cursor reads it off `noteTimings`'
- * `elements` and adds a class to it, so a stand-in object there breaks every follow-along
- * highlight. Filled by `setupSelection`; empty without a DOM, where the stand-in stays.
- */
-export const LIVE_NODE = new WeakMap<object, LiveNode>();
-
 export function setupSelection(
   paper: LiveNode | null,
   selectables: readonly Selectable[],
@@ -350,8 +342,6 @@ export function setupSelection(
     const isTempo =
       (sel.absEl.abcelem as { el_type?: string } | undefined)?.el_type === "tempo";
     bound.push({ sel, node, elemset: isTempo ? [] : [node] });
-    const abcelem = sel.absEl.abcelem as object | undefined;
-    if (!isTempo && abcelem !== undefined) LIVE_NODE.set(abcelem, node);
   }
   if (bound.length === 0 && listeners.length === 0) return svgs;
 

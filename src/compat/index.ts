@@ -134,9 +134,9 @@ const PITCH_STEP_PX = STAFF_SPACE_PX / 2;
 
 /** abcjs's `renderer.padding.left` on screen — the margin every system's music starts at. */
 const PAGE_MARGIN_PX = 15;
-import { layout, type MetaTextRow, type PlacedText } from "../renderer/layout.js";
+import { layout, type LayoutElement, type MetaTextRow, type PlacedText } from "../renderer/layout.js";
 import { type DrawnElement, type SelectableRecord, toSVG } from "../renderer/svg.js";
-import { LIVE_NODE, setupSelection } from "./interactive.js";
+import { setupSelection } from "./interactive.js";
 import { createDomTextMeasurer, setTextMeasurer } from "../renderer/text-measure.js";
 import {
   type HighlightPaper,
@@ -1410,6 +1410,48 @@ function renderInto(
      */
     const drawnRecords: DrawnElement[] = [];
     /**
+     * **EACH DRAWN ELEMENT'S LIVE `<g>`** — abcjs's `elemset`, found the way `rangeHighlight`
+     * finds a node: the `DrawnElement`'s `data-name` and ordinal, in document order. Built
+     * on each ask, after the markup is in the DOM; `null` headless, which keeps the
+     * `[abcelem]` stand-in. An element that opened no group — a `K:C` key, an invisible
+     * rest — gets `[]`, as abcjs's does. Keyed both by layout element (`makeVoicesArray`)
+     * and by `abcelem` (the timing rows, which carry only that).
+     */
+    const liveNodes = (): {
+      byElement: Map<LayoutElement, unknown>;
+      byAbcelem: Map<unknown, unknown>;
+    } | null => {
+      const target =
+        paper === null || typeof paper === "string" ? null : (paper as unknown as HighlightPaper);
+      if (target === null || drawnRecords.length === 0) return null;
+      const byName = new Map<string, ArrayLike<unknown>>();
+      const byElement = new Map<LayoutElement, unknown>();
+      const byAbcelem = new Map<unknown, unknown>();
+      const index = projection();
+      for (const record of drawnRecords) {
+        let nodes = byName.get(record.name);
+        if (nodes === undefined) {
+          nodes = target.querySelectorAll(`g[data-name="${record.name.replace(/["\\]/g, "\\$&")}"]`);
+          byName.set(record.name, nodes);
+        }
+        const node = nodes[record.ordinal];
+        // abcjs's tempo arm opens a group but never pushes it (`draw/absolute.js:52-56`).
+        if (node === undefined || record.element.type === "tempo") continue;
+        byElement.set(record.element, node);
+        const abcelem = abcelemOf(record.element, index);
+        if (abcelem !== undefined && !byAbcelem.has(abcelem)) byAbcelem.set(abcelem, node);
+      }
+      return byElement.size === 0 ? null : { byElement, byAbcelem };
+    };
+    const liveElemsetFor = (): ((element: LayoutElement) => readonly unknown[]) | undefined => {
+      const live = liveNodes();
+      if (live === null) return undefined;
+      return (element) => {
+        const node = live.byElement.get(element);
+        return node === undefined ? [] : [node];
+      };
+    };
+    /**
      * `engraver.rangeHighlight` — see `range-highlight.ts`. The paper is the element
      * `renderAbc` is about to write into, which is the DOM this searches; a headless slot
      * has none and the highlight is then a no-op, exactly as abcjs's is when nothing was
@@ -1571,13 +1613,28 @@ function renderInto(
       }
       return selectableCache ?? [];
     };
-    /** Each row's `elements` as abcjs hands them — the LIVE node where one was drawn. See `LIVE_NODE`. */
-    const liveRows = (rows: NoteTiming[]): NoteTiming[] =>
-      rows.map((r) =>
+    /**
+     * Each row's `elements` as abcjs hands them — a group per element, holding its LIVE node,
+     * or nothing where it drew nothing. A playback cursor adds a class to these. See
+     * `liveNodes`; headless the rows are left as built.
+     */
+    const liveRows = (rows: NoteTiming[]): NoteTiming[] => {
+      const live = liveNodes();
+      if (live === null) return rows;
+      return rows.map((r) =>
         r.elements === undefined
           ? r
-          : { ...r, elements: r.elements.map((g) => g.map((x) => LIVE_NODE.get(x as object) ?? x)) },
+          : {
+              ...r,
+              elements: r.elements.map((g) =>
+                g.flatMap((x) => {
+                  const node = live.byAbcelem.get(x);
+                  return node === undefined ? [] : [node];
+                }),
+              ),
+            },
       );
+    };
     const timings: {
       rows: NoteTiming[];
       time: number | undefined;
@@ -1869,16 +1926,8 @@ function renderInto(
 
       makeVoicesArray: (): VoiceElementRow[][] => {
         selectables();
-        // …with the live node in `elemset`, as abcjs keeps it — see `LIVE_NODE`.
-        // ponytail: only SELECTABLE elements are bound (by `data-index`); a clef, key or bar
-        // keeps the stand-in where abcjs holds its unindexed `<g>`. No cursor reads those —
-        // bind by drawing order if a host ever does. `zzaudio` gates the rest.
-        return makeVoicesArrayOf(laidOut(), projection(), lineCache ?? []).map((voice) =>
-          voice.map((row) => ({
-            ...row,
-            elem: { ...row.elem, elemset: row.elem.elemset.map((x) => LIVE_NODE.get(x as object) ?? x) },
-          })),
-        );
+        // …with the live `<g>` in `elemset` once drawn into a DOM — see `liveElemset`.
+        return makeVoicesArrayOf(laidOut(), projection(), lineCache ?? [], liveElemsetFor());
       },
       addElementToEvents,
     };

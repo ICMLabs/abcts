@@ -3456,6 +3456,14 @@ export function toSVG(
            * The same rule already governs `abcjs-meta-top` and the staff-lines group.
            */
           let openedAt = -1;
+          /** The `DrawnElement` this group pushed — taken back with an empty group. */
+          let drawnName: string | null = null;
+          const undraw = (): void => {
+            if (drawnName === null) return;
+            options.drawn?.pop();
+            drawnOrdinals.set(drawnName, (drawnOrdinals.get(drawnName) ?? 1) - 1);
+            drawnName = null;
+          };
           /** Whether this element took a `data-index` — see `unrecord`. */
           let tookIndex = false;
           /** The class counters this element advances — spent once its children are out. */
@@ -3580,6 +3588,7 @@ export function toSVG(
                 const ordinal = drawnOrdinals.get(name) ?? 0;
                 drawnOrdinals.set(name, ordinal + 1);
                 drawn.push({ name, ordinal, element: el });
+                drawnName = name;
               }
             }
             parts.push(
@@ -4232,8 +4241,10 @@ export function toSVG(
             if (openedAt >= 0 && parts.length === openedAt + 1) {
               parts.length = openedAt;
               // …**AND ITS `data-index` GOES BACK WITH IT** — see `unrecord`. This site is
-              // the one the `[1`-at-a-line-start case reaches.
+              // the one the `[1`-at-a-line-start case reaches. So does its `DrawnElement`:
+              // left behind, it shifted every later group's ordinal onto the wrong element.
               if (tookIndex) unrecord();
+              undraw();
             } else parts.push("</g>");
             return;
           }
@@ -4447,6 +4458,7 @@ export function toSVG(
               // `unrecord`. This read `if (el.type === "note" || el.type === "rest")` and
               // left the array's phantom behind in every case.
               if (tookIndex) unrecord();
+              undraw();
             } else {
               parts.push("</g>");
             }

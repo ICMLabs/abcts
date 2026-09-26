@@ -81,11 +81,9 @@ triage at the end, which is the part worth reading.
 
 - **:450** — abcjs's COMPOUND-METER tempo fix is not ported — for `den === 8` with a numerator other than 5 or 7 it recomputes the tempo from `millisecondsPerMeasure()`, which is a method on its laid-out tune and not on an event list. None of the three harvested cases is in 6/8; the table will say so when one…
 
-## `src/compat/index.ts` — 2
+## `src/compat/index.ts` — 1
 
 - **:800**  `no-trigger` — abcjs's tune object also carries audio and timing methods (`setUpAudio`, `millisecondsPerMeasure`, `getTotalTime`) and an `engraver` for its drag interaction. None of them is faked — a stub returning plausible numbers would be worse than an absent method, which at least fails loudly.
-
-- **:1873**  `trigger: a host reads makeVoicesArray's elemset for a clef, key or bar` — only SELECTABLE elements are bound to their live `<g>` (by `data-index`); the others keep the `abcelem` stand-in where abcjs holds an unindexed `<g>`. The playback cursor's `noteTimings` are exact (`zzaudio`, 2026-09-25). Upgrade: bind by drawing order.
 
 ## `src/compat/lines.ts` — 3
 
