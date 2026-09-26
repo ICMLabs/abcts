@@ -25,9 +25,11 @@ import { abcelemOf, type ProjectionIndex } from "./selectables.js";
  *
  * Two things ours cannot hand back, and both are stated rather than faked:
  *
- * - **`elemset` IS `[abcelem]`, NOT SVG NODES.** abcjs draws through a DOM and keeps the
- *   node (`draw/absolute.js:57`); we emit a string. Our own `setupEvents` already puts
- *   `[[abcelem]]` in a row's `elements` for exactly this reason, so the two agree.
+ * - **`elemset` IS `[abcelem]` HERE, AND THE LIVE NODE ON THE TUNE OBJECT.** abcjs keeps the
+ *   drawn `<g>` (`draw/absolute.js:57`); this function has no DOM, so it holds the element,
+ *   and `makeVoicesArray` / the timing rows swap in the node `setupSelection` bound
+ *   (`LIVE_NODE`). A stand-in there broke every playback cursor that adds a class to it —
+ *   found 2026-09-25 by the first page built on abcts.
  * - **`hint` IS NEVER SET**, because nothing here draws a drag preview.
  */
 

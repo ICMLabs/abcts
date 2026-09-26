@@ -136,7 +136,7 @@ const PITCH_STEP_PX = STAFF_SPACE_PX / 2;
 const PAGE_MARGIN_PX = 15;
 import { layout, type MetaTextRow, type PlacedText } from "../renderer/layout.js";
 import { type DrawnElement, type SelectableRecord, toSVG } from "../renderer/svg.js";
-import { setupSelection } from "./interactive.js";
+import { LIVE_NODE, setupSelection } from "./interactive.js";
 import { createDomTextMeasurer, setTextMeasurer } from "../renderer/text-measure.js";
 import {
   type HighlightPaper,
@@ -1571,6 +1571,13 @@ function renderInto(
       }
       return selectableCache ?? [];
     };
+    /** Each row's `elements` as abcjs hands them — the LIVE node where one was drawn. See `LIVE_NODE`. */
+    const liveRows = (rows: NoteTiming[]): NoteTiming[] =>
+      rows.map((r) =>
+        r.elements === undefined
+          ? r
+          : { ...r, elements: r.elements.map((g) => g.map((x) => LIVE_NODE.get(x as object) ?? x)) },
+      );
     const timings: {
       rows: NoteTiming[];
       time: number | undefined;
@@ -1747,12 +1754,12 @@ function renderInto(
           ...(bpm === undefined ? {} : { bpm }),
           ...(measuresOfDelay === undefined ? {} : { measuresOfDelay }),
         });
-        timings.rows = t.rows;
+        timings.rows = liveRows(t.rows);
         timings.time = t.totalTime;
         timings.beats = t.totalBeats;
         // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
-        (this as { noteTimings: NoteTiming[] }).noteTimings = t.rows;
-        return t.rows;
+        (this as { noteTimings: NoteTiming[] }).noteTimings = timings.rows;
+        return timings.rows;
       },
       setupEvents: (
         startingDelay: number,
@@ -1760,14 +1767,16 @@ function renderInto(
         startingBpm: number,
         warp = 1,
       ) =>
-        setupEventsFor(
-          score,
-          startingDelay,
-          timeDivider,
-          startingBpm,
-          warp,
-          geometryOf,
-          barGeometryOf,
+        liveRows(
+          setupEventsFor(
+            score,
+            startingDelay,
+            timeDivider,
+            startingBpm,
+            warp,
+            geometryOf,
+            barGeometryOf,
+          ),
         ),
       addUsefulCallbackInfo: (rows: readonly NoteTiming[], bpm: number) =>
         addUsefulCallbackInfo(score, rows, bpm),
@@ -1860,7 +1869,16 @@ function renderInto(
 
       makeVoicesArray: (): VoiceElementRow[][] => {
         selectables();
-        return makeVoicesArrayOf(laidOut(), projection(), lineCache ?? []);
+        // …with the live node in `elemset`, as abcjs keeps it — see `LIVE_NODE`.
+        // ponytail: only SELECTABLE elements are bound (by `data-index`); a clef, key or bar
+        // keeps the stand-in where abcjs holds its unindexed `<g>`. No cursor reads those —
+        // bind by drawing order if a host ever does. `zzaudio` gates the rest.
+        return makeVoicesArrayOf(laidOut(), projection(), lineCache ?? []).map((voice) =>
+          voice.map((row) => ({
+            ...row,
+            elem: { ...row.elem, elemset: row.elem.elemset.map((x) => LIVE_NODE.get(x as object) ?? x) },
+          })),
+        );
       },
       addElementToEvents,
     };

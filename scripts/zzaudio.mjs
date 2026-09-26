@@ -15,6 +15,7 @@
  * `play` — plus `CreateSynth().init().prime()`, in ONE WebKit page, against BOTH engines,
  * and compares what came back INCLUDING the rendered samples: buffer count, duration, peak
  * amplitude and the number of audible samples. Silence is the failure it is built to catch.
+ * It also compares the NODES a playback cursor is handed (`noteTimings`, `makeVoicesArray`).
  *
  *     node scripts/zzaudio.mjs
  *
@@ -52,6 +53,18 @@ const probe = async (page, name) =>
         const row = { label }
         try {
           const visual = API.renderAbc('paper', abc)[0]
+          // **WHAT A PLAYBACK CURSOR IS HANDED** — abcjs's `elements` / `elemset` hold the
+          // LIVE `<g>`, and a cursor adds a class to it. abcts handed a stand-in object
+          // until 2026-09-25, which broke every follow-along highlight and no gate saw.
+          const node = (x) => (x && x.getAttribute ? `${x.tagName}#${x.getAttribute('data-index')}` : 'NOT-A-NODE')
+          row.cursor = new API.TimingCallbacks(visual, {}).noteTimings
+            .filter((e) => e.type === 'event')
+            .map((e) => (e.elements ?? []).map((g) => g.map(node).join(',')).join('|'))
+            .join(' ')
+          // …for the SELECTABLE elements only: a clef, key or bar is an unindexed `<g>` in abcjs
+          // and still a stand-in here — see the `ponytail:` at `makeVoicesArray`.
+          row.elemset = visual.makeVoicesArray().flat().map((r) => r.elem.elemset.map(node).join(','))
+            .filter((x) => /#\d/.test(x)).join(' ')
           // abcjs's own documented path, in its own order.
           const c = new API.synth.SynthController()
           c.load('#audio', null, { displayPlay: true, displayProgress: true })
