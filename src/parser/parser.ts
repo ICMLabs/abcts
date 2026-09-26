@@ -9114,15 +9114,17 @@ function combineAccidental(current: Accidental | null, raw: string): Accidental 
  * Note this makes a consumer's `score.voices.push(x)` throw a TypeError under ESM's strict
  * mode. That is intended, and is the one way parse()'s output can raise.
  */
-function deepFreeze<T>(value: T, seen = new WeakSet<object>()): T {
-  if (!value || typeof value !== 'object' || seen.has(value)) return value
-  seen.add(value)
+function deepFreeze<T>(value: T): T {
+  // `isFrozen` doubles as the visited set: an object is frozen BEFORE its children are
+  // walked, so a shared or cyclic reference stops here — the WeakSet it replaces cost 7% of
+  // a headless render. ⚠️ So an object frozen ELSEWHERE is trusted to be deep already.
+  if (!value || typeof value !== 'object' || Object.isFrozen(value)) return value
   Object.freeze(value)
   if (Array.isArray(value)) {
-    for (const item of value) deepFreeze(item, seen)
+    for (const item of value) deepFreeze(item)
   } else {
     for (const key of Object.keys(value)) {
-      deepFreeze((value as Record<string, unknown>)[key], seen)
+      deepFreeze((value as Record<string, unknown>)[key])
     }
   }
   return value
