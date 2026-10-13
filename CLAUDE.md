@@ -5,7 +5,7 @@ and community successor to abcjs.
 
 ## How to read this file
 
-⚠️ **THE CURRENT STATE IS NOT IN THIS FILE.** It is in `Docs/PARITY-STATUS.md`, which is
+⚠️ **The current state is not in this file.** It is in `Docs/PARITY-STATUS.md`, which is
 re-measured rather than carried forward — read that first, then
 `Docs/NEXT-AGENT-PROMPT.md` and the newest `Docs/HANDOFF-*.md`.
 
@@ -20,24 +20,24 @@ What is here, and where:
 | **the target** | `## Parity targets, by mode`, `## Modes` |
 | **the rules that transfer** | `### The rules that transfer` — what 119 handoffs and checkpoints left behind |
 
-⚠️ **AND EVERY NUMBER IN A `>` BLOCKQUOTE IS WHAT WAS TRUE ON THE DATE BESIDE IT.** Run the
+⚠️ **And every number in a `>` blockquote is what was true on the date beside it.** Run the
 gate rather than quoting one. The dated LOG that used to fill `## Current phase` was deleted
 on 2026-09-23 — **60 handoffs and 59 checkpoints in `Docs/`** are the durable record, and
 this file keeps only what is true of every session.
 
 ## First Step — Always
-**THE STANDING ORDER IS 100% PARITY WITH ABCJS ON EVERY TUNE** — the 47-fixture sibling
+**The standing order is 100% parity with abcjs on every tune** — the 47-fixture sibling
 corpus, the 238-fixture in-repo corpus (180 harvested from abcjs 6.7.1's own tests + 58
 hand-written controls, 706 tunes) and the audio feature set. Work until it is reached;
 checkpoint and hand off as you go so no context is lost.
 
-> ⚖️ **THE RULING THAT GOVERNS THE GLYPH/METRIC SPLIT** (Lance, 2026-08-05): the Bravura
+> ⚖️ **The ruling that governs the glyph/metric split** (Lance, 2026-08-05): the Bravura
 > authorisation **never covered `abcjs-strict`**. Strict reproduces abcjs byte for byte, so
 > it has NO latitude — every figure it draws with must be abcjs's. `abcjs-extended`
 > is where the flexibility lives. **Any Bravura input reachable in strict is a defect, not
 > a decision.**
 >
-> **BOTH CLASSES ARE NOW CLOSED, AND THE FIRST ONE HAD TO BE CLOSED TWICE.** The line
+> **Both classes are now closed, and the first one had to be closed twice.** The line
 > weights were declared closed on 2026-08-05 and were not: `ABCJS_WEIGHTS` began with a
 > `...BRAVURA_WEIGHTS` spread, so every key nobody had reached stayed Bravura's silently,
 > and `slurEndpoint` — one of four the file itself flagged as "still Bravura's in strict" —
@@ -57,7 +57,7 @@ checkpoint and hand off as you go so no context is lost.
 > can express.** When something is invisible to every gate, ask what the gate's DATA MODEL
 > leaves out, not whether the number is small.
 
-> ⚖️ **AND THE ARCHITECTURAL FORM OF IT** (Lance, 2026-08-05): *"We keep measuring
+> ⚖️ **And the architectural form of it** (Lance, 2026-08-05): *"We keep measuring
 > differences to abcjs — when shouldn't we be using abcjs values?"* Measured: **`ENGRAVE`
 > holds 115 constants, 54 from `ABCJS_*` and 61 OURS — and strict reads all 61.** The
 > default in the strict path is our judgement and abcjs's is the exception, which is why
@@ -73,46 +73,46 @@ checkpoint and hand off as you go so no context is lost.
 > can reach rather than one nobody has checked. Re-measure a row before working it; the
 > ruling above is what stands.
 
-> ⚖️ **AND THE COROLLARY THE TRIAGE PRODUCED** (finding 91): **A CORRECT CONSTANT IS NOT
-> ALWAYS AN IMPROVEMENT.** abcjs's volta hook is 20px against our 10.85, certainly and
+> ⚖️ **And the corollary the triage produced** (finding 91): **A correct constant is not
+> always an improvement.** abcjs's volta hook is 20px against our 10.85, certainly and
 > measurably — and porting it ALONE puts the hook 4.5px inside the staff, because abcjs's
 > hook clears the staff only by virtue of abcjs's bracket sitting 29.93px above the top
 > line where ours sits 15.5. The two numbers were COMPENSATING, which makes them one port
 > rather than two. PORT THE STRUCTURE, THEN THE CONSTANTS is stated below; this is the
 > first case where obeying it meant deliberately NOT landing a figure known to be abcjs's.
 
-> ⚖️ **AND WHAT IT MEANS IN PRACTICE** (Lance, 2026-08-06): *"It seems you're doing more
+> ⚖️ **And what it means in practice** (Lance, 2026-08-06): *"It seems you're doing more
 > inferring rather than looking at abcjs constants and algorithms?"* It was right, and
 > acting on it produced the two largest steps of the whole arc within an hour. Measuring
 > said `visual-layout-04` was "a staircase, so four elements are too narrow" — a true
 > observation and the wrong conclusion; instrumenting abcjs showed every element width
-> already matched to the third decimal and the error was in the SOLVE. **A MEASUREMENT CAN
-> ONLY RANK HYPOTHESES YOU ALREADY HAVE; THE SOURCE IS WHERE THE HYPOTHESIS COMES FROM.**
+> already matched to the third decimal and the error was in the SOLVE. **A measurement can
+> only rank hypotheses you already have; the source is where the hypothesis comes from.**
 > The harness for instrumenting abcjs — in a SCRATCHPAD COPY, never in `../abcMusicKit` —
 > is written out in `Docs/CHECKPOINT-2026-08-06.md`.
 
-> ⚖️ **AND THE RULING BEHIND THE RULING** (Lance, 2026-08-05): **abcjs is the MASTER
+> ⚖️ **And the ruling behind the ruling** (Lance, 2026-08-05): **abcjs is the MASTER
 > SOURCE. Any variability is likely due to not using the same SETTING as abcjs, or to
 > INFERRING an algorithm instead of analysing abcjs.** Finding 73 is what that costs when
 > ignored: `createStems` counts a beamed head's `dx` twice, the quirk was READ, judged
 > "zero for the common case", left out — and that judgement was the entire remaining error
 > on `ragtime-nightingale`, the branch's one standing red. Port the quirk, then measure.
 
-> ⚖️ **AND HE HAD TO SAY IT AGAIN** (Lance, 2026-08-07): *"remember that abcjs code has the
+> ⚖️ **And he had to say it again** (Lance, 2026-08-07): *"remember that abcjs code has the
 > answers."* What it cost to ignore, in one sitting: reprinting the key in force made
 > `ragtime-nightingale` WORSE (dx 13.31 → 14.18), so I GUESSED at why, implemented the
 > guess, and it changed nothing at all. Reading `parseKey` gave it in one pass —
 > `impliedNaturals`, three lines of source, dx → 12.13. **A measurement can only rank
 > hypotheses you already have.**
 
-> 🖥️ **RUN EVERY COMMAND FROM `/Users/lrettberg/ICMLabs/Code/abcts`.** `cd` does not persist
+> 🖥️ **Run every command from `/Users/lrettberg/ICMLabs/Code/abcts`.** `cd` does not persist
 > between tool calls, and the workspace ROOT has its own vitest reach: run from there and it
 > collects every test in every sibling repo — abcjs's own included — and prints a wall of
 > failures that are nothing to do with this one. It bit twice on 2026-08-08. And run
 > `npx tsc --noEmit` BEFORE `git commit`, not alongside it: a duplicate object key shipped
 > that day because vitest passed and the typecheck came back after the push.
 
-> 🔬 **INSTRUMENT BOTH ENGINES — STANDING AUTHORITY** (Lance, 2026-08-13, and three times
+> 🔬 **Instrument both engines — standing authority** (Lance, 2026-08-13, and three times
 > before): *"you have abcjs code to work from and the ability and my authority to add
 > instrumentation to abcjs and to abcts to converge to 100% byte parity."* Reaching for a
 > probe is the FIRST move, not the last resort. Instrument a SCRATCHPAD COPY at
@@ -128,7 +128,7 @@ checkpoint and hand off as you go so no context is lost.
 > all and the stem is set by the `up` its unknown key failed to eat.
 > If a fix is only half understood, WRITE THE MEASUREMENT DOWN instead of shipping it.
 >
-> ⚠️ **AND WHEN THE SOURCE IS NOT ENOUGH, INSTRUMENT — THE DUMP LIES.**
+> ⚠️ **And when the source is not enough, instrument — the dump lies.**
 > `dump-elements.js` publishes `staff.top`/`bottom` BEFORE `setUpperAndLowerElements`
 > mutates them, and half a session went on a term list reasoned off that number. A
 > scratchpad copy with a `console.error` after every `moveY` answered the page walk in ONE
@@ -136,40 +136,40 @@ checkpoint and hand off as you go so no context is lost.
 > replacement and inject it — `layoutOneItem`, `setPaperSize`, `renderText`, `moveY` and
 > `nonMusic`'s row walk are already instrumented in the scratchpad copy.
 >
-> ⚠️ **AND A PROBE MUST BE CHECKED AGAINST ITS OWN DELIBERATE BREAK.** Four probes were MUTE
+> ⚠️ **And a probe must be checked against its own deliberate break.** Four probes were MUTE
 > on their first run here — a 200-character MIDI prefix identical whatever the tune, a tempo
 > byte that never moved, a part-box filter matching nothing, and a node-vs-browser text
 > comparison. A probe that cannot fail proves nothing, and one that measures two different
 > quantities is worse than none: `minPadding`'s ULP stood for three sessions behind a probe
 > that compared the grouping (which agreed) and never printed the term the tail was in.
 >
-> ⚠️ **AND A NODE PROBE AND A BROWSER PROBE ARE DIFFERENT ENGINES FOR ANYTHING TOUCHING
-> TEXT.** Node has no `getBBox`: the measurement falls back to the calibrated tables and
+> ⚠️ **And a Node probe and a browser probe are different engines for anything touching
+> text.** Node has no `getBBox`: the measurement falls back to the calibrated tables and
 > `boxInkAt` answers `null`. That is deliberate — the goldens ARE the headless measurement —
 > so a comparison against abcjs must happen in the SAME browser, and a control asserting a
 > browser-only number will pass in node against its own break.
 
-> 🔬 **AND abcjs ITSELF IS RUNNABLE**: `node dump-svg.js --file x.abc --output x.svg` from
+> 🔬 **And abcjs itself is runnable**: `node dump-svg.js --file x.abc --output x.svg` from
 > `../abcMusicKit/Tools/abcjs-debug`, at the goldens' own `{staffwidth: 670}`, with
-> `dump-elements.js` beside it. **`ABCJS_VERSION` PICKS THE TREE** — it defaults to 6.7.1
+> `dump-elements.js` beside it. **`ABCJS_VERSION` picks the tree** — it defaults to 6.7.1
 > now, so it is only needed to run an older one, and a run against the wrong tree once
 > accused this engine of a defect it did not have. `--add-classes` is not optional either:
 > without it every generated class in abcjs's output is the empty string.
-> **A LADDER OF CONTROLS THROUGH BOTH ENGINES IS A FIVE-MINUTE OPERATION**, and it is what
+> **A ladder of controls through both engines is a five-minute operation**, and it is what
 > names a rule; a FIXTURE NAME IS NOT EVIDENCE, and `stretchlast-1`'s defect had nothing to
 > do with `%%stretchlast`.
 
-> ⚖️ **GONZATO IS NOT AN abcjs-PARITY TARGET** (Lance, 2026-09-25, superseding the
+> ⚖️ **Gonzato is not an abcjs-parity target** (Lance, 2026-09-25, superseding the
 > 2026-08-08 deferral): *"abcjs was never able to render all of Gonzato's examples as they
 > are based on abcm2ps and abc2svg."* The book documents abcm2ps/abc2svg behaviour, so
 > abcjs is not an oracle for it and strict cannot be held to it. It was REMOVED from the
 > standing order above. If it returns, it returns as an `abcjs-extended` coverage question
 > measured against abcm2ps/abc2svg OUTPUT (clean-room), never as a strict gate.
 
-> ⚖️ **AND v1 HAS ALREADY ANSWERED THE ARCHITECTURAL QUESTION** (Lance, 2026-08-10b: *"v1
+> ⚖️ **And v1 has already answered the architectural question** (Lance, 2026-08-10b: *"v1
 > port from js encountered similar rounding issue — so v1 may have the solution used to get
-> to byte parity to js"*). It did, and **THERE IS NO CLEVER ROUNDING: v1 NEVER INTRODUCED A
-> SECOND UNIT.** It holds abcjs's own PIXELS end to end — `Spacing.STEP = 3.875`,
+> to byte parity to js"*). It did, and **there is no clever rounding: v1 never introduced a
+> second unit.** It holds abcjs's own PIXELS end to end — `Spacing.STEP = 3.875`,
 > `calcY(pitch) = staffAbsoluteY - pitch * STEP`, `roundNumber = parseFloat(x.toFixed(2))`
 > for paths and text, plain JS `String(number)` for the raw `width`/`height`. This engine
 > does every one of those now: `UNIT_PX = 1` and the layout holds abcjs's pixels, because
@@ -179,8 +179,8 @@ checkpoint and hand off as you go so no context is lost.
 > expression must never contain a CONVERTED constant, and a mode factor goes on the OUTSIDE
 > where 1.0 is the identity.
 
-> 📈 **AND THE CORPUS IS TOO SMALL TO SEE A QUADRATIC — `npm run scale` IS THE GATE THAT
-> CAN.** Every comparison here renders fixtures whose largest is a few hundred notes, so an
+> 📈 **And the corpus is too small to see a quadratic — `npm run scale` is the gate that
+> can.** Every comparison here renders fixtures whose largest is a few hundred notes, so an
 > O(n²) shows up as a flat, diffuse cost and a profiler over them says nothing.
 > `scripts/zzscale.mjs` measures the SHAPE OF THE CURVE instead — eight kinds of music at
 > three sizes, asserting the per-note cost does not run away — and it found **FIVE
@@ -188,12 +188,12 @@ checkpoint and hand off as you go so no context is lost.
 > start of the source PER WARNING, 85% of a render; `lastIndexOf` with no floor; an anchor
 > filter over all anchors for every anchor).
 >
-> ⚠️ **TWO OF THOSE HAD ALREADY BEEN MEASURED AND REJECTED** — "973ms → 975ms on the
+> ⚠️ **Two of those had already been measured and rejected** — "973ms → 975ms on the
 > corpus". Every number was right and every one was the wrong instrument: **a benchmark
 > whose inputs are all small cannot see a quadratic**, and "measured and rejected" is only
-> as good as the input that measured it. ⚠️ **AND ONE FIX HAD TO BE LAZY** — an eager map
+> as good as the input that measured it. ⚠️ **And one fix had to be lazy** — an eager map
 > really did make the biggest fixture slower, because a short line's scan is cheaper than
-> the map that replaces it; build it on first use. ⚠️ **AND IT IS A SCRIPT, NOT A TEST**: a
+> the map that replaces it; build it on first use. ⚠️ **And it is a script, not a test**: a
 > wall-clock measurement inside the parallel suite measures the MACHINE, and a flaky gate is
 > worse than no gate.
 
@@ -205,53 +205,53 @@ host-option matrix and the tune-object oracles. What follows is what they left b
 rules that are true of the NEXT session rather than of the one that found them. Each was paid
 for once, most of them twice.
 
-**ON WHAT A GATE CAN AND CANNOT SEE**
+**On what a gate can and cannot see**
 
-- **A COMPARISON CAN ONLY CATCH WHAT ITS REPRESENTATION CAN EXPRESS.** Strict drew Bravura's
+- **A comparison can only catch what its representation can express.** Strict drew Bravura's
   line weights for months — a thin barline at 1.24px against abcjs's 0.600 — and no gate
   could see it, because `PixelItem` carried only a CENTRE and a line's centre does not move
   when its thickness changes. When something is invisible to every gate, ask what the gate's
   DATA MODEL leaves out, not whether the number is small.
-- **A GATE'S REACH IS A PROPERTY OF ITS ENUMERATION, NOT OF ITS COMPARISON.** `pixel-parity`
+- **A gate's reach is a property of its enumeration, not of its comparison.** `pixel-parity`
   read `<name>.svg` and silently skipped every multi-tune fixture — 89 tunes with abcjs's own
   goldens sitting in the same directory. `svg-bytes` did the same and the seven tunes it
   skipped named a whole missing feature. Before concluding a gate is exhausted, ask what
   evidence EXISTS, not what the evidence says.
-- **A GATE BUILT ON OUR OWN MARKUP FAILS WHEN WE SUCCEED**, and the failure is the signal.
+- **A gate built on our own markup fails when we succeed**, and the failure is the signal.
   Five did: a density test keyed on `transform="translate("`, a glyph filter keyed on "a
   `<path>` with no `data-name`", two keyed on a class that is empty without `add_classes`,
   and a line-weight probe that asked a one-path bracket for a per-stroke box.
-- **A GATE THAT RECORDS ITS OWN NUMBERS CANNOT SEE A CHANGE OF UNITS.** The harvested table
+- **A gate that records its own numbers cannot see a change of units.** The harvested table
   went to 74 of 177 fixtures off some axis, one by 211.8px, **and its assertion passed the
   whole time** — it ratchets "no worse than recorded" against numbers it had recorded. It was
   found by READING THE REPORT.
-- **A RATCHET THAT NAMES ROWS CATCHES WHAT AN AGGREGATE HIDES.** Two fixtures went from
+- **A ratchet that names rows catches what an aggregate hides.** Two fixtures went from
   byte-exact to differing while the total improved; a ratchet holding 4% of what is green is
-  a ratchet in name. ⚠️ **AND A GATE'S REPORT FILE IS NOT ITS RESULT** — `/tmp/abcts-*.txt`
+  a ratchet in name. ⚠️ **And a gate's report file is not its result** — `/tmp/abcts-*.txt`
   outlives the run, and a gate was called green twice off a stale one.
-- **AN OPTION IS A RESERVE MAGNIFIER.** Five rules closed on the host-option matrix were
+- **An option is a reserve magnifier.** Five rules closed on the host-option matrix were
   defects on the DEFAULT path that no default-path gate could see: a width only reaches the
-  page when it beats the elastic gap beside it. Corollary: **A SECOND ALGORITHM REVEALS EVERY
-  COINCIDENCE THE FIRST ONE PAID FOR.**
-- **A RESERVE ALWAYS MASKED BY A BIGGER ONE IS A RULE NO GATE CAN SEE** — a chord's incoming
+  page when it beats the elastic gap beside it. Corollary: **A second algorithm reveals every
+  coincidence the first one paid for.**
+- **A reserve always masked by a bigger one is a rule no gate can see** — a chord's incoming
   tie-half had been dead since it landed, because a clef declares `bottom: -1` and the tie's
   own 0 never won the `min`.
-- **TWO SURFACES, AND A CONTROL THAT READS ONE IS MUTE FOR THE OTHER.** The ink and
+- **Two surfaces, and a control that reads one is mute for the other.** The ink and
   `tune.lines` carry the same rules separately, and eight open-row families were rules this
   repo had ALREADY PORTED at the site that named them: the renderer knew `%%staffnonote` and
   `clefChangeSilent`, the grace path knew a tie's carry was positional. **A rule ported at
   the site that named it is not a rule ported** — grep this repo before building one.
-- **THE INK AND THE CLOCK ARE DIFFERENT SURFACES TOO.** A note longer than a breve was
+- **The ink and the clock are different surfaces too.** A note longer than a breve was
   SILENT here for as long as its row existed, because its DRAWING is a declared divergence
   and nobody asked whether it still sounded.
-- **A DEFECT CAN NEED A BIGGER PAGE TO BE VISIBLE**: an accidental reserving in y rather than
+- **A defect can need a bigger page to be visible**: an accidental reserving in y rather than
   pitch is one ULP of `staff.top`, expressible only three thousand pixels down.
-- **RE-RUN BEFORE BELIEVING A RED.** The suite timed out under load and reported three reds
-  where the same tree re-ran green in 35 seconds. ⚠️ **AND A BISECT THAT NEVER TURNS GREEN
-  MEANS THE CAUSE IS NOT IN THE HISTORY** — seven commits bought what `ls -la` on two inputs
+- **Re-run before believing a red.** The suite timed out under load and reported three reds
+  where the same tree re-ran green in 35 seconds. ⚠️ **And a bisect that never turns green
+  means the cause is not in the history** — seven commits bought what `ls -la` on two inputs
   said at once: an uncommitted fixture edit in `../abcMusicKit`.
 
-- **A GATE THAT COMPARES A ROW'S SHAPE CANNOT SEE WHAT ITS ENTRIES ARE.** The timing gates
+- **A gate that compares a row's shape cannot see what its entries are.** The timing gates
   were at zero while every playback cursor threw on its first note: `elements` held the right
   COUNT of stand-in objects where abcjs holds live `<g>` nodes. The first real page built on
   abcts found it in one click (2026-09-25). **Build the consumer, not only the comparison.**
@@ -261,73 +261,73 @@ for once, most of them twice.
 - **READ THE NAMED abcjs FUNCTION, THEN PROBE. Neither half works alone.** Measuring can only
   RANK hypotheses you already have; the source is where a hypothesis comes from, and the
   output is what settles it.
-- **PORT THE STRUCTURE, THEN THE CONSTANTS.** Every costly divergence here has been
-  architectural rather than numeric. **AND A CORRECT CONSTANT IS NOT ALWAYS AN IMPROVEMENT**:
+- **Port the structure, then the constants.** Every costly divergence here has been
+  architectural rather than numeric. **And a correct constant is not always an improvement**:
   abcjs's volta hook is 20px against our 10.85, certainly — and porting it ALONE puts the
   hook inside the staff, because the two numbers were COMPENSATING.
-- **MEASURING IS A COMPASS AND A PROOF, NEVER A SOURCE OF NUMBERS** (Lance, 2026-08-05).
+- **Measuring is a compass and a proof, never a source of numbers** (Lance, 2026-08-05).
   Two pre-computed constants that hid real defects: a spring folded `sqrt(2)` in and rounded
   to four decimals (a relative 1.5e-5 on every note, invisible to a 0.05px gate and not to a
   byte comparison), and a tempo's pre-text gap was a flat staff space where abcjs measures
   one AVERAGE CHARACTER.
-- **A LADDER OF CONTROLS, ONE VARIABLE PER RUNG, IS WHAT NAMES AN INTERACTION.** `"D7"…|1…`
+- **A ladder of controls, one variable per rung, is what names an interaction.** `"D7"…|1…`
   took five rungs to say "a chord AND an ending", which is a BRANCH in abcjs and invisible in
   either feature alone. A CONTROL TUNE is the proof, not a fixture.
 - **A RECORDED CAUSE IS A HYPOTHESIS, HOWEVER CAREFULLY IT WAS WRITTEN DOWN — and its SIZE
   rots faster than its cause.** Four recorded causes were wrong in one session and all three
   "do not re-open" rows fell, each about an hour once the right model was in hand. A wrong
   cause gets tested and falls over; a wrong SIZE stops the work being attempted at all.
-- **A NOTE THAT NAMES A CAUSE IS THE REASON THE ROW STOPS BEING READ.** Five times: the `G8`
+- **A note that names a cause is the reason the row stops being read.** Five times: the `G8`
   breve (a wrong GLYPH explained away as a bounding-box difference, with the cited 16.83 being
   `noteheads.dbl`'s own published width), the `extra-class` accent, the notehead `data-name`,
   the `sfz` table, and `minPadding`'s ULP. Rule the cause OUT on a control before writing it
   down.
-- **A TEST CAN ENCODE AN INFERENCE AS FIRMLY AS A COMMENT CAN, AND IS HARDER TO NOTICE** — a
+- **A test can encode an inference as firmly as a comment can, and is harder to notice** — a
   green test reads as a checked fact. Three asserted this engine's own engraving as though
   measured, and one gate NORMALISED abcjs's answer away before comparing.
-- **SIZE AN ARC BY GREPPING THE REFERENCE, NOT BY REASONING ABOUT IT.** "51 call sites must
+- **Size an arc by grepping the reference, not by reasoning about it.** "51 call sites must
   learn their drawn x" was TWO. And size a representation change by SAMPLING THE ARITHMETIC:
   a ten-line script over 32 width/scale pairs decided two landings before the engine was
   touched, and killed a third candidate that was worse than what it replaced.
-- **ENUMERATE THE REFERENCE, NOT THE NOTES.** Sixteen defects came out of abcjs's own
+- **Enumerate the reference, not the notes.** Sixteen defects came out of abcjs's own
   DIRECTIVE SWITCH, which named 41 directives this parser never mentioned. A `ponytail:` that
   says "no fixture writes one" is a PREDICTION; writing the fixture is how it becomes a
-  measurement. **AND A GATE THAT CANNOT BE REGENERATED STOPS GROWING WITH THE CORPUS.**
-- **WHEN A CHANGE TO AN INPUT MOVES NOTHING, THE OUTPUT IS NOT READING THAT INPUT.** Twice a
+  measurement. **And a gate that cannot be regenerated stops growing with the corpus.**
+- **When a change to an input moves nothing, the output is not reading that input.** Twice a
   careful fix changed nothing at all, and both times the value it computed was being
-  overwritten downstream. ⚠️ **AND HALF A RULE CAN BE WORSE THAN NONE**, four times, with the
+  overwritten downstream. ⚠️ **And half a rule can be worse than none**, four times, with the
   row count unchanged.
-- **A HALF-UNDERSTOOD FIX IS WORTH LESS THAN A WRITTEN-DOWN MEASUREMENT.** Several were
+- **A half-understood fix is worth less than a written-down measurement.** Several were
   implemented, measured and REVERTED on purpose, with both engines' numbers recorded instead;
   every one of them landed later in about an hour.
 
-**ON THE ARITHMETIC, WHICH IS PART OF THE PORT**
+**On the arithmetic, which is part of the port**
 
-- **A RECOVERY IS NOT A PRIMITIVE.** `(a + b) - b` is not `a`, and on a rounding boundary that
+- **A recovery is not a primitive.** `(a + b) - b` is not `a`, and on a rounding boundary that
   is a printed digit. Six times: a flag's `dx`, a key signature's `dx`, `minx`'s two adds, a
   dot's offset, a rule's centre for its edge, and a grace accidental's left reach — that last
   one already written down AT THE SITE and re-derived three lines later. Where abcjs keeps a
   primitive, keep the same primitive; carry a constructed value rather than re-deriving it.
-- **AN ASSOCIATION IS A DECISION.** `a + b + c` is `(a + b) + c`, and abcjs's grouping is part
+- **An association is a decision.** `a + b + c` is `(a + b) + c`, and abcjs's grouping is part
   of the port: nine fixtures turned on one pair of brackets in `printSymbol`.
-- **A TOTAL IS NOT A WALK, AND A SUM CANNOT SEE AN ORDER.** Six times — `calcHeight`,
+- **A total is not a walk, and a sum cannot see an order.** Six times — `calcHeight`,
   `topAdvances`, the bottom-text block, the stacked page cursor, the above-lane order, a
   `%%text` before the music. Spend each term where abcjs spends it.
-- **abcjs HOLDS THE VERTICAL IN PITCH AND MULTIPLIES BY `STEP` ONCE**; hold the extent in
+- **abcjs holds the vertical in pitch and multiplies by `STEP` once**; hold the extent in
   pitch, not in y divided back. And `roundNumber` is `parseFloat(x.toFixed(2))`, which
   disagrees with `Math.round(x*100)/100` on a decimal half.
 - **A DECLARED BOX IS WHAT abcjs RESERVES — it does not measure what it draws.** Notehead,
   accidental, clef, key, meter, tempo, tuplet, dynamic, decoration and tie all reserve
-  declared figures, and a BEAM reserves nothing. It is not a skyline. **AND "DOES NOT
-  RESERVE" HAS TO BE SAID, NOT OMITTED**: an absent reserve falls back to an ascent/descent
+  declared figures, and a BEAM reserves nothing. It is not a skyline. **And "does not
+  reserve" has to be said, not omitted**: an absent reserve falls back to an ascent/descent
   estimate, which reserves MORE.
-- **A DECLARED EDGE OF ZERO IS NOT DECLARED AT ALL** — `if (opt.bottom)` and `0` is falsy.
+- **A declared edge of zero is not declared at all** — `if (opt.bottom)` and `0` is falsy.
   Ported twice: a stem whose low end is pitch 1, and a mezzosoprano clef.
-- **TWO ERRORS CANCELLING IS THE NORMAL SHAPE HERE**, six times — including a correct change
+- **Two errors cancelling is the normal shape here**, six times — including a correct change
   that made a fixture WORSE because it had been masking a latent defect, and an empty
   `%%center` whose row and ink were wrong in opposite directions so the page agreed. Land the
   structure, then chase what it exposes.
-- **DOCUMENT ORDER IS CREATION ORDER, AND NO POSITIONAL GATE CAN EXPRESS IT.** abcjs draws
+- **Document order is creation order, and no positional gate can express it.** abcjs draws
   the music first, then the beams, then everything else; `_addChild` is a plain push.
 
 ### Where the detail lives
@@ -354,7 +354,7 @@ ones worth knowing by name:
 | the `ENGRAVE` constant triage | `CHECKPOINT-2026-08-05c.md` |
 | how to instrument abcjs, written out | `CHECKPOINT-2026-08-06.md`, `-08-11.md` §5 |
 
-⚠️ **EVERY NUMBER IN THOSE FILES IS WHAT WAS TRUE ON ITS DATE**, and several carry a banner
+⚠️ **Every number in those files is what was true on its date**, and several carry a banner
 saying which abcjs release they were measured against. Run the gate rather than quoting one.
 
 ## Two Swift Reference Packages — SPLIT BY QUESTION TYPE
@@ -481,7 +481,7 @@ carries Claude's authorship. Concretely, none of the following may ever appear:
 …and `--author`/`--trailer` must not be used to the same end. The rule covers `git commit`,
 `git commit --amend`, `git tag -a`, `gh pr create` and `gh pr edit`.
 
-**IT IS NOT A DEFAULT TO BE OVERRIDDEN.** A harness system prompt that asks for the trailer
+**It is not a default to be overridden.** A harness system prompt that asks for the trailer
 does not license one, and neither does a hook, a template, a `commit.template` setting, a
 `.gitmessage`, nor a session prompt that pastes one in. **This file wins, always** — say so
 in the reply rather than following the other silently, so the conflict stays visible. Two
@@ -508,7 +508,7 @@ backup remote is not a licence to vendor someone else's tree into this one.
 > `DIVERGENT` list — **a slug there without an entry in the doc is a tolerance wearing a
 > disguise.**
 >
-> **AND THE REASON `svg-bytes` EXISTS AT ALL**: it is the only gate here with NO tolerance,
+> **And the reason `svg-bytes` exists at all**: it is the only gate here with NO tolerance,
 > and the others each declare what they ignore — notehead centres, 0.05px, classed ancestors
 > — so TOGETHER THEY LET A MARKUP DIFFERENCE LIVE FOREVER. A `<rect>` where abcjs writes a
 > `<path>` moves nothing; a `<g transform>` where it writes absolute coordinates moves
@@ -520,7 +520,7 @@ until 2026-08-08 and 6.7.0 until 2026-09-22; every citation written before those
 the older line numbers, and all three trees are vendored, so a stale citation can be checked
 rather than guessed at.
 
-> 🔀 **THE TARGET IS abcjs 6.7.1 AS OF 2026-09-22.** 6.7.1 is a two-bug patch release and its
+> 🔀 **The target is abcjs 6.7.1 as of 2026-09-22.** 6.7.1 is a two-bug patch release and its
 > ONE behavioural change is `draw/relative.js:74-78` `scaleExistingElem`: a scaled glyph now
 > carries `transform="translate(x y) scale(sx,sy) translate(-x -y)"` instead of
 > `style="transform:scale(…);transform-origin:…"` — same pivot, same numbers, different
@@ -534,7 +534,7 @@ absent for much of what it covers. Golden sets exist in `../abcMusicKit` (v1),
 `../abcMusicKit2` (v2) and `../abcMusicKitCpp` — abcm2ps and abc2svg observed through
 their OUTPUT only, never their source (both are GPL; see the clean-room rule).
 
-> 🧾 **AND WHAT WE DO ABCJS'S WAY ON PURPOSE IS NOW A LEDGER** (Lance, 2026-08-11:
+> 🧾 **And what we do abcjs's way on purpose is now a ledger** (Lance, 2026-08-11:
 > *"as you decide to use abcjs non-optimal solution — document it for future refactor."*).
 > `Docs/ABCJS-DEBT.md` holds every place abcts is deliberately WORSE-SHAPED than it needs to
 > be because byte parity demands abcjs's arithmetic, order or data model: `Math.sqrt` where
@@ -546,7 +546,7 @@ their OUTPUT only, never their source (both are GPL; see the clean-room rule).
 > corner we cut, an `abcjs-debt:` is a corner abcjs cut that we are obliged to cut with it.
 > Each entry names the gate that goes red if it is "fixed", so the cost is knowable before
 > anyone reaches for it — and it used to end "**nothing there may be touched while
-> `svg-bytes` is open**". ⚠️ **THAT CONDITION HAS BEEN MET SINCE 2026-08-14**: the gate is 0
+> `svg-bytes` is open**". ⚠️ **That condition has been met since 2026-08-14**: the gate is 0
 > of 697 in-repo and 0 of 359 sibling. It is not an invitation — every row still names the
 > gate that goes red and the cost is unchanged — but it is no longer a bar.
 
@@ -571,7 +571,7 @@ literal and each of which is a row of `tests/compat-mode.test.ts`. ⚠️ **The 
 row's obvious control was MUTE**: a single `^3/2C` reports the same width in both modes, so
 it takes SIX microtones over two bars to move the number.
 
-⚖️ **THERE WERE THREE AND `abc2.1` WAS NEVER A MODE** (Lance, 2026-09-04). It was meant to be
+⚖️ **There were three and `abc2.1` was never a mode** (Lance, 2026-09-04). It was meant to be
 the middle rung — the standard read correctly, conventional engraving — and **every mode
 branch in `src/` is `isStrict(mode)`**, one comparison in `core/model.ts`. Not one site ever
 distinguished it from `extended`, so all 691 corpus cases were byte-identical between them
@@ -614,7 +614,7 @@ surface. v1's extended-mode features are a feature-coverage gap, tracked separat
 
 ## Session Prompts
 
-⚠️ **THE LIVE ONE IS `Docs/NEXT-AGENT-PROMPT.md`**, which is rewritten with the board every
+⚠️ **The live one is `Docs/NEXT-AGENT-PROMPT.md`**, which is rewritten with the board every
 session and names the state, the traps and what is open. The block below is the part of it
 that does NOT change — paste the file's own block, not this one, and use this only if that
 file is missing.
