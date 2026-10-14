@@ -461,6 +461,30 @@ const EXPECTED: Record<
   "tunebook-3-tune0": { heads: 8, dy: 0, dx: 0, oy: 0, ox: 0 },
   "tunebook-3-tune1": { heads: 14, dy: 0, dx: 0, oy: 0, ox: 0 },
   "tunebook-3-tune2": { heads: 8, dy: 0, dx: 0, oy: 0, ox: 0 },
+  // The sibling corpus's measurement-unit fixtures (abcMusicKit 9.10.7, 2026-10-10): every
+  // `%%` measurement read as abcjs's `getMeasurement` does — byte-exact on arrival of the port.
+  "spacing-units-tune0": { heads: 39, dy: 0, dx: 0, oy: 0, ox: 0 },
+  "spacing-units-tune1": { heads: 39, dy: 0, dx: 0, oy: 0, ox: 0 },
+  "spacing-units-tune2": { heads: 39, dy: 0, dx: 0, oy: 0, ox: 0 },
+  "spacing-units-tune3": { heads: 39, dy: 0, dx: 0, oy: 0, ox: 0 },
+  "spacing-units-tune4": { heads: 39, dy: 0, dx: 0, oy: 0, ox: 0 },
+  "spacing-units-tune5": { heads: 39, dy: 0, dx: 0, oy: 0, ox: 0 },
+  "spacing-units-tune6": { heads: 39, dy: 0, dx: 0, oy: 0, ox: 0 },
+  "staffwidth-units-tune0": { heads: 41, dy: 0, dx: 0, oy: 0, ox: 0 },
+  "staffwidth-units-tune1": { heads: 41, dy: 0, dx: 0, oy: 0, ox: 0 },
+  "staffwidth-units-tune2": { heads: 41, dy: 0, dx: 0, oy: 0, ox: 0 },
+  "staffwidth-units-tune3": { heads: 41, dy: 0, dx: 0, oy: 0, ox: 0 },
+  "staffwidth-units-tune4": { heads: 41, dy: 0, dx: 0, oy: 0, ox: 0 },
+  "staffwidth-units-tune5": { heads: 41, dy: 0, dx: 0, oy: 0, ox: 0 },
+  "staffwidth-units-tune6": { heads: 41, dy: 0, dx: 0, oy: 0, ox: 0 },
+  "staffwidth-units-tune7": { heads: 41, dy: 0, dx: 0, oy: 0, ox: 0 },
+  "vskip-sep-units-tune0": { heads: 41, dy: 0, dx: 0, oy: 0, ox: 0 },
+  "vskip-sep-units-tune1": { heads: 41, dy: 0, dx: 0, oy: 0, ox: 0 },
+  "vskip-sep-units-tune2": { heads: 41, dy: 0, dx: 0, oy: 0, ox: 0 },
+  "vskip-sep-units-tune3": { heads: 41, dy: 0, dx: 0, oy: 0, ox: 0 },
+  "vskip-sep-units-tune4": { heads: 41, dy: 0, dx: 0, oy: 0, ox: 0 },
+  "vskip-sep-units-tune5": { heads: 41, dy: 0, dx: 0, oy: 0, ox: 0 },
+  "vskip-sep-units-tune6": { heads: 41, dy: 0, dx: 0, oy: 0, ox: 0 },
 };
 
 /** Rounding slack, so a last-digit wobble is not a failure. */

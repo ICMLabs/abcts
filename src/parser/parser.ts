@@ -4957,7 +4957,23 @@ class Parser {
     const sep = /^sep\b\s*(.*)$/.exec(body)
     if (sep !== null) {
       const args = (sep[1] ?? '').trim()
-      const measured = args === '' ? null : args.split(/\s+/).map(parseMeasurement)
+      let measured: (number | null)[] | null =
+        args === '' ? null : args.split(/\s+/).map(parseMeasurement)
+      // Strict reads them as abcjs does: three `getMeasurement`s off ONE token list, so
+      // `0.5 cm 0.5 cm 5 cm` is three values, and a failed read is abcjs's error with no
+      // separator at all (`abc_parse_directive.js:881-899`).
+      if (isStrict(this.mode) && args !== '') {
+        const m = abcjsMeasurements(args)
+        measured = [m.next(), m.next(), m.next()]
+        if (measured.some((n) => n === null) || !m.done()) {
+          this.warn(
+            'directive-parameter',
+            'Directive "sep" requires 3 numbers: space above, space below, length of line',
+            sourceRange(start, end),
+          )
+          return
+        }
+      }
       const [above, below, length] =
         measured === null || measured.length !== 3 || measured.some((n) => n === null)
           ? [14, 14, 85]
@@ -5037,6 +5053,19 @@ class Parser {
       )
       return
     }
+    /**
+     * …**AND IN STRICT IT IS `Math.round(getRequiredMeasurement(…))`**
+     * (`abc_parse_directive.js:873`), so a bare `30.6` is truncated to 30 BEFORE the round
+     * and `1 cm` may be spaced. A failed read is no error at all: `Math.round` of the
+     * error object is `NaN`, its `.error` is undefined, and `addSpacing(NaN)` parks a
+     * falsy value `pushLine` never stamps — so nothing happens, silently.
+     */
+    const strictVskip = isStrict(this.mode) ? /^vskip\b\s*(.*)$/.exec(body) : null
+    if (strictVskip !== null) {
+      const points = abcjsMeasurement(strictVskip[1] ?? '')
+      if (points !== null && this.builder) this.builder.pendingVskip.value = Math.round(points)
+      return
+    }
     const vskip = /^vskip\s+(-?\d+(?:\.\d+)?)\s*(cm|in|pt)?/.exec(body)
     if (vskip?.[1] !== undefined) {
       const n = Number.parseFloat(vskip[1])
@@ -5101,9 +5130,19 @@ class Parser {
     }
     // `%%staffsep` / `%%sysstaffsep` — minimum staff separations, given in POINTS and
     // scaled to pixels by 4/3 exactly as abcjs does (`write/renderer.js:148,160`).
-    const staffSep = /^(staffsep|sysstaffsep)\s+(-?\d+(?:\.\d+)?)/.exec(body)
-    if (staffSep?.[2] !== undefined) {
-      const px = (Number.parseFloat(staffSep[2]) * 4) / 3
+    // …and in strict they are `oneParameterMeasurement`s (`abc_parse_directive.js:842,845`),
+    // so a unit counts and a bare float is truncated — `2cm` was 2pt here, `50.2` 50.2.
+    const staffSep = /^(staffsep|sysstaffsep)\s+(.*)$/.exec(body)
+    const staffSepPoints =
+      staffSep === null
+        ? null
+        : isStrict(this.mode)
+          ? abcjsMeasurement(staffSep[2] ?? '')
+          : /^-?\d+(?:\.\d+)?/.test(staffSep[2] ?? '')
+            ? Number.parseFloat(staffSep[2] ?? '')
+            : null
+    if (staffSep !== null && staffSepPoints !== null) {
+      const px = (staffSepPoints * 4) / 3
       const builder = this.ensureScore(start)
       if (staffSep[1] === 'staffsep') builder.staffSep = px
       else builder.sysStaffSep = px
@@ -5114,9 +5153,9 @@ class Parser {
     // scaled by 4/3 like every other measurement (`write/renderer.js:155-156`). It is
     // spent ONCE, before the first staff group, so `%%musicspace 0` closes that gap and
     // nothing else moves. `visual-selection-01` sets it.
-    const musicSpace = /^musicspace\s+(\S+)\s*$/.exec(body)
+    const musicSpace = /^musicspace\s+(.+?)\s*$/.exec(body)
     if (musicSpace?.[1] !== undefined) {
-      const px = parseMeasurement(musicSpace[1])
+      const px = isStrict(this.mode) ? abcjsMeasurement(musicSpace[1]) : parseMeasurement(musicSpace[1])
       if (px !== null) {
         const b = this.ensureScore(start)
         b.musicSpace = (px * 4) / 3
@@ -5132,11 +5171,11 @@ class Parser {
      * seven are the measurements among them.
      */
     const measured =
-      /^(topmargin|botmargin|leftmargin|rightmargin|titlespace|vocalspace|stafftopmargin|botspace|composerspace|indent|linesep|partsspace|pageheight|pagewidth|subtitlespace|systemsep|textspace|topspace|wordsspace)\s+(\S+)\s*$/.exec(
+      /^(topmargin|botmargin|leftmargin|rightmargin|titlespace|vocalspace|stafftopmargin|botspace|composerspace|indent|linesep|partsspace|pageheight|pagewidth|subtitlespace|systemsep|textspace|topspace|wordsspace)\s+(.+?)\s*$/.exec(
         body,
       )
     if (measured?.[1] !== undefined && measured[2] !== undefined) {
-      const points = parseMeasurement(measured[2])
+      const points = isStrict(this.mode) ? abcjsMeasurement(measured[2]) : parseMeasurement(measured[2])
       if (points !== null) {
         const b = this.ensureScore(start)
         /**
@@ -5253,10 +5292,20 @@ class Parser {
     // (`engraver-controller.js:208`), where the param goes straight into
     // `staffwidthScreen` (`:55`). Reading the directive as pixels made
     // `%%staffwidth 400` a 400px staff against abcjs's 532.
-    const staffWidth = /^staffwidth\s+(\d+(?:\.\d+)?)\s*$/.exec(body)
-    if (staffWidth?.[1] !== undefined) {
+    // …and in strict it is `oneParameterMeasurement`, so it takes any unit, a spaced one
+    // too, and a bare float is truncated (`abc_parse_directive.js:843`).
+    const staffWidthText = /^staffwidth\s+(.*)$/.exec(body)?.[1]
+    const staffWidthPt =
+      staffWidthText === undefined
+        ? null
+        : isStrict(this.mode)
+          ? abcjsMeasurement(staffWidthText)
+          : /^\d+(?:\.\d+)?\s*$/.test(staffWidthText)
+            ? Number.parseFloat(staffWidthText)
+            : null
+    if (staffWidthPt !== null) {
       const b = this.ensureScore(start)
-      b.staffWidth = Number.parseFloat(staffWidth[1]) * 1.33
+      b.staffWidth = staffWidthPt * 1.33
       b.noteFormatting('staffwidth')
       return
     }
@@ -8756,6 +8805,53 @@ function prettifyChord(chord: string): string {
  * `abc_tokenizer.js:776-781`: `pt` and `px` pass through, `cm` is `/2.54*72`, `in` is
  * `*72`, and a bare number is already points. Anything else is not a measurement.
  */
+/**
+ * **abcjs's OWN READING OF A MEASUREMENT — `tokenize` then `getMeasurement`**
+ * (`abc_tokenizer.js:445-500`, `:752-784`), for strict mode. Differs from
+ * `parseMeasurement` in three observable ways: a BARE float is `parseInt`-truncated
+ * (`30.5` is 30), the unit may stand apart (`12 cm`), and a value is read off a token
+ * LIST, so `%%sep` takes three in turn. `-` and a leading `.` are punctuation, so
+ * `-3` reads and `.5in` does not. Each read returns null when abcjs's `used` is 0.
+ */
+function abcjsMeasurements(text: string): { next: () => number | null; done: () => boolean } {
+  const tokens: string[] = text.match(/[A-Za-z]+|\d+(?:\.\d+)?|[^\s]/g) ?? []
+  const isNumber = (t: string | undefined): t is string => t !== undefined && /^\d/.test(t)
+  return {
+    done: () => tokens.length === 0,
+    next: () => {
+      let num = ''
+      if (tokens[0] === '-') {
+        tokens.shift()
+        num = '-'
+      } else if (!isNumber(tokens[0])) return null
+      num += tokens.shift()
+      if (tokens.length === 0) return Number.parseInt(num, 10)
+      let x = tokens.shift() as string
+      if (x === '.') {
+        if (tokens.length === 0) return Number.parseInt(num, 10)
+        if (isNumber(tokens[0])) {
+          num = `${num}.${tokens.shift()}`
+          if (tokens.length === 0) return Number.parseFloat(num)
+        }
+        x = tokens.shift() as string
+      }
+      const value = Number.parseFloat(num)
+      if (x === 'pt' || x === 'px') return value
+      if (x === 'cm') return (value / 2.54) * 72
+      if (x === 'in') return value * 72
+      tokens.unshift(x)
+      return value
+    },
+  }
+}
+
+/** `oneParameterMeasurement` / `getRequiredMeasurement` — ONE read that must end the text. */
+function abcjsMeasurement(text: string): number | null {
+  const m = abcjsMeasurements(text)
+  const value = m.next()
+  return value === null || !m.done() ? null : value
+}
+
 function parseMeasurement(token: string): number | null {
   const m = /^(-?\d+(?:\.\d+)?)(pt|px|cm|in)?$/.exec(token.trim())
   if (!m?.[1]) return null

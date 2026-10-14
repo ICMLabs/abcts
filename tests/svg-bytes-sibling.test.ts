@@ -157,6 +157,30 @@ const DIVERGENT: readonly string[] = [];
 
 /** Slugs that are BYTE-EXACT and must stay so. Grows, never shrinks. */
 const PASSING: readonly string[] = [
+  // abcMusicKit 9.10.7's measurement-unit fixtures (2026-10-10), byte-exact once strict read
+  // every `%%` measurement through abcjs's own `getMeasurement`.
+  "spacing-units-tune0",
+  "spacing-units-tune1",
+  "spacing-units-tune2",
+  "spacing-units-tune3",
+  "spacing-units-tune4",
+  "spacing-units-tune5",
+  "spacing-units-tune6",
+  "staffwidth-units-tune0",
+  "staffwidth-units-tune1",
+  "staffwidth-units-tune2",
+  "staffwidth-units-tune3",
+  "staffwidth-units-tune4",
+  "staffwidth-units-tune5",
+  "staffwidth-units-tune6",
+  "staffwidth-units-tune7",
+  "vskip-sep-units-tune0",
+  "vskip-sep-units-tune1",
+  "vskip-sep-units-tune2",
+  "vskip-sep-units-tune3",
+  "vskip-sep-units-tune4",
+  "vskip-sep-units-tune5",
+  "vskip-sep-units-tune6",
   "S1-decorations-tune0",
   "S1-decorations-tune1",
   "S1-decorations-tune2",

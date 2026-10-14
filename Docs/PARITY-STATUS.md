@@ -4,6 +4,15 @@
 BROWSER gates too, in WebKit and Chrome, against the widened corpus. Every number below is a
 re-run, not a carried-forward claim.*
 
+> ✅ **2026-10-14: the SIBLING corpus grew from outside** — abcMusicKit 9.10.7 added three
+> measurement-unit fixtures with abcjs goldens (22 tunes) and 9.10.17 a `W:`-columns one (no
+> abcjs golden; baseline only). 16 of the 22 differed on arrival: strict now reads every `%%`
+> measurement through a port of abcjs's `tokenize` + `getMeasurement` (`parser.ts`
+> `abcjsMeasurements`) — units, `12 cm` spaced, a bare float truncated, `%%vskip`/`%%sep`
+> rounded, `%%staffwidth`/`%%staffsep`/`%%sysstaffsep` included — and `%%stafftopmargin` is
+> added AFTER the inter-staff clamp, as abcjs adds it (`set-upper-and-lower-elements.js:91`).
+> All 22 byte-exact and ratcheted.
+
 > ✅ **RE-RUN 2026-09-26** after the corpus grew by one control (`abcts-tempo-before-bar`,
 > nine tunes): **706 tunes, 700 comparable.** Every gate below is at zero or at its declared
 > count at the new size; the tables still carry the 697/691 figures from 2026-09-22 where a
@@ -47,7 +56,7 @@ together they let a markup difference live forever.
 | gate | what it compares | result |
 |---|---|---|
 | `svg-bytes` | 706 in-repo tunes, rendered headless | **0 differ** (6 divergent) |
-| `svg-bytes-sibling` | 359 tunes from the 47-fixture corpus, in 5 flavours — plain, `--add-classes`, print, stacked, stacked-print | **0 differ** |
+| `svg-bytes-sibling` | 381 tunes from the 51-fixture corpus, in 5 flavours — plain, `--add-classes`, print, stacked, stacked-print | **0 differ** (re-run 2026-10-14) |
 | `zzlive` (WebKit) | abcts and abcjs running **in the same browser page**, diffed live | **0 of 700** (6 divergent) |
 | `zzlive` (Chrome) | the same, in Blink | **0 of 700** (6 divergent) |
 | `dom-contract` | `class`, `data-name` and DOM depth over 25 tunes — what `querySelector` finds | **0 differ** |

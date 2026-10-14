@@ -26,7 +26,7 @@ on 2026-09-23 — **60 handoffs and 59 checkpoints in `Docs/`** are the durable 
 this file keeps only what is true of every session.
 
 ## First Step — Always
-**The standing order is 100% parity with abcjs on every tune** — the 47-fixture sibling
+**The standing order is 100% parity with abcjs on every tune** — the 51-fixture sibling
 corpus, the 238-fixture in-repo corpus (180 harvested from abcjs 6.7.1's own tests + 58
 hand-written controls, 706 tunes) and the audio feature set. Work until it is reached;
 checkpoint and hand off as you go so no context is lost.
@@ -424,7 +424,7 @@ wires strict. See §Modes.
   ladders. ⚠️ `npm run harvest` KEEPS every fixture not listed in `SOURCES.json` — it used to
   clear the directory, which once deleted all 57 controls with their goldens still keyed on
   the names.
-- `../abcMusicKit/Tools/abcjs-debug/fixtures/` — the SIBLING corpus, 47 `.abc` fixtures,
+- `../abcMusicKit/Tools/abcjs-debug/fixtures/` — the SIBLING corpus, 51 `.abc` fixtures (2026-10-14; it grows from abcMusicKit's side — re-run `svg-bytes-sibling` after any abcMusicKit release),
   with its goldens beside it in `golden/`: 46 `.parse.json`, 41 `.elements.json` and 384
   SVGs in five flavours (plain, `-classes`, `-print`, `-stacked`, `-stacked-print`).
   ⚠️ Counts re-measured 2026-09-23; this list has been wrong three times, the instrument

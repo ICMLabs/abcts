@@ -17239,15 +17239,20 @@ function layoutScoped(input: Score, options: LayoutOptions = {}): Layout {
        * system's without it — 35.18374193548387 against 35.183741935483866, on a tune
        * where every system has the same two staves.
        *
-       * `staffTopMargin` follows the clamp in abcjs and is 0 here, so the order of the two
-       * is unobservable; keeping ours inside `verticalExtent` costs nothing.
+       * ⚠️ **AND `staffTopMargin` IS ADDED AFTER THE CLAMP, NOT BEFORE IT** — `:91` follows
+       * `:88-89`. This note used to call the order unobservable because the margin was 0 on
+       * every fixture; the sibling `spacing-units` (2026-10-10) is the first with one, and a
+       * staff with nothing above it lost its margin to the clamp: 10.67px on its 4th staff.
+       * So the clamp reads the top WITHOUT the margin, and the margin goes on afterwards.
        */
       const clampedTopPitch = (() => {
         if (lastStaffBottomPitch === null) return extent.topPitch
-        const thisStaffTop = extent.topPitch - 10
+        const thisStaffTop = extent.topPitchBeforeMargin - 10
         const forcedSpacingBetween = lastStaffBottomPitch + thisStaffTop
         const addedSpace = intraStaffSep / ENGRAVE.spacePerStep - forcedSpacingBetween
-        return addedSpace > 0 ? extent.topPitch + addedSpace : extent.topPitch
+        return addedSpace > 0
+          ? extent.topPitchBeforeMargin + addedSpace + marginPitch
+          : extent.topPitch
       })()
       const stacked =
         musicOnlyTop === undefined
@@ -21760,6 +21765,8 @@ function verticalExtent(
   /** abcjs's `lyricHeightAbove` in PITCH — see the field's own note below. */
   lyricLaneAbove: number
   topPitch: number
+  /** `topPitch` BEFORE `%%stafftopmargin` — what abcjs's inter-staff clamp reads. */
+  topPitchBeforeMargin: number
   bottomPitch: number
 } {
   // The staff itself is always present, spanning steps 4 to -4.
@@ -22399,6 +22406,7 @@ function verticalExtent(
   // **`%%stafftopmargin` IS ONE MORE PITCH ON THE TOP, AFTER EVERY LANE** —
   // `staff.top += renderer.spacing.staffTopMargin / spacing.STEP`
   // (`set-upper-and-lower-elements.js:91`), and its default is zero.
+  const topPitchBeforeMargin = topPitch
   if (staffMargin && SPACING.stafftopmargin !== undefined) {
     // ⚠️ **AND THE PIXELS GO IN AS PIXELS.** abcjs states the margin in px and divides it
     // into pitch (`renderer.spacing.staffTopMargin / spacing.STEP`), so multiplying that
@@ -22429,6 +22437,7 @@ function verticalExtent(
     bottom: bottom + ENGRAVE.marginY,
     inkBottom,
     inkBottomPitch,
+    topPitchBeforeMargin,
     /**
      * **THE LYRIC LANE ALONE, IN PIXELS** — what `lower()` spent for it just above, and
      * zero when the staff sings nothing. abcjs's below chain is lyric, then chord, then

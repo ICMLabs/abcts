@@ -1,4 +1,4 @@
-# NEXT AGENT PROMPT — abcts, 2026-09-26
+# NEXT AGENT PROMPT — abcts, 2026-10-14
 
 Paste the block below.
 
@@ -33,7 +33,7 @@ persist between tool calls and the workspace ROOT collects every sibling repo's 
                 `<g>` nodes in `elemset` and the timing rows a playback cursor colours.
     zzwraplines 2 of 706, both DECLARED — abcts-vskip 0/2, where abcjs throws. NEW
                 2026-09-25: the wrapped `tune.lines` a host reads after `{wrap}`.
-    svg-bytes   0 of 706 in-repo, 0 of 359 sibling
+    svg-bytes   0 of 706 in-repo, 0 of 381 sibling (51 fixtures; +22 unit tunes 2026-10-14)
     mode-bytes  11 — every one DECLARED
     midi-bytes  0 of 697 — 19 ruled divergent
     zzlive      0 of 700  WebKit AND Chrome        zzselect 0 of 700  WebKit
